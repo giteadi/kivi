@@ -2,11 +2,9 @@ import { motion } from 'framer-motion';
 import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiFileText, FiCopy } from 'react-icons/fi';
 import { useState } from 'react';
 
-const EncounterTemplates = () => {
+const EncounterTemplates = ({ onCreateTemplate, onEditTemplate, onViewTemplate, onDuplicateTemplate, onDeleteTemplate }) => {
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Mock data - in real app this would come from API
-  const templates = [
+  const [templates, setTemplates] = useState([
     {
       id: 1,
       name: 'General Consultation Template',
@@ -37,7 +35,10 @@ const EncounterTemplates = () => {
       usageCount: 67,
       sections: ['Previous Treatment Review', 'Current Status', 'Adjustments', 'Next Steps']
     }
-  ];
+  ]);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState(null);
 
   const filteredTemplates = templates.filter(template =>
     template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -58,6 +59,34 @@ const EncounterTemplates = () => {
     }
   };
 
+  const handleDeleteTemplate = (template) => {
+    setTemplateToDelete(template);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = () => {
+    onDeleteTemplate(templateToDelete);
+    setTemplates(prev => prev.filter(t => t.id !== templateToDelete.id));
+    setShowDeleteModal(false);
+    setTemplateToDelete(null);
+  };
+
+  const handleDuplicateTemplate = (template) => {
+    onDuplicateTemplate(template);
+    const newTemplate = {
+      ...template,
+      id: Date.now(),
+      name: `${template.name} (Copy)`,
+      usageCount: 0,
+      createdDate: new Date().toISOString().split('T')[0]
+    };
+    setTemplates(prev => [...prev, newTemplate]);
+  };
+
+  const handleViewTemplate = (template) => {
+    onViewTemplate(template);
+  };
+
   return (
     <div className="lg:ml-64 min-h-screen bg-gray-50">
       <div className="p-4 lg:p-6">
@@ -71,6 +100,7 @@ const EncounterTemplates = () => {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            onClick={onCreateTemplate}
             className="flex items-center space-x-2 px-4 py-2 bg-red-400 hover:bg-red-500 text-white rounded-lg transition-colors"
           >
             <FiPlus className="w-4 h-4" />
@@ -169,6 +199,7 @@ const EncounterTemplates = () => {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
+                        onClick={() => handleViewTemplate(template)}
                         className="text-blue-600 hover:text-blue-900 p-2 rounded-lg hover:bg-blue-50 transition-colors"
                         title="View Template"
                       >
@@ -177,6 +208,7 @@ const EncounterTemplates = () => {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
+                        onClick={() => onEditTemplate(template)}
                         className="text-green-600 hover:text-green-900 p-2 rounded-lg hover:bg-green-50 transition-colors"
                         title="Edit Template"
                       >
@@ -185,6 +217,7 @@ const EncounterTemplates = () => {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
+                        onClick={() => handleDuplicateTemplate(template)}
                         className="text-purple-600 hover:text-purple-900 p-2 rounded-lg hover:bg-purple-50 transition-colors"
                         title="Duplicate Template"
                       >
@@ -193,6 +226,7 @@ const EncounterTemplates = () => {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
+                        onClick={() => handleDeleteTemplate(template)}
                         className="text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50 transition-colors"
                         title="Delete Template"
                       >
@@ -240,6 +274,36 @@ const EncounterTemplates = () => {
             <div className="text-sm text-gray-600">Total Usage</div>
           </div>
         </motion.div>
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-xl p-6 max-w-md w-full mx-4"
+            >
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Delete Template</h3>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to delete "{templateToDelete?.name}"? This action cannot be undone.
+              </p>
+              <div className="flex items-center justify-end space-x-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </div>
     </div>
   );

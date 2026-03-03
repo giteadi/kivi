@@ -3,21 +3,34 @@ import { motion } from 'framer-motion';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
+import AppointmentsList from './components/AppointmentsList';
 import AppointmentDetail from './components/AppointmentDetail';
 import EncounterDetail from './components/EncounterDetail';
 import EncountersList from './components/EncountersList';
 import EncounterTemplates from './components/EncounterTemplates';
+import TemplateBuilder from './components/TemplateBuilder';
+import TemplateViewer from './components/TemplateViewer';
+import TemplateSelector from './components/TemplateSelector';
+import TemplateBasedEncounter from './components/TemplateBasedEncounter';
 import MobileMenu from './components/MobileMenu';
 
 function App() {
   const [activeItem, setActiveItem] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'appointment-detail', 'encounter-detail'
+  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'appointment-detail', 'encounter-detail', 'template-builder', 'template-viewer', 'template-selector', 'template-based-encounter'
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [selectedPatient, setSelectedPatient] = useState(null);
 
   const handleAppointmentClick = (appointmentId) => {
     setSelectedAppointmentId(appointmentId);
     setCurrentView('appointment-detail');
+    setActiveItem('appointments'); // Set to appointments section
+  };
+
+  const handleViewAllAppointments = () => {
+    setActiveItem('appointments');
+    setCurrentView('appointments-list');
   };
 
   const handleViewEncounter = (encounterId = null) => {
@@ -32,6 +45,11 @@ function App() {
     setActiveItem('dashboard');
   };
 
+  const handleBackToAppointments = () => {
+    setCurrentView('appointments-list');
+    setActiveItem('appointments');
+  };
+
   const handleBackToAppointment = () => {
     setCurrentView('appointment-detail');
   };
@@ -41,7 +59,141 @@ function App() {
     setCurrentView('encounters-list');
   };
 
+  const handleCreateTemplate = () => {
+    setSelectedTemplate(null);
+    setCurrentView('template-builder');
+  };
+
+  const handleEditTemplate = (template) => {
+    setSelectedTemplate(template);
+    setCurrentView('template-builder');
+  };
+
+  const handleViewTemplate = (template) => {
+    setSelectedTemplate(template);
+    setCurrentView('template-viewer');
+  };
+
+  const handleDuplicateTemplate = (template) => {
+    const duplicatedTemplate = {
+      ...template,
+      id: Date.now(),
+      name: `${template.name} (Copy)`,
+      usageCount: 0,
+      createdDate: new Date().toISOString().split('T')[0]
+    };
+    setSelectedTemplate(duplicatedTemplate);
+    setCurrentView('template-builder');
+  };
+
+  const handleDeleteTemplate = (template) => {
+    if (window.confirm(`Are you sure you want to delete "${template.name}"?`)) {
+      // In a real app, this would delete from backend
+      alert('Template deleted successfully!');
+      handleBackToTemplates();
+    }
+  };
+
+  const handleSaveTemplate = (templateData) => {
+    // In a real app, this would save to backend
+    console.log('Saving template:', templateData);
+    alert('Template saved successfully!');
+    handleBackToTemplates();
+  };
+
+  const handleCancelTemplate = () => {
+    handleBackToTemplates();
+  };
+
+  const handleBackToTemplates = () => {
+    setSelectedTemplate(null);
+    setCurrentView('encounter-templates');
+    setActiveItem('encounter-templates');
+  };
+
+  const handleCreateNewEncounter = (patientData = null) => {
+    setSelectedPatient(patientData || {
+      id: 'P001',
+      name: 'Patient Kjaggi',
+      age: '35',
+      gender: 'Male'
+    });
+    setCurrentView('template-selector');
+  };
+
+  const handleSelectTemplate = (template) => {
+    setSelectedTemplate(template);
+    setCurrentView('template-based-encounter');
+  };
+
+  const handleCancelTemplateSelection = () => {
+    setSelectedPatient(null);
+    setCurrentView('encounters-list');
+    setActiveItem('encounters-list');
+  };
+
+  const handleSaveEncounter = (encounterData) => {
+    // In a real app, this would save to backend
+    console.log('Saving encounter:', encounterData);
+    alert('Encounter report created successfully!');
+    setSelectedTemplate(null);
+    setSelectedPatient(null);
+    setCurrentView('encounters-list');
+    setActiveItem('encounters-list');
+  };
+
+  const handleCancelEncounter = () => {
+    setCurrentView('template-selector');
+  };
+
   const renderContent = () => {
+    // Handle template-based encounter creation
+    if (currentView === 'template-based-encounter') {
+      return (
+        <TemplateBasedEncounter
+          template={selectedTemplate}
+          patientData={selectedPatient}
+          onSave={handleSaveEncounter}
+          onCancel={handleCancelEncounter}
+        />
+      );
+    }
+
+    // Handle template selection
+    if (currentView === 'template-selector') {
+      return (
+        <TemplateSelector
+          onSelectTemplate={handleSelectTemplate}
+          onCancel={handleCancelTemplateSelection}
+          patientData={selectedPatient}
+        />
+      );
+    }
+
+    // Handle template viewer
+    if (currentView === 'template-viewer') {
+      return (
+        <TemplateViewer
+          template={selectedTemplate}
+          onBack={handleBackToTemplates}
+          onEdit={handleEditTemplate}
+          onDuplicate={handleDuplicateTemplate}
+          onDelete={handleDeleteTemplate}
+        />
+      );
+    }
+
+    // Handle template builder view
+    if (currentView === 'template-builder') {
+      return (
+        <TemplateBuilder
+          template={selectedTemplate}
+          onSave={handleSaveTemplate}
+          onCancel={handleCancelTemplate}
+        />
+      );
+    }
+
     // Handle encounter detail view
     if (currentView === 'encounter-detail') {
       return (
@@ -54,8 +206,9 @@ function App() {
       return (
         <AppointmentDetail 
           appointmentId={selectedAppointmentId}
-          onBack={handleBackToDashboard}
+          onBack={handleBackToAppointments}
           onViewEncounter={handleViewEncounter}
+          onCreateNewEncounter={handleCreateNewEncounter}
         />
       );
     }
@@ -63,17 +216,27 @@ function App() {
     // Handle main navigation items
     switch (activeItem) {
       case 'dashboard':
-        return <Dashboard onAppointmentClick={handleAppointmentClick} />;
+        return <Dashboard onAppointmentClick={handleAppointmentClick} onCreateNewEncounter={handleCreateNewEncounter} onViewAllAppointments={handleViewAllAppointments} />;
+      
+      case 'appointments':
+        if (currentView === 'appointments-list' || currentView === 'dashboard') {
+          return <AppointmentsList onViewAppointment={handleAppointmentClick} onCreateNewAppointment={() => alert('Create new appointment functionality')} />;
+        }
+        return <AppointmentsList onViewAppointment={handleAppointmentClick} onCreateNewAppointment={() => alert('Create new appointment functionality')} />;
       
       case 'encounters-list':
-        if (currentView === 'encounters-list') {
-          return <EncountersList onViewEncounter={handleViewEncounter} />;
-        }
-        // If we're in encounter-detail view but encounters-list is active, show encounter detail
-        return <EncounterDetail onBack={handleBackToEncountersList} />;
+        return <EncountersList onViewEncounter={handleViewEncounter} onCreateNewEncounter={handleCreateNewEncounter} />;
       
       case 'encounter-templates':
-        return <EncounterTemplates />;
+        return (
+          <EncounterTemplates 
+            onCreateTemplate={handleCreateTemplate}
+            onEditTemplate={handleEditTemplate}
+            onViewTemplate={handleViewTemplate}
+            onDuplicateTemplate={handleDuplicateTemplate}
+            onDeleteTemplate={handleDeleteTemplate}
+          />
+        );
       
       default:
         // Other menu items

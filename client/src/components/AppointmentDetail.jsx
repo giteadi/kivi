@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiDownload, FiPhone } from 'react-icons/fi';
 
-const AppointmentDetail = ({ appointmentId, onBack, onViewEncounter }) => {
+const AppointmentDetail = ({ appointmentId, onBack, onViewEncounter, onCreateNewEncounter }) => {
   // Mock data - in real app this would come from API based on appointmentId
   const appointmentData = {
     id: '#1',
@@ -41,6 +41,15 @@ const AppointmentDetail = ({ appointmentId, onBack, onViewEncounter }) => {
   return (
     <div className="lg:ml-64 min-h-screen bg-gray-50">
       <div className="p-4 lg:p-6">
+        {/* Breadcrumb */}
+        <div className="flex items-center text-sm text-gray-500 mb-6">
+          <span>Home</span>
+          <span className="mx-2">›</span>
+          <span>Appointments</span>
+          <span className="mx-2">›</span>
+          <span className="text-gray-800">Appointment Detail</span>
+        </div>
+
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-4">
@@ -205,6 +214,18 @@ const AppointmentDetail = ({ appointmentId, onBack, onViewEncounter }) => {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-800">Encounter Detail</h3>
             <div className="flex items-center space-x-4">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => onCreateNewEncounter && onCreateNewEncounter({
+                  id: appointmentData.patient.id,
+                  name: appointmentData.patient.name,
+                  phone: appointmentData.patient.phone
+                })}
+                className="text-sm px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+              >
+                Create New Encounter
+              </motion.button>
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}

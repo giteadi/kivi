@@ -7,7 +7,7 @@ import AppointmentCard from './AppointmentCard';
 import DoctorCard from './DoctorCard';
 import BookingChart from './BookingChart';
 
-const Dashboard = ({ onAppointmentClick }) => {
+const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointments }) => {
   const stats = [
     {
       icon: FiCalendar,
@@ -170,7 +170,22 @@ const Dashboard = ({ onAppointmentClick }) => {
           >
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-gray-800">Upcoming Appointments</h3>
-              <button className="text-sm text-blue-600 hover:text-blue-700">View All</button>
+              <div className="flex items-center space-x-2">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => onCreateNewEncounter && onCreateNewEncounter()}
+                  className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                >
+                  New Encounter
+                </motion.button>
+                <button 
+                  onClick={() => onViewAllAppointments && onViewAllAppointments()}
+                  className="text-sm text-blue-600 hover:text-blue-700"
+                >
+                  View All
+                </button>
+              </div>
             </div>
             
             <div className="space-y-4">
