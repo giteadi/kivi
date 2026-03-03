@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiDownload, FiPhone } from 'react-icons/fi';
 
-const AppointmentDetail = ({ appointmentId, onBack }) => {
+const AppointmentDetail = ({ appointmentId, onBack, onViewEncounter }) => {
   // Mock data - in real app this would come from API based on appointmentId
   const appointmentData = {
     id: '#1',
@@ -205,7 +205,14 @@ const AppointmentDetail = ({ appointmentId, onBack }) => {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-800">Encounter Detail</h3>
             <div className="flex items-center space-x-4">
-              <button className="text-sm text-blue-600 hover:text-blue-700">View Details</button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={onViewEncounter}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                View Details
+              </motion.button>
               <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
                 {appointmentData.encounter.status}
               </span>
