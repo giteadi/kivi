@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiCalendar, FiUser } from 'react-icons/fi';
 import { useState } from 'react';
 
-const EncountersList = ({ onViewEncounter, onCreateNewEncounter }) => {
+const EncountersList = ({ onViewEncounter, onEditEncounter, onDeleteEncounter, onCreateNewEncounter }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
@@ -232,6 +232,10 @@ const EncountersList = ({ onViewEncounter, onCreateNewEncounter }) => {
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEditEncounter && onEditEncounter(encounter.id);
+                          }}
                           className="text-green-600 hover:text-green-900 p-1 rounded"
                           title="Edit"
                         >
@@ -240,6 +244,10 @@ const EncountersList = ({ onViewEncounter, onCreateNewEncounter }) => {
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteEncounter && onDeleteEncounter(encounter.id);
+                          }}
                           className="text-red-600 hover:text-red-900 p-1 rounded"
                           title="Delete"
                         >

@@ -1,10 +1,12 @@
 import { motion } from 'framer-motion';
-import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiCalendar, FiUser, FiClock } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiCalendar, FiUser, FiClock, FiUpload } from 'react-icons/fi';
 import { useState } from 'react';
+import ImportModal from './ImportModal';
 
-const AppointmentsList = ({ onViewAppointment, onCreateNewAppointment }) => {
+const AppointmentsList = ({ onViewAppointment, onEditAppointment, onDeleteAppointment, onCreateNewAppointment }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const appointments = [
     {
@@ -96,15 +98,26 @@ const AppointmentsList = ({ onViewAppointment, onCreateNewAppointment }) => {
             <p className="text-gray-600">Manage and view all patient appointments</p>
           </div>
           
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => onCreateNewAppointment && onCreateNewAppointment()}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-          >
-            <FiPlus className="w-4 h-4" />
-            <span>New Appointment</span>
-          </motion.button>
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setIsImportModalOpen(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            >
+              <FiUpload className="w-4 h-4" />
+              <span>Import Data</span>
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => onCreateNewAppointment && onCreateNewAppointment()}
+              className="flex items-center space-x-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+            >
+              <FiPlus className="w-4 h-4" />
+              <span>New Appointment</span>
+            </motion.button>
+          </div>
         </div>
 
         {/* Breadcrumb */}
@@ -247,6 +260,10 @@ const AppointmentsList = ({ onViewAppointment, onCreateNewAppointment }) => {
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEditAppointment && onEditAppointment(appointment.id);
+                          }}
                           className="text-green-600 hover:text-green-900 p-1 rounded"
                           title="Edit"
                         >
@@ -255,6 +272,10 @@ const AppointmentsList = ({ onViewAppointment, onCreateNewAppointment }) => {
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteAppointment && onDeleteAppointment(appointment.id);
+                          }}
                           className="text-red-600 hover:text-red-900 p-1 rounded"
                           title="Delete"
                         >
@@ -316,6 +337,13 @@ const AppointmentsList = ({ onViewAppointment, onCreateNewAppointment }) => {
           </div>
         </motion.div>
       </div>
+
+      {/* Import Modal */}
+      <ImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        importType="appointments"
+      />
     </div>
   );
 };
