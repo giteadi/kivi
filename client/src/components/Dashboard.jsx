@@ -1,9 +1,13 @@
 import { motion } from 'framer-motion';
-import { FiCalendar, FiUsers, FiMapPin, FiUserCheck, FiFilter } from 'react-icons/fi';
+import { FiCalendar, FiUsers, FiMapPin, FiUserCheck, FiFilter, FiSettings, FiLock } from 'react-icons/fi';
 import StatsCard from './StatsCard';
 import EmailAlert from './EmailAlert';
+import RevenueCard from './RevenueCard';
+import AppointmentCard from './AppointmentCard';
+import DoctorCard from './DoctorCard';
+import BookingChart from './BookingChart';
 
-const Dashboard = () => {
+const Dashboard = ({ onAppointmentClick }) => {
   const stats = [
     {
       icon: FiCalendar,
@@ -30,6 +34,55 @@ const Dashboard = () => {
       color: 'blue'
     }
   ];
+
+  const revenueStats = [
+    {
+      icon: FiSettings,
+      title: 'Active Services',
+      value: '352'
+    },
+    {
+      icon: FiLock,
+      title: 'Total Revenue',
+      value: '₹1.9k/-'
+    }
+  ];
+
+  const upcomingAppointments = [
+    {
+      id: 1,
+      patient: 'Patient Kjaggi',
+      date: 'February 21, 2026',
+      time: '9:00 am',
+      clinic: 'Clinic Kjaggi',
+      doctor: 'Dr. Kjaggi',
+      initials: 'PK',
+      bgColor: 'bg-purple-100'
+    }
+  ];
+
+  const topDoctors = [
+    {
+      name: 'Dr. Kjaggi',
+      clinic: 'Clinic Kjaggi',
+      appointments: '4',
+      initials: 'DK',
+      bgColor: 'bg-blue-100'
+    },
+    {
+      name: 'Dr. Paul Sanders',
+      clinic: 'Clinic Kjaggi',
+      appointments: '4',
+      initials: 'DP',
+      bgColor: 'bg-green-100'
+    }
+  ];
+
+  const handleAppointmentClick = (appointment) => {
+    if (onAppointmentClick) {
+      onAppointmentClick(appointment.id);
+    }
+  };
 
   return (
     <div className="lg:ml-64 min-h-screen bg-gray-50">
@@ -73,7 +126,7 @@ const Dashboard = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ staggerChildren: 0.1 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8"
         >
           {stats.map((stat, index) => (
             <motion.div
@@ -87,18 +140,78 @@ const Dashboard = () => {
           ))}
         </motion.div>
 
-        {/* Additional Content Area */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="mt-8 bg-white rounded-xl p-4 lg:p-6 shadow-sm border"
+        {/* Revenue Stats */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6 mb-8"
         >
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Recent Activity</h2>
-          <div className="text-center py-8 text-gray-500">
-            <p>No recent activity to display</p>
-          </div>
+          {revenueStats.map((stat, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 + index * 0.1 }}
+            >
+              <RevenueCard {...stat} />
+            </motion.div>
+          ))}
         </motion.div>
+
+        {/* Bottom Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Upcoming Appointments */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="bg-white rounded-xl p-6 shadow-sm border"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-800">Upcoming Appointments</h3>
+              <button className="text-sm text-blue-600 hover:text-blue-700">View All</button>
+            </div>
+            
+            <div className="space-y-4">
+              {upcomingAppointments.map((appointment, index) => (
+                <AppointmentCard 
+                  key={index} 
+                  {...appointment} 
+                  onClick={() => handleAppointmentClick(appointment)}
+                />
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Top Doctors */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="bg-white rounded-xl p-6 shadow-sm border"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-800">Top Doctors</h3>
+              <button className="text-sm text-blue-600 hover:text-blue-700">View All</button>
+            </div>
+            
+            <div className="space-y-4">
+              {topDoctors.map((doctor, index) => (
+                <DoctorCard key={index} {...doctor} />
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Booking Status Chart */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+          >
+            <BookingChart />
+          </motion.div>
+        </div>
       </div>
     </div>
   );
