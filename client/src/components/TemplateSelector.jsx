@@ -6,47 +6,59 @@ const TemplateSelector = ({ onSelectTemplate, onCancel, patientData }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  // Mock templates - in real app this would come from API
+  // Educational session templates
   const templates = [
     {
       id: 1,
-      name: 'General Consultation Template',
-      description: 'Standard template for general medical consultations',
-      category: 'General',
+      name: 'Learning Support Session Template',
+      description: 'Standard template for individual learning support sessions',
+      category: 'Learning Support',
       usageCount: 45,
-      estimatedTime: '15-20 min',
+      estimatedTime: '30-45 min',
       sections: [
-        { id: 1, name: 'Chief Complaint', type: 'text', required: true },
-        { id: 2, name: 'Medical History', type: 'text', required: true },
-        { id: 3, name: 'Physical Examination', type: 'text', required: true },
-        { id: 4, name: 'Assessment', type: 'text', required: true },
-        { id: 5, name: 'Treatment Plan', type: 'text', required: true }
+        { id: 1, name: 'Learning Goals', type: 'text', required: true },
+        { id: 2, name: 'Current Challenges', type: 'text', required: true },
+        { id: 3, name: 'Activities Conducted', type: 'text', required: true },
+        { id: 4, name: 'Student Response', type: 'dropdown', required: true, options: [
+          { id: 1, label: 'Excellent - Engaged and responsive', value: 'excellent' },
+          { id: 2, label: 'Good - Participated well', value: 'good' },
+          { id: 3, label: 'Fair - Some engagement', value: 'fair' },
+          { id: 4, label: 'Needs Improvement - Limited engagement', value: 'needs_improvement' }
+        ]},
+        { id: 5, name: 'Progress Notes', type: 'text', required: true },
+        { id: 6, name: 'Next Session Plan', type: 'text', required: true }
       ]
     },
     {
       id: 2,
-      name: 'Emergency Visit Template',
-      description: 'Template for emergency department visits',
-      category: 'Emergency',
+      name: 'Behavioral Assessment Template',
+      description: 'Template for behavioral assessments and observations',
+      category: 'Assessment',
       usageCount: 23,
-      estimatedTime: '10-15 min',
+      estimatedTime: '45-60 min',
       sections: [
-        { id: 1, name: 'Chief Complaint', type: 'text', required: true },
-        { id: 2, name: 'Vital Signs', type: 'text', required: true },
-        { id: 3, name: 'Triage Level', type: 'dropdown', required: true, options: [
-          { id: 1, label: 'Level 1 - Resuscitation', value: 'level1' },
-          { id: 2, label: 'Level 2 - Emergent', value: 'level2' },
-          { id: 3, label: 'Level 3 - Urgent', value: 'level3' }
+        { id: 1, name: 'Behavioral Observations', type: 'text', required: true },
+        { id: 2, name: 'Attention Level', type: 'dropdown', required: true, options: [
+          { id: 1, label: 'High - Sustained attention throughout', value: 'high' },
+          { id: 2, label: 'Moderate - Good attention with breaks', value: 'moderate' },
+          { id: 3, label: 'Low - Difficulty maintaining attention', value: 'low' }
         ]},
-        { id: 4, name: 'Assessment', type: 'text', required: true },
-        { id: 5, name: 'Immediate Care', type: 'text', required: true }
+        { id: 3, name: 'Social Interaction', type: 'text', required: true },
+        { id: 4, name: 'Interventions Used', type: 'checkbox', required: false, options: [
+          { id: 1, label: 'Positive Reinforcement', value: 'positive_reinforcement' },
+          { id: 2, label: 'Token System', value: 'token_system' },
+          { id: 3, label: 'Break Cards', value: 'break_cards' },
+          { id: 4, label: 'Visual Schedules', value: 'visual_schedules' }
+        ]},
+        { id: 5, name: 'Behavioral Goals', type: 'text', required: true },
+        { id: 6, name: 'Recommendations', type: 'text', required: true }
       ]
     },
     {
       id: 3,
-      name: 'Follow-up Visit Template',
-      description: 'Template for patient follow-up appointments',
-      category: 'Follow-up',
+      name: 'Speech Therapy Session Template',
+      description: 'Template for speech and language therapy sessions',
+      category: 'Speech Therapy',
       usageCount: 67,
       estimatedTime: '10-12 min',
       sections: [

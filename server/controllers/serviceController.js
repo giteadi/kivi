@@ -1,15 +1,15 @@
-const Service = require('../models/Service');
+const Programme = require('../models/Programme');
 
 class ServiceController {
   constructor() {
-    this.serviceModel = new Service();
+    this.serviceModel = new Programme(); // Use Programme model for backward compatibility
   }
 
   // Get all services
   async getServices(req, res) {
     try {
       const filters = req.query;
-      const services = await this.serviceModel.getServices(filters);
+      const services = await this.serviceModel.getProgrammes(filters);
 
       res.json({
         success: true,

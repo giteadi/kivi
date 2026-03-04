@@ -15,7 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 // Initialize Database
 const initializeDatabase = async () => {
   try {
-    // First connect without database to create it
+    // First connect without database to check if it exists
     const connection = mysql.createConnection({
       host: process.env.HOST || 'localhost',
       user: process.env.DB_USER || 'root',
@@ -23,24 +23,41 @@ const initializeDatabase = async () => {
       multipleStatements: true
     });
 
-    console.log('🔄 Initializing database...');
+    console.log('🔄 Checking database...');
 
-    // Read and execute SQL file
-    const sqlFile = path.join(__dirname, 'config', 'database.sql');
-    const sqlContent = fs.readFileSync(sqlFile, 'utf8');
-
-    // Execute SQL commands
-    await new Promise((resolve, reject) => {
-      connection.query(sqlContent, (err, results) => {
+    // Check if database exists
+    const dbExists = await new Promise((resolve, reject) => {
+      connection.query('SHOW DATABASES LIKE ?', [process.env.DATABASE || 'kivi'], (err, results) => {
         if (err) {
-          console.error('❌ Database initialization failed:', err);
           reject(err);
         } else {
-          console.log('✅ Database and tables created successfully');
-          resolve(results);
+          resolve(results.length > 0);
         }
       });
     });
+
+    if (!dbExists) {
+      console.log('🔄 Database not found, creating new database...');
+      
+      // Read and execute SQL file only if database doesn't exist
+      const sqlFile = path.join(__dirname, 'config', 'new_database.sql');
+      const sqlContent = fs.readFileSync(sqlFile, 'utf8');
+
+      // Execute SQL commands
+      await new Promise((resolve, reject) => {
+        connection.query(sqlContent, (err, results) => {
+          if (err) {
+            console.error('❌ Database initialization failed:', err);
+            reject(err);
+          } else {
+            console.log('✅ Database and tables created successfully');
+            resolve(results);
+          }
+        });
+      });
+    } else {
+      console.log('✅ Database already exists, skipping initialization');
+    }
 
     connection.end();
 
@@ -78,12 +95,22 @@ const startServer = async () => {
     // Routes (after database initialization)
     app.use('/api/auth', require('./routes/authRoutes'));
     app.use('/api/dashboard', require('./routes/dashboardRoutes'));
+    
+    // New routes with updated naming
+    app.use('/api/sessions', require('./routes/sessionRoutes'));
+    app.use('/api/students', require('./routes/studentRoutes'));
+    app.use('/api/therapists', require('./routes/therapistRoutes'));
+    app.use('/api/centres', require('./routes/centreRoutes'));
+    app.use('/api/programmes', require('./routes/programmeRoutes'));
+    
+    // Legacy routes for backward compatibility (if needed)
     app.use('/api/appointments', require('./routes/appointmentRoutes'));
     app.use('/api/patients', require('./routes/patientRoutes'));
     app.use('/api/doctors', require('./routes/doctorRoutes'));
     app.use('/api/receptionists', require('./routes/receptionistRoutes'));
     app.use('/api/clinics', require('./routes/clinicRoutes'));
     app.use('/api/services', require('./routes/serviceRoutes'));
+    
     app.use('/api/encounters', require('./routes/encounterRoutes'));
     app.use('/api/templates', require('./routes/templateRoutes'));
     app.use('/api/financial', require('./routes/financialRoutes'));

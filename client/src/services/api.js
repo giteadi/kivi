@@ -63,165 +63,165 @@ class ApiService {
 
   async getUpcomingAppointments(limit = 5, filters = {}) {
     const queryParams = new URLSearchParams({ limit, ...filters });
-    return this.request(`/dashboard/upcoming-appointments?${queryParams}`);
+    return this.request(`/dashboard/upcoming-sessions?${queryParams}`);
   }
 
   async getTopDoctors(limit = 5, filters = {}) {
     const queryParams = new URLSearchParams({ limit, ...filters });
-    return this.request(`/dashboard/top-doctors?${queryParams}`);
+    return this.request(`/dashboard/top-therapists?${queryParams}`);
   }
 
   async getBookingChart(filters = {}) {
     const queryParams = new URLSearchParams(filters);
-    return this.request(`/dashboard/booking-chart?${queryParams}`);
+    return this.request(`/dashboard/session-chart?${queryParams}`);
   }
 
-  // Appointments endpoints
+  // Sessions endpoints (mapped from appointments for frontend compatibility)
   async getAppointments(filters = {}) {
     const queryParams = new URLSearchParams(filters);
-    return this.request(`/appointments?${queryParams}`);
+    return this.request(`/sessions?${queryParams}`);
   }
 
   async getAppointment(id) {
-    return this.request(`/appointments/${id}`);
+    return this.request(`/sessions/${id}`);
   }
 
   async createAppointment(appointmentData) {
-    return this.request('/appointments', {
+    return this.request('/sessions', {
       method: 'POST',
       body: JSON.stringify(appointmentData),
     });
   }
 
   async updateAppointment(id, appointmentData) {
-    return this.request(`/appointments/${id}`, {
+    return this.request(`/sessions/${id}`, {
       method: 'PUT',
       body: JSON.stringify(appointmentData),
     });
   }
 
   async deleteAppointment(id) {
-    return this.request(`/appointments/${id}`, {
+    return this.request(`/sessions/${id}`, {
       method: 'DELETE',
     });
   }
 
-  // Patients endpoints
+  // Students endpoints (mapped from patients for frontend compatibility)
   async getPatients(filters = {}) {
     const queryParams = new URLSearchParams(filters);
-    return this.request(`/patients?${queryParams}`);
+    return this.request(`/students?${queryParams}`);
   }
 
   async getPatient(id) {
-    return this.request(`/patients/${id}`);
+    return this.request(`/students/${id}`);
   }
 
   async createPatient(patientData) {
-    return this.request('/patients', {
+    return this.request('/students', {
       method: 'POST',
       body: JSON.stringify(patientData),
     });
   }
 
   async updatePatient(id, patientData) {
-    return this.request(`/patients/${id}`, {
+    return this.request(`/students/${id}`, {
       method: 'PUT',
       body: JSON.stringify(patientData),
     });
   }
 
   async deletePatient(id) {
-    return this.request(`/patients/${id}`, {
+    return this.request(`/students/${id}`, {
       method: 'DELETE',
     });
   }
 
-  // Doctors endpoints
+  // Therapists endpoints (mapped from doctors for frontend compatibility)
   async getDoctors(filters = {}) {
     const queryParams = new URLSearchParams(filters);
-    return this.request(`/doctors?${queryParams}`);
+    return this.request(`/therapists?${queryParams}`);
   }
 
   async getDoctor(id) {
-    return this.request(`/doctors/${id}`);
+    return this.request(`/therapists/${id}`);
   }
 
   async createDoctor(doctorData) {
-    return this.request('/doctors', {
+    return this.request('/therapists', {
       method: 'POST',
       body: JSON.stringify(doctorData),
     });
   }
 
   async updateDoctor(id, doctorData) {
-    return this.request(`/doctors/${id}`, {
+    return this.request(`/therapists/${id}`, {
       method: 'PUT',
       body: JSON.stringify(doctorData),
     });
   }
 
   async deleteDoctor(id) {
-    return this.request(`/doctors/${id}`, {
+    return this.request(`/therapists/${id}`, {
       method: 'DELETE',
     });
   }
 
-  // Clinics endpoints
+  // Centres endpoints (mapped from clinics for frontend compatibility)
   async getClinics(filters = {}) {
     const queryParams = new URLSearchParams(filters);
-    return this.request(`/clinics?${queryParams}`);
+    return this.request(`/centres?${queryParams}`);
   }
 
   async getClinic(id) {
-    return this.request(`/clinics/${id}`);
+    return this.request(`/centres/${id}`);
   }
 
   async createClinic(clinicData) {
-    return this.request('/clinics', {
+    return this.request('/centres', {
       method: 'POST',
       body: JSON.stringify(clinicData),
     });
   }
 
   async updateClinic(id, clinicData) {
-    return this.request(`/clinics/${id}`, {
+    return this.request(`/centres/${id}`, {
       method: 'PUT',
       body: JSON.stringify(clinicData),
     });
   }
 
   async deleteClinic(id) {
-    return this.request(`/clinics/${id}`, {
+    return this.request(`/centres/${id}`, {
       method: 'DELETE',
     });
   }
 
-  // Services endpoints
+  // Programmes endpoints (mapped from services for frontend compatibility)
   async getServices(filters = {}) {
     const queryParams = new URLSearchParams(filters);
-    return this.request(`/services?${queryParams}`);
+    return this.request(`/programmes?${queryParams}`);
   }
 
   async getService(id) {
-    return this.request(`/services/${id}`);
+    return this.request(`/programmes/${id}`);
   }
 
   async createService(serviceData) {
-    return this.request('/services', {
+    return this.request('/programmes', {
       method: 'POST',
       body: JSON.stringify(serviceData),
     });
   }
 
   async updateService(id, serviceData) {
-    return this.request(`/services/${id}`, {
+    return this.request(`/programmes/${id}`, {
       method: 'PUT',
       body: JSON.stringify(serviceData),
     });
   }
 
   async deleteService(id) {
-    return this.request(`/services/${id}`, {
+    return this.request(`/programmes/${id}`, {
       method: 'DELETE',
     });
   }

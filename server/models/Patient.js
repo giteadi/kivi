@@ -2,20 +2,19 @@ const BaseModel = require('./BaseModel');
 
 class Patient extends BaseModel {
   constructor() {
-    super('patients');
+    super('students'); // Use students table for backward compatibility
   }
 
-  // Get patients with filters
+  // Get patients with filters (mapped to students)
   async getPatients(filters = {}) {
     try {
-      // First try the simple query without JOINs to test basic functionality
       let whereConditions = 'WHERE 1=1';
       const params = [];
 
       if (filters.search) {
-        whereConditions += ' AND (first_name LIKE ? OR last_name LIKE ? OR email LIKE ? OR phone LIKE ?)';
+        whereConditions += ' AND (first_name LIKE ? OR last_name LIKE ? OR email LIKE ? OR phone LIKE ? OR student_id LIKE ?)';
         const searchTerm = `%${filters.search}%`;
-        params.push(searchTerm, searchTerm, searchTerm, searchTerm);
+        params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
       }
 
       if (filters.status) {
@@ -23,9 +22,9 @@ class Patient extends BaseModel {
         params.push(filters.status);
       }
 
-      if (filters.clinicId) {
-        whereConditions += ' AND clinic_id = ?';
-        params.push(filters.clinicId);
+      if (filters.clinicId || filters.centreId) {
+        whereConditions += ' AND centre_id = ?';
+        params.push(filters.clinicId || filters.centreId);
       }
 
       whereConditions += ' ORDER BY created_at DESC';
@@ -35,49 +34,50 @@ class Patient extends BaseModel {
         params.push(parseInt(filters.limit));
       }
 
-      // Try complex query with JOINs first
-      try {
-        const complexSql = `
-          SELECT p.*, 
-                 c.name as clinic_name,
-                 MAX(a.appointment_date) as last_visit
-          FROM patients p
-          LEFT JOIN clinics c ON p.clinic_id = c.id
-          LEFT JOIN appointments a ON p.id = a.patient_id
-          ${whereConditions}
-          GROUP BY p.id, c.name
-        `;
-        return await this.query(complexSql, params);
-      } catch (joinError) {
-        console.log('JOIN query failed, falling back to simple query:', joinError.message);
+      // Simple query first, then add centre names
+      const simpleSql = `SELECT * FROM students ${whereConditions}`;
+      const students = await this.query(simpleSql, params);
+      
+      // Get centre names separately
+      const studentsWithCentres = await Promise.all(students.map(async (student) => {
+        let centreName = 'Unknown Centre';
+        if (student.centre_id) {
+          try {
+            const centreResult = await this.query('SELECT name FROM centres WHERE id = ?', [student.centre_id]);
+            if (centreResult.length > 0) {
+              centreName = centreResult[0].name;
+            }
+          } catch (error) {
+            console.log('Error fetching centre name:', error.message);
+          }
+        }
         
-        // Fallback to simple query
-        const simpleSql = `SELECT * FROM patients ${whereConditions}`;
-        const patients = await this.query(simpleSql, params);
-        
-        // Add default clinic_name for compatibility
-        return patients.map(patient => ({
-          ...patient,
-          clinic_name: 'Unknown Clinic',
-          last_visit: null
-        }));
-      }
+        return {
+          ...student,
+          clinic_name: centreName,
+          centre_name: centreName,
+          last_visit: null,
+          last_session: null
+        };
+      }));
+
+      return studentsWithCentres;
     } catch (error) {
       console.error('Error in getPatients:', error);
       throw error;
     }
   }
 
-  // Get patient with appointments
+  // Get patient with appointments (mapped to student with sessions)
   async getPatientWithAppointments(id) {
     const sql = `
-      SELECT p.*, 
-             COUNT(a.id) as total_appointments,
-             MAX(a.appointment_date) as last_appointment
-      FROM patients p
-      LEFT JOIN appointments a ON p.id = a.patient_id
-      WHERE p.id = ?
-      GROUP BY p.id
+      SELECT s.*, 
+             COUNT(sess.id) as total_appointments, COUNT(sess.id) as total_sessions,
+             MAX(sess.session_date) as last_appointment, MAX(sess.session_date) as last_session
+      FROM students s
+      LEFT JOIN sessions sess ON s.id = sess.student_id
+      WHERE s.id = ?
+      GROUP BY s.id
     `;
     const results = await this.query(sql, [id]);
     return results[0] || null;

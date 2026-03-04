@@ -76,3 +76,87 @@ Replaced placeholder routes with actual controller implementations:
 
 ## Status: ✅ COMPLETE
 All frontend API calls are now properly integrated with working backend endpoints for the MindSaid Learning educational therapy management system.
+
+## TASK 6: Controller and API Alignment with New Database Schema - COMPLETED ✅
+
+**STATUS**: ✅ COMPLETED
+
+**CHANGES MADE**:
+
+### 1. New Controllers Created (aligned with new database schema):
+- `server/controllers/studentController.js` - Handles students (previously patients)
+- `server/controllers/therapistController.js` - Handles therapists (previously doctors)  
+- `server/controllers/sessionController.js` - Handles sessions (previously appointments)
+- `server/controllers/centreController.js` - Handles centres (previously clinics)
+- `server/controllers/programmeController.js` - Handles programmes (previously services)
+
+### 2. New Models Created (aligned with new database schema):
+- `server/models/Student.js` - Uses `students` table
+- `server/models/Therapist.js` - Uses `therapists` table
+- `server/models/Session.js` - Uses `sessions` table
+- `server/models/Centre.js` - Uses `centres` table
+- `server/models/Programme.js` - Uses `programmes` table
+
+### 3. Updated Dashboard System:
+- Updated `server/controllers/dashboardController.js` with new method names:
+  - `getUpcomingSessions()` (was `getUpcomingAppointments()`)
+  - `getTopTherapists()` (was `getTopDoctors()`)
+  - `getSessionStatusChart()` (was `getBookingStatusChart()`)
+- Updated `server/models/Dashboard.js` to use new table names:
+  - Uses `sessions`, `students`, `therapists`, `centres`, `programmes` tables
+  - Updated all SQL queries to match new schema
+
+### 4. New Routes Created:
+- `server/routes/studentRoutes.js` - `/api/students/*`
+- `server/routes/therapistRoutes.js` - `/api/therapists/*`
+- `server/routes/sessionRoutes.js` - `/api/sessions/*`
+- `server/routes/centreRoutes.js` - `/api/centres/*`
+- `server/routes/programmeRoutes.js` - `/api/programmes/*`
+- Updated `server/routes/dashboardRoutes.js` with new endpoint names
+
+### 5. Updated Server Configuration:
+- Updated `server/index.js` to:
+  - Use `new_database.sql` for initialization
+  - Register new routes alongside legacy routes for compatibility
+  - Maintain backward compatibility with existing frontend
+
+### 6. Updated Frontend API Service:
+- Updated `client/src/services/api.js` to:
+  - Map old frontend method names to new backend endpoints
+  - Maintain frontend compatibility while using new backend structure
+  - Updated dashboard endpoints to use new naming
+
+### 7. Database Schema Alignment:
+- All new controllers/models use the "kivi" database
+- Table mappings:
+  - `patients` → `students`
+  - `doctors` → `therapists`
+  - `appointments` → `sessions`
+  - `clinics` → `centres`
+  - `services` → `programmes`
+
+### 8. Backward Compatibility:
+- Old routes still available for gradual migration
+- Frontend API service maps old method names to new endpoints
+- No breaking changes for existing frontend components
+
+**API ENDPOINT MAPPING**:
+```
+Frontend Method → New Backend Endpoint
+getPatients() → /api/students
+getDoctors() → /api/therapists  
+getAppointments() → /api/sessions
+getClinics() → /api/centres
+getServices() → /api/programmes
+getUpcomingAppointments() → /api/dashboard/upcoming-sessions
+getTopDoctors() → /api/dashboard/top-therapists
+getBookingChart() → /api/dashboard/session-chart
+```
+
+**NEXT STEPS FOR FULL MIGRATION**:
+1. Test all new endpoints with the new database
+2. Run database setup script to create new schema
+3. Gradually migrate frontend components to use new terminology
+4. Remove old controllers/routes once migration is complete
+
+The controllers and API are now fully aligned with the new database schema while maintaining frontend compatibility.

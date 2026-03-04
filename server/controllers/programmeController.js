@@ -1,22 +1,22 @@
-const Centre = require('../models/Centre');
+const Programme = require('../models/Programme');
 
-class ClinicController {
+class ProgrammeController {
   constructor() {
-    this.clinicModel = new Centre(); // Use Centre model for backward compatibility
+    this.programmeModel = new Programme();
   }
 
-  // Get all clinics
-  async getClinics(req, res) {
+  // Get all programmes
+  async getProgrammes(req, res) {
     try {
       const filters = req.query;
-      const clinics = await this.clinicModel.getCentres(filters);
+      const programmes = await this.programmeModel.getProgrammes(filters);
 
       res.json({
         success: true,
-        data: clinics
+        data: programmes
       });
     } catch (error) {
-      console.error('Get clinics error:', error);
+      console.error('Get programmes error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
@@ -24,25 +24,25 @@ class ClinicController {
     }
   }
 
-  // Get single clinic
-  async getClinic(req, res) {
+  // Get single programme
+  async getProgramme(req, res) {
     try {
       const { id } = req.params;
-      const clinic = await this.clinicModel.getCentreWithStats(id);
+      const programme = await this.programmeModel.findById(id);
 
-      if (!clinic) {
+      if (!programme) {
         return res.status(404).json({
           success: false,
-          message: 'Clinic not found'
+          message: 'Programme not found'
         });
       }
 
       res.json({
         success: true,
-        data: clinic
+        data: programme
       });
     } catch (error) {
-      console.error('Get clinic error:', error);
+      console.error('Get programme error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
@@ -50,24 +50,24 @@ class ClinicController {
     }
   }
 
-  // Create clinic
-  async createClinic(req, res) {
+  // Create programme
+  async createProgramme(req, res) {
     try {
-      const clinicData = {
+      const programmeData = {
         ...req.body,
         created_at: new Date(),
         updated_at: new Date()
       };
 
-      const clinicId = await this.clinicModel.create(clinicData);
+      const programmeId = await this.programmeModel.create(programmeData);
 
       res.status(201).json({
         success: true,
-        data: { id: clinicId },
-        message: 'Clinic created successfully'
+        data: { id: programmeId },
+        message: 'Programme created successfully'
       });
     } catch (error) {
-      console.error('Create clinic error:', error);
+      console.error('Create programme error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
@@ -75,8 +75,8 @@ class ClinicController {
     }
   }
 
-  // Update clinic
-  async updateClinic(req, res) {
+  // Update programme
+  async updateProgramme(req, res) {
     try {
       const { id } = req.params;
       const updateData = {
@@ -84,21 +84,21 @@ class ClinicController {
         updated_at: new Date()
       };
 
-      const updated = await this.clinicModel.update(id, updateData);
+      const updated = await this.programmeModel.update(id, updateData);
 
       if (!updated) {
         return res.status(404).json({
           success: false,
-          message: 'Clinic not found'
+          message: 'Programme not found'
         });
       }
 
       res.json({
         success: true,
-        message: 'Clinic updated successfully'
+        message: 'Programme updated successfully'
       });
     } catch (error) {
-      console.error('Update clinic error:', error);
+      console.error('Update programme error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
@@ -106,25 +106,25 @@ class ClinicController {
     }
   }
 
-  // Delete clinic
-  async deleteClinic(req, res) {
+  // Delete programme
+  async deleteProgramme(req, res) {
     try {
       const { id } = req.params;
-      const deleted = await this.clinicModel.delete(id);
+      const deleted = await this.programmeModel.delete(id);
 
       if (!deleted) {
         return res.status(404).json({
           success: false,
-          message: 'Clinic not found'
+          message: 'Programme not found'
         });
       }
 
       res.json({
         success: true,
-        message: 'Clinic deleted successfully'
+        message: 'Programme deleted successfully'
       });
     } catch (error) {
-      console.error('Delete clinic error:', error);
+      console.error('Delete programme error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
@@ -133,4 +133,4 @@ class ClinicController {
   }
 }
 
-module.exports = ClinicController;
+module.exports = ProgrammeController;

@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { FiBell, FiChevronDown, FiMenu } from 'react-icons/fi';
 
-const Header = ({ onMenuClick }) => {
+const Header = ({ onMenuClick, onBackClick, showBackButton = false }) => {
   return (
     <motion.header 
       initial={{ y: -50, opacity: 0 }}
@@ -20,16 +20,20 @@ const Header = ({ onMenuClick }) => {
           <FiMenu className="w-5 h-5 text-gray-600" />
         </motion.button>
 
-        {/* Back button - hidden on mobile */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="hidden lg:block p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-        >
-          <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </motion.button>
+        {/* Back button - show when needed */}
+        {showBackButton && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onBackClick}
+            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+            title="Go Back"
+          >
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </motion.button>
+        )}
       </div>
 
       {/* Right side - Controls */}

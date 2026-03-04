@@ -1,22 +1,22 @@
 const Centre = require('../models/Centre');
 
-class ClinicController {
+class CentreController {
   constructor() {
-    this.clinicModel = new Centre(); // Use Centre model for backward compatibility
+    this.centreModel = new Centre();
   }
 
-  // Get all clinics
-  async getClinics(req, res) {
+  // Get all centres
+  async getCentres(req, res) {
     try {
       const filters = req.query;
-      const clinics = await this.clinicModel.getCentres(filters);
+      const centres = await this.centreModel.getCentres(filters);
 
       res.json({
         success: true,
-        data: clinics
+        data: centres
       });
     } catch (error) {
-      console.error('Get clinics error:', error);
+      console.error('Get centres error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
@@ -24,25 +24,25 @@ class ClinicController {
     }
   }
 
-  // Get single clinic
-  async getClinic(req, res) {
+  // Get single centre
+  async getCentre(req, res) {
     try {
       const { id } = req.params;
-      const clinic = await this.clinicModel.getCentreWithStats(id);
+      const centre = await this.centreModel.getCentreWithStats(id);
 
-      if (!clinic) {
+      if (!centre) {
         return res.status(404).json({
           success: false,
-          message: 'Clinic not found'
+          message: 'Centre not found'
         });
       }
 
       res.json({
         success: true,
-        data: clinic
+        data: centre
       });
     } catch (error) {
-      console.error('Get clinic error:', error);
+      console.error('Get centre error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
@@ -50,24 +50,24 @@ class ClinicController {
     }
   }
 
-  // Create clinic
-  async createClinic(req, res) {
+  // Create centre
+  async createCentre(req, res) {
     try {
-      const clinicData = {
+      const centreData = {
         ...req.body,
         created_at: new Date(),
         updated_at: new Date()
       };
 
-      const clinicId = await this.clinicModel.create(clinicData);
+      const centreId = await this.centreModel.create(centreData);
 
       res.status(201).json({
         success: true,
-        data: { id: clinicId },
-        message: 'Clinic created successfully'
+        data: { id: centreId },
+        message: 'Centre created successfully'
       });
     } catch (error) {
-      console.error('Create clinic error:', error);
+      console.error('Create centre error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
@@ -75,8 +75,8 @@ class ClinicController {
     }
   }
 
-  // Update clinic
-  async updateClinic(req, res) {
+  // Update centre
+  async updateCentre(req, res) {
     try {
       const { id } = req.params;
       const updateData = {
@@ -84,21 +84,21 @@ class ClinicController {
         updated_at: new Date()
       };
 
-      const updated = await this.clinicModel.update(id, updateData);
+      const updated = await this.centreModel.update(id, updateData);
 
       if (!updated) {
         return res.status(404).json({
           success: false,
-          message: 'Clinic not found'
+          message: 'Centre not found'
         });
       }
 
       res.json({
         success: true,
-        message: 'Clinic updated successfully'
+        message: 'Centre updated successfully'
       });
     } catch (error) {
-      console.error('Update clinic error:', error);
+      console.error('Update centre error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
@@ -106,25 +106,25 @@ class ClinicController {
     }
   }
 
-  // Delete clinic
-  async deleteClinic(req, res) {
+  // Delete centre
+  async deleteCentre(req, res) {
     try {
       const { id } = req.params;
-      const deleted = await this.clinicModel.delete(id);
+      const deleted = await this.centreModel.delete(id);
 
       if (!deleted) {
         return res.status(404).json({
           success: false,
-          message: 'Clinic not found'
+          message: 'Centre not found'
         });
       }
 
       res.json({
         success: true,
-        message: 'Clinic deleted successfully'
+        message: 'Centre deleted successfully'
       });
     } catch (error) {
-      console.error('Delete clinic error:', error);
+      console.error('Delete centre error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
@@ -133,4 +133,4 @@ class ClinicController {
   }
 }
 
-module.exports = ClinicController;
+module.exports = CentreController;

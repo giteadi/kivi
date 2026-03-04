@@ -1,12 +1,12 @@
 const BaseModel = require('./BaseModel');
 
-class Appointment extends BaseModel {
+class Session extends BaseModel {
   constructor() {
-    super('sessions'); // Use sessions table for backward compatibility
+    super('sessions');
   }
 
-  // Get appointments with related data (mapped to sessions)
-  async getAppointments(filters = {}) {
+  // Get sessions with related data
+  async getSessions(filters = {}) {
     let conditions = `
       LEFT JOIN students st ON s.student_id = st.id
       LEFT JOIN therapists t ON s.therapist_id = t.id
@@ -17,19 +17,19 @@ class Appointment extends BaseModel {
     `;
     const params = [];
 
-    if (filters.patientId || filters.studentId) {
+    if (filters.studentId) {
       conditions += ' AND s.student_id = ?';
-      params.push(filters.patientId || filters.studentId);
+      params.push(filters.studentId);
     }
 
-    if (filters.doctorId || filters.therapistId) {
+    if (filters.therapistId) {
       conditions += ' AND s.therapist_id = ?';
-      params.push(filters.doctorId || filters.therapistId);
+      params.push(filters.therapistId);
     }
 
-    if (filters.clinicId || filters.centreId) {
+    if (filters.centreId) {
       conditions += ' AND s.centre_id = ?';
-      params.push(filters.clinicId || filters.centreId);
+      params.push(filters.centreId);
     }
 
     if (filters.status) {
@@ -51,26 +51,19 @@ class Appointment extends BaseModel {
 
     const sql = `
       SELECT s.*, 
-             s.session_date as appointment_date,
-             s.session_time as appointment_time,
-             st.first_name as patient_first_name, st.last_name as patient_last_name,
-             tu.first_name as doctor_first_name, tu.last_name as doctor_last_name,
-             t.specialty as doctor_specialty,
-             c.name as clinic_name, c.name as centre_name,
-             p.name as service_name, p.fee as service_price
+             st.first_name as student_first_name, st.last_name as student_last_name,
+             tu.first_name as therapist_first_name, tu.last_name as therapist_last_name,
+             t.specialty as therapist_specialty,
+             c.name as centre_name,
+             p.name as programme_name, p.fee as programme_fee
       FROM sessions s ${conditions}
     `;
 
     return await this.query(sql, params);
   }
 
-  // Get sessions method for new API
-  async getSessions(filters = {}) {
-    return this.getAppointments(filters);
-  }
-
-  // Get upcoming appointments (mapped to upcoming sessions)
-  async getUpcomingAppointments(limit = 5, filters = {}) {
+  // Get upcoming sessions
+  async getUpcomingSessions(limit = 5, filters = {}) {
     let conditions = `
       LEFT JOIN students st ON s.student_id = st.id
       LEFT JOIN therapists t ON s.therapist_id = t.id
@@ -79,14 +72,14 @@ class Appointment extends BaseModel {
     `;
     const params = [];
 
-    if (filters.clinicId || filters.centreId) {
+    if (filters.centreId) {
       conditions += ' AND s.centre_id = ?';
-      params.push(filters.clinicId || filters.centreId);
+      params.push(filters.centreId);
     }
 
-    if (filters.doctorId || filters.therapistId) {
+    if (filters.therapistId) {
       conditions += ' AND s.therapist_id = ?';
-      params.push(filters.doctorId || filters.therapistId);
+      params.push(filters.therapistId);
     }
 
     conditions += ' ORDER BY s.session_date ASC, s.session_time ASC LIMIT ?';
@@ -94,10 +87,8 @@ class Appointment extends BaseModel {
 
     const sql = `
       SELECT s.*, 
-             s.session_date as appointment_date,
-             s.session_time as appointment_time,
-             st.first_name as patient_first_name, st.last_name as patient_last_name,
-             tu.first_name as doctor_first_name, tu.last_name as doctor_last_name
+             st.first_name as student_first_name, st.last_name as student_last_name,
+             tu.first_name as therapist_first_name, tu.last_name as therapist_last_name
       FROM sessions s ${conditions}
     `;
 
@@ -105,4 +96,4 @@ class Appointment extends BaseModel {
   }
 }
 
-module.exports = Appointment;
+module.exports = Session;

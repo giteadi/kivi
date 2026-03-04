@@ -2,23 +2,23 @@ const BaseModel = require('./BaseModel');
 
 class Service extends BaseModel {
   constructor() {
-    super('services');
+    super('programmes'); // Use programmes table for backward compatibility
   }
 
-  // Get services with filters
+  // Get services with filters (mapped to programmes)
   async getServices(filters = {}) {
     let conditions = 'WHERE 1=1';
     const params = [];
 
     if (filters.search) {
-      conditions += ' AND (name LIKE ? OR description LIKE ?)';
+      conditions += ' AND (name LIKE ? OR description LIKE ? OR programme_id LIKE ?)';
       const searchTerm = `%${filters.search}%`;
-      params.push(searchTerm, searchTerm);
+      params.push(searchTerm, searchTerm, searchTerm);
     }
 
-    if (filters.clinicId) {
-      conditions += ' AND clinic_id = ?';
-      params.push(filters.clinicId);
+    if (filters.clinicId || filters.centreId) {
+      conditions += ' AND centre_id = ?';
+      params.push(filters.clinicId || filters.centreId);
     }
 
     if (filters.category) {
@@ -36,10 +36,20 @@ class Service extends BaseModel {
     return await this.findAll(conditions, params);
   }
 
-  // Get services by clinic
+  // Get programmes method for new API
+  async getProgrammes(filters = {}) {
+    return this.getServices(filters);
+  }
+
+  // Get services by clinic (mapped to programmes by centre)
   async getServicesByClinic(clinicId) {
-    const conditions = 'WHERE clinic_id = ? AND status = "active" ORDER BY name';
+    const conditions = 'WHERE centre_id = ? AND status = "active" ORDER BY name';
     return await this.findAll(conditions, [clinicId]);
+  }
+
+  // Get programmes by centre method for new API
+  async getProgrammesByCentre(centreId) {
+    return this.getServicesByClinic(centreId);
   }
 }
 

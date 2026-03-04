@@ -36,6 +36,7 @@ import ServiceCreateForm from './components/ServiceCreateForm';
 import ServiceEditForm from './components/ServiceEditForm';
 import StudentCreateForm from './components/StudentCreateForm';
 import TherapistCreateForm from './components/TherapistCreateForm';
+import SessionCreateForm from './components/SessionCreateForm';
 
 function App() {
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -51,6 +52,48 @@ function App() {
   const [selectedClinicId, setSelectedClinicId] = useState(null);
   const [selectedServiceId, setSelectedServiceId] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSessionCreateModalOpen, setIsSessionCreateModalOpen] = useState(false);
+
+  // Navigation history for back button
+  const [navigationHistory, setNavigationHistory] = useState(['dashboard']);
+
+  // Handle back navigation
+  const handleBackNavigation = () => {
+    if (navigationHistory.length > 1) {
+      const newHistory = [...navigationHistory];
+      newHistory.pop(); // Remove current page
+      const previousPage = newHistory[newHistory.length - 1];
+      
+      setNavigationHistory(newHistory);
+      setActiveItem(previousPage);
+      setCurrentView(previousPage);
+    } else {
+      // If no history, go to dashboard
+      setActiveItem('dashboard');
+      setCurrentView('dashboard');
+      setNavigationHistory(['dashboard']);
+    }
+  };
+
+  // Update navigation history when activeItem changes
+  const updateNavigationHistory = (newItem) => {
+    setNavigationHistory(prev => {
+      const newHistory = [...prev];
+      if (newHistory[newHistory.length - 1] !== newItem) {
+        newHistory.push(newItem);
+      }
+      return newHistory;
+    });
+  };
+
+  // Enhanced setActiveItem to track navigation
+  const handleSetActiveItem = (item) => {
+    setActiveItem(item);
+    updateNavigationHistory(item);
+  };
+
+  // Check if back button should be shown
+  const shouldShowBackButton = navigationHistory.length > 1 && activeItem !== 'dashboard';
 
   const handleLoginSuccess = () => {
     setShowLogin(false);
@@ -156,13 +199,8 @@ function App() {
   };
 
   const handleCreateNewEncounter = (patientData = null) => {
-    setSelectedPatient(patientData || {
-      id: 'P001',
-      name: 'Patient Kjaggi',
-      age: '35',
-      gender: 'Male'
-    });
-    setCurrentView('template-selector');
+    // Open session creation modal instead of template selector
+    setIsSessionCreateModalOpen(true);
   };
 
   const handleSelectTemplate = (template) => {
@@ -363,7 +401,26 @@ function App() {
   };
 
   const handleCreateNewAppointment = () => {
-    alert('Create new session functionality - Form coming soon');
+    // Navigate to template selector for appointment-based session creation
+    setSelectedPatient({
+      id: 'P001',
+      name: 'Student',
+      age: '12',
+      gender: 'Male'
+    });
+    setCurrentView('template-selector');
+    setActiveItem('encounters-list');
+  };
+
+  const handleSaveSession = (sessionData) => {
+    console.log('Creating new session:', sessionData);
+    alert('Session scheduled successfully!');
+    setIsSessionCreateModalOpen(false);
+    // Here you would typically dispatch an action to create the session
+    // dispatch(createSession(sessionData));
+    
+    // Refresh the encounters list to show the new session
+    // You might want to add this session to the Redux store
   };
 
   // Service CRUD handlers
@@ -700,16 +757,20 @@ function App() {
     <div className="min-h-screen bg-gray-50">
       <Sidebar 
         activeItem={activeItem} 
-        setActiveItem={setActiveItem} 
+        setActiveItem={handleSetActiveItem} 
         shouldExpandEncounters={activeItem === 'encounters-list' || activeItem === 'encounter-templates'}
       />
       <MobileMenu 
         isOpen={isMobileMenuOpen} 
         setIsOpen={setIsMobileMenuOpen}
         activeItem={activeItem} 
-        setActiveItem={setActiveItem} 
+        setActiveItem={handleSetActiveItem} 
       />
-      <Header onMenuClick={() => setIsMobileMenuOpen(true)} />
+      <Header 
+        onMenuClick={() => setIsMobileMenuOpen(true)} 
+        onBackClick={handleBackNavigation}
+        showBackButton={shouldShowBackButton}
+      />
       
       <motion.main
         initial={{ opacity: 0 }}
@@ -718,6 +779,13 @@ function App() {
       >
         {renderContent()}
       </motion.main>
+
+      {/* Session Create Modal */}
+      <SessionCreateForm
+        isOpen={isSessionCreateModalOpen}
+        onClose={() => setIsSessionCreateModalOpen(false)}
+        onSave={handleSaveSession}
+      />
     </div>
   );
 }

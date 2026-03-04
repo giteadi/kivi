@@ -1,12 +1,12 @@
 const BaseModel = require('./BaseModel');
 
-class Doctor extends BaseModel {
+class Therapist extends BaseModel {
   constructor() {
-    super('therapists'); // Use therapists table for backward compatibility
+    super('therapists');
   }
 
-  // Get doctors with user info (mapped to therapists)
-  async getDoctors(filters = {}) {
+  // Get therapists with user info
+  async getTherapists(filters = {}) {
     let conditions = `
       LEFT JOIN users u ON t.user_id = u.id
       LEFT JOIN centres c ON t.centre_id = c.id
@@ -20,9 +20,9 @@ class Doctor extends BaseModel {
       params.push(searchTerm, searchTerm, searchTerm, searchTerm);
     }
 
-    if (filters.clinicId || filters.centreId) {
+    if (filters.centreId) {
       conditions += ' AND t.centre_id = ?';
-      params.push(filters.clinicId || filters.centreId);
+      params.push(filters.centreId);
     }
 
     if (filters.specialty) {
@@ -40,20 +40,20 @@ class Doctor extends BaseModel {
     const sql = `
       SELECT t.*, 
              u.first_name, u.last_name, u.email, u.phone,
-             c.name as clinic_name, c.name as centre_name
+             c.name as centre_name
       FROM therapists t ${conditions}
     `;
 
     return await this.query(sql, params);
   }
 
-  // Get doctor with stats (mapped to therapist with stats)
-  async getDoctorWithStats(id) {
+  // Get therapist with stats
+  async getTherapistWithStats(id) {
     const sql = `
       SELECT t.*, 
              u.first_name, u.last_name, u.email, u.phone,
-             c.name as clinic_name, c.name as centre_name,
-             COUNT(s.id) as total_appointments, COUNT(s.id) as total_sessions,
+             c.name as centre_name,
+             COUNT(s.id) as total_sessions,
              AVG(CASE WHEN s.status = 'completed' THEN 5 ELSE 0 END) as avg_rating
       FROM therapists t
       LEFT JOIN users u ON t.user_id = u.id
@@ -67,4 +67,4 @@ class Doctor extends BaseModel {
   }
 }
 
-module.exports = Doctor;
+module.exports = Therapist;

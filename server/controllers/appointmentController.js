@@ -1,15 +1,15 @@
-const Appointment = require('../models/Appointment');
+const Session = require('../models/Session');
 
 class AppointmentController {
   constructor() {
-    this.appointmentModel = new Appointment();
+    this.appointmentModel = new Session(); // Use Session model for backward compatibility
   }
 
   // Get all appointments
   async getAppointments(req, res) {
     try {
       const filters = req.query;
-      const appointments = await this.appointmentModel.getAppointments(filters);
+      const appointments = await this.appointmentModel.getSessions(filters);
 
       res.json({
         success: true,

@@ -1,24 +1,24 @@
-const Patient = require('../models/Patient');
+const Student = require('../models/Student');
 
-class PatientController {
+class StudentController {
   constructor() {
-    this.patientModel = new Patient(); // Use Patient model which now maps to students table
+    this.studentModel = new Student();
   }
 
-  // Get all patients
-  async getPatients(req, res) {
+  // Get all students
+  async getStudents(req, res) {
     try {
-      console.log('Fetching patients with filters:', req.query);
+      console.log('Fetching students with filters:', req.query);
       const filters = req.query;
-      const patients = await this.patientModel.getPatients(filters);
-      console.log(`Found ${patients.length} patients`);
+      const students = await this.studentModel.getStudents(filters);
+      console.log(`Found ${students.length} students`);
 
       res.json({
         success: true,
-        data: patients
+        data: students
       });
     } catch (error) {
-      console.error('Get patients error:', error);
+      console.error('Get students error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error',
@@ -27,25 +27,25 @@ class PatientController {
     }
   }
 
-  // Get single patient
-  async getPatient(req, res) {
+  // Get single student
+  async getStudent(req, res) {
     try {
       const { id } = req.params;
-      const patient = await this.patientModel.getPatientWithAppointments(id);
+      const student = await this.studentModel.getStudentWithSessions(id);
 
-      if (!patient) {
+      if (!student) {
         return res.status(404).json({
           success: false,
-          message: 'Patient not found'
+          message: 'Student not found'
         });
       }
 
       res.json({
         success: true,
-        data: patient
+        data: student
       });
     } catch (error) {
-      console.error('Get patient error:', error);
+      console.error('Get student error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
@@ -53,24 +53,24 @@ class PatientController {
     }
   }
 
-  // Create patient
-  async createPatient(req, res) {
+  // Create student
+  async createStudent(req, res) {
     try {
-      const patientData = {
+      const studentData = {
         ...req.body,
         created_at: new Date(),
         updated_at: new Date()
       };
 
-      const patientId = await this.patientModel.create(patientData);
+      const studentId = await this.studentModel.create(studentData);
 
       res.status(201).json({
         success: true,
-        data: { id: patientId },
-        message: 'Patient created successfully'
+        data: { id: studentId },
+        message: 'Student created successfully'
       });
     } catch (error) {
-      console.error('Create patient error:', error);
+      console.error('Create student error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
@@ -78,8 +78,8 @@ class PatientController {
     }
   }
 
-  // Update patient
-  async updatePatient(req, res) {
+  // Update student
+  async updateStudent(req, res) {
     try {
       const { id } = req.params;
       const updateData = {
@@ -87,21 +87,21 @@ class PatientController {
         updated_at: new Date()
       };
 
-      const updated = await this.patientModel.update(id, updateData);
+      const updated = await this.studentModel.update(id, updateData);
 
       if (!updated) {
         return res.status(404).json({
           success: false,
-          message: 'Patient not found'
+          message: 'Student not found'
         });
       }
 
       res.json({
         success: true,
-        message: 'Patient updated successfully'
+        message: 'Student updated successfully'
       });
     } catch (error) {
-      console.error('Update patient error:', error);
+      console.error('Update student error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
@@ -109,25 +109,25 @@ class PatientController {
     }
   }
 
-  // Delete patient
-  async deletePatient(req, res) {
+  // Delete student
+  async deleteStudent(req, res) {
     try {
       const { id } = req.params;
-      const deleted = await this.patientModel.delete(id);
+      const deleted = await this.studentModel.delete(id);
 
       if (!deleted) {
         return res.status(404).json({
           success: false,
-          message: 'Patient not found'
+          message: 'Student not found'
         });
       }
 
       res.json({
         success: true,
-        message: 'Patient deleted successfully'
+        message: 'Student deleted successfully'
       });
     } catch (error) {
-      console.error('Delete patient error:', error);
+      console.error('Delete student error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
@@ -136,4 +136,4 @@ class PatientController {
   }
 }
 
-module.exports = PatientController;
+module.exports = StudentController;

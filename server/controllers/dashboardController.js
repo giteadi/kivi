@@ -8,13 +8,13 @@ class DashboardController {
   // Get dashboard statistics
   async getStats(req, res) {
     try {
-      const { startDate, endDate, clinicId, doctorId } = req.query;
+      const { startDate, endDate, centreId, therapistId } = req.query;
 
       const filters = {};
       if (startDate) filters.startDate = startDate;
       if (endDate) filters.endDate = endDate;
-      if (clinicId) filters.clinicId = parseInt(clinicId);
-      if (doctorId) filters.doctorId = parseInt(doctorId);
+      if (centreId) filters.centreId = parseInt(centreId);
+      if (therapistId) filters.therapistId = parseInt(therapistId);
 
       const stats = await this.dashboardModel.getDashboardStats(filters);
 
@@ -32,27 +32,27 @@ class DashboardController {
     }
   }
 
-  // Get upcoming appointments
-  async getUpcomingAppointments(req, res) {
+  // Get upcoming sessions
+  async getUpcomingSessions(req, res) {
     try {
-      const { limit = 5, clinicId, doctorId } = req.query;
+      const { limit = 5, centreId, therapistId } = req.query;
 
       const filters = {};
-      if (clinicId) filters.clinicId = parseInt(clinicId);
-      if (doctorId) filters.doctorId = parseInt(doctorId);
+      if (centreId) filters.centreId = parseInt(centreId);
+      if (therapistId) filters.therapistId = parseInt(therapistId);
 
-      const appointments = await this.dashboardModel.getUpcomingAppointments(
+      const sessions = await this.dashboardModel.getUpcomingSessions(
         parseInt(limit), 
         filters
       );
 
       res.json({
         success: true,
-        data: appointments
+        data: sessions
       });
 
     } catch (error) {
-      console.error('Get upcoming appointments error:', error);
+      console.error('Get upcoming sessions error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
@@ -60,28 +60,28 @@ class DashboardController {
     }
   }
 
-  // Get top doctors
-  async getTopDoctors(req, res) {
+  // Get top therapists
+  async getTopTherapists(req, res) {
     try {
-      const { limit = 5, startDate, endDate, clinicId } = req.query;
+      const { limit = 5, startDate, endDate, centreId } = req.query;
 
       const filters = {};
       if (startDate) filters.startDate = startDate;
       if (endDate) filters.endDate = endDate;
-      if (clinicId) filters.clinicId = parseInt(clinicId);
+      if (centreId) filters.centreId = parseInt(centreId);
 
-      const doctors = await this.dashboardModel.getTopDoctors(
+      const therapists = await this.dashboardModel.getTopTherapists(
         parseInt(limit), 
         filters
       );
 
       res.json({
         success: true,
-        data: doctors
+        data: therapists
       });
 
     } catch (error) {
-      console.error('Get top doctors error:', error);
+      console.error('Get top therapists error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
@@ -89,18 +89,18 @@ class DashboardController {
     }
   }
 
-  // Get booking status chart data
-  async getBookingStatusChart(req, res) {
+  // Get session status chart data
+  async getSessionStatusChart(req, res) {
     try {
-      const { startDate, endDate, clinicId, doctorId } = req.query;
+      const { startDate, endDate, centreId, therapistId } = req.query;
 
       const filters = {};
       if (startDate) filters.startDate = startDate;
       if (endDate) filters.endDate = endDate;
-      if (clinicId) filters.clinicId = parseInt(clinicId);
-      if (doctorId) filters.doctorId = parseInt(doctorId);
+      if (centreId) filters.centreId = parseInt(centreId);
+      if (therapistId) filters.therapistId = parseInt(therapistId);
 
-      const chartData = await this.dashboardModel.getBookingStatusChart(filters);
+      const chartData = await this.dashboardModel.getSessionStatusChart(filters);
 
       res.json({
         success: true,
@@ -108,7 +108,7 @@ class DashboardController {
       });
 
     } catch (error) {
-      console.error('Get booking status chart error:', error);
+      console.error('Get session status chart error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
@@ -119,29 +119,29 @@ class DashboardController {
   // Get complete dashboard data
   async getDashboardData(req, res) {
     try {
-      const { startDate, endDate, clinicId, doctorId } = req.query;
+      const { startDate, endDate, centreId, therapistId } = req.query;
 
       const filters = {};
       if (startDate) filters.startDate = startDate;
       if (endDate) filters.endDate = endDate;
-      if (clinicId) filters.clinicId = parseInt(clinicId);
-      if (doctorId) filters.doctorId = parseInt(doctorId);
+      if (centreId) filters.centreId = parseInt(centreId);
+      if (therapistId) filters.therapistId = parseInt(therapistId);
 
       // Get all dashboard data in parallel
-      const [stats, upcomingAppointments, topDoctors, bookingChart] = await Promise.all([
+      const [stats, upcomingSessions, topTherapists, sessionChart] = await Promise.all([
         this.dashboardModel.getDashboardStats(filters),
-        this.dashboardModel.getUpcomingAppointments(5, filters),
-        this.dashboardModel.getTopDoctors(5, filters),
-        this.dashboardModel.getBookingStatusChart(filters)
+        this.dashboardModel.getUpcomingSessions(5, filters),
+        this.dashboardModel.getTopTherapists(5, filters),
+        this.dashboardModel.getSessionStatusChart(filters)
       ]);
 
       res.json({
         success: true,
         data: {
           stats,
-          upcomingAppointments,
-          topDoctors,
-          bookingChart
+          upcomingSessions,
+          topTherapists,
+          sessionChart
         }
       });
 

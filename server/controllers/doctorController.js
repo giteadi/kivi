@@ -2,7 +2,7 @@ const Doctor = require('../models/Doctor');
 
 class DoctorController {
   constructor() {
-    this.doctorModel = new Doctor();
+    this.doctorModel = new Doctor(); // Use Doctor model which now maps to therapists table
   }
 
   // Get all doctors
