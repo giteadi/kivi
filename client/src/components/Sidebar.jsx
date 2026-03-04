@@ -5,12 +5,16 @@ import {
   FiUsers, 
   FiUser, 
   FiUserCheck, 
-  FiSettings,
   FiMapPin,
   FiChevronDown,
   FiChevronRight,
   FiList,
-  FiFileText
+  FiFileText,
+  FiDollarSign,
+  FiPercent,
+  FiCreditCard,
+  FiTrendingUp,
+  FiActivity
 } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 
@@ -41,13 +45,18 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters }) => {
         { id: 'encounter-templates', label: 'Encounter Templates', icon: FiFileText }
       ]
     },
+    { id: 'services', label: 'Services', icon: FiActivity, section: 'MAIN' },
     { id: 'patients', label: 'Patients', icon: FiUser, section: 'USERS' },
     { id: 'doctors', label: 'Doctors', icon: FiUserCheck, section: 'USERS' },
     { id: 'receptionists', label: 'Receptionists', icon: FiUser, section: 'USERS' },
     { id: 'clinics', label: 'Clinics', icon: FiMapPin, section: 'CLINIC' },
+    { id: 'clinic-revenue', label: 'Clinic Revenue', icon: FiTrendingUp, section: 'FINANCIAL' },
+    { id: 'doctor-revenue', label: 'Doctor Revenue', icon: FiDollarSign, section: 'FINANCIAL' },
+    { id: 'taxes', label: 'Taxes', icon: FiPercent, section: 'FINANCIAL' },
+    { id: 'billing-records', label: 'Billing Records', icon: FiCreditCard, section: 'FINANCIAL' },
   ];
 
-  const sections = ['MAIN', 'USERS', 'CLINIC'];
+  const sections = ['MAIN', 'USERS', 'CLINIC', 'FINANCIAL'];
 
   const toggleSection = (itemId) => {
     setExpandedSections(prev => ({
@@ -90,12 +99,13 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters }) => {
       {/* Menu Items */}
       <div className="py-4">
         {sections.map((section) => (
-          <div key={section} className="mb-6">
-            <div className="px-6 mb-3">
+          <div key={section} className="mb-4">
+            <div className="px-6 mb-2">
               <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                 {section}
               </span>
             </div>
+            <div className="space-y-1">
             {menuItems
               .filter(item => item.section === section)
               .map((item) => (
@@ -103,7 +113,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters }) => {
                   <motion.button
                     whileHover={{ x: 4 }}
                     onClick={() => handleItemClick(item.id, item.hasSubmenu)}
-                    className={`w-full flex items-center justify-between px-6 py-3 text-left transition-colors ${
+                    className={`w-full flex items-center justify-between px-6 py-2.5 text-left transition-colors ${
                       isActiveItem(item.id)
                         ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600'
                         : 'text-gray-600 hover:bg-gray-50'
@@ -153,19 +163,9 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters }) => {
                   </AnimatePresence>
                 </div>
               ))}
+            </div>
           </div>
         ))}
-      </div>
-
-      {/* Settings */}
-      <div className="absolute bottom-4 left-0 right-0 px-6">
-        <motion.button
-          whileHover={{ x: 4 }}
-          className="w-full flex items-center px-3 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-        >
-          <FiSettings className="w-5 h-5 mr-3" />
-          <span className="font-medium">Settings</span>
-        </motion.button>
       </div>
     </motion.div>
   );

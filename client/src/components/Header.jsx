@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { FiBell, FiChevronDown, FiGlobe, FiMenu } from 'react-icons/fi';
+import { FiBell, FiChevronDown, FiMenu } from 'react-icons/fi';
 
 const Header = ({ onMenuClick }) => {
   return (
@@ -34,24 +34,6 @@ const Header = ({ onMenuClick }) => {
 
       {/* Right side - Controls */}
       <div className="flex items-center space-x-2 lg:space-x-4">
-        {/* Language Selector - hidden on small screens */}
-        <div className="hidden md:flex items-center space-x-2 px-3 py-2 rounded-lg border hover:bg-gray-50 cursor-pointer">
-          <img 
-            src="https://flagcdn.com/w20/us.png" 
-            alt="US Flag" 
-            className="w-4 h-3"
-          />
-          <span className="text-sm text-gray-600">English (United States)</span>
-          <FiChevronDown className="w-4 h-4 text-gray-400" />
-        </div>
-
-        {/* Admin Dropdown */}
-        <div className="flex items-center space-x-2 px-3 py-2 rounded-lg border hover:bg-gray-50 cursor-pointer">
-          <FiGlobe className="w-4 h-4 text-gray-600" />
-          <span className="text-sm text-gray-600 hidden sm:block">Admin</span>
-          <FiChevronDown className="w-4 h-4 text-gray-400" />
-        </div>
-
         {/* Notifications */}
         <motion.button
           whileHover={{ scale: 1.05 }}

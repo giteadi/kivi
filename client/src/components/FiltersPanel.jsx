@@ -16,7 +16,11 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
     specialty: '',
     department: '',
     shift: '',
-    performance: ''
+    performance: '',
+    clinicName: '',
+    city: '',
+    state: '',
+    emergencyServices: ''
   });
 
   const clinics = [
@@ -101,7 +105,11 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
       specialty: '',
       department: '',
       shift: '',
-      performance: ''
+      performance: '',
+      clinicName: '',
+      city: '',
+      state: '',
+      emergencyServices: ''
     });
   };
 
@@ -472,6 +480,127 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
     </>
   );
 
+  const renderClinicFilters = () => (
+    <>
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Clinic Name
+          </label>
+          <input
+            type="text"
+            value={filters.clinicName || ''}
+            onChange={(e) => handleFilterChange('clinicName', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Enter clinic name"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            City
+          </label>
+          <input
+            type="text"
+            value={filters.city || ''}
+            onChange={(e) => handleFilterChange('city', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Enter city"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            State
+          </label>
+          <select
+            value={filters.state || ''}
+            onChange={(e) => handleFilterChange('state', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="">All States</option>
+            <option value="NY">New York</option>
+            <option value="CA">California</option>
+            <option value="FL">Florida</option>
+            <option value="IL">Illinois</option>
+            <option value="TX">Texas</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Specialty
+          </label>
+          <select
+            value={filters.specialty}
+            onChange={(e) => handleFilterChange('specialty', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            {specialties.map(specialty => (
+              <option key={specialty} value={specialty === 'All Specialties' ? '' : specialty}>
+                {specialty}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Status
+          </label>
+          <select
+            value={filters.status}
+            onChange={(e) => handleFilterChange('status', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            {statuses.map(status => (
+              <option key={status} value={status === 'All Status' ? '' : status}>
+                {status}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Emergency Services
+          </label>
+          <select
+            value={filters.emergencyServices || ''}
+            onChange={(e) => handleFilterChange('emergencyServices', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="">All Clinics</option>
+            <option value="true">With Emergency Services</option>
+            <option value="false">Without Emergency Services</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Established Date Range
+          </label>
+          <div className="space-y-2">
+            <input
+              type="date"
+              value={filters.dateRange.from}
+              onChange={(e) => handleFilterChange('dateRange.from', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="From"
+            />
+            <input
+              type="date"
+              value={filters.dateRange.to}
+              onChange={(e) => handleFilterChange('dateRange.to', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="To"
+            />
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
   const getFilterContent = () => {
     switch (filterType) {
       case 'patients':
@@ -482,6 +611,8 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
         return renderReceptionistFilters();
       case 'appointments':
         return renderAppointmentFilters();
+      case 'clinics':
+        return renderClinicFilters();
       default:
         return renderPatientFilters();
     }

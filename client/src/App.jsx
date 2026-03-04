@@ -22,6 +22,14 @@ import TemplateViewer from './components/TemplateViewer';
 import TemplateSelector from './components/TemplateSelector';
 import TemplateBasedEncounter from './components/TemplateBasedEncounter';
 import MobileMenu from './components/MobileMenu';
+import ClinicRevenue from './components/ClinicRevenue';
+import DoctorRevenue from './components/DoctorRevenue';
+import TaxList from './components/TaxList';
+import BillingRecords from './components/BillingRecords';
+import ClinicsList from './components/ClinicsList';
+import ClinicProfile from './components/ClinicProfile';
+import ClinicEditForm from './components/ClinicEditForm';
+import ServicesList from './components/ServicesList';
 
 function App() {
   const [activeItem, setActiveItem] = useState('dashboard');
@@ -33,6 +41,7 @@ function App() {
   const [selectedPatientId, setSelectedPatientId] = useState(null);
   const [selectedDoctorId, setSelectedDoctorId] = useState(null);
   const [selectedReceptionistId, setSelectedReceptionistId] = useState(null);
+  const [selectedClinicId, setSelectedClinicId] = useState(null);
 
   const handleAppointmentClick = (appointmentId) => {
     setSelectedAppointmentId(appointmentId);
@@ -194,6 +203,18 @@ function App() {
     setActiveItem('receptionists');
   };
 
+  const handleViewClinic = (clinicId) => {
+    setSelectedClinicId(clinicId);
+    setCurrentView('clinic-profile');
+    setActiveItem('clinics');
+  };
+
+  const handleBackToClinics = () => {
+    setSelectedClinicId(null);
+    setCurrentView('clinics-list');
+    setActiveItem('clinics');
+  };
+
   const handleSaveReceptionist = (updatedData) => {
     // In a real app, this would save to backend
     console.log('Saving receptionist:', updatedData);
@@ -294,6 +315,32 @@ function App() {
     }
   };
 
+  const handleDeleteClinic = (clinicId) => {
+    if (window.confirm('Are you sure you want to delete this clinic?')) {
+      alert(`Clinic ${clinicId} deleted successfully!`);
+    }
+  };
+
+  const handleEditClinic = (clinicId) => {
+    setSelectedClinicId(clinicId);
+    setCurrentView('clinic-edit');
+    setActiveItem('clinics');
+  };
+
+  const handleSaveClinic = (updatedData) => {
+    // In a real app, this would save to backend
+    console.log('Saving clinic:', updatedData);
+    alert(`Clinic ${updatedData.name} updated successfully!`);
+    setSelectedClinicId(null);
+    setCurrentView('clinics-list');
+    setActiveItem('clinics');
+  };
+
+  const handleCancelClinicEdit = () => {
+    setCurrentView('clinics-list');
+    setActiveItem('clinics');
+  };
+
   const renderContent = () => {
     // Handle doctor edit form
     if (currentView === 'doctor-edit') {
@@ -334,6 +381,27 @@ function App() {
         <ReceptionistProfile
           receptionistId={selectedReceptionistId}
           onBack={handleBackToReceptionists}
+        />
+      );
+    }
+
+    // Handle clinic profile view
+    if (currentView === 'clinic-profile') {
+      return (
+        <ClinicProfile
+          clinicId={selectedClinicId}
+          onBack={handleBackToClinics}
+        />
+      );
+    }
+
+    // Handle clinic edit form
+    if (currentView === 'clinic-edit') {
+      return (
+        <ClinicEditForm
+          clinicId={selectedClinicId}
+          onSave={handleSaveClinic}
+          onCancel={handleCancelClinicEdit}
         />
       );
     }
@@ -453,6 +521,15 @@ function App() {
         }
         return <ReceptionistsList onViewReceptionist={handleViewReceptionist} onEditReceptionist={handleEditReceptionist} onDeleteReceptionist={handleDeleteReceptionist} onCreateNewReceptionist={() => alert('Create new receptionist functionality')} />;
       
+      case 'services':
+        return <ServicesList onViewService={(id) => alert(`View service ${id}`)} onEditService={(id) => alert(`Edit service ${id}`)} onDeleteService={(id) => alert(`Delete service ${id}`)} onCreateNewService={() => alert('Create new service functionality')} />;
+      
+      case 'clinics':
+        if (currentView === 'clinics-list' || currentView === 'dashboard') {
+          return <ClinicsList onViewClinic={handleViewClinic} onEditClinic={handleEditClinic} onDeleteClinic={handleDeleteClinic} onCreateNewClinic={() => alert('Create new clinic functionality')} />;
+        }
+        return <ClinicsList onViewClinic={handleViewClinic} onEditClinic={handleEditClinic} onDeleteClinic={handleDeleteClinic} onCreateNewClinic={() => alert('Create new clinic functionality')} />;
+      
       case 'encounters-list':
         return <EncountersList onViewEncounter={handleViewEncounter} onEditEncounter={handleEditEncounter} onDeleteEncounter={handleDeleteEncounter} onCreateNewEncounter={handleCreateNewEncounter} />;
       
@@ -466,6 +543,18 @@ function App() {
             onDeleteTemplate={handleDeleteTemplate}
           />
         );
+      
+      case 'clinic-revenue':
+        return <ClinicRevenue />;
+      
+      case 'doctor-revenue':
+        return <DoctorRevenue />;
+      
+      case 'taxes':
+        return <TaxList onViewTax={(id) => alert(`View tax ${id}`)} onEditTax={(id) => alert(`Edit tax ${id}`)} onDeleteTax={(id) => alert(`Delete tax ${id}`)} onCreateNewTax={() => alert('Create new tax functionality')} />;
+      
+      case 'billing-records':
+        return <BillingRecords onViewBilling={(id) => alert(`View billing ${id}`)} onEditBilling={(id) => alert(`Edit billing ${id}`)} onDeleteBilling={(id) => alert(`Delete billing ${id}`)} onCreateNewBilling={() => alert('Create new billing functionality')} />;
       
       default:
         // Other menu items

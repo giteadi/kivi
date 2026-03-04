@@ -51,6 +51,20 @@ const ImportModal = ({ isOpen, onClose, importType = 'patients' }) => {
       ],
       sampleFileName: 'receptionists_sample.csv'
     },
+    clinics: {
+      title: 'Clinics Import',
+      requiredFields: [
+        'name',
+        'address',
+        'city',
+        'state',
+        'zip_code',
+        'phone',
+        'email',
+        'specialties'
+      ],
+      sampleFileName: 'clinics_sample.csv'
+    },
     appointments: {
       title: 'Appointments Import',
       requiredFields: [
@@ -62,6 +76,18 @@ const ImportModal = ({ isOpen, onClose, importType = 'patients' }) => {
         'service_type'
       ],
       sampleFileName: 'appointments_sample.csv'
+    },
+    services: {
+      title: 'Services Import',
+      requiredFields: [
+        'service_name',
+        'category',
+        'price',
+        'duration',
+        'clinic',
+        'description'
+      ],
+      sampleFileName: 'services_sample.csv'
     }
   };
 
