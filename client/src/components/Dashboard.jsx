@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 import { FiCalendar, FiUsers, FiMapPin, FiUserCheck, FiFilter, FiSettings, FiLock } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchDashboardData, setFilters, clearFilters } from '../store/slices/dashboardSlice';
 import StatsCard from './StatsCard';
 import EmailAlert from './EmailAlert';
 import RevenueCard from './RevenueCard';
@@ -9,142 +11,28 @@ import DoctorCard from './DoctorCard';
 import BookingChart from './BookingChart';
 
 const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointments }) => {
-  const [dashboardData, setDashboardData] = useState({
-    stats: {
-      totalAppointments: 0,
-      totalPatients: 0,
-      totalClinics: 0,
-      totalDoctors: 0,
-      activeServices: 0,
-      totalRevenue: 0
-    },
-    upcomingAppointments: [],
-    topDoctors: [],
-    bookingChart: []
-  });
-  const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({
-    startDate: '',
-    endDate: '',
-    clinicId: '',
-    doctorId: ''
-  });
+  const dispatch = useDispatch();
+  const { 
+    stats, 
+    upcomingAppointments, 
+    topDoctors, 
+    bookingChart, 
+    isLoading, 
+    error, 
+    filters 
+  } = useSelector((state) => state.dashboard);
+
   const [showDatePicker, setShowDatePicker] = useState(false);
-
-  // Fetch dashboard data
-  const fetchDashboardData = async (filterParams = {}) => {
-    try {
-      setLoading(true);
-      
-      const queryParams = new URLSearchParams();
-      if (filterParams.startDate) queryParams.append('startDate', filterParams.startDate);
-      if (filterParams.endDate) queryParams.append('endDate', filterParams.endDate);
-      if (filterParams.clinicId) queryParams.append('clinicId', filterParams.clinicId);
-      if (filterParams.doctorId) queryParams.append('doctorId', filterParams.doctorId);
-
-      const response = await fetch(`http://localhost:3005/api/dashboard/data?${queryParams}`);
-      const result = await response.json();
-
-      if (result.success) {
-        setDashboardData(result.data);
-      } else {
-        console.error('Failed to fetch dashboard data:', result.message);
-        // Use fallback data if API fails
-        setDashboardData({
-          stats: {
-            totalAppointments: 10,
-            totalPatients: 11,
-            totalClinics: 4,
-            totalDoctors: 11,
-            activeServices: 352,
-            totalRevenue: 1900
-          },
-          upcomingAppointments: [
-            {
-              id: 1,
-              patient_name: 'Patient Kjaggi',
-              appointment_date: '2026-02-21',
-              appointment_time: '09:00:00',
-              clinic_name: 'Clinic Kjaggi',
-              doctor_name: 'Dr. Kjaggi'
-            }
-          ],
-          topDoctors: [
-            {
-              id: 1,
-              doctor_name: 'Dr. Kjaggi',
-              clinic_name: 'Clinic Kjaggi',
-              appointment_count: 4
-            },
-            {
-              id: 2,
-              doctor_name: 'Dr. Paul Sanders',
-              clinic_name: 'Clinic Kjaggi',
-              appointment_count: 4
-            }
-          ],
-          bookingChart: [
-            { status: 'confirmed', count: 15 },
-            { status: 'scheduled', count: 8 },
-            { status: 'completed', count: 12 }
-          ]
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      // Use fallback data on error
-      setDashboardData({
-        stats: {
-          totalAppointments: 10,
-          totalPatients: 11,
-          totalClinics: 4,
-          totalDoctors: 11,
-          activeServices: 352,
-          totalRevenue: 1900
-        },
-        upcomingAppointments: [
-          {
-            id: 1,
-            patient_name: 'Patient Kjaggi',
-            appointment_date: '2026-02-21',
-            appointment_time: '09:00:00',
-            clinic_name: 'Clinic Kjaggi',
-            doctor_name: 'Dr. Kjaggi'
-          }
-        ],
-        topDoctors: [
-          {
-            id: 1,
-            doctor_name: 'Dr. Kjaggi',
-            clinic_name: 'Clinic Kjaggi',
-            appointment_count: 4
-          },
-          {
-            id: 2,
-            doctor_name: 'Dr. Paul Sanders',
-            clinic_name: 'Clinic Kjaggi',
-            appointment_count: 4
-          }
-        ],
-        bookingChart: [
-          { status: 'confirmed', count: 15 },
-          { status: 'scheduled', count: 8 },
-          { status: 'completed', count: 12 }
-        ]
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [localFilters, setLocalFilters] = useState(filters);
 
   // Load dashboard data on component mount
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    dispatch(fetchDashboardData());
+  }, [dispatch]);
 
   // Handle date range selection
   const handleDateRangeChange = (field, value) => {
-    setFilters(prev => ({
+    setLocalFilters(prev => ({
       ...prev,
       [field]: value
     }));
@@ -152,7 +40,8 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
 
   // Apply filters
   const handleApplyFilter = () => {
-    fetchDashboardData(filters);
+    dispatch(setFilters(localFilters));
+    dispatch(fetchDashboardData(localFilters));
     setShowDatePicker(false);
   };
 
@@ -164,34 +53,35 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
       clinicId: '',
       doctorId: ''
     };
-    setFilters(clearedFilters);
-    fetchDashboardData();
+    setLocalFilters(clearedFilters);
+    dispatch(clearFilters());
+    dispatch(fetchDashboardData());
     setShowDatePicker(false);
   };
 
-  const stats = [
+  const statsData = [
     {
       icon: FiCalendar,
       title: 'Total Appointments',
-      value: dashboardData.stats.totalAppointments.toString(),
+      value: stats.totalAppointments?.toString() || '0',
       color: 'blue'
     },
     {
       icon: FiUsers,
       title: 'Total Patients',
-      value: dashboardData.stats.totalPatients.toString(),
+      value: stats.totalPatients?.toString() || '0',
       color: 'blue'
     },
     {
       icon: FiMapPin,
       title: 'Total Clinics',
-      value: dashboardData.stats.totalClinics.toString(),
+      value: stats.totalClinics?.toString() || '0',
       color: 'blue'
     },
     {
       icon: FiUserCheck,
       title: 'Total Doctors',
-      value: dashboardData.stats.totalDoctors.toString(),
+      value: stats.totalDoctors?.toString() || '0',
       color: 'blue'
     }
   ];
@@ -200,12 +90,12 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
     {
       icon: FiSettings,
       title: 'Active Services',
-      value: dashboardData.stats.activeServices.toString()
+      value: stats.activeServices?.toString() || '0'
     },
     {
       icon: FiLock,
       title: 'Total Revenue',
-      value: `₹${dashboardData.stats.totalRevenue}/-`
+      value: `₹${stats.totalRevenue || 0}/-`
     }
   ];
 
@@ -234,7 +124,7 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
     return doctors.map(doc => ({
       name: doc.doctor_name,
       clinic: doc.clinic_name,
-      appointments: doc.appointment_count.toString(),
+      appointments: doc.appointment_count?.toString() || '0',
       initials: doc.doctor_name ? doc.doctor_name.split(' ').map(n => n[0]).join('') : 'DK',
       bgColor: 'bg-blue-100'
     }));
@@ -276,8 +166,8 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
               >
                 <FiCalendar className="w-4 h-4 text-gray-500" />
                 <span className="text-sm text-gray-600">
-                  {filters.startDate && filters.endDate 
-                    ? `${filters.startDate} to ${filters.endDate}`
+                  {localFilters.startDate && localFilters.endDate 
+                    ? `${localFilters.startDate} to ${localFilters.endDate}`
                     : 'Select Date Range'
                   }
                 </span>
@@ -297,7 +187,7 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
                       </label>
                       <input
                         type="date"
-                        value={filters.startDate}
+                        value={localFilters.startDate}
                         onChange={(e) => handleDateRangeChange('startDate', e.target.value)}
                         className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
@@ -308,7 +198,7 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
                       </label>
                       <input
                         type="date"
-                        value={filters.endDate}
+                        value={localFilters.endDate}
                         onChange={(e) => handleDateRangeChange('endDate', e.target.value)}
                         className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
@@ -336,12 +226,12 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleApplyFilter}
-              disabled={loading}
+              disabled={isLoading}
               className="flex items-center justify-center space-x-2 px-4 py-2 bg-red-400 hover:bg-red-500 text-white rounded-lg transition-colors disabled:opacity-50"
             >
               <FiFilter className="w-4 h-4" />
               <span className="text-sm">
-                {loading ? 'Loading...' : 'Apply Filter'}
+                {isLoading ? 'Loading...' : 'Apply Filter'}
               </span>
             </motion.button>
           </div>
@@ -354,7 +244,7 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
           transition={{ staggerChildren: 0.1 }}
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8"
         >
-          {stats.map((stat, index) => (
+          {statsData.map((stat, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 20 }}
@@ -415,14 +305,14 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
             </div>
             
             <div className="space-y-4">
-              {formatAppointmentData(dashboardData.upcomingAppointments).map((appointment, index) => (
+              {formatAppointmentData(upcomingAppointments || []).map((appointment, index) => (
                 <AppointmentCard 
                   key={index} 
                   {...appointment} 
                   onClick={() => handleAppointmentClick(appointment)}
                 />
               ))}
-              {dashboardData.upcomingAppointments.length === 0 && (
+              {(!upcomingAppointments || upcomingAppointments.length === 0) && (
                 <div className="text-center py-4 text-gray-500">
                   No upcoming appointments
                 </div>
@@ -443,10 +333,10 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
             </div>
             
             <div className="space-y-4">
-              {formatDoctorData(dashboardData.topDoctors).map((doctor, index) => (
+              {formatDoctorData(topDoctors || []).map((doctor, index) => (
                 <DoctorCard key={index} {...doctor} />
               ))}
-              {dashboardData.topDoctors.length === 0 && (
+              {(!topDoctors || topDoctors.length === 0) && (
                 <div className="text-center py-4 text-gray-500">
                   No doctor data available
                 </div>
@@ -460,7 +350,7 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8 }}
           >
-            <BookingChart data={dashboardData.bookingChart} />
+            <BookingChart data={bookingChart || []} />
           </motion.div>
         </div>
       </div>

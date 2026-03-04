@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
+import Login from './components/Login';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
@@ -32,8 +34,17 @@ import ClinicEditForm from './components/ClinicEditForm';
 import ServicesList from './components/ServicesList';
 
 function App() {
+  const { isAuthenticated } = useSelector((state) => state.auth);
+  const [showLogin, setShowLogin] = useState(!isAuthenticated);
+  const handleLoginSuccess = () => {
+    setShowLogin(false);
+  };
+
+  // Show login screen if not authenticated
+  if (showLogin || !isAuthenticated) {
+    return <Login onLoginSuccess={handleLoginSuccess} />;
+  }
   const [activeItem, setActiveItem] = useState('dashboard');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'appointment-detail', 'encounter-detail', 'template-builder', 'template-viewer', 'template-selector', 'template-based-encounter', 'patient-profile', 'patient-edit', 'doctor-profile', 'doctor-edit', 'receptionist-profile', 'receptionist-edit'
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState(null);

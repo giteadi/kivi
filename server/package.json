@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "init-db": "node scripts/initDatabase.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -13,6 +16,8 @@
     "express": "^5.2.1",
     "mysql": "^2.18.1",
     "mysql2": "^3.18.2",
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3"
   }
 }
