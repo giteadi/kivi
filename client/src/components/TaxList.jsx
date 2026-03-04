@@ -12,65 +12,65 @@ const TaxList = ({ onViewTax, onEditTax, onDeleteTax, onCreateNewTax }) => {
       id: 5,
       taxName: 'Equipment Handling Tax',
       taxRate: '$15',
-      clinic: {
-        name: 'All Clinic',
+      center: {
+        name: 'All Centers',
         badge: '',
         badgeColor: 'bg-gray-100 text-gray-800'
       },
-      doctor: 'All Doctor'
+      therapist: 'All Therapists'
     },
     {
       id: 4,
       taxName: 'Specialist Fee Tax',
       taxRate: '3%',
-      clinic: {
-        name: 'All Clinic',
+      center: {
+        name: 'All Centers',
         badge: '',
         badgeColor: 'bg-gray-100 text-gray-800'
       },
-      doctor: 'All Doctor'
+      therapist: 'All Therapists'
     },
     {
       id: 3,
-      taxName: 'Clinic Maintenance Tax',
+      taxName: 'Center Maintenance Tax',
       taxRate: '2%',
-      clinic: {
-        name: 'Clinic Kjaggi',
-        initials: 'CK',
-        email: 'clinic_kjaggi@kivicare.com',
-        badge: 'CK',
+      center: {
+        name: 'MindSaid Learning Center',
+        initials: 'ML',
+        email: 'center_kjaggi@mindsaidlearning.com',
+        badge: 'ML',
         badgeColor: 'bg-blue-100 text-blue-800'
       },
-      doctor: 'All Doctor'
+      therapist: 'All Therapists'
     },
     {
       id: 2,
       taxName: 'Service Tax',
       taxRate: '$10',
-      clinic: {
-        name: 'All Clinic',
+      center: {
+        name: 'All Centers',
         badge: '',
         badgeColor: 'bg-gray-100 text-gray-800'
       },
-      doctor: 'All Doctor'
+      therapist: 'All Therapists'
     },
     {
       id: 1,
       taxName: 'VAT',
       taxRate: '5%',
-      clinic: {
-        name: 'All Clinic',
+      center: {
+        name: 'All Centers',
         badge: '',
         badgeColor: 'bg-gray-100 text-gray-800'
       },
-      doctor: 'All Doctor'
+      therapist: 'All Therapists'
     }
   ];
 
   const filteredTaxes = taxData.filter(tax =>
     tax.taxName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tax.clinic.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tax.doctor.toLowerCase().includes(searchTerm.toLowerCase())
+    tax.center.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    tax.therapist.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Pagination
@@ -171,10 +171,10 @@ const TaxList = ({ onViewTax, onEditTax, onDeleteTax, onCreateNewTax }) => {
                     Tax Rate
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                    Clinic
+                    Center
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                    Doctor
+                    Therapist
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                     Actions
@@ -213,22 +213,22 @@ const TaxList = ({ onViewTax, onEditTax, onDeleteTax, onCreateNewTax }) => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {tax.clinic.badge ? (
+                        {tax.center.badge ? (
                           <div className="flex items-center">
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-2 ${tax.clinic.badgeColor}`}>
-                              <span className="text-xs font-semibold">{tax.clinic.badge}</span>
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-2 ${tax.center.badgeColor}`}>
+                              <span className="text-xs font-semibold">{tax.center.badge}</span>
                             </div>
                             <div>
-                              <div className="text-sm font-medium text-gray-900">{tax.clinic.name}</div>
-                              <div className="text-xs text-gray-500">{tax.clinic.email}</div>
+                              <div className="text-sm font-medium text-gray-900">{tax.center.name}</div>
+                              <div className="text-xs text-gray-500">{tax.center.email}</div>
                             </div>
                           </div>
                         ) : (
-                          <span className="text-sm text-gray-900">{tax.clinic.name}</span>
+                          <span className="text-sm text-gray-900">{tax.center.name}</span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {tax.doctor}
+                        {tax.therapist}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-2">
@@ -397,7 +397,7 @@ const TaxList = ({ onViewTax, onEditTax, onDeleteTax, onCreateNewTax }) => {
               </div>
               <div>
                 <div className="text-2xl font-bold text-purple-600">
-                  {taxData.filter(tax => tax.clinic.name === 'All Clinic').length}
+                  {taxData.filter(tax => tax.center.name === 'All Centers').length}
                 </div>
                 <div className="text-sm text-gray-600">Global Taxes</div>
               </div>

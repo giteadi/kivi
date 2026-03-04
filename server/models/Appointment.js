@@ -12,6 +12,7 @@ class Appointment extends BaseModel {
       LEFT JOIN doctors d ON a.doctor_id = d.id
       LEFT JOIN users du ON d.user_id = du.id
       LEFT JOIN clinics c ON a.clinic_id = c.id
+      LEFT JOIN services s ON a.service_id = s.id
       WHERE 1=1
     `;
     const params = [];
@@ -53,7 +54,8 @@ class Appointment extends BaseModel {
              p.first_name as patient_first_name, p.last_name as patient_last_name,
              du.first_name as doctor_first_name, du.last_name as doctor_last_name,
              d.specialty as doctor_specialty,
-             c.name as clinic_name
+             c.name as clinic_name,
+             s.name as service_name, s.price as service_price
       FROM appointments a ${conditions}
     `;
 

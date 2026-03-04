@@ -15,7 +15,7 @@ const DoctorCard = ({ name, clinic, appointments, initials, bgColor = 'bg-blue-1
       <div className="flex-1">
         <h4 className="font-semibold text-gray-800">{name}</h4>
         <p className="text-sm text-gray-500">{clinic}</p>
-        <p className="text-xs text-red-400 font-medium">{appointments} Appointments</p>
+        <p className="text-xs text-red-400 font-medium">{appointments} Sessions</p>
       </div>
     </motion.div>
   );

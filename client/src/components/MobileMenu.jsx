@@ -22,30 +22,29 @@ const MobileMenu = ({ isOpen, setIsOpen, activeItem, setActiveItem }) => {
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: FiHome, section: 'MAIN' },
-    { id: 'appointments', label: 'Appointments', icon: FiCalendar, section: 'MAIN' },
     { 
       id: 'encounters', 
-      label: 'Encounters', 
+      label: 'Sessions', 
       icon: FiUsers, 
       section: 'MAIN',
       hasSubmenu: true,
       submenu: [
-        { id: 'encounters-list', label: 'Encounters List', icon: FiList },
-        { id: 'encounter-templates', label: 'Encounter Templates', icon: FiFileText }
+        { id: 'encounters-list', label: 'Sessions List', icon: FiList },
+        { id: 'encounter-templates', label: 'Session Templates', icon: FiFileText }
       ]
     },
     { id: 'services', label: 'Services', icon: FiActivity, section: 'MAIN' },
-    { id: 'patients', label: 'Patients', icon: FiUser, section: 'USERS' },
-    { id: 'doctors', label: 'Doctors', icon: FiUserCheck, section: 'USERS' },
-    { id: 'receptionists', label: 'Receptionists', icon: FiUser, section: 'USERS' },
-    { id: 'clinics', label: 'Clinics', icon: FiMapPin, section: 'CLINIC' },
-    { id: 'clinic-revenue', label: 'Clinic Revenue', icon: FiTrendingUp, section: 'FINANCIAL' },
-    { id: 'doctor-revenue', label: 'Doctor Revenue', icon: FiDollarSign, section: 'FINANCIAL' },
+    { id: 'patients', label: 'Students', icon: FiUser, section: 'USERS' },
+    { id: 'doctors', label: 'Therapists', icon: FiUserCheck, section: 'USERS' },
+    { id: 'receptionists', label: 'Staff', icon: FiUser, section: 'USERS' },
+    { id: 'clinics', label: 'Centers', icon: FiMapPin, section: 'CENTER' },
+    { id: 'clinic-revenue', label: 'Center Revenue', icon: FiTrendingUp, section: 'FINANCIAL' },
+    { id: 'doctor-revenue', label: 'Therapist Revenue', icon: FiDollarSign, section: 'FINANCIAL' },
     { id: 'taxes', label: 'Taxes', icon: FiPercent, section: 'FINANCIAL' },
     { id: 'billing-records', label: 'Billing Records', icon: FiCreditCard, section: 'FINANCIAL' },
   ];
 
-  const sections = ['MAIN', 'USERS', 'CLINIC', 'FINANCIAL'];
+  const sections = ['MAIN', 'USERS', 'CENTER', 'FINANCIAL'];
 
   const toggleSection = (itemId) => {
     setExpandedSections(prev => ({
@@ -95,9 +94,9 @@ const MobileMenu = ({ isOpen, setIsOpen, activeItem, setActiveItem }) => {
             <div className="flex items-center justify-between p-6 border-b">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">K</span>
+                  <span className="text-white font-bold text-sm">M</span>
                 </div>
-                <span className="text-xl font-semibold text-gray-800">KiviCare</span>
+                <span className="text-xl font-semibold text-gray-800">MindSaid Learning</span>
               </div>
               <button
                 onClick={() => setIsOpen(false)}

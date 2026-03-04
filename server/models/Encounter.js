@@ -11,6 +11,7 @@ class Encounter extends BaseModel {
       LEFT JOIN patients p ON e.patient_id = p.id
       LEFT JOIN doctors d ON e.doctor_id = d.id
       LEFT JOIN users du ON d.user_id = du.id
+      LEFT JOIN clinics c ON e.clinic_id = c.id
       LEFT JOIN appointments a ON e.appointment_id = a.id
       WHERE 1=1
     `;
@@ -47,6 +48,7 @@ class Encounter extends BaseModel {
       SELECT e.*, 
              p.first_name as patient_first_name, p.last_name as patient_last_name,
              du.first_name as doctor_first_name, du.last_name as doctor_last_name,
+             c.name as clinic_name,
              a.appointment_date
       FROM encounters e ${conditions}
     `;

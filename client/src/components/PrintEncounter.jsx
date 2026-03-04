@@ -4,9 +4,9 @@ import { useState } from 'react';
 
 const PrintEncounter = () => {
   const [selectedSections, setSelectedSections] = useState({
-    patientInfo: true,
-    clinicInfo: true,
-    appointmentDetails: true,
+    studentInfo: true,
+    centerInfo: true,
+    sessionDetails: true,
     problems: true,
     observations: true,
     notes: true,
@@ -20,24 +20,24 @@ const PrintEncounter = () => {
   const [includeFooter, setIncludeFooter] = useState(true);
 
   const encounterData = {
-    patient: {
-      name: 'Patient Kjaggi',
-      id: 'P001',
+    student: {
+      name: 'Student Kjaggi',
+      id: 'S001',
       age: '45',
       gender: 'Male',
       phone: '6315 039',
-      email: 'patient_kjaggi@kivicare.com'
+      email: 'student_kjaggi@mindsaidlearning.com'
     },
-    clinic: {
-      name: 'Clinic Kjaggi',
-      doctor: 'Dr. Kjaggi',
+    center: {
+      name: 'MindSaid Learning Center',
+      therapist: 'Therapist Kjaggi',
       address: '1957 Forest Blvd',
       phone: '5000 000'
     },
-    encounter: {
+    session: {
       date: 'February 20, 2026',
       time: '9:00 AM',
-      type: 'Follow Up Visit',
+      type: 'Follow Up Session',
       status: 'Completed'
     }
   };
@@ -221,53 +221,53 @@ const PrintEncounter = () => {
               {/* Header */}
               {includeHeader && (
                 <div className="text-center mb-6 pb-4 border-b border-gray-300">
-                  <h1 className="text-2xl font-bold text-gray-800">Medical Encounter Report</h1>
-                  <p className="text-gray-600">{encounterData.clinic.name}</p>
+                  <h1 className="text-2xl font-bold text-gray-800">Educational Session Report</h1>
+                  <p className="text-gray-600">{encounterData.center.name}</p>
                 </div>
               )}
 
-              {/* Patient Info */}
-              {selectedSections.patientInfo && (
+              {/* Student Info */}
+              {selectedSections.studentInfo && (
                 <div className="mb-6">
-                  <h4 className="font-semibold text-gray-800 mb-2">Patient Information</h4>
+                  <h4 className="font-semibold text-gray-800 mb-2">Student Information</h4>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-gray-600">Name:</span> {encounterData.patient.name}
+                      <span className="text-gray-600">Name:</span> {encounterData.student.name}
                     </div>
                     <div>
-                      <span className="text-gray-600">ID:</span> {encounterData.patient.id}
+                      <span className="text-gray-600">ID:</span> {encounterData.student.id}
                     </div>
                     <div>
-                      <span className="text-gray-600">Age:</span> {encounterData.patient.age}
+                      <span className="text-gray-600">Age:</span> {encounterData.student.age}
                     </div>
                     <div>
-                      <span className="text-gray-600">Gender:</span> {encounterData.patient.gender}
+                      <span className="text-gray-600">Gender:</span> {encounterData.student.gender}
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Clinic Info */}
-              {selectedSections.clinicInfo && (
+              {/* Center Info */}
+              {selectedSections.centerInfo && (
                 <div className="mb-6">
-                  <h4 className="font-semibold text-gray-800 mb-2">Clinic Information</h4>
+                  <h4 className="font-semibold text-gray-800 mb-2">Center Information</h4>
                   <div className="text-sm">
-                    <p><span className="text-gray-600">Clinic:</span> {encounterData.clinic.name}</p>
-                    <p><span className="text-gray-600">Doctor:</span> {encounterData.clinic.doctor}</p>
-                    <p><span className="text-gray-600">Address:</span> {encounterData.clinic.address}</p>
+                    <p><span className="text-gray-600">Center:</span> {encounterData.center.name}</p>
+                    <p><span className="text-gray-600">Therapist:</span> {encounterData.center.therapist}</p>
+                    <p><span className="text-gray-600">Address:</span> {encounterData.center.address}</p>
                   </div>
                 </div>
               )}
 
-              {/* Encounter Details */}
-              {selectedSections.appointmentDetails && (
+              {/* Session Details */}
+              {selectedSections.sessionDetails && (
                 <div className="mb-6">
-                  <h4 className="font-semibold text-gray-800 mb-2">Encounter Details</h4>
+                  <h4 className="font-semibold text-gray-800 mb-2">Session Details</h4>
                   <div className="text-sm">
-                    <p><span className="text-gray-600">Date:</span> {encounterData.encounter.date}</p>
-                    <p><span className="text-gray-600">Time:</span> {encounterData.encounter.time}</p>
-                    <p><span className="text-gray-600">Type:</span> {encounterData.encounter.type}</p>
-                    <p><span className="text-gray-600">Status:</span> {encounterData.encounter.status}</p>
+                    <p><span className="text-gray-600">Date:</span> {encounterData.session.date}</p>
+                    <p><span className="text-gray-600">Time:</span> {encounterData.session.time}</p>
+                    <p><span className="text-gray-600">Type:</span> {encounterData.session.type}</p>
+                    <p><span className="text-gray-600">Status:</span> {encounterData.session.status}</p>
                   </div>
                 </div>
               )}
@@ -308,7 +308,7 @@ const PrintEncounter = () => {
               {/* Footer */}
               {includeFooter && (
                 <div className="text-center mt-8 pt-4 border-t border-gray-300 text-xs text-gray-500">
-                  <p>Generated on {new Date().toLocaleDateString()} | {encounterData.clinic.name}</p>
+                  <p>Generated on {new Date().toLocaleDateString()} | {encounterData.center.name}</p>
                 </div>
               )}
             </div>

@@ -4,9 +4,9 @@ import { useState } from 'react';
 
 const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients' }) => {
   const [filters, setFilters] = useState({
-    patientId: '',
-    patientName: '',
-    clinic: '',
+    studentId: '',
+    studentName: '',
+    center: '',
     registeredOn: '',
     status: '',
     dateRange: {
@@ -17,18 +17,18 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
     department: '',
     shift: '',
     performance: '',
-    clinicName: '',
+    centerName: '',
     city: '',
     state: '',
     emergencyServices: ''
   });
 
-  const clinics = [
-    'All Clinics',
-    'Clinic Kjaggi',
-    'Green Valley Clinic', 
-    'Sunrise Health Center',
-    'Downtown Family Clinic'
+  const centers = [
+    'All Centers',
+    'MindSaid Learning Center',
+    'Green Valley Learning Center', 
+    'Sunrise Learning Center',
+    'Downtown Learning Center'
   ];
 
   const statuses = [
@@ -41,12 +41,12 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
 
   const specialties = [
     'All Specialties',
-    'General Medicine',
-    'Cardiology',
-    'Pediatrics',
-    'Orthopedics',
-    'Dermatology',
-    'Neurology'
+    'Learning Therapy',
+    'Behavioral Therapy',
+    'Speech Therapy',
+    'Occupational Therapy',
+    'Educational Psychology',
+    'Special Needs Support'
   ];
 
   const departments = [
@@ -93,9 +93,9 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
 
   const handleReset = () => {
     setFilters({
-      patientId: '',
-      patientName: '',
-      clinic: '',
+      studentId: '',
+      studentName: '',
+      center: '',
       registeredOn: '',
       status: '',
       dateRange: {
@@ -106,7 +106,7 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
       department: '',
       shift: '',
       performance: '',
-      clinicName: '',
+      centerName: '',
       city: '',
       state: '',
       emergencyServices: ''
@@ -123,12 +123,12 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Patient ID
+            Student ID
           </label>
           <input
             type="text"
-            value={filters.patientId}
-            onChange={(e) => handleFilterChange('patientId', e.target.value)}
+            value={filters.studentId}
+            onChange={(e) => handleFilterChange('studentId', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             placeholder="eg 123"
           />
@@ -136,12 +136,12 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Patient Name
+            Student Name
           </label>
           <input
             type="text"
-            value={filters.patientName}
-            onChange={(e) => handleFilterChange('patientName', e.target.value)}
+            value={filters.studentName}
+            onChange={(e) => handleFilterChange('studentName', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             placeholder="eg Sophia Anderson"
           />
@@ -149,16 +149,16 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Clinic
+            Center
           </label>
           <select
-            value={filters.clinic}
-            onChange={(e) => handleFilterChange('clinic', e.target.value)}
+            value={filters.center}
+            onChange={(e) => handleFilterChange('center', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
-            {clinics.map(clinic => (
-              <option key={clinic} value={clinic === 'All Clinics' ? '' : clinic}>
-                {clinic}
+            {centers.map(center => (
+              <option key={center} value={center === 'All Centers' ? '' : center}>
+                {center}
               </option>
             ))}
           </select>
@@ -201,14 +201,14 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Doctor Name
+            Therapist Name
           </label>
           <input
             type="text"
-            value={filters.patientName}
-            onChange={(e) => handleFilterChange('patientName', e.target.value)}
+            value={filters.studentName}
+            onChange={(e) => handleFilterChange('studentName', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Enter doctor name"
+            placeholder="Enter therapist name"
           />
         </div>
 
@@ -231,16 +231,16 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Clinic
+            Center
           </label>
           <select
-            value={filters.clinic}
-            onChange={(e) => handleFilterChange('clinic', e.target.value)}
+            value={filters.center}
+            onChange={(e) => handleFilterChange('center', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
-            {clinics.map(clinic => (
-              <option key={clinic} value={clinic === 'All Clinics' ? '' : clinic}>
-                {clinic}
+            {centers.map(center => (
+              <option key={center} value={center === 'All Centers' ? '' : center}>
+                {center}
               </option>
             ))}
           </select>
@@ -396,42 +396,42 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Patient Name
+            Student Name
           </label>
           <input
             type="text"
-            value={filters.patientName}
-            onChange={(e) => handleFilterChange('patientName', e.target.value)}
+            value={filters.studentName}
+            onChange={(e) => handleFilterChange('studentName', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Enter patient name"
+            placeholder="Enter student name"
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Doctor Name
+            Therapist Name
           </label>
           <input
             type="text"
-            value={filters.patientId}
-            onChange={(e) => handleFilterChange('patientId', e.target.value)}
+            value={filters.studentId}
+            onChange={(e) => handleFilterChange('studentId', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Enter doctor name"
+            placeholder="Enter therapist name"
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Clinic
+            Center
           </label>
           <select
-            value={filters.clinic}
-            onChange={(e) => handleFilterChange('clinic', e.target.value)}
+            value={filters.center}
+            onChange={(e) => handleFilterChange('center', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
-            {clinics.map(clinic => (
-              <option key={clinic} value={clinic === 'All Clinics' ? '' : clinic}>
-                {clinic}
+            {centers.map(center => (
+              <option key={center} value={center === 'All Centers' ? '' : center}>
+                {center}
               </option>
             ))}
           </select>
@@ -439,7 +439,7 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Appointment Date Range
+            Session Date Range
           </label>
           <div className="space-y-2">
             <input
@@ -485,14 +485,14 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Clinic Name
+            Center Name
           </label>
           <input
             type="text"
-            value={filters.clinicName || ''}
-            onChange={(e) => handleFilterChange('clinicName', e.target.value)}
+            value={filters.centerName || ''}
+            onChange={(e) => handleFilterChange('centerName', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Enter clinic name"
+            placeholder="Enter center name"
           />
         </div>
 
@@ -570,7 +570,7 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
             onChange={(e) => handleFilterChange('emergencyServices', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
-            <option value="">All Clinics</option>
+            <option value="">All Centers</option>
             <option value="true">With Emergency Services</option>
             <option value="false">Without Emergency Services</option>
           </select>

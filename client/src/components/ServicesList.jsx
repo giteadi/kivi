@@ -11,128 +11,128 @@ const ServicesList = ({ onViewService, onEditService, onDeleteService, onCreateN
 
   const categories = [
     'General',
-    'Dentistry', 
-    'Weight Management',
-    'Psychology Services',
-    'Consultation',
-    'Laboratory',
-    'Radiology',
-    'Cardiology',
-    'Pediatrics',
-    'Orthopedics'
+    'Learning Support', 
+    'Behavioral Therapy',
+    'Speech Therapy',
+    'Occupational Therapy',
+    'Educational Assessment',
+    'Special Needs Support',
+    'Family Counseling',
+    'Child Development',
+    'Educational Psychology'
   ];
 
   const services = [
     {
       id: 8,
-      serviceId: 'MW',
-      name: 'Minor Wound Suturing',
+      serviceId: 'LS',
+      name: 'Learning Support Session',
       category: 'General',
-      clinic: 'Green Valley Clinic',
-      clinicInitials: 'GV',
-      clinicEmail: 'kjaggi+clinic3@mindsalelearning',
+      center: 'Green Valley Learning Center',
+      centerInitials: 'GV',
+      centerEmail: 'kjaggi+center3@mindsaidlearning.com',
       price: 150,
       duration: '30 mins',
       status: 'Active',
-      description: 'Professional wound suturing service for minor cuts and injuries'
+      description: 'Individual learning support session for academic improvement'
     },
     {
       id: 7,
-      serviceId: 'AU',
-      name: 'Abdominal Ultrasound',
-      category: 'Radiology',
-      clinic: 'Green Valley Clinic',
-      clinicInitials: 'GV',
-      clinicEmail: 'kjaggi+clinic3@mindsalelearning',
+      serviceId: 'BA',
+      name: 'Behavioral Assessment',
+      category: 'Educational Assessment',
+      center: 'Green Valley Learning Center',
+      centerInitials: 'GV',
+      centerEmail: 'kjaggi+center3@mindsaidlearning.com',
       price: 200,
       duration: '45 mins',
       status: 'Active',
-      description: 'Comprehensive abdominal ultrasound examination'
+      description: 'Comprehensive behavioral assessment for learning needs'
     },
     {
       id: 6,
-      serviceId: 'CX',
-      name: 'Chest X-Ray',
-      category: 'Radiology',
-      clinic: 'Green Valley Clinic',
-      clinicInitials: 'GV',
-      clinicEmail: 'kjaggi+clinic3@mindsalelearning',
+      serviceId: 'ST',
+      name: 'Speech Therapy',
+      category: 'Speech Therapy',
+      center: 'Green Valley Learning Center',
+      centerInitials: 'GV',
+      centerEmail: 'kjaggi+center3@mindsaidlearning.com',
       price: 100,
       duration: '15 mins',
       status: 'Active',
-      description: 'Digital chest X-ray imaging service'
+      description: 'Speech therapy session for communication development'
     },
     {
       id: 5,
-      serviceId: 'LP',
-      name: 'Lipid Profile',
-      category: 'Laboratory',
-      clinic: 'Green Valley Clinic',
-      clinicInitials: 'GV',
-      clinicEmail: 'kjaggi+clinic3@mindsalelearning',
+      serviceId: 'LA',
+      name: 'Learning Assessment',
+      category: 'Educational Assessment',
+      center: 'Green Valley Learning Center',
+      centerInitials: 'GV',
+      centerEmail: 'kjaggi+center3@mindsaidlearning.com',
       price: 80,
       duration: '10 mins',
       status: 'Active',
-      description: 'Complete lipid profile blood test'
+      description: 'Complete learning abilities assessment'
     },
     {
       id: 4,
-      serviceId: 'DC',
-      name: 'Dental Cleaning',
-      category: 'Dentistry',
-      clinic: 'Downtown Family Clinic',
-      clinicInitials: 'DF',
-      clinicEmail: 'kjaggi+clinic2@mindsale',
+      serviceId: 'OT',
+      name: 'Occupational Therapy',
+      category: 'Occupational Therapy',
+      center: 'Downtown Learning Center',
+      centerInitials: 'DL',
+      centerEmail: 'kjaggi+center2@mindsaidlearning.com',
       price: 120,
       duration: '60 mins',
       status: 'Active',
-      description: 'Professional dental cleaning and oral hygiene'
+      description: 'Occupational therapy for skill development'
     },
     {
       id: 3,
-      serviceId: 'WM',
-      name: 'Weight Management Consultation',
-      category: 'Weight Management',
-      clinic: 'Sunrise Health Center',
-      clinicInitials: 'SH',
-      clinicEmail: 'kjaggi+clinic1@mindsale',
+      serviceId: 'FC',
+      name: 'Family Counseling',
+      category: 'Family Counseling',
+      center: 'Sunrise Learning Center',
+      centerInitials: 'SL',
+      centerEmail: 'kjaggi+center1@mindsaidlearning.com',
       price: 180,
       duration: '45 mins',
       status: 'Active',
-      description: 'Comprehensive weight management and nutrition consultation'
+      description: 'Family counseling and support sessions'
     },
     {
       id: 2,
-      serviceId: 'PS',
-      name: 'Psychology Counseling',
-      category: 'Psychology Services',
-      clinic: 'Clinic Kjaggi',
-      clinicInitials: 'CK',
-      clinicEmail: 'clinic_kjaggi@kivicare.com',
+      serviceId: 'EP',
+      name: 'Educational Psychology',
+      category: 'Educational Psychology',
+      center: 'MindSaid Learning Center',
+      centerInitials: 'ML',
+      centerEmail: 'center_kjaggi@mindsaidlearning.com',
       price: 200,
       duration: '50 mins',
       status: 'Active',
-      description: 'Individual psychology counseling and therapy sessions'
+      description: 'Educational psychology consultation and therapy sessions'
     },
     {
       id: 1,
       serviceId: 'GC',
       name: 'General Consultation',
-      category: 'Consultation',
-      clinic: 'Clinic Kjaggi',
-      clinicInitials: 'CK',
-      clinicEmail: 'clinic_kjaggi@kivicare.com',
+      category: 'General',
+      center: 'MindSaid Learning Center',
+      centerInitials: 'ML',
+      centerEmail: 'center_kjaggi@mindsaidlearning.com',
       price: 100,
       duration: '30 mins',
       status: 'Active',
-      description: 'General medical consultation with experienced physicians'
+      description: 'General educational consultation with experienced therapists'
     }
   ];
 
   const filteredServices = services.filter(service => {
     const matchesSearch = service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          service.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         service.clinic.toLowerCase().includes(searchTerm.toLowerCase());
+                         service.center.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = !selectedCategory || service.category === selectedCategory;
     const matchesStatus = filterStatus === 'all' || service.status.toLowerCase() === filterStatus.toLowerCase();
     
@@ -159,7 +159,7 @@ const ServicesList = ({ onViewService, onEditService, onDeleteService, onCreateN
           <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
             <div>
               <h1 className="text-xl sm:text-2xl font-semibold text-gray-800">All Services</h1>
-              <p className="text-sm sm:text-base text-gray-600">Manage medical services and procedures</p>
+              <p className="text-sm sm:text-base text-gray-600">Manage educational services and programs</p>
             </div>
             
             <div className="flex flex-col xs:flex-row space-y-2 xs:space-y-0 xs:space-x-2 sm:space-x-3">
@@ -192,7 +192,7 @@ const ServicesList = ({ onViewService, onEditService, onDeleteService, onCreateN
             <span className="mx-1 sm:mx-2">›</span>
             <span>Services</span>
             <span className="mx-1 sm:mx-2">›</span>
-            <span className="text-gray-800 whitespace-nowrap">All Doctor Services</span>
+            <span className="text-gray-800 whitespace-nowrap">All Therapist Services</span>
           </div>
         </div>
 
@@ -324,7 +324,7 @@ const ServicesList = ({ onViewService, onEditService, onDeleteService, onCreateN
                         Service
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                        Clinic
+                        Center
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                         Price
@@ -367,11 +367,11 @@ const ServicesList = ({ onViewService, onEditService, onDeleteService, onCreateN
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-2">
-                              <span className="text-xs font-semibold text-purple-600">{service.clinicInitials}</span>
+                              <span className="text-xs font-semibold text-purple-600">{service.centerInitials}</span>
                             </div>
                             <div>
-                              <div className="text-sm font-medium text-gray-900">{service.clinic}</div>
-                              <div className="text-sm text-gray-500">{service.clinicEmail}</div>
+                              <div className="text-sm font-medium text-gray-900">{service.center}</div>
+                              <div className="text-sm text-gray-500">{service.centerEmail}</div>
                             </div>
                           </div>
                         </td>
@@ -464,11 +464,11 @@ const ServicesList = ({ onViewService, onEditService, onDeleteService, onCreateN
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
                             <div className="w-6 h-6 bg-purple-100 rounded flex items-center justify-center">
-                              <span className="text-xs font-semibold text-purple-600">{service.clinicInitials}</span>
+                              <span className="text-xs font-semibold text-purple-600">{service.centerInitials}</span>
                             </div>
                             <div>
-                              <div className="text-xs font-medium text-gray-900">{service.clinic}</div>
-                              <div className="text-xs text-gray-500 truncate max-w-32">{service.clinicEmail}</div>
+                              <div className="text-xs font-medium text-gray-900">{service.center}</div>
+                              <div className="text-xs text-gray-500 truncate max-w-32">{service.centerEmail}</div>
                             </div>
                           </div>
                           

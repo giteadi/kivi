@@ -36,14 +36,6 @@ import ServicesList from './components/ServicesList';
 function App() {
   const { isAuthenticated } = useSelector((state) => state.auth);
   const [showLogin, setShowLogin] = useState(!isAuthenticated);
-  const handleLoginSuccess = () => {
-    setShowLogin(false);
-  };
-
-  // Show login screen if not authenticated
-  if (showLogin || !isAuthenticated) {
-    return <Login onLoginSuccess={handleLoginSuccess} />;
-  }
   const [activeItem, setActiveItem] = useState('dashboard');
   const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'appointment-detail', 'encounter-detail', 'template-builder', 'template-viewer', 'template-selector', 'template-based-encounter', 'patient-profile', 'patient-edit', 'doctor-profile', 'doctor-edit', 'receptionist-profile', 'receptionist-edit'
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
@@ -53,16 +45,31 @@ function App() {
   const [selectedDoctorId, setSelectedDoctorId] = useState(null);
   const [selectedReceptionistId, setSelectedReceptionistId] = useState(null);
   const [selectedClinicId, setSelectedClinicId] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const handleLoginSuccess = () => {
+    setShowLogin(false);
+  };
+
+  // Show login screen if not authenticated
+  if (showLogin || !isAuthenticated) {
+    return <Login onLoginSuccess={handleLoginSuccess} />;
+  }
 
   const handleAppointmentClick = (appointmentId) => {
     setSelectedAppointmentId(appointmentId);
     setCurrentView('appointment-detail');
-    setActiveItem('appointments'); // Set to appointments section
+    setActiveItem('encounters-list'); // Set to encounters section
   };
 
   const handleViewAllAppointments = () => {
-    setActiveItem('appointments');
+    setActiveItem('encounters-list');
     setCurrentView('appointments-list');
+  };
+
+  const handleViewAllTherapists = () => {
+    setActiveItem('doctors');
+    setCurrentView('doctors-list');
   };
 
   const handleViewEncounter = (encounterId = null) => {
@@ -79,7 +86,7 @@ function App() {
 
   const handleBackToAppointments = () => {
     setCurrentView('appointments-list');
-    setActiveItem('appointments');
+    setActiveItem('encounters-list');
   };
 
   const handleBackToAppointment = () => {
@@ -228,8 +235,8 @@ function App() {
 
   const handleSaveReceptionist = (updatedData) => {
     // In a real app, this would save to backend
-    console.log('Saving receptionist:', updatedData);
-    alert(`Receptionist ${updatedData.name} updated successfully!`);
+    console.log('Saving staff member:', updatedData);
+    alert(`Staff member ${updatedData.name} updated successfully!`);
     setSelectedReceptionistId(null);
     setCurrentView('receptionists-list');
     setActiveItem('receptionists');
@@ -242,8 +249,8 @@ function App() {
 
   const handleSavePatient = (updatedData) => {
     // In a real app, this would save to backend
-    console.log('Saving patient:', updatedData);
-    alert(`Patient ${updatedData.name} updated successfully!`);
+    console.log('Saving student:', updatedData);
+    alert(`Student ${updatedData.name} updated successfully!`);
     setSelectedPatientId(null);
     setCurrentView('patients-list');
     setActiveItem('patients');
@@ -256,8 +263,8 @@ function App() {
 
   const handleSaveDoctor = (updatedData) => {
     // In a real app, this would save to backend
-    console.log('Saving doctor:', updatedData);
-    alert(`Doctor ${updatedData.name} updated successfully!`);
+    console.log('Saving therapist:', updatedData);
+    alert(`Therapist ${updatedData.name} updated successfully!`);
     setSelectedDoctorId(null);
     setCurrentView('doctors-list');
     setActiveItem('doctors');
@@ -297,38 +304,38 @@ function App() {
 
   // Delete handlers
   const handleDeletePatient = (patientId) => {
-    if (window.confirm('Are you sure you want to delete this patient?')) {
-      alert(`Patient ${patientId} deleted successfully!`);
+    if (window.confirm('Are you sure you want to delete this student?')) {
+      alert(`Student ${patientId} deleted successfully!`);
     }
   };
 
   const handleDeleteDoctor = (doctorId) => {
-    if (window.confirm('Are you sure you want to delete this doctor?')) {
-      alert(`Doctor ${doctorId} deleted successfully!`);
+    if (window.confirm('Are you sure you want to delete this therapist?')) {
+      alert(`Therapist ${doctorId} deleted successfully!`);
     }
   };
 
   const handleDeleteReceptionist = (receptionistId) => {
-    if (window.confirm('Are you sure you want to delete this receptionist?')) {
-      alert(`Receptionist ${receptionistId} deleted successfully!`);
+    if (window.confirm('Are you sure you want to delete this staff member?')) {
+      alert(`Staff member ${receptionistId} deleted successfully!`);
     }
   };
 
   const handleDeleteAppointment = (appointmentId) => {
-    if (window.confirm('Are you sure you want to delete this appointment?')) {
-      alert(`Appointment ${appointmentId} deleted successfully!`);
+    if (window.confirm('Are you sure you want to delete this session?')) {
+      alert(`Session ${appointmentId} deleted successfully!`);
     }
   };
 
   const handleDeleteEncounter = (encounterId) => {
-    if (window.confirm('Are you sure you want to delete this encounter?')) {
-      alert(`Encounter ${encounterId} deleted successfully!`);
+    if (window.confirm('Are you sure you want to delete this session?')) {
+      alert(`Session ${encounterId} deleted successfully!`);
     }
   };
 
   const handleDeleteClinic = (clinicId) => {
-    if (window.confirm('Are you sure you want to delete this clinic?')) {
-      alert(`Clinic ${clinicId} deleted successfully!`);
+    if (window.confirm('Are you sure you want to delete this center?')) {
+      alert(`Center ${clinicId} deleted successfully!`);
     }
   };
 
@@ -340,8 +347,8 @@ function App() {
 
   const handleSaveClinic = (updatedData) => {
     // In a real app, this would save to backend
-    console.log('Saving clinic:', updatedData);
-    alert(`Clinic ${updatedData.name} updated successfully!`);
+    console.log('Saving center:', updatedData);
+    alert(`Center ${updatedData.name} updated successfully!`);
     setSelectedClinicId(null);
     setCurrentView('clinics-list');
     setActiveItem('clinics');
@@ -506,42 +513,39 @@ function App() {
     // Handle main navigation items
     switch (activeItem) {
       case 'dashboard':
-        return <Dashboard onAppointmentClick={handleAppointmentClick} onCreateNewEncounter={handleCreateNewEncounter} onViewAllAppointments={handleViewAllAppointments} />;
-      
-      case 'appointments':
-        if (currentView === 'appointments-list' || currentView === 'dashboard') {
-          return <AppointmentsList onViewAppointment={handleAppointmentClick} onEditAppointment={handleEditAppointment} onDeleteAppointment={handleDeleteAppointment} onCreateNewAppointment={() => alert('Create new appointment functionality')} />;
-        }
-        return <AppointmentsList onViewAppointment={handleAppointmentClick} onEditAppointment={handleEditAppointment} onDeleteAppointment={handleDeleteAppointment} onCreateNewAppointment={() => alert('Create new appointment functionality')} />;
+        return <Dashboard onAppointmentClick={handleAppointmentClick} onCreateNewEncounter={handleCreateNewEncounter} onViewAllAppointments={handleViewAllAppointments} onViewAllTherapists={handleViewAllTherapists} />;
       
       case 'patients':
         if (currentView === 'patients-list' || currentView === 'dashboard') {
-          return <PatientsList onViewPatient={handleViewPatient} onEditPatient={handleEditPatient} onDeletePatient={handleDeletePatient} onCreateNewPatient={() => alert('Create new patient functionality')} />;
+          return <PatientsList onViewPatient={handleViewPatient} onEditPatient={handleEditPatient} onDeletePatient={handleDeletePatient} onCreateNewPatient={() => alert('Create new student functionality')} />;
         }
-        return <PatientsList onViewPatient={handleViewPatient} onEditPatient={handleEditPatient} onDeletePatient={handleDeletePatient} onCreateNewPatient={() => alert('Create new patient functionality')} />;
+        return <PatientsList onViewPatient={handleViewPatient} onEditPatient={handleEditPatient} onDeletePatient={handleDeletePatient} onCreateNewPatient={() => alert('Create new student functionality')} />;
       
       case 'doctors':
         if (currentView === 'doctors-list' || currentView === 'dashboard') {
-          return <DoctorsList onViewDoctor={handleViewDoctor} onEditDoctor={handleEditDoctor} onDeleteDoctor={handleDeleteDoctor} onCreateNewDoctor={() => alert('Create new doctor functionality')} />;
+          return <DoctorsList onViewDoctor={handleViewDoctor} onEditDoctor={handleEditDoctor} onDeleteDoctor={handleDeleteDoctor} onCreateNewDoctor={() => alert('Create new therapist functionality')} />;
         }
-        return <DoctorsList onViewDoctor={handleViewDoctor} onEditDoctor={handleEditDoctor} onDeleteDoctor={handleDeleteDoctor} onCreateNewDoctor={() => alert('Create new doctor functionality')} />;
+        return <DoctorsList onViewDoctor={handleViewDoctor} onEditDoctor={handleEditDoctor} onDeleteDoctor={handleDeleteDoctor} onCreateNewDoctor={() => alert('Create new therapist functionality')} />;
       
       case 'receptionists':
         if (currentView === 'receptionists-list' || currentView === 'dashboard') {
-          return <ReceptionistsList onViewReceptionist={handleViewReceptionist} onEditReceptionist={handleEditReceptionist} onDeleteReceptionist={handleDeleteReceptionist} onCreateNewReceptionist={() => alert('Create new receptionist functionality')} />;
+          return <ReceptionistsList onViewReceptionist={handleViewReceptionist} onEditReceptionist={handleEditReceptionist} onDeleteReceptionist={handleDeleteReceptionist} onCreateNewReceptionist={() => alert('Create new staff member functionality')} />;
         }
-        return <ReceptionistsList onViewReceptionist={handleViewReceptionist} onEditReceptionist={handleEditReceptionist} onDeleteReceptionist={handleDeleteReceptionist} onCreateNewReceptionist={() => alert('Create new receptionist functionality')} />;
+        return <ReceptionistsList onViewReceptionist={handleViewReceptionist} onEditReceptionist={handleEditReceptionist} onDeleteReceptionist={handleDeleteReceptionist} onCreateNewReceptionist={() => alert('Create new staff member functionality')} />;
       
       case 'services':
         return <ServicesList onViewService={(id) => alert(`View service ${id}`)} onEditService={(id) => alert(`Edit service ${id}`)} onDeleteService={(id) => alert(`Delete service ${id}`)} onCreateNewService={() => alert('Create new service functionality')} />;
       
       case 'clinics':
         if (currentView === 'clinics-list' || currentView === 'dashboard') {
-          return <ClinicsList onViewClinic={handleViewClinic} onEditClinic={handleEditClinic} onDeleteClinic={handleDeleteClinic} onCreateNewClinic={() => alert('Create new clinic functionality')} />;
+          return <ClinicsList onViewClinic={handleViewClinic} onEditClinic={handleEditClinic} onDeleteClinic={handleDeleteClinic} onCreateNewClinic={() => alert('Create new center functionality')} />;
         }
-        return <ClinicsList onViewClinic={handleViewClinic} onEditClinic={handleEditClinic} onDeleteClinic={handleDeleteClinic} onCreateNewClinic={() => alert('Create new clinic functionality')} />;
+        return <ClinicsList onViewClinic={handleViewClinic} onEditClinic={handleEditClinic} onDeleteClinic={handleDeleteClinic} onCreateNewClinic={() => alert('Create new center functionality')} />;
       
       case 'encounters-list':
+        if (currentView === 'appointments-list') {
+          return <AppointmentsList onViewAppointment={handleAppointmentClick} onEditAppointment={handleEditAppointment} onDeleteAppointment={handleDeleteAppointment} onCreateNewAppointment={() => alert('Create new session functionality')} />;
+        }
         return <EncountersList onViewEncounter={handleViewEncounter} onEditEncounter={handleEditEncounter} onDeleteEncounter={handleDeleteEncounter} onCreateNewEncounter={handleCreateNewEncounter} />;
       
       case 'encounter-templates':

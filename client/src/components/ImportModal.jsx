@@ -13,7 +13,7 @@ const ImportModal = ({ isOpen, onClose, importType = 'patients' }) => {
 
   const importTypes = {
     patients: {
-      title: 'Patients Import',
+      title: 'Students Import',
       requiredFields: [
         'first_name',
         'last_name', 
@@ -23,10 +23,10 @@ const ImportModal = ({ isOpen, onClose, importType = 'patients' }) => {
         'contact',
         'gender'
       ],
-      sampleFileName: 'patients_sample.csv'
+      sampleFileName: 'students_sample.csv'
     },
     doctors: {
-      title: 'Doctors Import',
+      title: 'Therapists Import',
       requiredFields: [
         'first_name',
         'last_name',
@@ -36,10 +36,10 @@ const ImportModal = ({ isOpen, onClose, importType = 'patients' }) => {
         'qualification',
         'license_number'
       ],
-      sampleFileName: 'doctors_sample.csv'
+      sampleFileName: 'therapists_sample.csv'
     },
     receptionists: {
-      title: 'Receptionists Import',
+      title: 'Staff Import',
       requiredFields: [
         'first_name',
         'last_name',
@@ -49,10 +49,10 @@ const ImportModal = ({ isOpen, onClose, importType = 'patients' }) => {
         'shift',
         'employee_id'
       ],
-      sampleFileName: 'receptionists_sample.csv'
+      sampleFileName: 'staff_sample.csv'
     },
     clinics: {
-      title: 'Clinics Import',
+      title: 'Centers Import',
       requiredFields: [
         'name',
         'address',
@@ -63,19 +63,19 @@ const ImportModal = ({ isOpen, onClose, importType = 'patients' }) => {
         'email',
         'specialties'
       ],
-      sampleFileName: 'clinics_sample.csv'
+      sampleFileName: 'centers_sample.csv'
     },
     appointments: {
-      title: 'Appointments Import',
+      title: 'Sessions Import',
       requiredFields: [
-        'patient_name',
-        'doctor_name',
-        'appointment_date',
-        'appointment_time',
-        'clinic',
+        'student_name',
+        'therapist_name',
+        'session_date',
+        'session_time',
+        'center',
         'service_type'
       ],
-      sampleFileName: 'appointments_sample.csv'
+      sampleFileName: 'sessions_sample.csv'
     },
     services: {
       title: 'Services Import',
@@ -84,7 +84,7 @@ const ImportModal = ({ isOpen, onClose, importType = 'patients' }) => {
         'category',
         'price',
         'duration',
-        'clinic',
+        'center',
         'description'
       ],
       sampleFileName: 'services_sample.csv'

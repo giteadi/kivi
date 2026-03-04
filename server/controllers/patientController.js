@@ -8,8 +8,10 @@ class PatientController {
   // Get all patients
   async getPatients(req, res) {
     try {
+      console.log('Fetching patients with filters:', req.query);
       const filters = req.query;
       const patients = await this.patientModel.getPatients(filters);
+      console.log(`Found ${patients.length} patients`);
 
       res.json({
         success: true,
@@ -19,7 +21,8 @@ class PatientController {
       console.error('Get patients error:', error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: 'Internal server error',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Database error'
       });
     }
   }

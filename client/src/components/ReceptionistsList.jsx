@@ -14,10 +14,10 @@ const ReceptionistsList = ({ onViewReceptionist, onEditReceptionist, onDeleteRec
       id: '#R001',
       name: 'Sarah Johnson',
       initials: 'SJ',
-      email: 'sarah.johnson@clinic.com',
+      email: 'sarah.johnson@mindsaidlearning.com',
       phone: '+1 5551234567',
-      clinic: 'Clinic Kjaggi',
-      clinicColor: 'bg-blue-100 text-blue-800',
+      center: 'MindSaid Learning Center',
+      centerColor: 'bg-blue-100 text-blue-800',
       shift: 'Morning',
       shiftColor: 'bg-green-100 text-green-800',
       shiftTime: '8:00 AM - 4:00 PM',
@@ -32,17 +32,17 @@ const ReceptionistsList = ({ onViewReceptionist, onEditReceptionist, onDeleteRec
       id: '#R002',
       name: 'Maria Garcia',
       initials: 'MG',
-      email: 'maria.garcia@clinic.com',
+      email: 'maria.garcia@mindsaidlearning.com',
       phone: '+1 5559876543',
-      clinic: 'Green Valley Clinic',
-      clinicColor: 'bg-green-100 text-green-800',
+      center: 'Green Valley Learning Center',
+      centerColor: 'bg-green-100 text-green-800',
       shift: 'Evening',
       shiftColor: 'bg-orange-100 text-orange-800',
       shiftTime: '4:00 PM - 12:00 AM',
       status: 'Active',
       joinDate: 'March 10, 2023',
       experience: '2 years',
-      department: 'Patient Registration',
+      department: 'Student Registration',
       salary: '₹23,000',
       performance: 'Good'
     },
@@ -50,10 +50,10 @@ const ReceptionistsList = ({ onViewReceptionist, onEditReceptionist, onDeleteRec
       id: '#R003',
       name: 'Jennifer Wilson',
       initials: 'JW',
-      email: 'jennifer.wilson@clinic.com',
+      email: 'jennifer.wilson@mindsaidlearning.com',
       phone: '+1 5554567890',
-      clinic: 'Sunrise Health Center',
-      clinicColor: 'bg-yellow-100 text-yellow-800',
+      center: 'Sunrise Learning Center',
+      centerColor: 'bg-yellow-100 text-yellow-800',
       shift: 'Night',
       shiftColor: 'bg-purple-100 text-purple-800',
       shiftTime: '12:00 AM - 8:00 AM',
@@ -68,10 +68,10 @@ const ReceptionistsList = ({ onViewReceptionist, onEditReceptionist, onDeleteRec
       id: '#R004',
       name: 'Lisa Anderson',
       initials: 'LA',
-      email: 'lisa.anderson@clinic.com',
+      email: 'lisa.anderson@mindsaidlearning.com',
       phone: '+1 5556789012',
-      clinic: 'Downtown Family Clinic',
-      clinicColor: 'bg-purple-100 text-purple-800',
+      center: 'Downtown Learning Center',
+      centerColor: 'bg-purple-100 text-purple-800',
       shift: 'Morning',
       shiftColor: 'bg-green-100 text-green-800',
       shiftTime: '8:00 AM - 4:00 PM',
@@ -86,32 +86,32 @@ const ReceptionistsList = ({ onViewReceptionist, onEditReceptionist, onDeleteRec
       id: '#R005',
       name: 'Emma Thompson',
       initials: 'ET',
-      email: 'emma.thompson@clinic.com',
+      email: 'emma.thompson@mindsaidlearning.com',
       phone: '+1 5553456789',
-      clinic: 'Clinic Kjaggi',
-      clinicColor: 'bg-blue-100 text-blue-800',
+      center: 'MindSaid Learning Center',
+      centerColor: 'bg-blue-100 text-blue-800',
       shift: 'Evening',
       shiftColor: 'bg-orange-100 text-orange-800',
       shiftTime: '4:00 PM - 12:00 AM',
       status: 'Active',
       joinDate: 'November 12, 2022',
       experience: '2.5 years',
-      department: 'Appointment Scheduling',
+      department: 'Session Scheduling',
       salary: '₹24,000',
       performance: 'Excellent'
     }
   ];
 
-  const clinics = ['all', 'Clinic Kjaggi', 'Green Valley Clinic', 'Sunrise Health Center', 'Downtown Family Clinic'];
+  const centers = ['all', 'MindSaid Learning Center', 'Green Valley Learning Center', 'Sunrise Learning Center', 'Downtown Learning Center'];
   const shifts = ['all', 'Morning', 'Evening', 'Night'];
 
   const filteredReceptionists = receptionists.filter(receptionist => {
     const matchesSearch = receptionist.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          receptionist.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          receptionist.department.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesClinic = filterClinic === 'all' || receptionist.clinic === filterClinic;
+    const matchesCenter = filterClinic === 'all' || receptionist.center === filterClinic;
     const matchesShift = filterShift === 'all' || receptionist.shift === filterShift;
-    return matchesSearch && matchesClinic && matchesShift;
+    return matchesSearch && matchesCenter && matchesShift;
   });
 
   const getStatusColor = (status) => {
@@ -147,8 +147,8 @@ const ReceptionistsList = ({ onViewReceptionist, onEditReceptionist, onDeleteRec
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 space-y-4 lg:space-y-0">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-800">All Receptionists</h1>
-            <p className="text-gray-600">Manage and view all receptionist profiles</p>
+            <h1 className="text-2xl font-semibold text-gray-800">All Staff Members</h1>
+            <p className="text-gray-600">Manage and view all staff member profiles</p>
           </div>
           
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
@@ -168,7 +168,7 @@ const ReceptionistsList = ({ onViewReceptionist, onEditReceptionist, onDeleteRec
               className="flex items-center space-x-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
             >
               <FiPlus className="w-4 h-4" />
-              <span>Add Receptionist</span>
+              <span>Add Staff Member</span>
             </motion.button>
           </div>
         </div>
@@ -177,9 +177,9 @@ const ReceptionistsList = ({ onViewReceptionist, onEditReceptionist, onDeleteRec
         <div className="flex items-center text-sm text-gray-500 mb-6">
           <span>Home</span>
           <span className="mx-2">›</span>
-          <span>Receptionists</span>
+          <span>Staff</span>
           <span className="mx-2">›</span>
-          <span className="text-gray-800">All Receptionists</span>
+          <span className="text-gray-800">All Staff Members</span>
         </div>
 
         {/* Filters */}
@@ -191,15 +191,15 @@ const ReceptionistsList = ({ onViewReceptionist, onEditReceptionist, onDeleteRec
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
             {/* Clinic Filter */}
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Select Clinic:</label>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Select Center:</label>
               <select
                 value={filterClinic}
                 onChange={(e) => setFilterClinic(e.target.value)}
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                {clinics.map(clinic => (
-                  <option key={clinic} value={clinic}>
-                    {clinic === 'all' ? 'All Clinics' : clinic}
+                {centers.map(center => (
+                  <option key={center} value={center}>
+                    {center === 'all' ? 'All Centers' : center}
                   </option>
                 ))}
               </select>
@@ -228,7 +228,7 @@ const ReceptionistsList = ({ onViewReceptionist, onEditReceptionist, onDeleteRec
                 <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="text"
-                  placeholder="Search receptionists..."
+                  placeholder="Search staff members..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -249,13 +249,13 @@ const ReceptionistsList = ({ onViewReceptionist, onEditReceptionist, onDeleteRec
               <thead className="bg-blue-600 text-white">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                    Receptionist
+                    Staff Member
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                     Department
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                    Clinic
+                    Center
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                     Shift
@@ -301,8 +301,8 @@ const ReceptionistsList = ({ onViewReceptionist, onEditReceptionist, onDeleteRec
                       <div className="text-sm text-gray-500">{receptionist.salary}/month</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${receptionist.clinicColor}`}>
-                        {receptionist.clinic}
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${receptionist.centerColor}`}>
+                        {receptionist.center}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -387,7 +387,7 @@ const ReceptionistsList = ({ onViewReceptionist, onEditReceptionist, onDeleteRec
             <div className="text-center py-12">
               <div className="text-gray-500">
                 <FiUser className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium">No receptionists found</p>
+                <p className="text-lg font-medium">No staff members found</p>
                 <p className="text-sm">Try adjusting your search or filter criteria</p>
               </div>
             </div>
@@ -403,7 +403,7 @@ const ReceptionistsList = ({ onViewReceptionist, onEditReceptionist, onDeleteRec
         >
           <div className="bg-white rounded-lg p-4 shadow-sm border">
             <div className="text-2xl font-bold text-blue-600">{receptionists.length}</div>
-            <div className="text-sm text-gray-600">Total Receptionists</div>
+            <div className="text-sm text-gray-600">Total Staff</div>
           </div>
           <div className="bg-white rounded-lg p-4 shadow-sm border">
             <div className="text-2xl font-bold text-green-600">

@@ -88,6 +88,38 @@ const startServer = async () => {
     app.use('/api/templates', require('./routes/templateRoutes'));
     app.use('/api/financial', require('./routes/financialRoutes'));
 
+    // Test endpoint
+    app.get('/api/test', (req, res) => {
+      res.json({ 
+        success: true, 
+        message: 'Server is running',
+        timestamp: new Date().toISOString()
+      });
+    });
+
+    // Database test endpoint
+    app.get('/api/test/db', async (req, res) => {
+      try {
+        const result = await new Promise((resolve, reject) => {
+          global.db.query('SELECT 1 as test', (err, results) => {
+            if (err) reject(err);
+            else resolve(results);
+          });
+        });
+        res.json({ 
+          success: true, 
+          message: 'Database connection working',
+          result: result[0]
+        });
+      } catch (error) {
+        res.status(500).json({ 
+          success: false, 
+          message: 'Database connection failed',
+          error: error.message
+        });
+      }
+    });
+
     // Error handling middleware (must be after routes)
     app.use((err, req, res, next) => {
       console.error(err.stack);

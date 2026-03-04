@@ -28,7 +28,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
       totalDoctors: 8,
       totalPatients: 245,
       totalAppointments: 1250,
-      specialties: ['General Medicine', 'Cardiology', 'Pediatrics'],
+      specialties: ['Learning Therapy', 'Behavioral Therapy', 'Speech Therapy'],
       operatingHours: '8:00 AM - 8:00 PM',
       emergencyServices: true,
       rating: 4.8,
@@ -50,7 +50,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
       totalDoctors: 12,
       totalPatients: 380,
       totalAppointments: 2100,
-      specialties: ['Orthopedics', 'Dermatology', 'Neurology'],
+      specialties: ['Occupational Therapy', 'Educational Psychology', 'Special Needs Support'],
       operatingHours: '7:00 AM - 9:00 PM',
       emergencyServices: true,
       rating: 4.6,
@@ -72,7 +72,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
       totalDoctors: 15,
       totalPatients: 520,
       totalAppointments: 3200,
-      specialties: ['Emergency Medicine', 'Surgery', 'Radiology'],
+      specialties: ['Learning Support', 'Therapy Services', 'Assessment'],
       operatingHours: '24/7',
       emergencyServices: true,
       rating: 4.9,
@@ -94,7 +94,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
       totalDoctors: 6,
       totalPatients: 180,
       totalAppointments: 890,
-      specialties: ['Family Medicine', 'Pediatrics', 'Women\'s Health'],
+      specialties: ['Family Support', 'Child Development', 'Educational Guidance'],
       operatingHours: '8:00 AM - 6:00 PM',
       emergencyServices: false,
       rating: 4.5,
@@ -116,7 +116,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
       totalDoctors: 4,
       totalPatients: 95,
       totalAppointments: 320,
-      specialties: ['Internal Medicine', 'Psychiatry'],
+      specialties: ['Learning Assessment', 'Behavioral Support'],
       operatingHours: '9:00 AM - 5:00 PM',
       emergencyServices: false,
       rating: 4.2,
@@ -178,8 +178,8 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 space-y-4 lg:space-y-0">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-800">All Clinics</h1>
-            <p className="text-gray-600">Manage and view all clinic locations</p>
+            <h1 className="text-2xl font-semibold text-gray-800">All Centers</h1>
+            <p className="text-gray-600">Manage and view all learning center locations</p>
           </div>
           
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
@@ -199,7 +199,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
               className="flex items-center space-x-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
             >
               <FiPlus className="w-4 h-4" />
-              <span>Add Clinic</span>
+              <span>Add Center</span>
             </motion.button>
           </div>
         </div>
@@ -208,9 +208,9 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
         <div className="flex items-center text-sm text-gray-500 mb-6">
           <span>Home</span>
           <span className="mx-2">›</span>
-          <span>Clinics</span>
+          <span>Centers</span>
           <span className="mx-2">›</span>
-          <span className="text-gray-800">All Clinics</span>
+          <span className="text-gray-800">All Centers</span>
         </div>
 
         {/* Filters */}
@@ -240,7 +240,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
               <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="Search clinics, locations, or specialties..."
+                placeholder="Search centers, locations, or specialties..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -317,15 +317,15 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
               <div className="grid grid-cols-3 gap-4 mb-4">
                 <div className="text-center">
                   <div className="text-lg font-bold text-blue-600">{clinic.totalDoctors}</div>
-                  <div className="text-xs text-gray-500">Doctors</div>
+                  <div className="text-xs text-gray-500">Therapists</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold text-green-600">{clinic.totalPatients}</div>
-                  <div className="text-xs text-gray-500">Patients</div>
+                  <div className="text-xs text-gray-500">Students</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold text-purple-600">{clinic.totalAppointments}</div>
-                  <div className="text-xs text-gray-500">Appointments</div>
+                  <div className="text-xs text-gray-500">Sessions</div>
                 </div>
               </div>
 
@@ -399,7 +399,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
           <div className="text-center py-12">
             <div className="text-gray-500">
               <FiMapPin className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p className="text-lg font-medium">No clinics found</p>
+              <p className="text-lg font-medium">No centers found</p>
               <p className="text-sm">Try adjusting your search or filter criteria</p>
             </div>
           </div>
@@ -419,7 +419,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
               </div>
               <div>
                 <div className="text-2xl font-bold text-blue-600">{clinics.length}</div>
-                <div className="text-sm text-gray-600">Total Clinics</div>
+                <div className="text-sm text-gray-600">Total Centers</div>
               </div>
             </div>
           </div>
@@ -433,7 +433,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
                 <div className="text-2xl font-bold text-green-600">
                   {clinics.reduce((sum, clinic) => sum + clinic.totalDoctors, 0)}
                 </div>
-                <div className="text-sm text-gray-600">Total Doctors</div>
+                <div className="text-sm text-gray-600">Total Therapists</div>
               </div>
             </div>
           </div>
@@ -447,7 +447,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
                 <div className="text-2xl font-bold text-purple-600">
                   {clinics.reduce((sum, clinic) => sum + clinic.totalPatients, 0)}
                 </div>
-                <div className="text-sm text-gray-600">Total Patients</div>
+                <div className="text-sm text-gray-600">Total Students</div>
               </div>
             </div>
           </div>
@@ -461,7 +461,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
                 <div className="text-2xl font-bold text-yellow-600">
                   {clinics.filter(clinic => clinic.status === 'Active').length}
                 </div>
-                <div className="text-sm text-gray-600">Active Clinics</div>
+                <div className="text-sm text-gray-600">Active Centers</div>
               </div>
             </div>
           </div>

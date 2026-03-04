@@ -10,7 +10,7 @@ import AppointmentCard from './AppointmentCard';
 import DoctorCard from './DoctorCard';
 import BookingChart from './BookingChart';
 
-const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointments }) => {
+const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointments, onViewAllTherapists }) => {
   const dispatch = useDispatch();
   const { 
     stats, 
@@ -62,25 +62,25 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
   const statsData = [
     {
       icon: FiCalendar,
-      title: 'Total Appointments',
+      title: 'Total Sessions',
       value: stats.totalAppointments?.toString() || '0',
       color: 'blue'
     },
     {
       icon: FiUsers,
-      title: 'Total Patients',
+      title: 'Total Students',
       value: stats.totalPatients?.toString() || '0',
       color: 'blue'
     },
     {
       icon: FiMapPin,
-      title: 'Total Clinics',
+      title: 'Total Centers',
       value: stats.totalClinics?.toString() || '0',
       color: 'blue'
     },
     {
       icon: FiUserCheck,
-      title: 'Total Doctors',
+      title: 'Total Therapists',
       value: stats.totalDoctors?.toString() || '0',
       color: 'blue'
     }
@@ -285,7 +285,7 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
             className="bg-white rounded-xl p-6 shadow-sm border"
           >
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-800">Upcoming Appointments</h3>
+              <h3 className="text-lg font-semibold text-gray-800">Upcoming Sessions</h3>
               <div className="flex items-center space-x-2">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -293,7 +293,7 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
                   onClick={() => onCreateNewEncounter && onCreateNewEncounter()}
                   className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                 >
-                  New Encounter
+                  New Session
                 </motion.button>
                 <button 
                   onClick={() => onViewAllAppointments && onViewAllAppointments()}
@@ -304,7 +304,7 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
               </div>
             </div>
             
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
               {formatAppointmentData(upcomingAppointments || []).map((appointment, index) => (
                 <AppointmentCard 
                   key={index} 
@@ -314,7 +314,7 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
               ))}
               {(!upcomingAppointments || upcomingAppointments.length === 0) && (
                 <div className="text-center py-4 text-gray-500">
-                  No upcoming appointments
+                  No upcoming sessions
                 </div>
               )}
             </div>
@@ -328,17 +328,22 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
             className="bg-white rounded-xl p-6 shadow-sm border"
           >
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-800">Top Doctors</h3>
-              <button className="text-sm text-blue-600 hover:text-blue-700">View All</button>
+              <h3 className="text-lg font-semibold text-gray-800">Top Therapists</h3>
+              <button 
+                onClick={() => onViewAllTherapists && onViewAllTherapists()}
+                className="text-sm text-blue-600 hover:text-blue-700"
+              >
+                View All
+              </button>
             </div>
             
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
               {formatDoctorData(topDoctors || []).map((doctor, index) => (
                 <DoctorCard key={index} {...doctor} />
               ))}
               {(!topDoctors || topDoctors.length === 0) && (
                 <div className="text-center py-4 text-gray-500">
-                  No doctor data available
+                  No therapist data available
                 </div>
               )}
             </div>

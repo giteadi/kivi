@@ -5,35 +5,35 @@ const AppointmentDetail = ({ appointmentId, onBack, onViewEncounter, onCreateNew
   // Mock data - in real app this would come from API based on appointmentId
   const appointmentData = {
     id: '#1',
-    title: 'Follow Up Visit',
-    description: 'Regular checkup appointment',
+    title: 'Follow Up Session',
+    description: 'Regular checkup session',
     date: 'February 21, 2026',
     time: '9:00 am',
-    serviceName: 'General Consultation, Follow Up Visit',
+    serviceName: 'General Consultation, Follow Up Session',
     bookingStatus: 'Booked',
     paymentMode: 'Manual',
     paymentStatus: 'paid',
     grandTotal: '₹350.00/-',
-    patient: {
-      name: 'Patient Kjaggi',
+    student: {
+      name: 'Student Kjaggi',
       id: '+194',
       phone: '6315 039',
-      initials: 'PK'
+      initials: 'SK'
     },
-    clinic: {
-      name: 'Clinic Kjaggi',
+    center: {
+      name: 'MindSaid Learning Center',
       id: '+165',
       phone: '5000 000',
-      initials: 'CK'
+      initials: 'ML'
     },
-    doctor: {
-      name: 'Dr. Kjaggi',
+    therapist: {
+      name: 'Therapist Kjaggi',
       id: '9424',
       phone: '6530 66',
-      initials: 'DK'
+      initials: 'TK'
     },
-    encounter: {
-      description: 'Initial consultation and physical examination',
+    session: {
+      description: 'Initial consultation and assessment',
       status: 'ACTIVE'
     }
   };
@@ -45,9 +45,9 @@ const AppointmentDetail = ({ appointmentId, onBack, onViewEncounter, onCreateNew
         <div className="flex items-center text-sm text-gray-500 mb-6">
           <span>Home</span>
           <span className="mx-2">›</span>
-          <span>Appointments</span>
+          <span>Sessions</span>
           <span className="mx-2">›</span>
-          <span className="text-gray-800">Appointment Detail</span>
+          <span className="text-gray-800">Session Detail</span>
         </div>
 
         {/* Header */}
@@ -75,7 +75,7 @@ const AppointmentDetail = ({ appointmentId, onBack, onViewEncounter, onCreateNew
           className="bg-white rounded-xl p-6 shadow-sm border mb-6"
         >
           <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 lg:mb-0">Appointment Detail</h2>
+            <h2 className="text-xl font-semibold text-gray-800 mb-4 lg:mb-0">Session Detail</h2>
             <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
               <motion.button
                 whileHover={{ scale: 1.02 }}
@@ -95,7 +95,7 @@ const AppointmentDetail = ({ appointmentId, onBack, onViewEncounter, onCreateNew
           {/* Appointment Info Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             <div>
-              <label className="text-sm text-gray-500">Appointment ID:</label>
+              <label className="text-sm text-gray-500">Session ID:</label>
               <p className="font-semibold text-gray-800">{appointmentData.id}</p>
             </div>
             <div>
@@ -134,77 +134,77 @@ const AppointmentDetail = ({ appointmentId, onBack, onViewEncounter, onCreateNew
 
         {/* Details Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          {/* Patient Detail */}
+          {/* Student Detail */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
             className="bg-white rounded-xl p-6 shadow-sm border"
           >
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Patient Detail</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Student Detail</h3>
             <div className="flex items-center space-x-4 mb-4">
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <span className="text-sm font-semibold text-purple-700">{appointmentData.patient.initials}</span>
+                <span className="text-sm font-semibold text-purple-700">{appointmentData.student.initials}</span>
               </div>
               <div>
-                <h4 className="font-semibold text-gray-800">{appointmentData.patient.name}</h4>
-                <p className="text-sm text-gray-500">{appointmentData.patient.id}</p>
+                <h4 className="font-semibold text-gray-800">{appointmentData.student.name}</h4>
+                <p className="text-sm text-gray-500">{appointmentData.student.id}</p>
               </div>
             </div>
             <div className="flex items-center space-x-2 text-gray-600">
               <FiPhone className="w-4 h-4" />
-              <span className="text-sm">{appointmentData.patient.phone}</span>
+              <span className="text-sm">{appointmentData.student.phone}</span>
             </div>
           </motion.div>
 
-          {/* Clinic Detail */}
+          {/* Center Detail */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="bg-white rounded-xl p-6 shadow-sm border"
           >
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Clinic Detail</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Center Detail</h3>
             <div className="flex items-center space-x-4 mb-4">
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <span className="text-sm font-semibold text-blue-700">{appointmentData.clinic.initials}</span>
+                <span className="text-sm font-semibold text-blue-700">{appointmentData.center.initials}</span>
               </div>
               <div>
-                <h4 className="font-semibold text-gray-800">{appointmentData.clinic.name}</h4>
-                <p className="text-sm text-gray-500">{appointmentData.clinic.id}</p>
+                <h4 className="font-semibold text-gray-800">{appointmentData.center.name}</h4>
+                <p className="text-sm text-gray-500">{appointmentData.center.id}</p>
               </div>
             </div>
             <div className="flex items-center space-x-2 text-gray-600">
               <FiPhone className="w-4 h-4" />
-              <span className="text-sm">{appointmentData.clinic.phone}</span>
+              <span className="text-sm">{appointmentData.center.phone}</span>
             </div>
           </motion.div>
 
-          {/* Doctor Detail */}
+          {/* Therapist Detail */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
             className="bg-white rounded-xl p-6 shadow-sm border"
           >
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Doctor Detail</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Therapist Detail</h3>
             <div className="flex items-center space-x-4 mb-4">
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <span className="text-sm font-semibold text-green-700">{appointmentData.doctor.initials}</span>
+                <span className="text-sm font-semibold text-green-700">{appointmentData.therapist.initials}</span>
               </div>
               <div>
-                <h4 className="font-semibold text-gray-800">{appointmentData.doctor.name}</h4>
-                <p className="text-sm text-gray-500">{appointmentData.doctor.id}</p>
+                <h4 className="font-semibold text-gray-800">{appointmentData.therapist.name}</h4>
+                <p className="text-sm text-gray-500">{appointmentData.therapist.id}</p>
               </div>
             </div>
             <div className="flex items-center space-x-2 text-gray-600">
               <FiPhone className="w-4 h-4" />
-              <span className="text-sm">{appointmentData.doctor.phone}</span>
+              <span className="text-sm">{appointmentData.therapist.phone}</span>
             </div>
           </motion.div>
         </div>
 
-        {/* Encounter Detail */}
+        {/* Session Detail */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -212,19 +212,19 @@ const AppointmentDetail = ({ appointmentId, onBack, onViewEncounter, onCreateNew
           className="bg-white rounded-xl p-6 shadow-sm border"
         >
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Encounter Detail</h3>
+            <h3 className="text-lg font-semibold text-gray-800">Session Detail</h3>
             <div className="flex items-center space-x-4">
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => onCreateNewEncounter && onCreateNewEncounter({
-                  id: appointmentData.patient.id,
-                  name: appointmentData.patient.name,
-                  phone: appointmentData.patient.phone
+                  id: appointmentData.student.id,
+                  name: appointmentData.student.name,
+                  phone: appointmentData.student.phone
                 })}
                 className="text-sm px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
               >
-                Create New Encounter
+                Create New Session
               </motion.button>
               <motion.button
                 whileHover={{ scale: 1.02 }}
@@ -235,13 +235,13 @@ const AppointmentDetail = ({ appointmentId, onBack, onViewEncounter, onCreateNew
                 View Details
               </motion.button>
               <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                {appointmentData.encounter.status}
+                {appointmentData.session.status}
               </span>
             </div>
           </div>
           <div>
             <label className="text-sm text-gray-500">Description:</label>
-            <p className="font-semibold text-gray-800">{appointmentData.encounter.description}</p>
+            <p className="font-semibold text-gray-800">{appointmentData.session.description}</p>
           </div>
         </motion.div>
       </div>
