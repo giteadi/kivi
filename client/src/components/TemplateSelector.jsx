@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
-import { FiSearch, FiFileText, FiArrowRight, FiClock, FiUsers } from 'react-icons/fi';
+import { FiSearch, FiFileText, FiArrowRight, FiClock, FiUsers, FiArrowLeft, FiX } from 'react-icons/fi';
 
 const TemplateSelector = ({ onSelectTemplate, onCancel, patientData }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -109,12 +109,44 @@ const TemplateSelector = ({ onSelectTemplate, onCancel, patientData }) => {
   return (
     <div className="lg:ml-64 min-h-screen bg-gray-50">
       <div className="p-4 lg:p-6">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-800 mb-2">Select Encounter Template</h1>
-          <p className="text-gray-600">
-            Choose a template to create encounter report for <strong>{patientData.name}</strong>
-          </p>
+        {/* Header with Back Button */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-4">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onCancel}
+              className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <FiArrowLeft className="w-5 h-5" />
+              <span>Back</span>
+            </motion.button>
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-800">Select Encounter Template</h1>
+              <p className="text-gray-600">
+                Choose a template to create encounter report for <strong>{patientData.name}</strong>
+              </p>
+            </div>
+          </div>
+          
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onCancel}
+            className="flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <FiX className="w-4 h-4" />
+            <span>Cancel</span>
+          </motion.button>
+        </div>
+
+        {/* Breadcrumb */}
+        <div className="flex items-center text-sm text-gray-500 mb-6">
+          <span>Home</span>
+          <span className="mx-2">›</span>
+          <span>Encounters</span>
+          <span className="mx-2">›</span>
+          <span className="text-gray-800">Select Template</span>
         </div>
 
         {/* Filters */}
@@ -217,18 +249,6 @@ const TemplateSelector = ({ onSelectTemplate, onCancel, patientData }) => {
             <p className="text-gray-500">Try adjusting your search or filter criteria</p>
           </div>
         )}
-
-        {/* Cancel Button */}
-        <div className="mt-8 flex justify-center">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onCancel}
-            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Cancel
-          </motion.button>
-        </div>
       </div>
     </div>
   );

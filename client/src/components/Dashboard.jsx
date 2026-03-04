@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { FiCalendar, FiUsers, FiMapPin, FiUserCheck, FiFilter, FiSettings, FiLock } from 'react-icons/fi';
+import { useState, useEffect } from 'react';
 import StatsCard from './StatsCard';
 import EmailAlert from './EmailAlert';
 import RevenueCard from './RevenueCard';
@@ -8,29 +9,189 @@ import DoctorCard from './DoctorCard';
 import BookingChart from './BookingChart';
 
 const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointments }) => {
+  const [dashboardData, setDashboardData] = useState({
+    stats: {
+      totalAppointments: 0,
+      totalPatients: 0,
+      totalClinics: 0,
+      totalDoctors: 0,
+      activeServices: 0,
+      totalRevenue: 0
+    },
+    upcomingAppointments: [],
+    topDoctors: [],
+    bookingChart: []
+  });
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    startDate: '',
+    endDate: '',
+    clinicId: '',
+    doctorId: ''
+  });
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // Fetch dashboard data
+  const fetchDashboardData = async (filterParams = {}) => {
+    try {
+      setLoading(true);
+      
+      const queryParams = new URLSearchParams();
+      if (filterParams.startDate) queryParams.append('startDate', filterParams.startDate);
+      if (filterParams.endDate) queryParams.append('endDate', filterParams.endDate);
+      if (filterParams.clinicId) queryParams.append('clinicId', filterParams.clinicId);
+      if (filterParams.doctorId) queryParams.append('doctorId', filterParams.doctorId);
+
+      const response = await fetch(`http://localhost:3005/api/dashboard/data?${queryParams}`);
+      const result = await response.json();
+
+      if (result.success) {
+        setDashboardData(result.data);
+      } else {
+        console.error('Failed to fetch dashboard data:', result.message);
+        // Use fallback data if API fails
+        setDashboardData({
+          stats: {
+            totalAppointments: 10,
+            totalPatients: 11,
+            totalClinics: 4,
+            totalDoctors: 11,
+            activeServices: 352,
+            totalRevenue: 1900
+          },
+          upcomingAppointments: [
+            {
+              id: 1,
+              patient_name: 'Patient Kjaggi',
+              appointment_date: '2026-02-21',
+              appointment_time: '09:00:00',
+              clinic_name: 'Clinic Kjaggi',
+              doctor_name: 'Dr. Kjaggi'
+            }
+          ],
+          topDoctors: [
+            {
+              id: 1,
+              doctor_name: 'Dr. Kjaggi',
+              clinic_name: 'Clinic Kjaggi',
+              appointment_count: 4
+            },
+            {
+              id: 2,
+              doctor_name: 'Dr. Paul Sanders',
+              clinic_name: 'Clinic Kjaggi',
+              appointment_count: 4
+            }
+          ],
+          bookingChart: [
+            { status: 'confirmed', count: 15 },
+            { status: 'scheduled', count: 8 },
+            { status: 'completed', count: 12 }
+          ]
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      // Use fallback data on error
+      setDashboardData({
+        stats: {
+          totalAppointments: 10,
+          totalPatients: 11,
+          totalClinics: 4,
+          totalDoctors: 11,
+          activeServices: 352,
+          totalRevenue: 1900
+        },
+        upcomingAppointments: [
+          {
+            id: 1,
+            patient_name: 'Patient Kjaggi',
+            appointment_date: '2026-02-21',
+            appointment_time: '09:00:00',
+            clinic_name: 'Clinic Kjaggi',
+            doctor_name: 'Dr. Kjaggi'
+          }
+        ],
+        topDoctors: [
+          {
+            id: 1,
+            doctor_name: 'Dr. Kjaggi',
+            clinic_name: 'Clinic Kjaggi',
+            appointment_count: 4
+          },
+          {
+            id: 2,
+            doctor_name: 'Dr. Paul Sanders',
+            clinic_name: 'Clinic Kjaggi',
+            appointment_count: 4
+          }
+        ],
+        bookingChart: [
+          { status: 'confirmed', count: 15 },
+          { status: 'scheduled', count: 8 },
+          { status: 'completed', count: 12 }
+        ]
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load dashboard data on component mount
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  // Handle date range selection
+  const handleDateRangeChange = (field, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Apply filters
+  const handleApplyFilter = () => {
+    fetchDashboardData(filters);
+    setShowDatePicker(false);
+  };
+
+  // Clear filters
+  const handleClearFilters = () => {
+    const clearedFilters = {
+      startDate: '',
+      endDate: '',
+      clinicId: '',
+      doctorId: ''
+    };
+    setFilters(clearedFilters);
+    fetchDashboardData();
+    setShowDatePicker(false);
+  };
+
   const stats = [
     {
       icon: FiCalendar,
       title: 'Total Appointments',
-      value: '10',
+      value: dashboardData.stats.totalAppointments.toString(),
       color: 'blue'
     },
     {
       icon: FiUsers,
       title: 'Total Patients',
-      value: '11',
+      value: dashboardData.stats.totalPatients.toString(),
       color: 'blue'
     },
     {
       icon: FiMapPin,
       title: 'Total Clinics',
-      value: '4',
+      value: dashboardData.stats.totalClinics.toString(),
       color: 'blue'
     },
     {
       icon: FiUserCheck,
       title: 'Total Doctors',
-      value: '11',
+      value: dashboardData.stats.totalDoctors.toString(),
       color: 'blue'
     }
   ];
@@ -39,44 +200,45 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
     {
       icon: FiSettings,
       title: 'Active Services',
-      value: '352'
+      value: dashboardData.stats.activeServices.toString()
     },
     {
       icon: FiLock,
       title: 'Total Revenue',
-      value: '₹1.9k/-'
+      value: `₹${dashboardData.stats.totalRevenue}/-`
     }
   ];
 
-  const upcomingAppointments = [
-    {
-      id: 1,
-      patient: 'Patient Kjaggi',
-      date: 'February 21, 2026',
-      time: '9:00 am',
-      clinic: 'Clinic Kjaggi',
-      doctor: 'Dr. Kjaggi',
-      initials: 'PK',
+  const formatAppointmentData = (appointments) => {
+    return appointments.map(apt => ({
+      id: apt.id,
+      patient: apt.patient_name,
+      date: new Date(apt.appointment_date).toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      }),
+      time: new Date(`2000-01-01T${apt.appointment_time}`).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      }),
+      clinic: apt.clinic_name,
+      doctor: apt.doctor_name,
+      initials: apt.patient_name ? apt.patient_name.split(' ').map(n => n[0]).join('') : 'PK',
       bgColor: 'bg-purple-100'
-    }
-  ];
+    }));
+  };
 
-  const topDoctors = [
-    {
-      name: 'Dr. Kjaggi',
-      clinic: 'Clinic Kjaggi',
-      appointments: '4',
-      initials: 'DK',
+  const formatDoctorData = (doctors) => {
+    return doctors.map(doc => ({
+      name: doc.doctor_name,
+      clinic: doc.clinic_name,
+      appointments: doc.appointment_count.toString(),
+      initials: doc.doctor_name ? doc.doctor_name.split(' ').map(n => n[0]).join('') : 'DK',
       bgColor: 'bg-blue-100'
-    },
-    {
-      name: 'Dr. Paul Sanders',
-      clinic: 'Clinic Kjaggi',
-      appointments: '4',
-      initials: 'DP',
-      bgColor: 'bg-green-100'
-    }
-  ];
+    }));
+  };
 
   const handleAppointmentClick = (appointment) => {
     if (onAppointmentClick) {
@@ -107,16 +269,80 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
           </motion.h1>
           
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
-            <div className="flex items-center space-x-2 px-4 py-2 border rounded-lg bg-white">
-              <span className="text-sm text-gray-600">Select Date Range</span>
+            <div className="relative">
+              <button
+                onClick={() => setShowDatePicker(!showDatePicker)}
+                className="flex items-center space-x-2 px-4 py-2 border rounded-lg bg-white hover:bg-gray-50 transition-colors"
+              >
+                <FiCalendar className="w-4 h-4 text-gray-500" />
+                <span className="text-sm text-gray-600">
+                  {filters.startDate && filters.endDate 
+                    ? `${filters.startDate} to ${filters.endDate}`
+                    : 'Select Date Range'
+                  }
+                </span>
+              </button>
+              
+              {/* Date Range Picker */}
+              {showDatePicker && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="absolute top-full left-0 mt-2 p-4 bg-white border rounded-lg shadow-lg z-10 min-w-[300px]"
+                >
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Start Date
+                      </label>
+                      <input
+                        type="date"
+                        value={filters.startDate}
+                        onChange={(e) => handleDateRangeChange('startDate', e.target.value)}
+                        className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        End Date
+                      </label>
+                      <input
+                        type="date"
+                        value={filters.endDate}
+                        onChange={(e) => handleDateRangeChange('endDate', e.target.value)}
+                        className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={handleClearFilters}
+                        className="flex-1 px-3 py-2 text-sm border rounded-md hover:bg-gray-50 transition-colors"
+                      >
+                        Clear
+                      </button>
+                      <button
+                        onClick={handleApplyFilter}
+                        className="flex-1 px-3 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
             </div>
+            
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="flex items-center justify-center space-x-2 px-4 py-2 bg-red-400 hover:bg-red-500 text-white rounded-lg transition-colors"
+              onClick={handleApplyFilter}
+              disabled={loading}
+              className="flex items-center justify-center space-x-2 px-4 py-2 bg-red-400 hover:bg-red-500 text-white rounded-lg transition-colors disabled:opacity-50"
             >
               <FiFilter className="w-4 h-4" />
-              <span className="text-sm">Apply Filter</span>
+              <span className="text-sm">
+                {loading ? 'Loading...' : 'Apply Filter'}
+              </span>
             </motion.button>
           </div>
         </div>
@@ -189,13 +415,18 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
             </div>
             
             <div className="space-y-4">
-              {upcomingAppointments.map((appointment, index) => (
+              {formatAppointmentData(dashboardData.upcomingAppointments).map((appointment, index) => (
                 <AppointmentCard 
                   key={index} 
                   {...appointment} 
                   onClick={() => handleAppointmentClick(appointment)}
                 />
               ))}
+              {dashboardData.upcomingAppointments.length === 0 && (
+                <div className="text-center py-4 text-gray-500">
+                  No upcoming appointments
+                </div>
+              )}
             </div>
           </motion.div>
 
@@ -212,9 +443,14 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
             </div>
             
             <div className="space-y-4">
-              {topDoctors.map((doctor, index) => (
+              {formatDoctorData(dashboardData.topDoctors).map((doctor, index) => (
                 <DoctorCard key={index} {...doctor} />
               ))}
+              {dashboardData.topDoctors.length === 0 && (
+                <div className="text-center py-4 text-gray-500">
+                  No doctor data available
+                </div>
+              )}
             </div>
           </motion.div>
 
@@ -224,7 +460,7 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8 }}
           >
-            <BookingChart />
+            <BookingChart data={dashboardData.bookingChart} />
           </motion.div>
         </div>
       </div>
