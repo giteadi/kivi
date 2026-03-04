@@ -35,10 +35,10 @@ const AppointmentsList = ({ onViewAppointment, onEditAppointment, onDeleteAppoin
       hour12: true
     }),
     type: appointment.notes || 'General Visit',
-    status: appointment.status === 'scheduled' ? 'Booked' : 
+    status: appointment.status === 'scheduled' ? 'Scheduled' : 
             appointment.status === 'confirmed' ? 'Confirmed' :
             appointment.status === 'completed' ? 'Completed' :
-            appointment.status === 'cancelled' ? 'Cancelled' : 'Pending',
+            appointment.status === 'cancelled' ? 'Cancelled' : 'Awaiting Confirmation',
     duration: `${appointment.duration || 30} min`,
     service: appointment.service_name || 'General Consultation',
     amount: `₹${appointment.service_price || 0}.00`
@@ -54,11 +54,11 @@ const AppointmentsList = ({ onViewAppointment, onEditAppointment, onDeleteAppoin
 
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
-      case 'booked':
+      case 'scheduled':
         return 'bg-blue-100 text-blue-800';
       case 'confirmed':
         return 'bg-green-100 text-green-800';
-      case 'pending':
+      case 'awaiting confirmation':
         return 'bg-yellow-100 text-yellow-800';
       case 'completed':
         return 'bg-gray-100 text-gray-800';
@@ -75,8 +75,8 @@ const AppointmentsList = ({ onViewAppointment, onEditAppointment, onDeleteAppoin
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 space-y-4 lg:space-y-0">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-800">Sessions</h1>
-            <p className="text-gray-600">Manage and view all student sessions</p>
+            <h1 className="text-2xl font-semibold text-gray-800">Session Schedule</h1>
+            <p className="text-gray-600">Manage and view all student therapy sessions</p>
           </div>
           
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
@@ -87,7 +87,7 @@ const AppointmentsList = ({ onViewAppointment, onEditAppointment, onDeleteAppoin
               className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
             >
               <FiUpload className="w-4 h-4" />
-              <span>Import Data</span>
+              <span>Import Student Data</span>
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -96,7 +96,7 @@ const AppointmentsList = ({ onViewAppointment, onEditAppointment, onDeleteAppoin
               className="flex items-center space-x-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
             >
               <FiPlus className="w-4 h-4" />
-              <span>New Session</span>
+              <span>Schedule Session</span>
             </motion.button>
           </div>
         </div>
@@ -105,7 +105,7 @@ const AppointmentsList = ({ onViewAppointment, onEditAppointment, onDeleteAppoin
         <div className="flex items-center text-sm text-gray-500 mb-6">
           <span>Home</span>
           <span className="mx-2">›</span>
-          <span className="text-gray-800">Sessions</span>
+          <span className="text-gray-800">Session Schedule</span>
         </div>
 
         {/* Filters */}
@@ -136,9 +136,9 @@ const AppointmentsList = ({ onViewAppointment, onEditAppointment, onDeleteAppoin
                 className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">All Status</option>
-                <option value="booked">Booked</option>
+                <option value="scheduled">Scheduled</option>
                 <option value="confirmed">Confirmed</option>
-                <option value="pending">Pending</option>
+                <option value="awaiting confirmation">Awaiting Confirmation</option>
                 <option value="completed">Completed</option>
                 <option value="cancelled">Cancelled</option>
               </select>
@@ -179,16 +179,16 @@ const AppointmentsList = ({ onViewAppointment, onEditAppointment, onDeleteAppoin
                       Therapist
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date & Time
+                      Session Date & Time
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Service
+                      Program / Therapy Type
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
+                      Session Status
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Amount
+                      Fee
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
@@ -316,15 +316,15 @@ const AppointmentsList = ({ onViewAppointment, onEditAppointment, onDeleteAppoin
           </div>
           <div className="bg-white rounded-lg p-4 shadow-sm border">
             <div className="text-2xl font-bold text-blue-600">
-              {transformedAppointments.filter(a => a.status === 'Booked').length}
+              {transformedAppointments.filter(a => a.status === 'Scheduled').length}
             </div>
-            <div className="text-sm text-gray-600">Booked</div>
+            <div className="text-sm text-gray-600">Scheduled</div>
           </div>
           <div className="bg-white rounded-lg p-4 shadow-sm border">
             <div className="text-2xl font-bold text-yellow-600">
-              {transformedAppointments.filter(a => a.status === 'Pending').length}
+              {transformedAppointments.filter(a => a.status === 'Awaiting Confirmation').length}
             </div>
-            <div className="text-sm text-gray-600">Pending</div>
+            <div className="text-sm text-gray-600">Awaiting Confirmation</div>
           </div>
           <div className="bg-white rounded-lg p-4 shadow-sm border">
             <div className="text-2xl font-bold text-gray-600">

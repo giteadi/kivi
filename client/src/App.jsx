@@ -32,12 +32,16 @@ import ClinicsList from './components/ClinicsList';
 import ClinicProfile from './components/ClinicProfile';
 import ClinicEditForm from './components/ClinicEditForm';
 import ServicesList from './components/ServicesList';
+import ServiceCreateForm from './components/ServiceCreateForm';
+import ServiceEditForm from './components/ServiceEditForm';
+import StudentCreateForm from './components/StudentCreateForm';
+import TherapistCreateForm from './components/TherapistCreateForm';
 
 function App() {
   const { isAuthenticated } = useSelector((state) => state.auth);
   const [showLogin, setShowLogin] = useState(!isAuthenticated);
   const [activeItem, setActiveItem] = useState('dashboard');
-  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'appointment-detail', 'encounter-detail', 'template-builder', 'template-viewer', 'template-selector', 'template-based-encounter', 'patient-profile', 'patient-edit', 'doctor-profile', 'doctor-edit', 'receptionist-profile', 'receptionist-edit'
+  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'appointment-detail', 'encounter-detail', 'template-builder', 'template-viewer', 'template-selector', 'template-based-encounter', 'patient-profile', 'patient-edit', 'patient-create', 'doctor-profile', 'doctor-edit', 'doctor-create', 'receptionist-profile', 'receptionist-edit', 'service-create', 'service-edit'
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -45,6 +49,7 @@ function App() {
   const [selectedDoctorId, setSelectedDoctorId] = useState(null);
   const [selectedReceptionistId, setSelectedReceptionistId] = useState(null);
   const [selectedClinicId, setSelectedClinicId] = useState(null);
+  const [selectedServiceId, setSelectedServiceId] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLoginSuccess = () => {
@@ -333,9 +338,67 @@ function App() {
     }
   };
 
+  // Create handlers
+  const handleCreateNewPatient = () => {
+    setCurrentView('patient-create');
+    setActiveItem('patients');
+  };
+
+  const handleCreateNewDoctor = () => {
+    setCurrentView('doctor-create');
+    setActiveItem('doctors');
+  };
+
+  const handleCreateNewService = () => {
+    setCurrentView('service-create');
+    setActiveItem('services');
+  };
+
+  const handleCreateNewReceptionist = () => {
+    alert('Create new staff member functionality - Form coming soon');
+  };
+
+  const handleCreateNewClinic = () => {
+    alert('Create new centre functionality - Form coming soon');
+  };
+
+  const handleCreateNewAppointment = () => {
+    alert('Create new session functionality - Form coming soon');
+  };
+
+  // Service CRUD handlers
+  const handleViewService = (serviceId) => {
+    alert(`View service ${serviceId} - Detail view coming soon`);
+  };
+
+  const handleEditService = (serviceId) => {
+    setSelectedServiceId(serviceId);
+    setCurrentView('service-edit');
+    setActiveItem('services');
+  };
+
+  const handleDeleteService = (serviceId) => {
+    if (window.confirm('Are you sure you want to delete this programme?')) {
+      alert(`Programme ${serviceId} deleted successfully!`);
+    }
+  };
+
+  const handleSaveService = (serviceData) => {
+    // In a real app, this would save to backend
+    console.log('Saving service:', serviceData);
+    alert(`Programme "${serviceData.name}" saved successfully!`);
+    setCurrentView('services-list');
+    setActiveItem('services');
+  };
+
+  const handleCancelServiceEdit = () => {
+    setCurrentView('services-list');
+    setActiveItem('services');
+  };
+
   const handleDeleteClinic = (clinicId) => {
-    if (window.confirm('Are you sure you want to delete this center?')) {
-      alert(`Center ${clinicId} deleted successfully!`);
+    if (window.confirm('Are you sure you want to delete this centre?')) {
+      alert(`Centre ${clinicId} deleted successfully!`);
     }
   };
 
@@ -360,6 +423,47 @@ function App() {
   };
 
   const renderContent = () => {
+    // Handle service create form
+    if (currentView === 'service-create') {
+      return (
+        <ServiceCreateForm
+          onSave={handleSaveService}
+          onCancel={handleCancelServiceEdit}
+        />
+      );
+    }
+
+    // Handle service edit form
+    if (currentView === 'service-edit') {
+      return (
+        <ServiceEditForm
+          serviceId={selectedServiceId}
+          onSave={handleSaveService}
+          onCancel={handleCancelServiceEdit}
+        />
+      );
+    }
+
+    // Handle student create form
+    if (currentView === 'patient-create') {
+      return (
+        <StudentCreateForm
+          onSave={handleSavePatient}
+          onCancel={handleCancelPatientEdit}
+        />
+      );
+    }
+
+    // Handle therapist create form
+    if (currentView === 'doctor-create') {
+      return (
+        <TherapistCreateForm
+          onSave={handleSaveDoctor}
+          onCancel={handleCancelDoctorEdit}
+        />
+      );
+    }
+
     // Handle doctor edit form
     if (currentView === 'doctor-edit') {
       return (
@@ -517,34 +621,34 @@ function App() {
       
       case 'patients':
         if (currentView === 'patients-list' || currentView === 'dashboard') {
-          return <PatientsList onViewPatient={handleViewPatient} onEditPatient={handleEditPatient} onDeletePatient={handleDeletePatient} onCreateNewPatient={() => alert('Create new student functionality')} />;
+          return <PatientsList onViewPatient={handleViewPatient} onEditPatient={handleEditPatient} onDeletePatient={handleDeletePatient} onCreateNewPatient={handleCreateNewPatient} />;
         }
-        return <PatientsList onViewPatient={handleViewPatient} onEditPatient={handleEditPatient} onDeletePatient={handleDeletePatient} onCreateNewPatient={() => alert('Create new student functionality')} />;
+        return <PatientsList onViewPatient={handleViewPatient} onEditPatient={handleEditPatient} onDeletePatient={handleDeletePatient} onCreateNewPatient={handleCreateNewPatient} />;
       
       case 'doctors':
         if (currentView === 'doctors-list' || currentView === 'dashboard') {
-          return <DoctorsList onViewDoctor={handleViewDoctor} onEditDoctor={handleEditDoctor} onDeleteDoctor={handleDeleteDoctor} onCreateNewDoctor={() => alert('Create new therapist functionality')} />;
+          return <DoctorsList onViewDoctor={handleViewDoctor} onEditDoctor={handleEditDoctor} onDeleteDoctor={handleDeleteDoctor} onCreateNewDoctor={handleCreateNewDoctor} />;
         }
-        return <DoctorsList onViewDoctor={handleViewDoctor} onEditDoctor={handleEditDoctor} onDeleteDoctor={handleDeleteDoctor} onCreateNewDoctor={() => alert('Create new therapist functionality')} />;
+        return <DoctorsList onViewDoctor={handleViewDoctor} onEditDoctor={handleEditDoctor} onDeleteDoctor={handleDeleteDoctor} onCreateNewDoctor={handleCreateNewDoctor} />;
       
       case 'receptionists':
         if (currentView === 'receptionists-list' || currentView === 'dashboard') {
-          return <ReceptionistsList onViewReceptionist={handleViewReceptionist} onEditReceptionist={handleEditReceptionist} onDeleteReceptionist={handleDeleteReceptionist} onCreateNewReceptionist={() => alert('Create new staff member functionality')} />;
+          return <ReceptionistsList onViewReceptionist={handleViewReceptionist} onEditReceptionist={handleEditReceptionist} onDeleteReceptionist={handleDeleteReceptionist} onCreateNewReceptionist={handleCreateNewReceptionist} />;
         }
-        return <ReceptionistsList onViewReceptionist={handleViewReceptionist} onEditReceptionist={handleEditReceptionist} onDeleteReceptionist={handleDeleteReceptionist} onCreateNewReceptionist={() => alert('Create new staff member functionality')} />;
+        return <ReceptionistsList onViewReceptionist={handleViewReceptionist} onEditReceptionist={handleEditReceptionist} onDeleteReceptionist={handleDeleteReceptionist} onCreateNewReceptionist={handleCreateNewReceptionist} />;
       
       case 'services':
-        return <ServicesList onViewService={(id) => alert(`View service ${id}`)} onEditService={(id) => alert(`Edit service ${id}`)} onDeleteService={(id) => alert(`Delete service ${id}`)} onCreateNewService={() => alert('Create new service functionality')} />;
+        return <ServicesList onViewService={handleViewService} onEditService={handleEditService} onDeleteService={handleDeleteService} onCreateNewService={handleCreateNewService} />;
       
       case 'clinics':
         if (currentView === 'clinics-list' || currentView === 'dashboard') {
-          return <ClinicsList onViewClinic={handleViewClinic} onEditClinic={handleEditClinic} onDeleteClinic={handleDeleteClinic} onCreateNewClinic={() => alert('Create new center functionality')} />;
+          return <ClinicsList onViewClinic={handleViewClinic} onEditClinic={handleEditClinic} onDeleteClinic={handleDeleteClinic} onCreateNewClinic={handleCreateNewClinic} />;
         }
-        return <ClinicsList onViewClinic={handleViewClinic} onEditClinic={handleEditClinic} onDeleteClinic={handleDeleteClinic} onCreateNewClinic={() => alert('Create new center functionality')} />;
+        return <ClinicsList onViewClinic={handleViewClinic} onEditClinic={handleEditClinic} onDeleteClinic={handleDeleteClinic} onCreateNewClinic={handleCreateNewClinic} />;
       
       case 'encounters-list':
         if (currentView === 'appointments-list') {
-          return <AppointmentsList onViewAppointment={handleAppointmentClick} onEditAppointment={handleEditAppointment} onDeleteAppointment={handleDeleteAppointment} onCreateNewAppointment={() => alert('Create new session functionality')} />;
+          return <AppointmentsList onViewAppointment={handleAppointmentClick} onEditAppointment={handleEditAppointment} onDeleteAppointment={handleDeleteAppointment} onCreateNewAppointment={handleCreateNewAppointment} />;
         }
         return <EncountersList onViewEncounter={handleViewEncounter} onEditEncounter={handleEditEncounter} onDeleteEncounter={handleDeleteEncounter} onCreateNewEncounter={handleCreateNewEncounter} />;
       

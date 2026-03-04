@@ -158,8 +158,8 @@ const ServicesList = ({ onViewService, onEditService, onDeleteService, onCreateN
         <div className="flex flex-col space-y-4 mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
             <div>
-              <h1 className="text-xl sm:text-2xl font-semibold text-gray-800">All Services</h1>
-              <p className="text-sm sm:text-base text-gray-600">Manage educational services and programs</p>
+              <h1 className="text-xl sm:text-2xl font-semibold text-gray-800">All Programs</h1>
+              <p className="text-sm sm:text-base text-gray-600">Manage educational programs and therapy services</p>
             </div>
             
             <div className="flex flex-col xs:flex-row space-y-2 xs:space-y-0 xs:space-x-2 sm:space-x-3">
@@ -170,7 +170,7 @@ const ServicesList = ({ onViewService, onEditService, onDeleteService, onCreateN
                 className="flex items-center justify-center space-x-2 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm sm:text-base"
               >
                 <FiUpload className="w-4 h-4" />
-                <span className="hidden xs:inline">Import Data</span>
+                <span className="hidden xs:inline">Import Programme Data</span>
                 <span className="xs:hidden">Import</span>
               </motion.button>
               <motion.button
@@ -180,7 +180,7 @@ const ServicesList = ({ onViewService, onEditService, onDeleteService, onCreateN
                 className="flex items-center justify-center space-x-2 px-3 sm:px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors text-sm sm:text-base"
               >
                 <FiPlus className="w-4 h-4" />
-                <span className="hidden xs:inline">Add Service</span>
+                <span className="hidden xs:inline">Add Program</span>
                 <span className="xs:hidden">Add</span>
               </motion.button>
             </div>
@@ -192,7 +192,7 @@ const ServicesList = ({ onViewService, onEditService, onDeleteService, onCreateN
             <span className="mx-1 sm:mx-2">›</span>
             <span>Services</span>
             <span className="mx-1 sm:mx-2">›</span>
-            <span className="text-gray-800 whitespace-nowrap">All Therapist Services</span>
+            <span className="text-gray-800 whitespace-nowrap">All Programs</span>
           </div>
         </div>
 
@@ -321,7 +321,7 @@ const ServicesList = ({ onViewService, onEditService, onDeleteService, onCreateN
                         Service ID
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                        Service
+                        Program
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                         Center

@@ -1,29 +1,29 @@
 # Backend Integration Summary
 
 ## Overview
-Successfully integrated all frontend API calls with backend controllers and database models.
+Successfully integrated all frontend API calls with backend controllers and database models for MindSaid Learning educational therapy management system.
 
 ## What Was Done
 
 ### 1. Created Missing Models (8 new models)
-- `server/models/Appointment.js` - Handles appointment data with joins to patients, doctors, clinics
-- `server/models/Patient.js` - Patient management with search and filtering
-- `server/models/Doctor.js` - Doctor profiles with user info and stats
-- `server/models/Clinic.js` - Clinic management with statistics
-- `server/models/Service.js` - Medical services by clinic
-- `server/models/Encounter.js` - Patient encounters with full details
-- `server/models/Template.js` - Encounter templates management
-- `server/models/Receptionist.js` - Receptionist profiles with clinic info
+- `server/models/Appointment.js` - Handles session data with joins to students, therapists, centers
+- `server/models/Patient.js` - Student management with search and filtering
+- `server/models/Doctor.js` - Therapist profiles with user info and stats
+- `server/models/Clinic.js` - Center management with statistics
+- `server/models/Service.js` - Educational services by center
+- `server/models/Encounter.js` - Student sessions with full details
+- `server/models/Template.js` - Session templates management
+- `server/models/Receptionist.js` - Staff profiles with center info
 
 ### 2. Created Missing Controllers (8 new controllers)
-- `server/controllers/appointmentController.js` - Full CRUD for appointments
-- `server/controllers/patientController.js` - Patient management with search
-- `server/controllers/doctorController.js` - Doctor profiles and statistics
-- `server/controllers/clinicController.js` - Clinic management with stats
-- `server/controllers/serviceController.js` - Medical services CRUD
-- `server/controllers/encounterController.js` - Patient encounter management
+- `server/controllers/appointmentController.js` - Full CRUD for sessions
+- `server/controllers/patientController.js` - Student management with search
+- `server/controllers/doctorController.js` - Therapist profiles and statistics
+- `server/controllers/clinicController.js` - Center management with stats
+- `server/controllers/serviceController.js` - Educational services CRUD
+- `server/controllers/encounterController.js` - Student session management
 - `server/controllers/templateController.js` - Template builder functionality
-- `server/controllers/receptionistController.js` - Receptionist management
+- `server/controllers/receptionistController.js` - Staff management
 - `server/controllers/financialController.js` - Revenue and billing reports
 
 ### 3. Updated All Route Files (9 routes updated)
@@ -43,14 +43,14 @@ Replaced placeholder routes with actual controller implementations:
 ### API Endpoints Now Working
 - **Auth**: `/api/auth/*` (already working)
 - **Dashboard**: `/api/dashboard/*` (already working)
-- **Appointments**: `/api/appointments/*` (now integrated)
-- **Patients**: `/api/patients/*` (now integrated)
-- **Doctors**: `/api/doctors/*` (now integrated)
-- **Clinics**: `/api/clinics/*` (now integrated)
+- **Sessions**: `/api/appointments/*` (now integrated)
+- **Students**: `/api/patients/*` (now integrated)
+- **Therapists**: `/api/doctors/*` (now integrated)
+- **Centers**: `/api/clinics/*` (now integrated)
 - **Services**: `/api/services/*` (now integrated)
-- **Encounters**: `/api/encounters/*` (now integrated)
+- **Sessions**: `/api/encounters/*` (now integrated)
 - **Templates**: `/api/templates/*` (now integrated)
-- **Receptionists**: `/api/receptionists/*` (now integrated)
+- **Staff**: `/api/receptionists/*` (now integrated)
 - **Financial**: `/api/financial/*` (now integrated)
 
 ### Features Now Supported
@@ -75,4 +75,4 @@ Replaced placeholder routes with actual controller implementations:
 5. Add more advanced features as required
 
 ## Status: ✅ COMPLETE
-All frontend API calls are now properly integrated with working backend endpoints.
+All frontend API calls are now properly integrated with working backend endpoints for the MindSaid Learning educational therapy management system.

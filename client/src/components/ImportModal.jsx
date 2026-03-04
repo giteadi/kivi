@@ -13,7 +13,20 @@ const ImportModal = ({ isOpen, onClose, importType = 'patients' }) => {
 
   const importTypes = {
     patients: {
-      title: 'Students Import',
+      title: 'Import Student Data',
+      requiredFields: [
+        'first_name',
+        'last_name', 
+        'email',
+        'country_calling_code',
+        'country_code',
+        'contact',
+        'gender'
+      ],
+      sampleFileName: 'students_sample.csv'
+    },
+    students: {
+      title: 'Import Student Data',
       requiredFields: [
         'first_name',
         'last_name', 
@@ -26,7 +39,20 @@ const ImportModal = ({ isOpen, onClose, importType = 'patients' }) => {
       sampleFileName: 'students_sample.csv'
     },
     doctors: {
-      title: 'Therapists Import',
+      title: 'Import Therapist Data',
+      requiredFields: [
+        'first_name',
+        'last_name',
+        'email',
+        'contact',
+        'specialty',
+        'qualification',
+        'license_number'
+      ],
+      sampleFileName: 'therapists_sample.csv'
+    },
+    therapists: {
+      title: 'Import Therapist Data',
       requiredFields: [
         'first_name',
         'last_name',
@@ -39,7 +65,7 @@ const ImportModal = ({ isOpen, onClose, importType = 'patients' }) => {
       sampleFileName: 'therapists_sample.csv'
     },
     receptionists: {
-      title: 'Staff Import',
+      title: 'Import Staff Data',
       requiredFields: [
         'first_name',
         'last_name',
@@ -52,7 +78,7 @@ const ImportModal = ({ isOpen, onClose, importType = 'patients' }) => {
       sampleFileName: 'staff_sample.csv'
     },
     clinics: {
-      title: 'Centers Import',
+      title: 'Import Centre Data',
       requiredFields: [
         'name',
         'address',
@@ -63,35 +89,47 @@ const ImportModal = ({ isOpen, onClose, importType = 'patients' }) => {
         'email',
         'specialties'
       ],
-      sampleFileName: 'centers_sample.csv'
+      sampleFileName: 'centres_sample.csv'
     },
     appointments: {
-      title: 'Sessions Import',
+      title: 'Import Session Data',
       requiredFields: [
         'student_name',
         'therapist_name',
         'session_date',
         'session_time',
-        'center',
+        'centre',
+        'service_type'
+      ],
+      sampleFileName: 'sessions_sample.csv'
+    },
+    sessions: {
+      title: 'Import Session Data',
+      requiredFields: [
+        'student_name',
+        'therapist_name',
+        'session_date',
+        'session_time',
+        'centre',
         'service_type'
       ],
       sampleFileName: 'sessions_sample.csv'
     },
     services: {
-      title: 'Services Import',
+      title: 'Import Programme Data',
       requiredFields: [
         'service_name',
         'category',
         'price',
         'duration',
-        'center',
+        'centre',
         'description'
       ],
-      sampleFileName: 'services_sample.csv'
+      sampleFileName: 'programmes_sample.csv'
     }
   };
 
-  const currentImport = importTypes[importType];
+  const currentImport = importTypes[importType] || importTypes['patients'];
   const fileFormats = ['Choose file format...', 'CSV', 'Excel (.xlsx)', 'JSON'];
 
   const handleFileSelect = (event) => {

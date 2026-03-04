@@ -178,8 +178,8 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 space-y-4 lg:space-y-0">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-800">All Centers</h1>
-            <p className="text-gray-600">Manage and view all learning center locations</p>
+            <h1 className="text-2xl font-semibold text-gray-800">All Centres</h1>
+            <p className="text-gray-600">Manage and view all learning centre locations</p>
           </div>
           
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
@@ -190,7 +190,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
               className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
             >
               <FiUpload className="w-4 h-4" />
-              <span>Import Data</span>
+              <span>Import Centre Data</span>
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -199,7 +199,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
               className="flex items-center space-x-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
             >
               <FiPlus className="w-4 h-4" />
-              <span>Add Center</span>
+              <span>Add Centre</span>
             </motion.button>
           </div>
         </div>
@@ -208,9 +208,9 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
         <div className="flex items-center text-sm text-gray-500 mb-6">
           <span>Home</span>
           <span className="mx-2">›</span>
-          <span>Centers</span>
+          <span>Centres</span>
           <span className="mx-2">›</span>
-          <span className="text-gray-800">All Centers</span>
+          <span className="text-gray-800">All Centres</span>
         </div>
 
         {/* Filters */}
@@ -240,7 +240,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
               <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="Search centers, locations, or specialties..."
+                placeholder="Search centres, locations, or specialties..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -399,7 +399,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
           <div className="text-center py-12">
             <div className="text-gray-500">
               <FiMapPin className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p className="text-lg font-medium">No centers found</p>
+              <p className="text-lg font-medium">No centres found</p>
               <p className="text-sm">Try adjusting your search or filter criteria</p>
             </div>
           </div>
@@ -419,7 +419,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
               </div>
               <div>
                 <div className="text-2xl font-bold text-blue-600">{clinics.length}</div>
-                <div className="text-sm text-gray-600">Total Centers</div>
+                <div className="text-sm text-gray-600">Total Centres</div>
               </div>
             </div>
           </div>
@@ -461,7 +461,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
                 <div className="text-2xl font-bold text-yellow-600">
                   {clinics.filter(clinic => clinic.status === 'Active').length}
                 </div>
-                <div className="text-sm text-gray-600">Active Centers</div>
+                <div className="text-sm text-gray-600">Active Centres</div>
               </div>
             </div>
           </div>

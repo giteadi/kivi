@@ -1,6 +1,6 @@
-# 🏥 KiviCare - Complete Healthcare Management System
+# 🎓 MindSaid Learning - Complete Educational Therapy Management System
 
-A comprehensive healthcare management system built with **React**, **Redux Toolkit**, **Node.js**, **Express**, and **MySQL2**.
+A comprehensive educational therapy management system built with **React**, **Redux Toolkit**, **Node.js**, **Express**, and **MySQL2**.
 
 ## ✨ Features
 
@@ -11,33 +11,33 @@ A comprehensive healthcare management system built with **React**, **Redux Toolk
 - Demo credentials included
 
 ### 📊 **Dashboard with Real-time Analytics**
-- Live statistics (appointments, patients, doctors, clinics)
+- Live statistics (sessions, students, therapists, centers)
 - Interactive date range filtering
 - Revenue tracking and charts
-- Upcoming appointments overview
-- Top doctors performance
+- Upcoming sessions overview
+- Top therapists performance
 
 ### 👥 **Complete User Management**
-- **Patients**: Full CRUD with profiles and medical history
-- **Doctors**: Specialties, qualifications, and performance tracking
-- **Receptionists**: Department management and shift tracking
-- **Clinics**: Multi-location support with analytics
+- **Students**: Full CRUD with profiles and learning history
+- **Therapists**: Specialties, qualifications, and performance tracking
+- **Staff**: Department management and shift tracking
+- **Centers**: Multi-location support with analytics
 
-### 📅 **Appointment System**
+### 📅 **Session System**
 - Scheduling and management
 - Status tracking (scheduled, confirmed, completed, cancelled)
-- Doctor and clinic assignment
+- Therapist and center assignment
 - Service integration
 
-### 🏥 **Medical Encounters**
-- Template-based encounter creation
-- Customizable encounter forms
-- Medical history tracking
+### 🎓 **Educational Sessions**
+- Template-based session creation
+- Customizable session forms
+- Learning history tracking
 - Treatment plan documentation
 
 ### 💰 **Financial Management**
 - Billing and invoicing
-- Revenue tracking by clinic/doctor
+- Revenue tracking by center/therapist
 - Tax management
 - Payment status tracking
 
@@ -75,7 +75,7 @@ A comprehensive healthcare management system built with **React**, **Redux Toolk
 ### **1. Clone Repository**
 ```bash
 git clone <repository-url>
-cd kivi
+cd mindsaid-learning
 ```
 
 ### **2. Backend Setup**
@@ -87,7 +87,7 @@ npm install
 
 # Configure environment variables
 # Update .env file with your MySQL credentials:
-DATABASE=kivi
+DATABASE=mindsaid_learning
 HOST=localhost
 DB_USER=root
 PASSWORD=your_mysql_password
@@ -98,7 +98,7 @@ npm run dev
 ```
 
 The server will:
-- ✅ Automatically create the `kivi` database
+- ✅ Automatically create the `mindsaid_learning` database
 - ✅ Create all required tables with relationships
 - ✅ Insert sample data
 - ✅ Start on port 3005
@@ -119,14 +119,14 @@ The frontend will start on port 5173.
 ## 🔑 **Default Login Credentials**
 
 ```
-Email: admin@kivicare.com
+Email: admin@mindsaidlearning.com
 Password: admin123
 ```
 
 ## 📁 **Project Structure**
 
 ```
-kivi/
+mindsaid-learning/
 ├── client/                     # React Frontend
 │   ├── src/
 │   │   ├── components/         # React Components
@@ -163,17 +163,17 @@ kivi/
 ### **Dashboard**
 - `GET /api/dashboard/data` - Complete dashboard data
 - `GET /api/dashboard/stats` - Statistics with filtering
-- `GET /api/dashboard/upcoming-appointments` - Upcoming appointments
-- `GET /api/dashboard/top-doctors` - Top performing doctors
+- `GET /api/dashboard/upcoming-sessions` - Upcoming sessions
+- `GET /api/dashboard/top-therapists` - Top performing therapists
 - `GET /api/dashboard/booking-chart` - Booking status chart
 
 ### **CRUD Operations**
-- `GET|POST|PUT|DELETE /api/appointments` - Appointments management
-- `GET|POST|PUT|DELETE /api/patients` - Patients management
-- `GET|POST|PUT|DELETE /api/doctors` - Doctors management
-- `GET|POST|PUT|DELETE /api/clinics` - Clinics management
+- `GET|POST|PUT|DELETE /api/sessions` - Sessions management
+- `GET|POST|PUT|DELETE /api/students` - Students management
+- `GET|POST|PUT|DELETE /api/therapists` - Therapists management
+- `GET|POST|PUT|DELETE /api/centers` - Centers management
 - `GET|POST|PUT|DELETE /api/services` - Services management
-- `GET|POST|PUT|DELETE /api/encounters` - Encounters management
+- `GET|POST|PUT|DELETE /api/encounters` - Sessions management
 
 ## 🎯 **Key Features Implemented**
 
@@ -232,8 +232,8 @@ npm run lint     # Run ESLint
 - Real-time search functionality
 - Filter persistence across sessions
 
-### **Template-Based Encounters**
-- Customizable encounter templates
+### **Template-Based Sessions**
+- Customizable session templates
 - Dynamic form generation
 - Field validation and requirements
 - Template usage analytics
@@ -246,8 +246,8 @@ npm run lint     # Run ESLint
 
 ### **Financial Analytics**
 - Revenue tracking by time periods
-- Doctor performance metrics
-- Clinic profitability analysis
+- Therapist performance metrics
+- Center profitability analysis
 - Tax calculation and management
 
 ## 🚀 **Production Deployment**
@@ -285,4 +285,4 @@ For support and questions:
 
 ---
 
-**Built with ❤️ for modern healthcare management**
+**Built with ❤️ for modern educational therapy management**

@@ -1,4 +1,4 @@
-# KiviCare Encounter Management Workflow
+# MindSaid Learning Encounter Management Workflow
 
 ## Complete Template-Based Encounter Creation Process
 
@@ -12,7 +12,7 @@
 
 ### Method 1: From Dashboard
 ```
-Dashboard → Upcoming Appointments → "New Encounter" button → Select Template → Fill Form → Save
+Dashboard → Upcoming Sessions → "New Encounter" button → Select Template → Fill Form → Save
 ```
 
 ### Method 2: From Encounters Section
@@ -20,26 +20,26 @@ Dashboard → Upcoming Appointments → "New Encounter" button → Select Templa
 Sidebar → Encounters → Encounters List → "New Encounter" button → Select Template → Fill Form → Save
 ```
 
-### Method 3: From Appointment Details
+### Method 3: From Session Details
 ```
-Dashboard → Click Appointment Card → "Create New Encounter" button → Select Template → Fill Form → Save
+Dashboard → Click Session Card → "Create New Encounter" button → Select Template → Fill Form → Save
 ```
 
 ## 📋 Step-by-Step Process
 
 ### Step 1: Access Template Selector
-- **From Dashboard**: Click "New Encounter" in Upcoming Appointments section
+- **From Dashboard**: Click "New Encounter" in Upcoming Sessions section
 - **From Encounters**: Navigate to Encounters List and click "New Encounter"
-- **From Appointment**: Click appointment card, then "Create New Encounter"
+- **From Session**: Click session card, then "Create New Encounter"
 
 ### Step 2: Choose Template
-- Browse templates by category (General, Emergency, Follow-up, Pediatric)
+- Browse templates by category (General, Assessment, Follow-up, Behavioral)
 - Use search to find specific templates
 - Filter by category
 - See template details: sections, estimated time, usage count
 
 ### Step 3: Fill Encounter Form
-- Patient information is pre-filled
+- Student information is pre-filled
 - Complete template sections (marked with * are required)
 - Track progress with completion bar
 - Different field types: text, dropdown, checkbox, radio, number, date
@@ -51,24 +51,24 @@ Dashboard → Click Appointment Card → "Create New Encounter" button → Selec
 
 ## 🎯 Template Categories Available
 
-### 1. General Consultation Template
-- **Use for**: Standard medical consultations
-- **Sections**: Chief Complaint, Medical History, Physical Examination, Assessment, Treatment Plan
+### 1. General Session Template
+- **Use for**: Standard educational sessions
+- **Sections**: Session Goals, Learning Activities, Student Response, Assessment, Next Steps
 - **Time**: 15-20 minutes
 
-### 2. Emergency Visit Template
-- **Use for**: Emergency department visits
-- **Sections**: Chief Complaint, Vital Signs, Triage Level, Assessment, Immediate Care
-- **Time**: 10-15 minutes
+### 2. Assessment Template
+- **Use for**: Educational assessments
+- **Sections**: Assessment Type, Learning Areas, Performance Levels, Recommendations
+- **Time**: 20-25 minutes
 
-### 3. Follow-up Visit Template
-- **Use for**: Patient follow-up appointments
-- **Sections**: Previous Treatment Review, Current Symptoms, Current Status, Next Steps
+### 3. Follow-up Session Template
+- **Use for**: Student follow-up sessions
+- **Sections**: Previous Goals Review, Current Progress, Challenges, Adjustments
 - **Time**: 10-12 minutes
 
-### 4. Pediatric Consultation
-- **Use for**: Children's medical visits
-- **Sections**: Growth Measurements, Developmental Milestones, Vaccination Status, Parent Concerns
+### 4. Behavioral Support Template
+- **Use for**: Behavioral therapy sessions
+- **Sections**: Behavioral Observations, Interventions Used, Student Response, Family Communication
 - **Time**: 20-25 minutes
 
 ## 🔧 Template Management
@@ -91,30 +91,30 @@ Dashboard → Click Appointment Card → "Create New Encounter" button → Selec
 
 ```
 Home › Dashboard
-├── Upcoming Appointments → Create New Encounter
+├── Upcoming Sessions → Create New Encounter
 └── New Encounter Button
 
 Home › Encounters
 ├── Encounters List → New Encounter Button
 └── Encounter Templates → Template Management
 
-Home › Appointment Details
+Home › Session Details
 └── Create New Encounter → Template Selection
 ```
 
 ## 💡 Benefits
 
-### For Healthcare Providers:
+### For Educational Therapists:
 - **Faster Documentation**: Pre-built templates save time
 - **Consistent Reports**: Standardized format across all encounters
 - **Complete Records**: Required fields ensure nothing is missed
 - **Professional Output**: Well-structured, organized reports
 
-### For Clinics:
+### For Learning Centres:
 - **Quality Control**: Standardized documentation practices
 - **Efficiency**: Reduced time spent on paperwork
 - **Compliance**: Consistent record-keeping standards
-- **Customization**: Create templates for specific specialties
+- **Customization**: Create templates for specific educational needs
 
 ## 🎨 User Interface Features
 
@@ -127,24 +127,24 @@ Home › Appointment Details
 ### Encounter Form:
 - Progress tracking bar
 - Field validation with error messages
-- Patient information sidebar
+- Student information sidebar
 - Template details panel
 - Auto-save functionality
 
 ### Encounters List:
 - View all created encounters
 - Filter by status (Active, Completed, Closed)
-- Search by patient, doctor, or type
+- Search by student, therapist, or type
 - Quick actions (View, Edit, Delete)
 
 ## 🔄 Complete Workflow Example
 
-1. **Patient Check-in**: Patient arrives for appointment
-2. **Dashboard Access**: Healthcare provider opens KiviCare dashboard
-3. **Appointment Selection**: Click on patient's appointment card
+1. **Student Check-in**: Student arrives for session
+2. **Dashboard Access**: Educational therapist opens MindSaid Learning dashboard
+3. **Session Selection**: Click on student's session card
 4. **Encounter Creation**: Click "Create New Encounter" button
-5. **Template Selection**: Choose appropriate template (e.g., "General Consultation")
-6. **Form Completion**: Fill out template sections with patient data
+5. **Template Selection**: Choose appropriate template (e.g., "General Session")
+6. **Form Completion**: Fill out template sections with student data
 7. **Progress Tracking**: Monitor completion percentage
 8. **Validation**: System checks required fields
 9. **Report Generation**: Click "Save Encounter" to create report
