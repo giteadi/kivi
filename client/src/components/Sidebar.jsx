@@ -88,8 +88,12 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters }) => {
       {/* Logo */}
       <div className="p-6 border-b">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">K</span>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
+            <img 
+              src="https://res.cloudinary.com/bazeercloud/image/upload/v1765087953/Gemini_Generated_Image_o8ciwko8ciwko8ci-removebg-preview_l4nnui.png" 
+              alt="MindSaid Learning Logo" 
+              className="w-full h-full object-contain"
+            />
           </div>
           <span className="text-xl font-semibold text-gray-800">MindSaid Learning</span>
         </div>

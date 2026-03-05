@@ -1,9 +1,13 @@
 import { useState } from 'react';
+import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { FiClock, FiUser, FiCheck, FiArrowRight } from 'react-icons/fi';
+import PaymentModal from './PaymentModal';
 
 const Homepage = ({ onSelectPlan, onShowLogin }) => {
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
   const [selectedPlan, setSelectedPlan] = useState(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   const sessionPlans = [
     {
@@ -119,13 +123,36 @@ const Homepage = ({ onSelectPlan, onShowLogin }) => {
   ];
 
   const handlePlanSelect = (plan, type) => {
-    setSelectedPlan({ ...plan, type });
+    const planWithType = { ...plan, type };
+    setSelectedPlan(planWithType);
   };
 
   const handleContinue = () => {
     if (selectedPlan) {
-      onSelectPlan(selectedPlan);
+      // Check if user is authenticated
+      if (isAuthenticated && user) {
+        // User is logged in, show payment modal
+        setShowPaymentModal(true);
+      } else {
+        // User not logged in, redirect to login with selected plan
+        onSelectPlan(selectedPlan);
+      }
     }
+  };
+
+  const handlePaymentSuccess = (plan, paymentResponse) => {
+    // Handle successful payment
+    console.log('Payment successful:', paymentResponse);
+    alert(`Payment successful for ${plan.title}! You will be redirected to your dashboard.`);
+    
+    // You can redirect to user dashboard or show success message
+    // For now, we'll just close the modal and reset selection
+    setShowPaymentModal(false);
+    setSelectedPlan(null);
+  };
+
+  const handleClosePaymentModal = () => {
+    setShowPaymentModal(false);
   };
 
   return (
@@ -135,10 +162,14 @@ const Homepage = ({ onSelectPlan, onShowLogin }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
-                <span className="text-white font-bold text-lg">K</span>
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center overflow-hidden">
+                <img 
+                  src="https://res.cloudinary.com/bazeercloud/image/upload/v1765087953/Gemini_Generated_Image_o8ciwko8ciwko8ci-removebg-preview_l4nnui.png" 
+                  alt="MindSaid Learning Logo" 
+                  className="w-full h-full object-contain"
+                />
               </div>
-              <span className="text-2xl font-bold text-gray-800">KiviCare</span>
+              <span className="text-2xl font-bold text-gray-800">MindSaid Learning</span>
             </div>
             <button
               onClick={onShowLogin}
@@ -276,7 +307,7 @@ const Homepage = ({ onSelectPlan, onShowLogin }) => {
               onClick={handleContinue}
               className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg"
             >
-              Continue with {selectedPlan.title}
+              {isAuthenticated ? 'Pay Now' : 'Continue with'} {selectedPlan.title}
               <FiArrowRight className="ml-2 w-5 h-5" />
             </button>
           </motion.div>
@@ -287,11 +318,19 @@ const Homepage = ({ onSelectPlan, onShowLogin }) => {
       <div className="bg-white border-t">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-gray-600">
-            <p>&copy; 2026 KiviCare. All rights reserved.</p>
+            <p>&copy; 2026 MindSaid Learning. All rights reserved.</p>
             <p className="mt-2">Professional therapy and assessment services for learning development</p>
           </div>
         </div>
       </div>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={handleClosePaymentModal}
+        selectedPlan={selectedPlan}
+        onPaymentSuccess={handlePaymentSuccess}
+      />
     </div>
   );
 };

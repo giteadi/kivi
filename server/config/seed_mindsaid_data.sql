@@ -26,24 +26,24 @@ ALTER TABLE encounters AUTO_INCREMENT = 1;
 -- Insert additional admin users
 INSERT INTO users (email, password, role, first_name, last_name, phone) VALUES
 -- Additional Admin Users
-('admin2@kivicare.com', 'admin123', 'admin', 'John', 'Admin', '+1-555-0011'),
-('superadmin@kivicare.com', 'super123', 'admin', 'Super', 'Administrator', '+1-555-0012'),
+('admin2@mindsaidlearning.com', 'admin123', 'admin', 'John', 'Admin', '+1-555-0011'),
+('superadmin@mindsaidlearning.com', 'super123', 'admin', 'Super', 'Administrator', '+1-555-0012'),
 
 -- Therapists
-('dr.sarah.johnson@kivicare.com', 'therapist123', 'therapist', 'Sarah', 'Johnson', '+1-555-0101'),
-('dr.michael.chen@kivicare.com', 'therapist123', 'therapist', 'Michael', 'Chen', '+1-555-0102'),
-('dr.emily.davis@kivicare.com', 'therapist123', 'therapist', 'Emily', 'Davis', '+1-555-0103'),
-('dr.james.wilson@kivicare.com', 'therapist123', 'therapist', 'James', 'Wilson', '+1-555-0104'),
-('dr.lisa.brown@kivicare.com', 'therapist123', 'therapist', 'Lisa', 'Brown', '+1-555-0105'),
-('dr.david.miller@kivicare.com', 'therapist123', 'therapist', 'David', 'Miller', '+1-555-0106'),
-('dr.anna.garcia@kivicare.com', 'therapist123', 'therapist', 'Anna', 'Garcia', '+1-555-0107'),
-('dr.robert.taylor@kivicare.com', 'therapist123', 'therapist', 'Robert', 'Taylor', '+1-555-0108'),
+('dr.sarah.johnson@mindsaidlearning.com', 'therapist123', 'therapist', 'Sarah', 'Johnson', '+1-555-0101'),
+('dr.michael.chen@mindsaidlearning.com', 'therapist123', 'therapist', 'Michael', 'Chen', '+1-555-0102'),
+('dr.emily.davis@mindsaidlearning.com', 'therapist123', 'therapist', 'Emily', 'Davis', '+1-555-0103'),
+('dr.james.wilson@mindsaidlearning.com', 'therapist123', 'therapist', 'James', 'Wilson', '+1-555-0104'),
+('dr.lisa.brown@mindsaidlearning.com', 'therapist123', 'therapist', 'Lisa', 'Brown', '+1-555-0105'),
+('dr.david.miller@mindsaidlearning.com', 'therapist123', 'therapist', 'David', 'Miller', '+1-555-0106'),
+('dr.anna.garcia@mindsaidlearning.com', 'therapist123', 'therapist', 'Anna', 'Garcia', '+1-555-0107'),
+('dr.robert.taylor@mindsaidlearning.com', 'therapist123', 'therapist', 'Robert', 'Taylor', '+1-555-0108'),
 
 -- Staff members
-('staff.jennifer.white@kivicare.com', 'staff123', 'staff', 'Jennifer', 'White', '+1-555-0201'),
-('staff.mark.anderson@kivicare.com', 'staff123', 'staff', 'Mark', 'Anderson', '+1-555-0202'),
-('staff.susan.thomas@kivicare.com', 'staff123', 'staff', 'Susan', 'Thomas', '+1-555-0203'),
-('staff.kevin.jackson@kivicare.com', 'staff123', 'staff', 'Kevin', 'Jackson', '+1-555-0204'),
+('staff.jennifer.white@mindsaidlearning.com', 'staff123', 'staff', 'Jennifer', 'White', '+1-555-0201'),
+('staff.mark.anderson@mindsaidlearning.com', 'staff123', 'staff', 'Mark', 'Anderson', '+1-555-0202'),
+('staff.susan.thomas@mindsaidlearning.com', 'staff123', 'staff', 'Susan', 'Thomas', '+1-555-0203'),
+('staff.kevin.jackson@mindsaidlearning.com', 'staff123', 'staff', 'Kevin', 'Jackson', '+1-555-0204'),
 
 -- Parents/Students (for future use)
 ('parent.john.smith@gmail.com', 'parent123', 'parent', 'John', 'Smith', '+1-555-0301'),

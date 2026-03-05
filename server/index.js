@@ -95,6 +95,7 @@ const startServer = async () => {
     // Routes (after database initialization)
     app.use('/api/auth', require('./routes/authRoutes'));
     app.use('/api/dashboard', require('./routes/dashboardRoutes'));
+    app.use('/api/payment', require('./routes/paymentRoutes'));
     
     // New routes with updated naming
     app.use('/api/sessions', require('./routes/sessionRoutes'));

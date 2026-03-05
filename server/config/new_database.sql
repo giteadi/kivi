@@ -404,7 +404,7 @@ CREATE TABLE system_settings (
 
 -- Insert default admin user
 INSERT INTO users (email, password, role, first_name, last_name, phone) 
-VALUES ('admin@kivicare.com', 'admin123', 'admin', 'Admin', 'User', '+1-555-0001');
+VALUES ('admin@mindsaidlearning.com', 'admin123', 'admin', 'Admin', 'User', '+1-555-0001');
 
 -- Insert sample learning centres
 INSERT INTO centres (name, address, city, state, zip_code, phone, email, website, specialties, facilities, description, established_date, operating_hours, emergency_services) VALUES

@@ -10,14 +10,18 @@ import {
   FiActivity,
   FiTrendingUp,
   FiCheckCircle,
-  FiAlertCircle
+  FiAlertCircle,
+  FiPlus
 } from 'react-icons/fi';
+import PaymentModal from './PaymentModal';
 
-const UserDashboard = ({ selectedPlan }) => {
+const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
   const { user } = useSelector((state) => state.auth);
   const [userSessions, setUserSessions] = useState([]);
   const [paymentHistory, setPaymentHistory] = useState([]);
   const [assignedTherapist, setAssignedTherapist] = useState(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [planToPayFor, setPlanToPayFor] = useState(null);
 
   // Mock data for user dashboard
   useEffect(() => {
@@ -79,7 +83,7 @@ const UserDashboard = ({ selectedPlan }) => {
       experience: '8 years',
       qualification: 'M.Ed, Ph.D in Special Education',
       phone: '+91-9876543210',
-      email: 'dr.sarah.johnson@kivicare.com'
+      email: 'dr.sarah.johnson@mindsaidlearning.com'
     });
   }, [selectedPlan]);
 
@@ -99,6 +103,34 @@ const UserDashboard = ({ selectedPlan }) => {
       case 'Failed': return 'text-red-600 bg-red-50';
       default: return 'text-gray-600 bg-gray-50';
     }
+  };
+
+  const handlePayForPlan = (plan) => {
+    setPlanToPayFor(plan);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSuccess = (plan, paymentResponse) => {
+    console.log('Payment successful:', paymentResponse);
+    alert(`Payment successful for ${plan.title}!`);
+    setShowPaymentModal(false);
+    setPlanToPayFor(null);
+    
+    // Add to payment history
+    const newPayment = {
+      id: Date.now(),
+      date: new Date().toISOString().split('T')[0],
+      amount: plan.price,
+      type: plan.title,
+      status: 'Paid',
+      method: 'Razorpay'
+    };
+    setPaymentHistory(prev => [newPayment, ...prev]);
+  };
+
+  const handleClosePaymentModal = () => {
+    setShowPaymentModal(false);
+    setPlanToPayFor(null);
   };
 
   return (
@@ -249,8 +281,12 @@ const UserDashboard = ({ selectedPlan }) => {
               <div className="p-6">
                 {assignedTherapist && (
                   <div className="text-center">
-                    <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <FiUser className="w-8 h-8 text-white" />
+                    <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 overflow-hidden">
+                      <img 
+                        src="https://res.cloudinary.com/bazeercloud/image/upload/v1765087953/Gemini_Generated_Image_o8ciwko8ciwko8ci-removebg-preview_l4nnui.png" 
+                        alt="Therapist Avatar" 
+                        className="w-full h-full object-contain"
+                      />
                     </div>
                     <h3 className="font-bold text-gray-900 mb-1">{assignedTherapist.name}</h3>
                     <p className="text-sm text-gray-600 mb-2">{assignedTherapist.specialty}</p>
@@ -302,6 +338,14 @@ const UserDashboard = ({ selectedPlan }) => {
           </div>
         </div>
       </div>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={handleClosePaymentModal}
+        selectedPlan={planToPayFor}
+        onPaymentSuccess={handlePaymentSuccess}
+      />
     </div>
   );
 };

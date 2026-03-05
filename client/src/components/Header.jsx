@@ -82,8 +82,12 @@ const Header = ({ onMenuClick, onBackClick, showBackButton = false }) => {
             onClick={() => setShowUserMenu(!showUserMenu)}
             className="flex items-center space-x-2 p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
           >
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-              <FiUser className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden">
+              <img 
+                src="https://res.cloudinary.com/bazeercloud/image/upload/v1765087953/Gemini_Generated_Image_o8ciwko8ciwko8ci-removebg-preview_l4nnui.png" 
+                alt="User Avatar" 
+                className="w-full h-full object-contain"
+              />
             </div>
             <div className="hidden md:block text-left">
               <p className="text-sm font-medium text-gray-800">
