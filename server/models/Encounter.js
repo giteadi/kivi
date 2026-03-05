@@ -5,26 +5,26 @@ class Encounter extends BaseModel {
     super('encounters');
   }
 
-  // Get encounters with related data
+  // Get encounters with related data (updated for new schema)
   async getEncounters(filters = {}) {
     let conditions = `
-      LEFT JOIN patients p ON e.patient_id = p.id
-      LEFT JOIN doctors d ON e.doctor_id = d.id
-      LEFT JOIN users du ON d.user_id = du.id
-      LEFT JOIN clinics c ON e.clinic_id = c.id
-      LEFT JOIN appointments a ON e.appointment_id = a.id
+      LEFT JOIN students s ON e.student_id = s.id
+      LEFT JOIN therapists t ON e.therapist_id = t.id
+      LEFT JOIN users tu ON t.user_id = tu.id
+      LEFT JOIN centres c ON e.centre_id = c.id
+      LEFT JOIN sessions sess ON e.session_id = sess.id
       WHERE 1=1
     `;
     const params = [];
 
-    if (filters.patientId) {
-      conditions += ' AND e.patient_id = ?';
-      params.push(filters.patientId);
+    if (filters.patientId || filters.studentId) {
+      conditions += ' AND e.student_id = ?';
+      params.push(filters.patientId || filters.studentId);
     }
 
-    if (filters.doctorId) {
-      conditions += ' AND e.doctor_id = ?';
-      params.push(filters.doctorId);
+    if (filters.doctorId || filters.therapistId) {
+      conditions += ' AND e.therapist_id = ?';
+      params.push(filters.doctorId || filters.therapistId);
     }
 
     if (filters.status) {
@@ -46,30 +46,34 @@ class Encounter extends BaseModel {
 
     const sql = `
       SELECT e.*, 
-             p.first_name as patient_first_name, p.last_name as patient_last_name,
-             du.first_name as doctor_first_name, du.last_name as doctor_last_name,
-             c.name as clinic_name,
-             a.appointment_date
+             s.first_name as patient_first_name, s.last_name as patient_last_name,
+             s.first_name as student_first_name, s.last_name as student_last_name,
+             tu.first_name as doctor_first_name, tu.last_name as doctor_last_name,
+             tu.first_name as therapist_first_name, tu.last_name as therapist_last_name,
+             c.name as clinic_name, c.name as centre_name,
+             sess.session_date as appointment_date, sess.session_date
       FROM encounters e ${conditions}
     `;
 
     return await this.query(sql, params);
   }
 
-  // Get encounter with full details
+  // Get encounter with full details (updated for new schema)
   async getEncounterWithDetails(id) {
     const sql = `
       SELECT e.*, 
-             p.first_name as patient_first_name, p.last_name as patient_last_name,
-             p.date_of_birth, p.gender, p.phone as patient_phone,
-             du.first_name as doctor_first_name, du.last_name as doctor_last_name,
-             d.specialty as doctor_specialty,
-             a.appointment_date
+             s.first_name as patient_first_name, s.last_name as patient_last_name,
+             s.first_name as student_first_name, s.last_name as student_last_name,
+             s.date_of_birth, s.gender, s.phone as patient_phone, s.phone as student_phone,
+             tu.first_name as doctor_first_name, tu.last_name as doctor_last_name,
+             tu.first_name as therapist_first_name, tu.last_name as therapist_last_name,
+             t.specialty as doctor_specialty, t.specialty as therapist_specialty,
+             sess.session_date as appointment_date, sess.session_date
       FROM encounters e
-      LEFT JOIN patients p ON e.patient_id = p.id
-      LEFT JOIN doctors d ON e.doctor_id = d.id
-      LEFT JOIN users du ON d.user_id = du.id
-      LEFT JOIN appointments a ON e.appointment_id = a.id
+      LEFT JOIN students s ON e.student_id = s.id
+      LEFT JOIN therapists t ON e.therapist_id = t.id
+      LEFT JOIN users tu ON t.user_id = tu.id
+      LEFT JOIN sessions sess ON e.session_id = sess.id
       WHERE e.id = ?
     `;
     const results = await this.query(sql, [id]);
