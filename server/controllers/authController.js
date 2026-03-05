@@ -114,21 +114,12 @@ class AuthController {
   // Get current user profile
   async getProfile(req, res) {
     try {
-      const userId = req.user?.id; // Assuming middleware sets req.user
+      const user = req.user; // Set by authentication middleware
 
-      if (!userId) {
+      if (!user) {
         return res.status(401).json({
           success: false,
           message: 'Unauthorized'
-        });
-      }
-
-      const user = await this.userModel.findById(userId);
-      
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: 'User not found'
         });
       }
 

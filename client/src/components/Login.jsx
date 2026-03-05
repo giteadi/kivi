@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 import { loginUser, clearError } from '../store/slices/authSlice';
 
-const Login = ({ onLoginSuccess }) => {
+const Login = ({ onLoginSuccess, onShowRegister, selectedPlan }) => {
   const dispatch = useDispatch();
   const { isLoading, error } = useSelector((state) => state.auth);
   
@@ -54,6 +54,13 @@ const Login = ({ onLoginSuccess }) => {
           </div>
           <h1 className="text-2xl font-bold text-gray-800">Welcome to KiviCare</h1>
           <p className="text-gray-600 mt-2">Sign in to your account</p>
+          {selectedPlan && (
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-800">Selected Plan:</p>
+              <p className="font-semibold text-blue-900">{selectedPlan.title}</p>
+              <p className="text-sm text-blue-700">₹{selectedPlan.price?.toLocaleString()}/-</p>
+            </div>
+          )}
         </div>
 
         {/* Error Message */}
@@ -139,9 +146,25 @@ const Login = ({ onLoginSuccess }) => {
 
         {/* Demo Credentials */}
         <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-          <p className="text-sm text-blue-800 font-medium mb-2">Demo Credentials:</p>
-          <p className="text-sm text-blue-700">Email: admin@kivicare.com</p>
-          <p className="text-sm text-blue-700">Password: admin123</p>
+          <p className="text-sm text-blue-800 font-medium mb-2">Demo Admin Credentials:</p>
+          <div className="space-y-1">
+            <p className="text-sm text-blue-700">Email: admin@kivicare.com | Password: admin123</p>
+            <p className="text-sm text-blue-700">Email: admin2@kivicare.com | Password: admin123</p>
+            <p className="text-sm text-blue-700">Email: superadmin@kivicare.com | Password: super123</p>
+          </div>
+        </div>
+
+        {/* Register Link */}
+        <div className="mt-6 text-center">
+          <p className="text-gray-600">
+            Don't have an account?{' '}
+            <button
+              onClick={onShowRegister}
+              className="text-blue-600 hover:text-blue-700 font-medium"
+            >
+              Create Account
+            </button>
+          </p>
         </div>
       </motion.div>
     </div>

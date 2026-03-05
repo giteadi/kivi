@@ -75,8 +75,11 @@ const authSlice = createSlice({
       state.token = null;
       state.isAuthenticated = false;
       state.error = null;
+      state.isLoading = false;
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      // Force page reload to ensure complete cleanup
+      window.location.reload();
     },
     clearError: (state) => {
       state.error = null;

@@ -8,9 +8,13 @@ class ApiService {
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
     
+    // Get token from localStorage for authenticated requests
+    const token = localStorage.getItem('token');
+    
     const config = {
       headers: {
         'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
         ...options.headers,
       },
       ...options,
@@ -19,6 +23,14 @@ class ApiService {
     try {
       const response = await fetch(url, config);
       const data = await response.json();
+      
+      // Handle unauthorized responses
+      if (response.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.reload();
+        return;
+      }
       
       if (!response.ok) {
         throw new Error(data.message || 'API request failed');

@@ -23,8 +23,12 @@ ALTER TABLE staff AUTO_INCREMENT = 1;
 ALTER TABLE sessions AUTO_INCREMENT = 1;
 ALTER TABLE encounters AUTO_INCREMENT = 1;
 
--- Insert additional users for therapists and staff
+-- Insert additional admin users
 INSERT INTO users (email, password, role, first_name, last_name, phone) VALUES
+-- Additional Admin Users
+('admin2@kivicare.com', 'admin123', 'admin', 'John', 'Admin', '+1-555-0011'),
+('superadmin@kivicare.com', 'super123', 'admin', 'Super', 'Administrator', '+1-555-0012'),
+
 -- Therapists
 ('dr.sarah.johnson@kivicare.com', 'therapist123', 'therapist', 'Sarah', 'Johnson', '+1-555-0101'),
 ('dr.michael.chen@kivicare.com', 'therapist123', 'therapist', 'Michael', 'Chen', '+1-555-0102'),

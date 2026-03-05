@@ -459,3 +459,50 @@ INSERT INTO system_settings (setting_key, setting_value, setting_type, descripti
 ('supported_image_formats', '["jpg", "jpeg", "png", "gif", "webp"]', 'json', 'Supported image file formats', FALSE),
 ('backup_frequency', 'daily', 'string', 'Database backup frequency', FALSE),
 ('session_reminder_hours', '24', 'number', 'Hours before session to send reminder', FALSE);
+
+-- Create plans table for therapy and assessment packages
+CREATE TABLE IF NOT EXISTS plans (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    type ENUM('session', 'assessment') NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    duration VARCHAR(50),
+    description TEXT,
+    features JSON,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Create user_plans table to track user selected plans
+CREATE TABLE IF NOT EXISTS user_plans (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    plan_id INT NOT NULL,
+    selected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_active BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (plan_id) REFERENCES plans(id) ON DELETE CASCADE
+);
+
+-- Insert therapy session plans
+INSERT INTO plans (name, type, price, duration, description, features) VALUES
+('Remedial Therapy', 'session', 2000.00, '1 Hour', 'Comprehensive remedial therapy sessions for learning difficulties', 
+ '["One-on-one therapy session", "Customized learning approach", "Progress tracking", "Parent consultation"]'),
+('Occupational Therapy', 'session', 1500.00, '1 Hour', 'Specialized occupational therapy for daily living skills', 
+ '["Sensory integration therapy", "Fine motor skill development", "Daily living activities", "Equipment recommendations"]'),
+('Speech Language Therapy', 'session', 1500.00, '1 Hour', 'Professional speech and language development therapy', 
+ '["Speech articulation training", "Language development", "Communication skills", "Swallowing therapy"]'),
+('Counselling', 'session', 1500.00, '1 Hour', 'Professional counselling and psychological support', 
+ '["Individual counselling", "Behavioral therapy", "Emotional support", "Coping strategies"]');
+
+-- Insert assessment packages
+INSERT INTO plans (name, type, price, description, features) VALUES
+('Package I - Comprehensive Assessment', 'assessment', 45500.00, 'Complete psycho-educational assessment with detailed report', 
+ '["Full cognitive assessment", "Academic achievement testing", "Behavioral evaluation", "Detailed written report", "Parent consultation", "School recommendations"]'),
+('Package II - Standard Assessment', 'assessment', 32500.00, 'Standard psycho-educational assessment package', 
+ '["Cognitive assessment", "Academic testing", "Written report", "Parent consultation", "Basic recommendations"]'),
+('Package III - Essential Assessment', 'assessment', 28500.00, 'Essential assessment for learning difficulties', 
+ '["Core cognitive testing", "Academic screening", "Summary report", "Parent meeting"]'),
+('Package IV - Basic Assessment', 'assessment', 15500.00, 'Basic screening and assessment package', 
+ '["Basic cognitive screening", "Academic review", "Brief report", "Consultation"]');

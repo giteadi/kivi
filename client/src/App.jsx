@@ -1,7 +1,11 @@
-import { useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
+import { setCredentials } from './store/slices/authSlice';
 import Login from './components/Login';
+import Register from './components/Register';
+import Homepage from './components/Homepage';
+import UserDashboard from './components/UserDashboard';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
@@ -39,10 +43,17 @@ import TherapistCreateForm from './components/TherapistCreateForm';
 import SessionCreateForm from './components/SessionCreateForm';
 
 function App() {
-  const { isAuthenticated } = useSelector((state) => state.auth);
-  const [showLogin, setShowLogin] = useState(!isAuthenticated);
+  const dispatch = useDispatch();
+  const { isAuthenticated, user, token } = useSelector((state) => state.auth);
+  
+  // All useState hooks at the top level
+  const [showLogin, setShowLogin] = useState(true);
+  const [showRegister, setShowRegister] = useState(false);
+  const [showHomepage, setShowHomepage] = useState(true);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [activeItem, setActiveItem] = useState('dashboard');
-  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'appointment-detail', 'encounter-detail', 'template-builder', 'template-viewer', 'template-selector', 'template-based-encounter', 'patient-profile', 'patient-edit', 'patient-create', 'doctor-profile', 'doctor-edit', 'doctor-create', 'receptionist-profile', 'receptionist-edit', 'service-create', 'service-edit'
+  const [currentView, setCurrentView] = useState('dashboard');
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -53,9 +64,51 @@ function App() {
   const [selectedServiceId, setSelectedServiceId] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSessionCreateModalOpen, setIsSessionCreateModalOpen] = useState(false);
-
-  // Navigation history for back button
   const [navigationHistory, setNavigationHistory] = useState(['dashboard']);
+
+  // Check authentication on app load
+  useEffect(() => {
+    const checkAuth = () => {
+      const storedToken = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
+      
+      if (storedToken && storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          dispatch(setCredentials({ user: parsedUser, token: storedToken }));
+          setShowLogin(false);
+          setShowHomepage(false); // Don't show homepage if already authenticated
+        } catch (error) {
+          console.error('Error parsing stored user:', error);
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setShowLogin(false);
+          setShowHomepage(true); // Show homepage for new users
+        }
+      } else {
+        setShowLogin(false);
+        setShowHomepage(true); // Show homepage for new users
+      }
+      setIsInitialized(true);
+    };
+
+    checkAuth();
+  }, [dispatch]);
+
+  // Show loading screen while checking authentication
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <span className="text-white font-bold text-2xl">K</span>
+          </div>
+          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-gray-600 mt-4">Loading KiviCare...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Handle back navigation
   const handleBackNavigation = () => {
@@ -97,11 +150,79 @@ function App() {
 
   const handleLoginSuccess = () => {
     setShowLogin(false);
+    setShowRegister(false);
+    setShowHomepage(false);
   };
 
-  // Show login screen if not authenticated
-  if (showLogin || !isAuthenticated) {
-    return <Login onLoginSuccess={handleLoginSuccess} />;
+  const handleShowRegister = () => {
+    setShowLogin(false);
+    setShowRegister(true);
+    setShowHomepage(false);
+  };
+
+  const handleBackToLogin = () => {
+    setShowRegister(false);
+    setShowLogin(true);
+    setShowHomepage(false);
+  };
+
+  const handleRegisterSuccess = () => {
+    setShowRegister(false);
+    setShowLogin(true);
+    setShowHomepage(false);
+  };
+
+  const handleShowLogin = () => {
+    setShowHomepage(false);
+    setShowLogin(true);
+  };
+
+  const handleSelectPlan = (plan) => {
+    setSelectedPlan(plan);
+    setShowHomepage(false);
+    setShowLogin(true);
+  };
+
+  // Show homepage first for non-authenticated users
+  if (!isAuthenticated && showHomepage && !showLogin && !showRegister) {
+    return (
+      <Homepage 
+        onSelectPlan={handleSelectPlan}
+        onShowLogin={handleShowLogin}
+      />
+    );
+  }
+
+  // Show register screen
+  if (showRegister) {
+    return (
+      <Register 
+        onBackToLogin={handleBackToLogin}
+        onRegisterSuccess={handleRegisterSuccess}
+      />
+    );
+  }
+
+  // Show login screen if not authenticated or showLogin is true
+  if (showLogin || (!isAuthenticated && !showHomepage)) {
+    return (
+      <Login 
+        onLoginSuccess={handleLoginSuccess}
+        onShowRegister={handleShowRegister}
+        selectedPlan={selectedPlan}
+      />
+    );
+  }
+
+  // Role-based dashboard rendering
+  if (isAuthenticated && user) {
+    // Show user dashboard for non-admin users
+    if (user.role !== 'admin') {
+      return <UserDashboard selectedPlan={selectedPlan} />;
+    }
+    
+    // Show admin dashboard for admin users
+    // (existing admin dashboard code continues...)
   }
 
   const handleAppointmentClick = (appointmentId) => {
