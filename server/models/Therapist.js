@@ -224,6 +224,31 @@ class Therapist extends BaseModel {
       throw error;
     }
   }
+
+  // Update therapist availability
+  async updateAvailability(therapistId, availabilityData) {
+    try {
+      const sql = `
+        UPDATE kivi_therapists
+        SET login_time = ?, logout_time = ?, is_available = ?, last_availability_update = ?
+        WHERE id = ?
+      `;
+
+      const params = [
+        availabilityData.login_time,
+        availabilityData.logout_time,
+        availabilityData.is_available,
+        availabilityData.last_availability_update,
+        therapistId
+      ];
+
+      const result = await this.query(sql, params);
+      return result.affectedRows > 0;
+    } catch (error) {
+      console.error('Error in updateAvailability:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = Therapist;

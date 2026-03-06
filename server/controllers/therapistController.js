@@ -2,7 +2,15 @@ const Therapist = require('../models/Therapist');
 
 class TherapistController {
   constructor() {
-    this.therapistModel = new Therapist();
+    // Don't instantiate model here to avoid database issues during module loading
+  }
+
+  // Lazy getter for therapist model
+  get therapistModel() {
+    if (!this._therapistModel) {
+      this._therapistModel = new Therapist();
+    }
+    return this._therapistModel;
   }
 
   // Get all therapists
@@ -110,6 +118,7 @@ class TherapistController {
   async deleteTherapist(req, res) {
     try {
       const { id } = req.params;
+
       const deleted = await this.therapistModel.delete(id);
 
       if (!deleted) {
@@ -125,6 +134,147 @@ class TherapistController {
       });
     } catch (error) {
       console.error('Delete therapist error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  // Get therapist availability
+  async getTherapistAvailability(req, res) {
+    try {
+      const { id } = req.params;
+      const availability = await this.therapistModel.getTherapistAvailability(id);
+
+      res.json({
+        success: true,
+        data: availability
+      });
+    } catch (error) {
+      console.error('Get therapist availability error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  // Update therapist availability
+  async updateTherapistAvailability(req, res) {
+    try {
+      const { id } = req.params;
+      const therapistModel = new Therapist();
+
+      // Only allow therapist to update their own availability or admin to update any
+      if (req.user.role !== 'admin' && req.user.id !== parseInt(id)) {
+        return res.status(403).json({
+          success: false,
+          message: 'Unauthorized to update this therapist availability'
+        });
+      }
+
+      const updateData = {
+        login_time: req.body.login_time,
+        logout_time: req.body.logout_time,
+        is_available: req.body.is_available,
+        last_availability_update: new Date()
+      };
+
+      const updated = await therapistModel.updateAvailability(id, updateData);
+
+      if (!updated) {
+        return res.status(404).json({
+          success: false,
+          message: 'Therapist not found'
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Therapist availability updated successfully'
+      });
+    } catch (error) {
+      console.error('Update therapist availability error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  // Get current user's therapist availability (for therapist dashboard)
+  async getMyAvailability(req, res) {
+    try {
+      // Find therapist record for current user
+      const therapistQuery = await this.therapistModel.query(
+        'SELECT id FROM kivi_therapists WHERE user_id = ?',
+        [req.user.id]
+      );
+
+      if (therapistQuery.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Therapist profile not found'
+        });
+      }
+
+      const therapistId = therapistQuery[0].id;
+      const availability = await this.therapistModel.getTherapistAvailability(therapistId);
+
+      res.json({
+        success: true,
+        data: availability
+      });
+    } catch (error) {
+      console.error('Get my availability error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  // Update current user's therapist availability
+  async updateMyAvailability(req, res) {
+    try {
+      // Find therapist record for current user
+      const therapistQuery = await this.therapistModel.query(
+        'SELECT id FROM kivi_therapists WHERE user_id = ?',
+        [req.user.id]
+      );
+
+      if (therapistQuery.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Therapist profile not found'
+        });
+      }
+
+      const therapistId = therapistQuery[0].id;
+
+      const updateData = {
+        login_time: req.body.login_time,
+        logout_time: req.body.logout_time,
+        is_available: req.body.is_available,
+        last_availability_update: new Date()
+      };
+
+      const updated = await this.therapistModel.updateAvailability(therapistId, updateData);
+
+      if (!updated) {
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to update availability'
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Your availability updated successfully'
+      });
+    } catch (error) {
+      console.error('Update my availability error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'

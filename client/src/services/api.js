@@ -285,8 +285,30 @@ class ApiService {
     return this.request(`/booking/therapists?${queryParams}`);
   }
 
-  async getTherapistAvailability(therapistId, date) {
+  async getTherapistAvailabilityForBooking(therapistId, date) {
     return this.request(`/booking/therapists/${therapistId}/availability/${date}`);
+  }
+
+  async getTherapistAvailabilitySettings(therapistId) {
+    return this.request(`/therapists/${therapistId}/availability`);
+  }
+
+  async updateTherapistAvailabilitySettings(therapistId, availabilityData) {
+    return this.request(`/therapists/${therapistId}/availability`, {
+      method: 'PUT',
+      body: JSON.stringify(availabilityData),
+    });
+  }
+
+  async getMyTherapistAvailabilitySettings() {
+    return this.request('/therapists/my/availability');
+  }
+
+  async updateMyTherapistAvailabilitySettings(availabilityData) {
+    return this.request('/therapists/my/availability', {
+      method: 'PUT',
+      body: JSON.stringify(availabilityData),
+    });
   }
 
   async getAvailableTimeSlots(therapistId, date) {

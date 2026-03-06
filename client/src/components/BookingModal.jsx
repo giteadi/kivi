@@ -201,39 +201,64 @@ const BookingModal = ({ isOpen, onClose, selectedPlan, onSuccess }) => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {availableTherapists.map((therapist) => (
-                    <div
-                      key={therapist.id}
-                      onClick={() => handleTherapistSelect(therapist)}
-                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                        selectedTherapist?.id === therapist.id
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="flex items-start space-x-3">
-                        <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                          <FiUser className="w-5 h-5 text-gray-600" />
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-medium">
-                            {therapist.first_name} {therapist.last_name}
-                          </h4>
-                          <p className="text-sm text-gray-600">{therapist.specialty}</p>
-                          <div className="flex items-center mt-1 text-xs text-gray-500">
-                            <FiStar className="w-3 h-3 text-yellow-500 mr-1" />
-                            {therapist.experience_years} years experience
+                  {availableTherapists.map((therapist) => {
+                    // Check if therapist is currently available based on login/logout times
+                    const now = new Date();
+                    const currentTime = now.getHours() * 60 + now.getMinutes();
+                    const loginTime = therapist.login_time ? therapist.login_time.split(':').reduce((h, m) => parseInt(h) * 60 + parseInt(m)) : 9 * 60; // Default 9:00
+                    const logoutTime = therapist.logout_time ? therapist.logout_time.split(':').reduce((h, m) => parseInt(h) * 60 + parseInt(m)) : 18 * 60; // Default 18:00
+                    const isCurrentlyAvailable = therapist.is_available && currentTime >= loginTime && currentTime <= logoutTime;
+
+                    return (
+                      <div
+                        key={therapist.id}
+                        onClick={() => handleTherapistSelect(therapist)}
+                        className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                          selectedTherapist?.id === therapist.id
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-start space-x-3">
+                          <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                            <FiUser className="w-5 h-5 text-gray-600" />
                           </div>
-                          {therapist.centre_name && (
-                            <div className="flex items-center mt-1 text-xs text-gray-500">
-                              <FiMapPin className="w-3 h-3 mr-1" />
-                              {therapist.centre_name}
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-medium">
+                                {therapist.first_name} {therapist.last_name}
+                              </h4>
+                              <div className={`flex items-center space-x-1 text-xs px-2 py-1 rounded-full ${
+                                isCurrentlyAvailable
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-red-100 text-red-800'
+                              }`}>
+                                <div className={`w-2 h-2 rounded-full ${
+                                  isCurrentlyAvailable ? 'bg-green-500' : 'bg-red-500'
+                                }`}></div>
+                                <span>{isCurrentlyAvailable ? 'Available' : 'Unavailable'}</span>
+                              </div>
                             </div>
-                          )}
+                            <p className="text-sm text-gray-600">{therapist.specialty}</p>
+                            <div className="flex items-center mt-1 text-xs text-gray-500">
+                              <FiStar className="w-3 h-3 text-yellow-500 mr-1" />
+                              {therapist.experience_years} years experience
+                            </div>
+                            {therapist.centre_name && (
+                              <div className="flex items-center mt-1 text-xs text-gray-500">
+                                <FiMapPin className="w-3 h-3 mr-1" />
+                                {therapist.centre_name}
+                              </div>
+                            )}
+                            <div className="flex items-center mt-2 text-xs text-gray-500">
+                              <FiClock className="w-3 h-3 mr-1" />
+                              Available: {therapist.login_time || '09:00'} - {therapist.logout_time || '18:00'}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </motion.div>

@@ -7,7 +7,6 @@ import {
   FiUser, 
   FiCreditCard, 
   FiFileText,
-  FiSettings,
   FiLogOut,
   FiPackage,
   FiClock,
@@ -15,7 +14,7 @@ import {
   FiDollarSign
 } from 'react-icons/fi';
 
-const UserSidebar = ({ activeItem, setActiveItem, onLogout, onPlanSelect, onBookSession }) => {
+const UserSidebar = ({ activeItem, setActiveItem, onLogout, onPlanSelect, onBookSession, isMobileOpen = false, onMobileClose }) => {
   const { user } = useSelector((state) => state.auth);
 
   const menuItems = [
@@ -26,7 +25,6 @@ const UserSidebar = ({ activeItem, setActiveItem, onLogout, onPlanSelect, onBook
     { id: 'payments', label: 'Payments', icon: FiCreditCard },
     { id: 'profile', label: 'My Profile', icon: FiUser },
     { id: 'reports', label: 'Reports', icon: FiFileText },
-    { id: 'settings', label: 'Settings', icon: FiSettings },
   ];
 
   const handlePlanClick = (plan) => {
@@ -42,7 +40,19 @@ const UserSidebar = ({ activeItem, setActiveItem, onLogout, onPlanSelect, onBook
   };
 
   return (
-    <div className="w-64 bg-white h-full shadow-lg flex flex-col">
+    <>
+      {/* Mobile Backdrop */}
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={onMobileClose}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div className={`w-64 bg-white h-full shadow-lg flex flex-col ${
+        isMobileOpen ? 'fixed left-0 top-0 z-50 lg:relative lg:z-auto' : 'relative lg:block hidden'
+      }`}>
       {/* User Profile */}
       <div className="p-6 border-b">
         <div className="flex items-center space-x-3">
@@ -66,7 +76,14 @@ const UserSidebar = ({ activeItem, setActiveItem, onLogout, onPlanSelect, onBook
             return (
               <li key={item.id}>
                 <button
-                  onClick={() => item.id === 'booking' ? handleBookSession() : setActiveItem(item.id)}
+                  onClick={() => {
+                    if (item.id === 'booking') {
+                      handleBookSession();
+                    } else {
+                      setActiveItem(item.id);
+                    }
+                    if (onMobileClose) onMobileClose();
+                  }}
                   className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                     activeItem === item.id
                       ? 'bg-blue-50 text-blue-600'
@@ -93,6 +110,7 @@ const UserSidebar = ({ activeItem, setActiveItem, onLogout, onPlanSelect, onBook
         </div>
       </nav>
     </div>
+    </>
   );
 };
 
