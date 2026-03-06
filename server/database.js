@@ -45,7 +45,7 @@ const initializeDatabase = async () => {
         });
       });
     } else {
-      console.log('✅ Database already exists, skipping initialization');
+      console.log('✅ Database exists, checking tables...');
     }
 
     connection.end();
@@ -70,10 +70,86 @@ const initializeDatabase = async () => {
       });
     });
 
+    // Check if tables exist and create them if missing
+    const tablesExist = await checkTablesExist(dbInstance);
+    if (!tablesExist) {
+      console.log('🔄 Tables missing, creating tables...');
+      await createTables(dbInstance);
+    } else {
+      console.log('✅ Tables exist');
+    }
+
     return dbInstance;
   } catch (error) {
     console.error('❌ Database initialization error:', error);
     process.exit(1);
+  }
+};
+
+const checkTablesExist = async (db) => {
+  try {
+    const requiredTables = ['kivi_users', 'kivi_centres', 'kivi_therapists', 'kivi_students', 'kivi_sessions', 'kivi_encounters'];
+    
+    for (const table of requiredTables) {
+      const result = await new Promise((resolve, reject) => {
+        db.query('SHOW TABLES LIKE ?', [table], (err, results) => {
+          if (err) reject(err);
+          else resolve(results.length > 0);
+        });
+      });
+      
+      if (!result) {
+        console.log(`❌ Table ${table} missing`);
+        return false;
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error checking tables:', error);
+    return false;
+  }
+};
+
+const createTables = async (db) => {
+  try {
+    const sqlFile = path.join(__dirname, 'config', 'new_database.sql');
+    const sqlContent = fs.readFileSync(sqlFile, 'utf8');
+    
+    // Split by semicolon to get individual statements
+    const statements = sqlContent.split(';').map(stmt => stmt.trim()).filter(stmt => stmt.length > 0);
+    
+    for (const statement of statements) {
+      // Skip database creation/drop statements
+      if (statement.toUpperCase().includes('DROP DATABASE') || 
+          statement.toUpperCase().includes('CREATE DATABASE') ||
+          statement.toUpperCase().includes('USE ')) {
+        continue;
+      }
+      
+      if (statement.trim()) {
+        await new Promise((resolve, reject) => {
+          db.query(statement + ';', (err, results) => {
+            if (err) {
+              // Ignore table already exists errors
+              if (err.code === 'ER_TABLE_EXISTS_ERROR') {
+                console.log('Table already exists, skipping...');
+                resolve();
+              } else {
+                reject(err);
+              }
+            } else {
+              resolve(results);
+            }
+          });
+        });
+      }
+    }
+    
+    console.log('✅ Tables and data created successfully');
+  } catch (error) {
+    console.error('Error creating tables:', error);
+    throw error;
   }
 };
 
