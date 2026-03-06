@@ -156,6 +156,9 @@ function App() {
     setShowLogin(false);
     setShowRegister(false);
     setShowHomepage(false);
+    
+    // If there's a selected plan, we need to trigger payment modal
+    // This will be handled in the UserDashboard component
   };
 
   const handleShowRegister = () => {

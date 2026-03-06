@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 import { loginUser, clearError } from '../store/slices/authSlice';
+import LogoImage from './LogoImage';
 
 const Login = ({ onLoginSuccess, onShowRegister, selectedPlan }) => {
   const dispatch = useDispatch();
@@ -33,7 +34,14 @@ const Login = ({ onLoginSuccess, onShowRegister, selectedPlan }) => {
     try {
       const result = await dispatch(loginUser(formData)).unwrap();
       if (result) {
-        onLoginSuccess();
+        // Check if there's a selected plan to trigger payment
+        if (selectedPlan) {
+          // User logged in with selected plan, trigger payment flow
+          onLoginSuccess();
+        } else {
+          // Normal login without selected plan
+          onLoginSuccess();
+        }
       }
     } catch (error) {
       console.error('Login failed:', error);
@@ -50,11 +58,7 @@ const Login = ({ onLoginSuccess, onShowRegister, selectedPlan }) => {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 overflow-hidden">
-            <img 
-              src="https://res.cloudinary.com/bazeercloud/image/upload/v1765087953/Gemini_Generated_Image_o8ciwko8ciwko8ci-removebg-preview_l4nnui.png" 
-              alt="MindSaid Learning Logo" 
-              className="w-full h-full object-contain"
-            />
+            <LogoImage />
           </div>
           <h1 className="text-2xl font-bold text-gray-800">Welcome to MindSaid Learning</h1>
           <p className="text-gray-600 mt-2">Sign in to your account</p>
@@ -155,6 +159,12 @@ const Login = ({ onLoginSuccess, onShowRegister, selectedPlan }) => {
             <p className="text-sm text-blue-700">Email: admin@mindsaidlearning.com | Password: admin123</p>
             <p className="text-sm text-blue-700">Email: admin2@mindsaidlearning.com | Password: admin123</p>
             <p className="text-sm text-blue-700">Email: superadmin@mindsaidlearning.com | Password: super123</p>
+          </div>
+          <p className="text-sm text-blue-800 font-medium mt-4 mb-2">Demo Parent/User Credentials:</p>
+          <div className="space-y-1">
+            <p className="text-sm text-blue-700">Email: parent.john.smith@gmail.com | Password: parent123</p>
+            <p className="text-sm text-blue-700">Email: parent.mary.jones@gmail.com | Password: parent123</p>
+            <p className="text-sm text-blue-700">Email: parent.william.davis@gmail.com | Password: parent123</p>
           </div>
         </div>
 

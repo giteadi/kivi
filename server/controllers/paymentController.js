@@ -1,10 +1,17 @@
 const crypto = require('crypto');
+const Razorpay = require('razorpay');
 
 class PaymentController {
   constructor() {
-    // Razorpay configuration (you'll need to add these to .env)
-    this.razorpayKeyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_your_key_here';
-    this.razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET || 'your_secret_here';
+    // Razorpay test configuration - Using new valid credentials
+    this.razorpayKeyId = 'rzp_test_SNpafZQympJjF6'; // New test key ID
+    this.razorpayKeySecret = 'kessrETUaSQNmohXEK6DpnpQ'; // New test key secret
+
+    // Initialize Razorpay with new test credentials
+    this.razorpay = new Razorpay({
+      key_id: this.razorpayKeyId,
+      key_secret: this.razorpayKeySecret,
+    });
   }
 
   // Create Razorpay order
@@ -13,6 +20,9 @@ class PaymentController {
       const { planId, amount, currency = 'INR' } = req.body;
       const userId = req.user.id;
 
+      console.log('Create order request:', { planId, amount, currency, userId });
+      console.log('Using Razorpay key_id:', this.razorpayKeyId);
+
       if (!planId || !amount) {
         return res.status(400).json({
           success: false,
@@ -20,40 +30,38 @@ class PaymentController {
         });
       }
 
-      // Generate order ID
-      const orderId = `order_${Date.now()}_${userId}`;
-
-      // In a real implementation, you would:
-      // 1. Create order with Razorpay API
-      // 2. Store order details in database
-      // For demo purposes, we'll just return a mock order
-
-      const orderData = {
-        orderId: orderId,
-        amount: amount,
+      // Create order with Razorpay
+      const options = {
+        amount: amount, // amount in the smallest currency unit (paise for INR)
         currency: currency,
-        planId: planId,
-        userId: userId,
-        status: 'created',
-        createdAt: new Date().toISOString()
+        receipt: `receipt_${userId}_${Date.now()}`,
+        notes: {
+          planId: planId,
+          userId: userId
+        }
       };
 
-      // Store order in database (you'll need to create orders table)
-      // await this.storeOrder(orderData);
+      console.log('Creating Razorpay order with options:', options);
+
+      const order = await this.razorpay.orders.create(options);
+
+      console.log('Razorpay order created successfully:', order.id);
 
       res.json({
         success: true,
         message: 'Order created successfully',
         data: {
-          orderId: orderId,
-          amount: amount,
-          currency: currency,
+          orderId: order.id,
+          amount: order.amount,
+          currency: order.currency,
           key: this.razorpayKeyId
         }
       });
 
     } catch (error) {
       console.error('Create order error:', error);
+      console.error('Error details:', error.message);
+      console.error('Error stack:', error.stack);
       res.status(500).json({
         success: false,
         message: 'Failed to create order'

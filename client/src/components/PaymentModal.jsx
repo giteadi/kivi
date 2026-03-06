@@ -27,7 +27,7 @@ const PaymentModal = ({ isOpen, onClose, selectedPlan, onPaymentSuccess }) => {
 
     try {
       // Create order on backend (you'll need to implement this API)
-      const orderResponse = await fetch('/api/payment/create-order', {
+      const orderResponse = await fetch('http://localhost:3005/api/payment/create-order', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -48,7 +48,7 @@ const PaymentModal = ({ isOpen, onClose, selectedPlan, onPaymentSuccess }) => {
 
       // Razorpay options
       const options = {
-        key: 'rzp_test_RSRL6CiapHiTg7', // Using the key from .env
+        key: orderData.data.key, // Using key from backend
         amount: selectedPlan.price * 100,
         currency: 'INR',
         name: 'MindSaid Learning',
@@ -86,7 +86,7 @@ const PaymentModal = ({ isOpen, onClose, selectedPlan, onPaymentSuccess }) => {
   const handlePaymentSuccess = async (paymentResponse) => {
     try {
       // Verify payment on backend
-      const verifyResponse = await fetch('/api/payment/verify', {
+      const verifyResponse = await fetch('http://localhost:3005/api/payment/verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -183,8 +183,8 @@ const PaymentModal = ({ isOpen, onClose, selectedPlan, onPaymentSuccess }) => {
                   />
                   <FiCreditCard className="w-5 h-5 mr-2 text-blue-600" />
                   <div>
-                    <p className="font-medium">Razorpay</p>
-                    <p className="text-xs text-gray-500">Credit/Debit Card, UPI, Net Banking</p>
+                    <p className="font-medium">Razorpay (Test Mode)</p>
+                    <p className="text-xs text-gray-500">Credit/Debit Card, UPI, Net Banking - No real charges</p>
                   </div>
                 </label>
               </div>

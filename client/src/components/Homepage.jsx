@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { FiClock, FiUser, FiCheck, FiArrowRight } from 'react-icons/fi';
 import PaymentModal from './PaymentModal';
+import LogoImage from './LogoImage';
 
 const Homepage = ({ onSelectPlan, onShowLogin }) => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
@@ -125,18 +126,36 @@ const Homepage = ({ onSelectPlan, onShowLogin }) => {
   const handlePlanSelect = (plan, type) => {
     const planWithType = { ...plan, type };
     setSelectedPlan(planWithType);
+    
+    // Check if user is authenticated
+    if (isAuthenticated && user) {
+      // User is logged in, show payment modal
+      console.log('User authenticated, showing payment modal');
+      setShowPaymentModal(true);
+    } else {
+      // User not logged in, redirect to login with selected plan
+      console.log('User not authenticated, redirecting to login');
+      onSelectPlan(planWithType);
+    }
   };
 
   const handleContinue = () => {
+    console.log('Continue clicked, selectedPlan:', selectedPlan);
+    console.log('isAuthenticated:', isAuthenticated, 'user:', user);
+    
     if (selectedPlan) {
       // Check if user is authenticated
       if (isAuthenticated && user) {
         // User is logged in, show payment modal
+        console.log('User authenticated, showing payment modal');
         setShowPaymentModal(true);
       } else {
         // User not logged in, redirect to login with selected plan
+        console.log('User not authenticated, redirecting to login');
         onSelectPlan(selectedPlan);
       }
+    } else {
+      console.log('No plan selected');
     }
   };
 
@@ -163,11 +182,7 @@ const Homepage = ({ onSelectPlan, onShowLogin }) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 rounded-2xl flex items-center justify-center overflow-hidden">
-                <img 
-                  src="https://res.cloudinary.com/bazeercloud/image/upload/v1765087953/Gemini_Generated_Image_o8ciwko8ciwko8ci-removebg-preview_l4nnui.png" 
-                  alt="MindSaid Learning Logo" 
-                  className="w-full h-full object-contain"
-                />
+                <LogoImage />
               </div>
               <span className="text-2xl font-bold text-gray-800">MindSaid Learning</span>
             </div>
@@ -204,6 +219,20 @@ const Homepage = ({ onSelectPlan, onShowLogin }) => {
         {/* Session Plans */}
         <div className="mb-16">
           <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Session Plans</h2>
+          
+          {/* Test Button */}
+          <div className="text-center mb-4">
+            <button 
+              onClick={() => {
+                console.log('Test button clicked');
+                alert('Test button works!');
+              }}
+              className="px-4 py-2 bg-red-500 text-white rounded"
+            >
+              Test Click (Remove Later)
+            </button>
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {sessionPlans.map((plan, index) => (
               <motion.div
@@ -296,22 +325,6 @@ const Homepage = ({ onSelectPlan, onShowLogin }) => {
           </div>
         </div>
 
-        {/* Continue Button */}
-        {selectedPlan && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center"
-          >
-            <button
-              onClick={handleContinue}
-              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg"
-            >
-              {isAuthenticated ? 'Pay Now' : 'Continue with'} {selectedPlan.title}
-              <FiArrowRight className="ml-2 w-5 h-5" />
-            </button>
-          </motion.div>
-        )}
       </div>
 
       {/* Footer */}

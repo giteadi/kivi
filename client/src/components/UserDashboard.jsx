@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { logout } from '../store/slices/authSlice';
 import { motion } from 'framer-motion';
 import { 
   FiCalendar, 
@@ -17,6 +18,7 @@ import PaymentModal from './PaymentModal';
 
 const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
   const { user } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
   const [userSessions, setUserSessions] = useState([]);
   const [paymentHistory, setPaymentHistory] = useState([]);
   const [assignedTherapist, setAssignedTherapist] = useState(null);
@@ -25,6 +27,12 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
 
   // Mock data for user dashboard
   useEffect(() => {
+    // Show payment modal if selectedPlan is available (user selected plan before login)
+    if (selectedPlan) {
+      setPlanToPayFor(selectedPlan);
+      setShowPaymentModal(true);
+    }
+
     // Mock user sessions
     setUserSessions([
       {
@@ -133,6 +141,10 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
     setPlanToPayFor(null);
   };
 
+  const handleLogout = () => {
+    dispatch(logout());
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -150,6 +162,12 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
               <p className="text-lg font-semibold text-blue-600">
                 {selectedPlan?.title || 'No Plan Selected'}
               </p>
+              <button
+                onClick={handleLogout}
+                className="mt-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>
@@ -343,7 +361,7 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
       <PaymentModal
         isOpen={showPaymentModal}
         onClose={handleClosePaymentModal}
-        selectedPlan={planToPayFor}
+        selectedPlan={planToPayFor || selectedPlan}
         onPaymentSuccess={handlePaymentSuccess}
       />
     </div>
