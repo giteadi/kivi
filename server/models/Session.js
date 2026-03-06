@@ -62,6 +62,147 @@ class Session extends BaseModel {
     return await this.query(sql, params);
   }
 
+  // Get available time slots for a therapist on a specific date
+  async getAvailableTimeSlots(therapistId, date, duration = 30) {
+    console.log(`=== DEBUG getAvailableTimeSlots ===`);
+    console.log(`Therapist ID: ${therapistId}, Date: ${date}, Duration: ${duration}`);
+    
+    try {
+      // Get therapist's availability
+      const therapistSql = `
+        SELECT t.availability, t.session_duration
+        FROM kivi_therapists t
+        WHERE t.id = ?
+      `;
+      const therapistResult = await this.query(therapistSql, [therapistId]);
+      console.log(`Therapist query result:`, therapistResult);
+
+      if (!therapistResult.length) {
+        console.log(`Therapist ${therapistId} not found`);
+        return [];
+      }
+
+      const therapist = therapistResult[0];
+      const sessionDuration = therapist.session_duration || duration;
+      console.log(`Therapist data:`, therapist);
+      
+      const availability = therapist.availability ? JSON.parse(therapist.availability) : {};
+      console.log(`Parsed availability:`, availability);
+
+      // Get day of week
+      const dateObj = new Date(date);
+      const dayOfWeek = dateObj.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+      const dayAvailability = availability[dayOfWeek] || [];
+      console.log(`Day of week: ${dayOfWeek}`);
+      console.log(`Day availability:`, dayAvailability);
+
+      if (dayAvailability.length === 0) {
+        console.log(`No availability for ${dayOfWeek}`);
+        return [];
+      }
+
+      // Get existing sessions for that date
+      const existingSessionsSql = `
+        SELECT session_time, duration
+        FROM kivi_sessions 
+        WHERE therapist_id = ? AND session_date = ? 
+        AND status NOT IN ('cancelled', 'no_show')
+        ORDER BY session_time
+      `;
+      const existingSessions = await this.query(existingSessionsSql, [therapistId, date]);
+      console.log(`Existing sessions:`, existingSessions);
+
+      // Generate all possible time slots
+      const availableSlots = [];
+
+      for (const timeRange of dayAvailability) {
+        console.log(`Processing time range: ${timeRange}`);
+        const [startTime, endTime] = timeRange.split('-');
+        console.log(`Start time: ${startTime}, End time: ${endTime}`);
+
+        if (!startTime || !endTime) {
+          console.log(`Invalid time range format: ${timeRange}`);
+          continue;
+        }
+
+        const slots = this.generateTimeSlots(startTime.trim(), endTime.trim(), sessionDuration);
+        console.log(`Generated ${slots.length} slots:`, slots);
+
+        // Filter out slots that conflict with existing sessions
+        for (const slot of slots) {
+          const isAvailable = !this.hasTimeConflict(slot, existingSessions, sessionDuration);
+          console.log(`Slot ${slot} available: ${isAvailable}`);
+          if (isAvailable) {
+            availableSlots.push({
+              time: slot,
+              available: true,
+              therapist_id: therapistId,
+              date: date,
+              duration: sessionDuration
+            });
+          }
+        }
+      }
+
+      console.log(`Final available slots: ${availableSlots.length}`);
+      return availableSlots;
+    } catch (error) {
+      console.error('Error getting available time slots:', error);
+      return [];
+    }
+  }
+  
+  // Generate time slots between start and end time
+  generateTimeSlots(startTime, endTime, duration) {
+    const slots = [];
+    const [startHour, startMin] = startTime.split(':').map(Number);
+    const [endHour, endMin] = endTime.split(':').map(Number);
+    
+    let currentHour = startHour;
+    let currentMin = startMin;
+    
+    // Convert to minutes for easier calculation
+    const startTotalMin = startHour * 60 + startMin;
+    const endTotalMin = endHour * 60 + endMin;
+    let currentTotalMin = startTotalMin;
+    
+    while (currentTotalMin + duration <= endTotalMin) {
+      const timeStr = `${String(currentHour).padStart(2, '0')}:${String(currentMin).padStart(2, '0')}`;
+      slots.push(timeStr);
+      
+      // Add duration in minutes
+      currentTotalMin += duration;
+      currentHour = Math.floor(currentTotalMin / 60);
+      currentMin = currentTotalMin % 60;
+    }
+    
+    return slots;
+  }
+  
+  // Check if time slot conflicts with existing sessions
+  hasTimeConflict(slotTime, existingSessions, duration) {
+    const slotStart = this.timeToMinutes(slotTime);
+    const slotEnd = slotStart + duration;
+    
+    for (const session of existingSessions) {
+      const sessionStart = this.timeToMinutes(session.session_time);
+      const sessionEnd = sessionStart + (session.duration || duration);
+      
+      // Check if slots overlap
+      if (slotStart < sessionEnd && slotEnd > sessionStart) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+  
+  // Convert time string to minutes
+  timeToMinutes(timeStr) {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
+  }
+
   // Get upcoming sessions
   async getUpcomingSessions(limit = 5, filters = {}) {
     let conditions = `

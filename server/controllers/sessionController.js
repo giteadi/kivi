@@ -50,9 +50,63 @@ class SessionController {
     }
   }
 
+  // Get available time slots
+  async getAvailableTimeSlots(req, res) {
+    try {
+      const { therapistId, date, duration } = req.query;
+      
+      if (!therapistId || !date) {
+        return res.status(400).json({
+          success: false,
+          message: 'Therapist ID and date are required'
+        });
+      }
+
+      const availableSlots = await this.sessionModel.getAvailableTimeSlots(
+        parseInt(therapistId), 
+        date, 
+        duration ? parseInt(duration) : 30
+      );
+
+      res.json({
+        success: true,
+        data: availableSlots,
+        therapistId: parseInt(therapistId),
+        date: date,
+        totalSlots: availableSlots.length
+      });
+    } catch (error) {
+      console.error('Get available time slots error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
   // Create session
   async createSession(req, res) {
     try {
+      const { therapist_id, session_date, session_time, duration = 30 } = req.body;
+      
+      // Check if the time slot is available before creating
+      if (therapist_id && session_date && session_time) {
+        const availableSlots = await this.sessionModel.getAvailableTimeSlots(
+          therapist_id, 
+          session_date, 
+          duration
+        );
+        
+        const isSlotAvailable = availableSlots.some(slot => slot.time === session_time);
+        
+        if (!isSlotAvailable) {
+          return res.status(409).json({
+            success: false,
+            message: 'This time slot is not available. Please choose another time.'
+          });
+        }
+      }
+
       const sessionData = {
         ...req.body,
         created_at: new Date(),

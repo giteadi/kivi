@@ -11,6 +11,12 @@ class User extends BaseModel {
     return results[0] || null;
   }
 
+  async findById(id) {
+    const sql = `SELECT * FROM ${this.tableName} WHERE id = ?`;
+    const results = await this.query(sql, [id]);
+    return results[0] || null;
+  }
+
   async findByRole(role) {
     const sql = `SELECT * FROM ${this.tableName} WHERE role = ? AND is_active = 1`;
     return await this.query(sql, [role]);

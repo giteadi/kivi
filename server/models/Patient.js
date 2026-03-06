@@ -27,7 +27,8 @@ class Patient extends BaseModel {
         params.push(filters.clinicId || filters.centreId);
       }
 
-      whereConditions += ' ORDER BY created_at DESC';
+      // Order by id DESC as fallback since created_at might not exist in all schemas
+      whereConditions += ' ORDER BY id DESC';
 
       if (filters.limit) {
         whereConditions += ' LIMIT ?';

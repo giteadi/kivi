@@ -27,7 +27,8 @@ class Student extends BaseModel {
         params.push(filters.centreId);
       }
 
-      whereConditions += ' ORDER BY created_at DESC';
+      // Order by id DESC as fallback since created_at might not exist in all schemas
+      whereConditions += ' ORDER BY id DESC';
 
       if (filters.limit) {
         whereConditions += ' LIMIT ?';
@@ -39,12 +40,10 @@ class Student extends BaseModel {
         const complexSql = `
           SELECT s.*, 
                  c.name as centre_name,
-                 MAX(sess.session_date) as last_session
+                 (SELECT MAX(sess.session_date) FROM kivi_sessions sess WHERE sess.student_id = s.id) as last_session
           FROM kivi_students s
           LEFT JOIN kivi_centres c ON s.centre_id = c.id
-          LEFT JOIN kivi_sessions sess ON s.id = sess.student_id
           ${whereConditions}
-          GROUP BY s.id, c.name
         `;
         return await this.query(complexSql, params);
       } catch (joinError) {

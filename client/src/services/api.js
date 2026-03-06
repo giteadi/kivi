@@ -7,9 +7,12 @@ class ApiService {
 
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
+    console.log('🌐 API Service: Making request to:', url);
+    console.log('🌐 API Service: Request options:', { ...options, body: options.body ? '***' : undefined });
     
     // Get token from localStorage for authenticated requests
     const token = localStorage.getItem('token');
+    console.log('🌐 API Service: Token available:', !!token);
     
     const config = {
       headers: {
@@ -21,11 +24,16 @@ class ApiService {
     };
 
     try {
+      console.log('🌐 API Service: Sending fetch request...');
       const response = await fetch(url, config);
+      console.log('🌐 API Service: Response status:', response.status, response.statusText);
+      
       const data = await response.json();
+      console.log('🌐 API Service: Response data:', data);
       
       // Handle unauthorized responses
       if (response.status === 401) {
+        console.log('🌐 API Service: Unauthorized response, clearing localStorage');
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.reload();
@@ -33,22 +41,36 @@ class ApiService {
       }
       
       if (!response.ok) {
+        console.error('🌐 API Service: Response not OK:', response.status, data);
         throw new Error(data.message || 'API request failed');
       }
       
+      console.log('🌐 API Service: Request successful, returning data');
       return data;
     } catch (error) {
-      console.error('API request error:', error);
+      console.error('🌐 API Service: Request error:', error);
+      console.error('🌐 API Service: Error details:', { message: error.message, stack: error.stack });
       throw error;
     }
   }
 
   // Auth endpoints
   async login(credentials) {
-    return this.request('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(credentials),
-    });
+    console.log('🌐 API Service: Starting login request to:', `${this.baseURL}/auth/login`);
+    console.log('🌐 API Service: Login payload:', { email: credentials.email, password: '***' });
+    
+    try {
+      const response = await this.request('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify(credentials),
+      });
+      
+      console.log('🌐 API Service: Login response received:', response);
+      return response;
+    } catch (error) {
+      console.error('🌐 API Service: Login request failed:', error);
+      throw error;
+    }
   }
 
   async register(userData) {

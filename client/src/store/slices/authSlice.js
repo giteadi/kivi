@@ -1,25 +1,32 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:3005/api';
+import api from '../../services/api';
 
 // Async thunks
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async (credentials, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/login`, credentials);
+      console.log('🚀 Auth slice: Starting login with credentials:', { email: credentials.email, password: '***' });
+      
+      const response = await api.login(credentials);
+      console.log('📨 Auth slice: API response received:', response);
       
       // Store token in localStorage
-      if (response.data.data.token) {
-        localStorage.setItem('token', response.data.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+      if (response.data.token) {
+        console.log('💾 Auth slice: Storing token and user in localStorage');
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      } else {
+        console.warn('⚠️ Auth slice: No token in response');
       }
       
-      return response.data.data;
+      console.log('✅ Auth slice: Login successful, returning:', response.data);
+      return response.data;
     } catch (error) {
+      console.error('❌ Auth slice: Login error:', error);
+      console.error('❌ Auth slice: Error details:', { message: error.message, stack: error.stack });
       return rejectWithValue(
-        error.response?.data?.message || 'Login failed'
+        error.message || 'Login failed'
       );
     }
   }
@@ -29,11 +36,11 @@ export const registerUser = createAsyncThunk(
   'auth/registerUser',
   async (userData, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/register`, userData);
-      return response.data;
+      const response = await api.register(userData);
+      return response;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || 'Registration failed'
+        error.message || 'Registration failed'
       );
     }
   }
@@ -43,14 +50,11 @@ export const getUserProfile = createAsyncThunk(
   'auth/getUserProfile',
   async (_, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_BASE_URL}/auth/profile`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      return response.data.data;
+      const response = await api.getProfile();
+      return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || 'Failed to get profile'
+        error.message || 'Failed to get profile'
       );
     }
   }

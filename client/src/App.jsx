@@ -49,7 +49,7 @@ function App() {
   // All useState hooks at the top level
   const [showLogin, setShowLogin] = useState(true);
   const [showRegister, setShowRegister] = useState(false);
-  const [showHomepage, setShowHomepage] = useState(true);
+  const [showHomepage, setShowHomepage] = useState(false); // Changed to false to force login
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [activeItem, setActiveItem] = useState('dashboard');

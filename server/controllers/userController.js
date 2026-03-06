@@ -11,6 +11,14 @@ class UserController extends BaseModel {
     try {
       const userId = req.user.id;
 
+      // For parent users, return empty sessions if no linked student
+      if (req.user.role === 'parent') {
+        return res.json({
+          success: true,
+          data: []
+        });
+      }
+
       // Assuming user is linked to student, get student_id for the user
       const studentQuery = await this.query(
         'SELECT id FROM kivi_students WHERE user_id = ?',
@@ -65,6 +73,14 @@ class UserController extends BaseModel {
     try {
       const userId = req.user.id;
 
+      // For parent users, return empty payments if no linked student
+      if (req.user.role === 'parent') {
+        return res.json({
+          success: true,
+          data: []
+        });
+      }
+
       // Get payments from kivi_billing_records linked to user's sessions
       const payments = await this.query(`
         SELECT
@@ -102,6 +118,14 @@ class UserController extends BaseModel {
     try {
       const userId = req.user.id;
 
+      // For parent users, return null therapist if no linked student
+      if (req.user.role === 'parent') {
+        return res.json({
+          success: true,
+          data: null
+        });
+      }
+
       const therapistQuery = await this.query(`
         SELECT
           CONCAT(u.first_name, ' ', u.last_name) as name,
@@ -136,6 +160,19 @@ class UserController extends BaseModel {
   async getUserStats(req, res) {
     try {
       const userId = req.user.id;
+
+      // For parent users, return empty stats if no linked student
+      if (req.user.role === 'parent') {
+        return res.json({
+          success: true,
+          data: {
+            totalSessions: 0,
+            completedSessions: 0,
+            upcomingSessions: 0,
+            progress: 0
+          }
+        });
+      }
 
       // Get student_id for the user
       const studentQuery = await this.query(

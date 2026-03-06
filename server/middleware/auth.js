@@ -33,10 +33,10 @@ const authenticateToken = async (req, res, next) => {
     const userModel = new User();
     const user = await userModel.findById(userId);
 
-    if (!user || !user.is_active) {
+    if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'User not found or inactive'
+        message: 'User not found'
       });
     }
 

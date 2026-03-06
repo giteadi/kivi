@@ -17,6 +17,7 @@ const Login = ({ onLoginSuccess, onShowRegister, selectedPlan }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    console.log('📝 Form field changed:', { name, value });
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -24,27 +25,34 @@ const Login = ({ onLoginSuccess, onShowRegister, selectedPlan }) => {
     
     // Clear error when user starts typing
     if (error) {
+      console.log('🧹 Clearing error state');
       dispatch(clearError());
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('🔐 Login attempt with:', { email: formData.email, password: '***' });
     
     try {
+      console.log('📤 Dispatching login request...');
       const result = await dispatch(loginUser(formData)).unwrap();
+      console.log('✅ Login successful:', result);
       if (result) {
         // Check if there's a selected plan to trigger payment
         if (selectedPlan) {
+          console.log('💳 User has selected plan, triggering payment flow');
           // User logged in with selected plan, trigger payment flow
           onLoginSuccess();
         } else {
+          console.log('🏠 Normal login without selected plan');
           // Normal login without selected plan
           onLoginSuccess();
         }
       }
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error('❌ Login failed:', error);
+      console.error('❌ Error details:', { message: error.message, stack: error.stack });
     }
   };
 
