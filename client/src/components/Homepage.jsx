@@ -220,19 +220,6 @@ const Homepage = ({ onSelectPlan, onShowLogin }) => {
         <div className="mb-16">
           <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Session Plans</h2>
           
-          {/* Test Button */}
-          <div className="text-center mb-4">
-            <button 
-              onClick={() => {
-                console.log('Test button clicked');
-                alert('Test button works!');
-              }}
-              className="px-4 py-2 bg-red-500 text-white rounded"
-            >
-              Test Click (Remove Later)
-            </button>
-          </div>
-          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {sessionPlans.map((plan, index) => (
               <motion.div

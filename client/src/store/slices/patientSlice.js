@@ -9,7 +9,7 @@ export const fetchPatients = createAsyncThunk(
   async (filters = {}, { rejectWithValue }) => {
     try {
       const queryParams = new URLSearchParams(filters);
-      const response = await axios.get(`${API_BASE_URL}/patients?${queryParams}`);
+      const response = await axios.get(`${API_BASE_URL}/students?${queryParams}`);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(
@@ -23,7 +23,7 @@ export const fetchPatient = createAsyncThunk(
   'patients/fetchPatient',
   async (id, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/patients/${id}`);
+      const response = await axios.get(`${API_BASE_URL}/students/${id}`);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(
@@ -37,7 +37,7 @@ export const createPatient = createAsyncThunk(
   'patients/createPatient',
   async (patientData, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/patients`, patientData);
+      const response = await axios.post(`${API_BASE_URL}/students`, patientData);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(
@@ -51,7 +51,7 @@ export const updatePatient = createAsyncThunk(
   'patients/updatePatient',
   async ({ id, patientData }, { rejectWithValue }) => {
     try {
-      const response = await axios.put(`${API_BASE_URL}/patients/${id}`, patientData);
+      const response = await axios.put(`${API_BASE_URL}/students/${id}`, patientData);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(
@@ -65,7 +65,7 @@ export const deletePatient = createAsyncThunk(
   'patients/deletePatient',
   async (id, { rejectWithValue }) => {
     try {
-      await axios.delete(`${API_BASE_URL}/patients/${id}`);
+      await axios.delete(`${API_BASE_URL}/students/${id}`);
       return id;
     } catch (error) {
       return rejectWithValue(

@@ -2,7 +2,7 @@ const BaseModel = require('./BaseModel');
 
 class Programme extends BaseModel {
   constructor() {
-    super('programmes');
+    super('kivi_programmes');
   }
 
   // Get programmes with filters

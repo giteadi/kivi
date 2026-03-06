@@ -9,7 +9,7 @@ export const fetchAppointments = createAsyncThunk(
   async (filters = {}, { rejectWithValue }) => {
     try {
       const queryParams = new URLSearchParams(filters);
-      const response = await axios.get(`${API_BASE_URL}/appointments?${queryParams}`);
+      const response = await axios.get(`${API_BASE_URL}/sessions?${queryParams}`);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(
@@ -23,7 +23,7 @@ export const fetchAppointment = createAsyncThunk(
   'appointments/fetchAppointment',
   async (id, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/appointments/${id}`);
+      const response = await axios.get(`${API_BASE_URL}/sessions/${id}`);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(
@@ -37,7 +37,7 @@ export const createAppointment = createAsyncThunk(
   'appointments/createAppointment',
   async (appointmentData, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/appointments`, appointmentData);
+      const response = await axios.post(`${API_BASE_URL}/sessions`, appointmentData);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(
@@ -51,7 +51,7 @@ export const updateAppointment = createAsyncThunk(
   'appointments/updateAppointment',
   async ({ id, appointmentData }, { rejectWithValue }) => {
     try {
-      const response = await axios.put(`${API_BASE_URL}/appointments/${id}`, appointmentData);
+      const response = await axios.put(`${API_BASE_URL}/sessions/${id}`, appointmentData);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(
@@ -65,7 +65,7 @@ export const deleteAppointment = createAsyncThunk(
   'appointments/deleteAppointment',
   async (id, { rejectWithValue }) => {
     try {
-      await axios.delete(`${API_BASE_URL}/appointments/${id}`);
+      await axios.delete(`${API_BASE_URL}/sessions/${id}`);
       return id;
     } catch (error) {
       return rejectWithValue(

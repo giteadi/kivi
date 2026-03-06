@@ -1,6 +1,8 @@
-class FinancialController {
+const BaseModel = require('../models/BaseModel');
+
+class FinancialController extends BaseModel {
   constructor() {
-    this.db = global.db;
+    super();
   }
 
   // Get clinic revenue
@@ -14,9 +16,9 @@ class FinancialController {
           SUM(br.amount) as total_revenue,
           COUNT(br.id) as total_transactions,
           AVG(br.amount) as avg_transaction
-        FROM billing_records br
-        JOIN appointments a ON br.appointment_id = a.id
-        JOIN clinics c ON a.clinic_id = c.id
+        FROM kivi_billing_records br
+        JOIN kivi_sessions a ON br.session_id = a.id
+        JOIN kivi_centres c ON a.centre_id = c.id
         WHERE 1=1
       `;
       const params = [];
@@ -61,19 +63,19 @@ class FinancialController {
       let sql = `
         SELECT 
           u.first_name, u.last_name,
-          d.specialty,
+          t.specialty,
           SUM(br.amount) as total_revenue,
           COUNT(br.id) as total_transactions
-        FROM billing_records br
-        JOIN appointments a ON br.appointment_id = a.id
-        JOIN doctors d ON a.doctor_id = d.id
-        JOIN users u ON d.user_id = u.id
+        FROM kivi_billing_records br
+        JOIN kivi_sessions a ON br.session_id = a.id
+        JOIN kivi_therapists t ON a.therapist_id = t.id
+        JOIN kivi_users u ON t.user_id = u.id
         WHERE 1=1
       `;
       const params = [];
 
       if (doctorId) {
-        sql += ' AND d.id = ?';
+        sql += ' AND t.id = ?';
         params.push(doctorId);
       }
 
@@ -113,8 +115,8 @@ class FinancialController {
           t.*,
           SUM(br.amount * t.rate / 100) as tax_amount,
           COUNT(br.id) as applicable_transactions
-        FROM taxes t
-        LEFT JOIN billing_records br ON 1=1
+        FROM kivi_taxes t
+        LEFT JOIN kivi_billing_records br ON 1=1
         WHERE t.status = 'active'
       `;
       const params = [];
@@ -154,25 +156,25 @@ class FinancialController {
       let sql = `
         SELECT 
           br.*,
-          p.first_name as patient_first_name, p.last_name as patient_last_name,
-          u.first_name as doctor_first_name, u.last_name as doctor_last_name,
-          a.appointment_date
-        FROM billing_records br
-        JOIN appointments a ON br.appointment_id = a.id
-        JOIN patients p ON a.patient_id = p.id
-        JOIN doctors d ON a.doctor_id = d.id
-        JOIN users u ON d.user_id = u.id
+          st.first_name as student_first_name, st.last_name as student_last_name,
+          u.first_name as therapist_first_name, u.last_name as therapist_last_name,
+          a.session_date
+        FROM kivi_billing_records br
+        JOIN kivi_sessions a ON br.session_id = a.id
+        JOIN kivi_students st ON a.student_id = st.id
+        JOIN kivi_therapists t ON a.therapist_id = t.id
+        JOIN kivi_users u ON t.user_id = u.id
         WHERE 1=1
       `;
       const params = [];
 
       if (patientId) {
-        sql += ' AND p.id = ?';
+        sql += ' AND st.id = ?';
         params.push(patientId);
       }
 
       if (doctorId) {
-        sql += ' AND d.id = ?';
+        sql += ' AND t.id = ?';
         params.push(doctorId);
       }
 

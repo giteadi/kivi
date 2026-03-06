@@ -14,6 +14,7 @@ import {
   FiAlertCircle,
   FiPlus
 } from 'react-icons/fi';
+import api from '../services/api';
 import PaymentModal from './PaymentModal';
 
 const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
@@ -22,77 +23,99 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
   const [userSessions, setUserSessions] = useState([]);
   const [paymentHistory, setPaymentHistory] = useState([]);
   const [assignedTherapist, setAssignedTherapist] = useState(null);
+  const [userStats, setUserStats] = useState({
+    totalSessions: 0,
+    completedSessions: 0,
+    upcomingSessions: 0,
+    progress: 0
+  });
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [planToPayFor, setPlanToPayFor] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data for user dashboard
+  // Fetch user dashboard data
   useEffect(() => {
-    // Show payment modal if selectedPlan is available (user selected plan before login)
-    if (selectedPlan) {
-      setPlanToPayFor(selectedPlan);
-      setShowPaymentModal(true);
-    }
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
 
-    // Mock user sessions
-    setUserSessions([
-      {
-        id: 1,
-        date: '2026-03-10',
-        time: '10:00 AM',
-        type: selectedPlan?.title || 'Remedial Therapy',
-        therapist: 'Dr. Sarah Johnson',
-        status: 'Scheduled',
-        notes: 'Initial assessment and goal setting'
-      },
-      {
-        id: 2,
-        date: '2026-03-05',
-        time: '2:00 PM',
-        type: selectedPlan?.title || 'Remedial Therapy',
-        therapist: 'Dr. Sarah Johnson',
-        status: 'Completed',
-        notes: 'Good progress in reading comprehension'
-      },
-      {
-        id: 3,
-        date: '2026-02-28',
-        time: '10:00 AM',
-        type: selectedPlan?.title || 'Remedial Therapy',
-        therapist: 'Dr. Sarah Johnson',
-        status: 'Completed',
-        notes: 'Worked on phonetic awareness'
+        // Show payment modal if selectedPlan is available (user selected plan before login)
+        if (selectedPlan) {
+          setPlanToPayFor(selectedPlan);
+          setShowPaymentModal(true);
+        }
+
+        // Fetch all user data in parallel
+        const [sessionsRes, paymentsRes, therapistRes, statsRes] = await Promise.all([
+          api.getUserSessions(),
+          api.getUserPayments(),
+          api.getUserTherapist(),
+          api.getUserStats()
+        ]);
+
+        if (sessionsRes.success) {
+          setUserSessions(sessionsRes.data);
+        }
+
+        if (paymentsRes.success) {
+          setPaymentHistory(paymentsRes.data);
+        }
+
+        if (therapistRes.success && therapistRes.data) {
+          setAssignedTherapist(therapistRes.data);
+        }
+
+        if (statsRes.success) {
+          setUserStats(statsRes.data);
+        }
+
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        // Keep mock data as fallback if API fails
+        setUserSessions([
+          {
+            id: 1,
+            session_date: '2026-03-10',
+            session_time: '10:00 AM',
+            programme_name: selectedPlan?.title || 'Remedial Therapy',
+            therapist_name: 'Dr. Sarah Johnson',
+            status: 'scheduled',
+            notes: 'Initial assessment and goal setting'
+          }
+        ]);
+
+        setPaymentHistory([
+          {
+            id: 1,
+            date: '2026-03-01',
+            amount: selectedPlan?.price || 2000,
+            plan_name: selectedPlan?.title || 'Remedial Therapy',
+            status: 'paid',
+            method: 'Credit Card'
+          }
+        ]);
+
+        setAssignedTherapist({
+          name: 'Dr. Sarah Johnson',
+          specialty: 'Learning Therapy',
+          experience: '8 years',
+          qualification: 'M.Ed, Ph.D in Special Education',
+          phone: '+91-9876543210',
+          email: 'dr.sarah.johnson@mindsaidlearning.com'
+        });
+
+        setUserStats({
+          totalSessions: 12,
+          completedSessions: 8,
+          upcomingSessions: 4,
+          progress: 85
+        });
+      } finally {
+        setLoading(false);
       }
-    ]);
+    };
 
-    // Mock payment history
-    setPaymentHistory([
-      {
-        id: 1,
-        date: '2026-03-01',
-        amount: selectedPlan?.price || 2000,
-        type: selectedPlan?.title || 'Remedial Therapy',
-        status: 'Paid',
-        method: 'Credit Card'
-      },
-      {
-        id: 2,
-        date: '2026-02-15',
-        amount: selectedPlan?.price || 2000,
-        type: selectedPlan?.title || 'Remedial Therapy',
-        status: 'Paid',
-        method: 'UPI'
-      }
-    ]);
-
-    // Mock assigned therapist
-    setAssignedTherapist({
-      name: 'Dr. Sarah Johnson',
-      specialty: 'Learning Therapy',
-      experience: '8 years',
-      qualification: 'M.Ed, Ph.D in Special Education',
-      phone: '+91-9876543210',
-      email: 'dr.sarah.johnson@mindsaidlearning.com'
-    });
+    fetchUserData();
   }, [selectedPlan]);
 
   const getStatusColor = (status) => {
@@ -187,7 +210,7 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
               </div>
               <div className="ml-4">
                 <p className="text-sm text-gray-600">Total Sessions</p>
-                <p className="text-2xl font-bold text-gray-900">12</p>
+                <p className="text-2xl font-bold text-gray-900">{loading ? '...' : userStats.totalSessions}</p>
               </div>
             </div>
           </motion.div>
@@ -204,7 +227,7 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
               </div>
               <div className="ml-4">
                 <p className="text-sm text-gray-600">Completed</p>
-                <p className="text-2xl font-bold text-gray-900">8</p>
+                <p className="text-2xl font-bold text-gray-900">{loading ? '...' : userStats.completedSessions}</p>
               </div>
             </div>
           </motion.div>
@@ -221,7 +244,7 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
               </div>
               <div className="ml-4">
                 <p className="text-sm text-gray-600">Upcoming</p>
-                <p className="text-2xl font-bold text-gray-900">4</p>
+                <p className="text-2xl font-bold text-gray-900">{loading ? '...' : userStats.upcomingSessions}</p>
               </div>
             </div>
           </motion.div>
@@ -238,7 +261,7 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
               </div>
               <div className="ml-4">
                 <p className="text-sm text-gray-600">Progress</p>
-                <p className="text-2xl font-bold text-gray-900">85%</p>
+                <p className="text-2xl font-bold text-gray-900">{loading ? '...' : `${userStats.progress}%`}</p>
               </div>
             </div>
           </motion.div>

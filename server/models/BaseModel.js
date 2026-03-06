@@ -1,7 +1,9 @@
+const { getDb } = require('../database');
+
 class BaseModel {
   constructor(tableName) {
     this.tableName = tableName;
-    this.db = global.db;
+    this.db = getDb();
   }
 
   // Execute query with promise

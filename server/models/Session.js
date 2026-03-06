@@ -2,17 +2,17 @@ const BaseModel = require('./BaseModel');
 
 class Session extends BaseModel {
   constructor() {
-    super('sessions');
+    super('kivi_sessions');
   }
 
   // Get sessions with related data
   async getSessions(filters = {}) {
     let conditions = `
-      LEFT JOIN students st ON s.student_id = st.id
-      LEFT JOIN therapists t ON s.therapist_id = t.id
-      LEFT JOIN users tu ON t.user_id = tu.id
-      LEFT JOIN centres c ON s.centre_id = c.id
-      LEFT JOIN programmes p ON s.programme_id = p.id
+      LEFT JOIN kivi_students st ON s.student_id = st.id
+      LEFT JOIN kivi_therapists t ON s.therapist_id = t.id
+      LEFT JOIN kivi_users tu ON t.user_id = tu.id
+      LEFT JOIN kivi_centres c ON s.centre_id = c.id
+      LEFT JOIN kivi_programmes p ON s.programme_id = p.id
       WHERE 1=1
     `;
     const params = [];
@@ -56,7 +56,7 @@ class Session extends BaseModel {
              t.specialty as therapist_specialty,
              c.name as centre_name,
              p.name as programme_name, p.fee as programme_fee
-      FROM sessions s ${conditions}
+      FROM kivi_sessions s ${conditions}
     `;
 
     return await this.query(sql, params);
@@ -65,9 +65,9 @@ class Session extends BaseModel {
   // Get upcoming sessions
   async getUpcomingSessions(limit = 5, filters = {}) {
     let conditions = `
-      LEFT JOIN students st ON s.student_id = st.id
-      LEFT JOIN therapists t ON s.therapist_id = t.id
-      LEFT JOIN users tu ON t.user_id = tu.id
+      LEFT JOIN kivi_students st ON s.student_id = st.id
+      LEFT JOIN kivi_therapists t ON s.therapist_id = t.id
+      LEFT JOIN kivi_users tu ON t.user_id = tu.id
       WHERE s.session_date >= CURDATE() AND s.status IN ('scheduled', 'confirmed', 'awaiting_confirmation')
     `;
     const params = [];
@@ -89,7 +89,7 @@ class Session extends BaseModel {
       SELECT s.*, 
              st.first_name as student_first_name, st.last_name as student_last_name,
              tu.first_name as therapist_first_name, tu.last_name as therapist_last_name
-      FROM sessions s ${conditions}
+      FROM kivi_sessions s ${conditions}
     `;
 
     return await this.query(sql, params);

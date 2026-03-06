@@ -2,7 +2,7 @@ const BaseModel = require('./BaseModel');
 
 class Centre extends BaseModel {
   constructor() {
-    super('centres');
+    super('kivi_centres');
   }
 
   // Get centres with stats
@@ -38,10 +38,10 @@ class Centre extends BaseModel {
              COUNT(DISTINCT t.id) as total_therapists,
              COUNT(DISTINCT s.id) as total_sessions,
              COUNT(DISTINCT st.id) as total_students
-      FROM centres c
-      LEFT JOIN therapists t ON c.id = t.centre_id
-      LEFT JOIN sessions s ON c.id = s.centre_id
-      LEFT JOIN students st ON s.student_id = st.id
+      FROM kivi_centres c
+      LEFT JOIN kivi_therapists t ON c.id = t.centre_id
+      LEFT JOIN kivi_sessions s ON c.id = s.centre_id
+      LEFT JOIN kivi_students st ON s.student_id = st.id
       WHERE c.id = ?
       GROUP BY c.id
     `;

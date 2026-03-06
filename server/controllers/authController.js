@@ -35,13 +35,6 @@ class AuthController {
         });
       }
 
-      if (!user.is_active) {
-        return res.status(401).json({
-          success: false,
-          message: 'Account is deactivated'
-        });
-      }
-
       // Remove password from response
       const { password: _, ...userWithoutPassword } = user;
 

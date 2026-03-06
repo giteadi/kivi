@@ -2,7 +2,7 @@ const BaseModel = require('./BaseModel');
 
 class Template extends BaseModel {
   constructor() {
-    super('encounter_templates');
+    super('kivi_encounter_templates');
   }
 
   // Get templates with filters

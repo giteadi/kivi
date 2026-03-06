@@ -2,7 +2,7 @@ const BaseModel = require('./BaseModel');
 
 class Patient extends BaseModel {
   constructor() {
-    super('students'); // Use students table for backward compatibility
+    super('kivi_students'); // Use students table for backward compatibility
   }
 
   // Get patients with filters (mapped to students)
@@ -35,7 +35,7 @@ class Patient extends BaseModel {
       }
 
       // Simple query first, then add centre names
-      const simpleSql = `SELECT * FROM students ${whereConditions}`;
+      const simpleSql = `SELECT * FROM kivi_students ${whereConditions}`;
       const students = await this.query(simpleSql, params);
       
       // Get centre names separately
@@ -43,7 +43,7 @@ class Patient extends BaseModel {
         let centreName = 'Unknown Centre';
         if (student.centre_id) {
           try {
-            const centreResult = await this.query('SELECT name FROM centres WHERE id = ?', [student.centre_id]);
+            const centreResult = await this.query('SELECT name FROM kivi_centres WHERE id = ?', [student.centre_id]);
             if (centreResult.length > 0) {
               centreName = centreResult[0].name;
             }
@@ -74,8 +74,8 @@ class Patient extends BaseModel {
       SELECT s.*, 
              COUNT(sess.id) as total_appointments, COUNT(sess.id) as total_sessions,
              MAX(sess.session_date) as last_appointment, MAX(sess.session_date) as last_session
-      FROM students s
-      LEFT JOIN sessions sess ON s.id = sess.student_id
+      FROM kivi_students s
+      LEFT JOIN kivi_sessions sess ON s.id = sess.student_id
       WHERE s.id = ?
       GROUP BY s.id
     `;

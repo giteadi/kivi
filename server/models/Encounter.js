@@ -2,17 +2,17 @@ const BaseModel = require('./BaseModel');
 
 class Encounter extends BaseModel {
   constructor() {
-    super('encounters');
+    super('kivi_encounters');
   }
 
   // Get encounters with related data (updated for new schema)
   async getEncounters(filters = {}) {
     let conditions = `
-      LEFT JOIN students s ON e.student_id = s.id
-      LEFT JOIN therapists t ON e.therapist_id = t.id
-      LEFT JOIN users tu ON t.user_id = tu.id
-      LEFT JOIN centres c ON e.centre_id = c.id
-      LEFT JOIN sessions sess ON e.session_id = sess.id
+      LEFT JOIN kivi_students s ON e.student_id = s.id
+      LEFT JOIN kivi_therapists t ON e.therapist_id = t.id
+      LEFT JOIN kivi_users tu ON t.user_id = tu.id
+      LEFT JOIN kivi_centres c ON e.centre_id = c.id
+      LEFT JOIN kivi_sessions sess ON e.session_id = sess.id
       WHERE 1=1
     `;
     const params = [];
@@ -52,7 +52,7 @@ class Encounter extends BaseModel {
              tu.first_name as therapist_first_name, tu.last_name as therapist_last_name,
              c.name as clinic_name, c.name as centre_name,
              sess.session_date as appointment_date, sess.session_date
-      FROM encounters e ${conditions}
+      FROM kivi_encounters e ${conditions}
     `;
 
     return await this.query(sql, params);
@@ -69,11 +69,11 @@ class Encounter extends BaseModel {
              tu.first_name as therapist_first_name, tu.last_name as therapist_last_name,
              t.specialty as doctor_specialty, t.specialty as therapist_specialty,
              sess.session_date as appointment_date, sess.session_date
-      FROM encounters e
-      LEFT JOIN students s ON e.student_id = s.id
-      LEFT JOIN therapists t ON e.therapist_id = t.id
-      LEFT JOIN users tu ON t.user_id = tu.id
-      LEFT JOIN sessions sess ON e.session_id = sess.id
+      FROM kivi_encounters e
+      LEFT JOIN kivi_students s ON e.student_id = s.id
+      LEFT JOIN kivi_therapists t ON e.therapist_id = t.id
+      LEFT JOIN kivi_users tu ON t.user_id = tu.id
+      LEFT JOIN kivi_sessions sess ON e.session_id = sess.id
       WHERE e.id = ?
     `;
     const results = await this.query(sql, [id]);

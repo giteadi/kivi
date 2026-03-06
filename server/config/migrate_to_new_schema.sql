@@ -23,22 +23,22 @@ USE kivi;
 SHOW TABLES;
 
 -- Verify key tables structure
-DESCRIBE users;
-DESCRIBE centres;
-DESCRIBE therapists;
-DESCRIBE students;
-DESCRIBE programmes;
-DESCRIBE sessions;
-DESCRIBE encounters;
+DESCRIBE kivi_users;
+DESCRIBE kivi_centres;
+DESCRIBE kivi_therapists;
+DESCRIBE kivi_students;
+DESCRIBE kivi_programmes;
+DESCRIBE kivi_sessions;
+DESCRIBE kivi_encounters;
 
 -- Check if sample data was inserted
-SELECT COUNT(*) as total_centres FROM centres;
-SELECT COUNT(*) as total_programmes FROM programmes;
-SELECT COUNT(*) as total_templates FROM encounter_templates;
-SELECT COUNT(*) as total_users FROM users;
+SELECT COUNT(*) as total_centres FROM kivi_centres;
+SELECT COUNT(*) as total_programmes FROM kivi_programmes;
+SELECT COUNT(*) as total_templates FROM kivi_encounter_templates;
+SELECT COUNT(*) as total_users FROM kivi_users;
 
 -- Display sample data
-SELECT id, name, city, status FROM centres;
-SELECT id, name, category, fee FROM programmes;
-SELECT id, name, template_type FROM encounter_templates;
-SELECT id, email, role, first_name, last_name FROM users;
+SELECT id, name, city, status FROM kivi_centres;
+SELECT id, name, category, fee FROM kivi_programmes;
+SELECT id, name, template_type FROM kivi_encounter_templates;
+SELECT id, email, role, first_name, last_name FROM kivi_users;

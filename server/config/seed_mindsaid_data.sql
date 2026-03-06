@@ -2,29 +2,29 @@
 USE kivi;
 
 -- Clear existing data (except system data)
-DELETE FROM communications WHERE id > 0;
-DELETE FROM student_progress WHERE id > 0;
-DELETE FROM billing_records WHERE id > 0;
-DELETE FROM encounters WHERE id > 0;
-DELETE FROM sessions WHERE id > 0;
-DELETE FROM students WHERE id > 0;
-DELETE FROM therapists WHERE id > 0;
-DELETE FROM staff WHERE id > 0;
-DELETE FROM programmes WHERE id > 8; -- Keep the initial programmes
-DELETE FROM centres WHERE id > 4; -- Keep the initial centres
-DELETE FROM users WHERE id > 1; -- Keep the admin user
+DELETE FROM kivi_communications WHERE id > 0;
+DELETE FROM kivi_student_progress WHERE id > 0;
+DELETE FROM kivi_billing_records WHERE id > 0;
+DELETE FROM kivi_encounters WHERE id > 0;
+DELETE FROM kivi_sessions WHERE id > 0;
+DELETE FROM kivi_students WHERE id > 0;
+DELETE FROM kivi_therapists WHERE id > 0;
+DELETE FROM kivi_staff WHERE id > 0;
+DELETE FROM kivi_programmes WHERE id > 8; -- Keep the initial programmes
+DELETE FROM kivi_centres WHERE id > 4; -- Keep the initial centres
+DELETE FROM kivi_users WHERE id > 1; -- Keep the admin user
 
 -- Reset auto increment
-ALTER TABLE users AUTO_INCREMENT = 2;
-ALTER TABLE centres AUTO_INCREMENT = 5;
-ALTER TABLE therapists AUTO_INCREMENT = 1;
-ALTER TABLE students AUTO_INCREMENT = 1;
-ALTER TABLE staff AUTO_INCREMENT = 1;
-ALTER TABLE sessions AUTO_INCREMENT = 1;
-ALTER TABLE encounters AUTO_INCREMENT = 1;
+ALTER TABLE kivi_users AUTO_INCREMENT = 2;
+ALTER TABLE kivi_centres AUTO_INCREMENT = 5;
+ALTER TABLE kivi_therapists AUTO_INCREMENT = 1;
+ALTER TABLE kivi_students AUTO_INCREMENT = 1;
+ALTER TABLE kivi_staff AUTO_INCREMENT = 1;
+ALTER TABLE kivi_sessions AUTO_INCREMENT = 1;
+ALTER TABLE kivi_encounters AUTO_INCREMENT = 1;
 
 -- Insert additional admin users
-INSERT INTO users (email, password, role, first_name, last_name, phone) VALUES
+INSERT INTO kivi_users (email, password, role, first_name, last_name, phone) VALUES
 -- Additional Admin Users
 ('admin2@mindsaidlearning.com', 'admin123', 'admin', 'John', 'Admin', '+1-555-0011'),
 ('superadmin@mindsaidlearning.com', 'super123', 'admin', 'Super', 'Administrator', '+1-555-0012'),
@@ -52,7 +52,7 @@ INSERT INTO users (email, password, role, first_name, last_name, phone) VALUES
 ('parent.patricia.wilson@gmail.com', 'parent123', 'parent', 'Patricia', 'Wilson', '+1-555-0304');
 
 -- Insert therapists
-INSERT INTO therapists (user_id, centre_id, employee_id, specialty, qualification, license_number, experience_years, session_fee, bio, date_of_birth, gender, address, city, state, zip_code, emergency_contact_name, emergency_contact_phone, joining_date, availability, certifications, languages, status) VALUES
+INSERT INTO kivi_therapists (user_id, centre_id, employee_id, specialty, qualification, license_number, experience_years, session_fee, bio, date_of_birth, gender, address, city, state, zip_code, emergency_contact_name, emergency_contact_phone, joining_date, availability, certifications, languages, status) VALUES
 
 (2, 1, 'TH001', 'Learning Therapy', 'M.Ed in Special Education, Ph.D in Educational Psychology', 'LT-2020-001', 8, 150.00, 'Specialized in learning disabilities and cognitive behavioral therapy for children and adolescents. Experienced in working with ADHD, dyslexia, and autism spectrum disorders.', '1985-03-15', 'female', '123 Therapist Lane, New York', 'New York', 'NY', '10001', 'Emergency Contact', '+1-555-9001', '2020-01-15', '{"monday": ["09:00-17:00"], "tuesday": ["09:00-17:00"], "wednesday": ["09:00-17:00"], "thursday": ["09:00-17:00"], "friday": ["09:00-15:00"]}', '["Certified Learning Therapist", "ADHD Specialist", "Autism Spectrum Specialist"]', '["English", "Spanish"]', 'active'),
 
@@ -71,7 +71,7 @@ INSERT INTO therapists (user_id, centre_id, employee_id, specialty, qualificatio
 (9, 4, 'TH008', 'Child Development', 'M.S. in Child Development', 'CD-2021-008', 3, 145.00, 'Child development specialist with expertise in early childhood development, developmental assessments, and intervention planning for young children.', '1992-01-10', 'male', '258 Development St, Chicago', 'Chicago', 'IL', '60602', 'Emergency Contact', '+1-555-9008', '2021-01-25', '{"monday": ["09:00-17:00"], "tuesday": ["09:00-17:00"], "wednesday": ["09:00-17:00"], "thursday": ["09:00-17:00"], "friday": ["09:00-15:00"]}', '["Child Development Specialist", "Early Intervention Certified"]', '["English", "German"]', 'active');
 
 -- Insert staff members
-INSERT INTO staff (user_id, centre_id, employee_id, department, position, shift, salary, date_of_birth, gender, address, city, state, zip_code, emergency_contact_name, emergency_contact_phone, joining_date, permissions, status) VALUES
+INSERT INTO kivi_staff (user_id, centre_id, employee_id, department, position, shift, salary, date_of_birth, gender, address, city, state, zip_code, emergency_contact_name, emergency_contact_phone, joining_date, permissions, status) VALUES
 
 (10, 1, 'ST001', 'Front Desk', 'Receptionist', 'full_day', 35000.00, '1990-06-15', 'female', '111 Staff St, New York', 'New York', 'NY', '10001', 'Emergency Contact', '+1-555-8001', '2020-03-01', '["schedule_sessions", "view_students", "manage_billing"]', 'active'),
 
@@ -82,7 +82,7 @@ INSERT INTO staff (user_id, centre_id, employee_id, department, position, shift,
 (13, 4, 'ST004', 'Billing', 'Billing Specialist', 'morning', 42000.00, '1987-03-28', 'male', '444 Billing Dr, Chicago', 'Chicago', 'IL', '60601', 'Emergency Contact', '+1-555-8004', '2020-08-10', '["manage_billing", "process_payments", "generate_invoices"]', 'active');
 
 -- Insert students
-INSERT INTO students (student_id, first_name, last_name, email, phone, date_of_birth, age, gender, address, city, state, zip_code, centre_id, emergency_contact_name, emergency_contact_phone, emergency_contact_relation, learning_needs, support_requirements, current_programmes, learning_goals, parent_guardian_name, parent_guardian_phone, parent_guardian_email, parent_guardian_relation, registration_date, status) VALUES
+INSERT INTO kivi_students (student_id, first_name, last_name, email, phone, date_of_birth, age, gender, address, city, state, zip_code, centre_id, emergency_contact_name, emergency_contact_phone, emergency_contact_relation, learning_needs, support_requirements, current_programmes, learning_goals, parent_guardian_name, parent_guardian_phone, parent_guardian_email, parent_guardian_relation, registration_date, status) VALUES
 
 ('ST001', 'Emma', 'Thompson', 'kjaggi+student1@kivicare.com', '+1-555-7001', '2010-03-15', 14, 'female', '100 Student Lane, New York', 'New York', 'NY', '10001', 1, 'Sarah Thompson', '+1-555-7101', 'Mother', 'Reading comprehension difficulties, attention challenges', 'Individual attention, visual learning aids, frequent breaks', '["Learning Support Session", "Behavioral Assessment"]', 'Improve reading fluency and attention span', 'Sarah Thompson', '+1-555-7101', 'sarah.thompson@email.com', 'Mother', '2023-01-15', 'active'),
 
@@ -105,7 +105,7 @@ INSERT INTO students (student_id, first_name, last_name, email, phone, date_of_b
 ('ST010', 'Mason', 'Garcia', 'kjaggi+student10@kivicare.com', '+1-555-7010', '2012-06-05', 12, 'male', '1000 Therapy Lane, Los Angeles', 'Los Angeles', 'CA', '90212', 2, 'Rosa Garcia', '+1-555-7110', 'Mother', 'Language delays, bilingual language development', 'Speech therapy, bilingual support', '["Speech Therapy"]', 'Develop language skills in both English and Spanish', 'Rosa Garcia', '+1-555-7110', 'rosa.garcia@email.com', 'Mother', '2023-04-01', 'active');
 
 -- Insert sample sessions
-INSERT INTO sessions (session_id, student_id, therapist_id, centre_id, programme_id, session_date, session_time, duration, session_type, status, notes, session_goals, room_number) VALUES
+INSERT INTO kivi_sessions (session_id, student_id, therapist_id, centre_id, programme_id, session_date, session_time, duration, session_type, status, notes, session_goals, room_number) VALUES
 
 ('SES001', 1, 1, 1, 1, '2024-03-05', '09:00:00', 30, 'individual', 'scheduled', 'First session focusing on reading assessment', 'Assess current reading level and identify specific challenges', 'Room 101'),
 ('SES002', 2, 1, 1, 1, '2024-03-05', '10:00:00', 30, 'individual', 'scheduled', 'Math anxiety intervention session', 'Introduce relaxation techniques for math tasks', 'Room 101'),
@@ -119,7 +119,7 @@ INSERT INTO sessions (session_id, student_id, therapist_id, centre_id, programme
 ('SES010', 10, 3, 2, 3, '2024-03-07', '14:00:00', 30, 'individual', 'scheduled', 'Bilingual speech therapy', 'Work on English and Spanish language skills', 'Room 203');
 
 -- Insert sample encounters (session reports)
-INSERT INTO encounters (encounter_id, session_id, student_id, therapist_id, centre_id, template_id, encounter_date, encounter_time, encounter_type, session_goals, activities_conducted, student_response, progress_notes, recommendations, next_session_plan, completion_percentage, status) VALUES
+INSERT INTO kivi_encounters (encounter_id, session_id, student_id, therapist_id, centre_id, template_id, encounter_date, encounter_time, encounter_type, session_goals, activities_conducted, student_response, progress_notes, recommendations, next_session_plan, completion_percentage, status) VALUES
 
 ('ENC001', 1, 1, 1, 1, 1, '2024-03-05', '09:00:00', 'session_report', 'Assess current reading level and identify specific challenges', 'Reading assessment using standardized tools, phonics evaluation, comprehension tasks', 'Student showed good effort but struggled with multi-syllabic words and reading comprehension', 'Reading level assessed at grade 4.2, needs support with decoding strategies and comprehension skills', 'Continue with phonics-based interventions, introduce graphic organizers for comprehension', 'Focus on consonant blends and sight word recognition', 100, 'completed'),
 
@@ -128,7 +128,7 @@ INSERT INTO encounters (encounter_id, session_id, student_id, therapist_id, cent
 ('ENC003', 6, 6, 6, 3, 1, '2024-03-06', '10:30:00', 'session_report', 'Work on communication and social skills', 'Social stories, role-playing activities, communication board practice', 'Student engaged well with visual supports, showed improvement in requesting help', 'Better use of communication strategies, increased eye contact during interactions', 'Expand vocabulary on communication board, practice social greetings', 'Focus on peer interaction skills and turn-taking', 100, 'completed');
 
 -- Insert sample billing records
-INSERT INTO billing_records (invoice_number, student_id, therapist_id, centre_id, session_id, programme_ids, subtotal, tax_amount, total_amount, payment_status, due_date) VALUES
+INSERT INTO kivi_billing_records (invoice_number, student_id, therapist_id, centre_id, session_id, programme_ids, subtotal, tax_amount, total_amount, payment_status, due_date) VALUES
 
 ('INV-2024-001', 1, 1, 1, 1, '[1]', 150.00, 27.00, 177.00, 'pending', '2024-03-20'),
 ('INV-2024-002', 3, 3, 2, 3, '[3]', 100.00, 18.00, 118.00, 'paid', '2024-03-20'),
@@ -136,7 +136,7 @@ INSERT INTO billing_records (invoice_number, student_id, therapist_id, centre_id
 ('INV-2024-004', 7, 7, 4, 7, '[6]', 200.00, 36.00, 236.00, 'pending', '2024-03-21');
 
 -- Insert sample student progress records
-INSERT INTO student_progress (student_id, therapist_id, programme_id, assessment_date, progress_type, learning_goals_met, skill_improvements, behavioral_changes, academic_progress, attention_rating, participation_rating, cooperation_rating, progress_rating, recommendations, next_goals) VALUES
+INSERT INTO kivi_student_progress (student_id, therapist_id, programme_id, assessment_date, progress_type, learning_goals_met, skill_improvements, behavioral_changes, academic_progress, attention_rating, participation_rating, cooperation_rating, progress_rating, recommendations, next_goals) VALUES
 
 (1, 1, 1, '2024-03-01', 'monthly', '["Phonics awareness: 75%", "Reading fluency: 60%", "Comprehension: 50%"]', '{"decoding": "improved", "sight_words": "significant_improvement", "comprehension": "needs_work"}', 'Increased confidence in reading tasks, less avoidance behavior', 'Reading level improved from 3.8 to 4.2 grade equivalent', 7, 8, 9, 7, 'Continue phonics-based approach, add more comprehension strategies', 'Achieve 80% accuracy in phonics tasks, improve reading comprehension to grade level'),
 
@@ -145,7 +145,7 @@ INSERT INTO student_progress (student_id, therapist_id, programme_id, assessment
 (6, 6, 1, '2024-03-01', 'monthly', '["Communication requests: 80%", "Social greetings: 60%", "Turn-taking: 50%"]', '{"communication": "significant_improvement", "social_skills": "progressing", "attention": "improved"}', 'Decreased challenging behaviors, increased appropriate communication', 'Better engagement in learning activities, following 2-step instructions', 6, 7, 8, 7, 'Expand communication opportunities, work on peer interactions', 'Increase spontaneous communication, improve peer social skills');
 
 -- Insert sample communications
-INSERT INTO communications (student_id, sender_id, receiver_id, communication_type, subject, message, priority, is_read, response_required) VALUES
+INSERT INTO kivi_communications (student_id, sender_id, receiver_id, communication_type, subject, message, priority, is_read, response_required) VALUES
 
 (1, 1, 14, 'email', 'Emma Thompson - Weekly Progress Update', 'Emma has shown great improvement in her reading skills this week. She is becoming more confident with phonics and is starting to tackle longer words. Please continue practicing sight words at home.', 'medium', FALSE, FALSE),
 
@@ -154,15 +154,15 @@ INSERT INTO communications (student_id, sender_id, receiver_id, communication_ty
 (6, 6, 16, 'email', 'Ethan Davis - Behavioral Strategies Update', 'Ethan responded very well to the new visual schedule we implemented. His communication attempts have increased significantly. I recommend continuing with the same strategies at home and school.', 'high', FALSE, TRUE);
 
 -- Update system settings with current data
-UPDATE system_settings SET setting_value = '15' WHERE setting_key = 'default_session_duration';
-UPDATE system_settings SET setting_value = 'KiviCare - Educational Therapy Management' WHERE setting_key = 'system_name';
+UPDATE kivi_system_settings SET setting_value = '15' WHERE setting_key = 'default_session_duration';
+UPDATE kivi_system_settings SET setting_value = 'KiviCare - Educational Therapy Management' WHERE setting_key = 'system_name';
 
 -- Verify data insertion
 SELECT 'Data insertion completed successfully' as status;
-SELECT COUNT(*) as total_users FROM users;
-SELECT COUNT(*) as total_therapists FROM therapists;
-SELECT COUNT(*) as total_students FROM students;
-SELECT COUNT(*) as total_staff FROM staff;
-SELECT COUNT(*) as total_sessions FROM sessions;
-SELECT COUNT(*) as total_encounters FROM encounters;
-SELECT COUNT(*) as total_billing_records FROM billing_records;
+SELECT COUNT(*) as total_users FROM kivi_users;
+SELECT COUNT(*) as total_therapists FROM kivi_therapists;
+SELECT COUNT(*) as total_students FROM kivi_students;
+SELECT COUNT(*) as total_staff FROM kivi_staff;
+SELECT COUNT(*) as total_sessions FROM kivi_sessions;
+SELECT COUNT(*) as total_encounters FROM kivi_encounters;
+SELECT COUNT(*) as total_billing_records FROM kivi_billing_records;

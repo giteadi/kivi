@@ -8,7 +8,7 @@ export const fetchDoctors = createAsyncThunk(
   async (filters = {}, { rejectWithValue }) => {
     try {
       const queryParams = new URLSearchParams(filters);
-      const response = await axios.get(`${API_BASE_URL}/doctors?${queryParams}`);
+      const response = await axios.get(`${API_BASE_URL}/therapists?${queryParams}`);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch doctors');

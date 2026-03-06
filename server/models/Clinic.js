@@ -2,7 +2,7 @@ const BaseModel = require('./BaseModel');
 
 class Clinic extends BaseModel {
   constructor() {
-    super('centres'); // Use centres table for backward compatibility
+    super('kivi_centres'); // Use centres table for backward compatibility
   }
 
   // Get clinics with stats (mapped to centres)
@@ -43,10 +43,10 @@ class Clinic extends BaseModel {
              COUNT(DISTINCT t.id) as total_doctors, COUNT(DISTINCT t.id) as total_therapists,
              COUNT(DISTINCT s.id) as total_appointments, COUNT(DISTINCT s.id) as total_sessions,
              COUNT(DISTINCT st.id) as total_patients, COUNT(DISTINCT st.id) as total_students
-      FROM centres c
-      LEFT JOIN therapists t ON c.id = t.centre_id
-      LEFT JOIN sessions s ON c.id = s.centre_id
-      LEFT JOIN students st ON s.student_id = st.id
+      FROM kivi_centres c
+      LEFT JOIN kivi_therapists t ON c.id = t.centre_id
+      LEFT JOIN kivi_sessions s ON c.id = s.centre_id
+      LEFT JOIN kivi_students st ON s.student_id = st.id
       WHERE c.id = ?
       GROUP BY c.id
     `;

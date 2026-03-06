@@ -2,7 +2,7 @@ const BaseModel = require('./BaseModel');
 
 class Student extends BaseModel {
   constructor() {
-    super('students');
+    super('kivi_students');
   }
 
   // Get students with filters
@@ -40,9 +40,9 @@ class Student extends BaseModel {
           SELECT s.*, 
                  c.name as centre_name,
                  MAX(sess.session_date) as last_session
-          FROM students s
-          LEFT JOIN centres c ON s.centre_id = c.id
-          LEFT JOIN sessions sess ON s.id = sess.student_id
+          FROM kivi_students s
+          LEFT JOIN kivi_centres c ON s.centre_id = c.id
+          LEFT JOIN kivi_sessions sess ON s.id = sess.student_id
           ${whereConditions}
           GROUP BY s.id, c.name
         `;
@@ -51,7 +51,7 @@ class Student extends BaseModel {
         console.log('JOIN query failed, falling back to simple query:', joinError.message);
         
         // Fallback to simple query
-        const simpleSql = `SELECT * FROM students ${whereConditions}`;
+        const simpleSql = `SELECT * FROM kivi_students ${whereConditions}`;
         const students = await this.query(simpleSql, params);
         
         // Add default centre_name for compatibility
@@ -73,8 +73,8 @@ class Student extends BaseModel {
       SELECT s.*, 
              COUNT(sess.id) as total_sessions,
              MAX(sess.session_date) as last_session
-      FROM students s
-      LEFT JOIN sessions sess ON s.id = sess.student_id
+      FROM kivi_students s
+      LEFT JOIN kivi_sessions sess ON s.id = sess.student_id
       WHERE s.id = ?
       GROUP BY s.id
     `;

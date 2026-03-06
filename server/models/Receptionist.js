@@ -2,14 +2,14 @@ const BaseModel = require('./BaseModel');
 
 class Receptionist extends BaseModel {
   constructor() {
-    super('receptionists');
+    super('kivi_staff');
   }
 
   // Get receptionists with user info
   async getReceptionists(filters = {}) {
     let conditions = `
-      LEFT JOIN users u ON r.user_id = u.id
-      LEFT JOIN clinics c ON r.clinic_id = c.id
+      LEFT JOIN kivi_users u ON r.user_id = u.id
+      LEFT JOIN kivi_centres c ON r.centre_id = c.id
       WHERE 1=1
     `;
     const params = [];
@@ -20,9 +20,9 @@ class Receptionist extends BaseModel {
       params.push(searchTerm, searchTerm, searchTerm);
     }
 
-    if (filters.clinicId) {
-      conditions += ' AND r.clinic_id = ?';
-      params.push(filters.clinicId);
+    if (filters.clinicId || filters.centreId) {
+      conditions += ' AND r.centre_id = ?';
+      params.push(filters.clinicId || filters.centreId);
     }
 
     if (filters.status) {
@@ -35,8 +35,8 @@ class Receptionist extends BaseModel {
     const sql = `
       SELECT r.*, 
              u.first_name, u.last_name, u.email, u.phone,
-             c.name as clinic_name
-      FROM receptionists r ${conditions}
+             c.name as clinic_name, c.name as centre_name
+      FROM kivi_staff r ${conditions}
     `;
 
     return await this.query(sql, params);

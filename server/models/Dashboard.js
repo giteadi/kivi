@@ -2,7 +2,7 @@ const BaseModel = require('./BaseModel');
 
 class Dashboard extends BaseModel {
   constructor() {
-    super('sessions'); // Base table for dashboard stats
+    super();
   }
 
   async getDashboardStats(filters = {}) {
@@ -36,7 +36,7 @@ class Dashboard extends BaseModel {
     // Total Sessions
     const sessionCount = await this.query(`
       SELECT COUNT(*) as total 
-      FROM sessions s 
+      FROM kivi_sessions s 
       WHERE 1=1 ${dateCondition} ${centreCondition} ${therapistCondition}
     `, params);
     stats.totalSessions = sessionCount[0].total;
@@ -44,8 +44,8 @@ class Dashboard extends BaseModel {
     // Total Students
     const studentCount = await this.query(`
       SELECT COUNT(DISTINCT st.id) as total 
-      FROM students st 
-      LEFT JOIN sessions s ON st.id = s.student_id 
+      FROM kivi_students st 
+      LEFT JOIN kivi_sessions s ON st.id = s.student_id 
       WHERE st.status = 'active' ${dateCondition} ${centreCondition} ${therapistCondition}
     `, params);
     stats.totalStudents = studentCount[0].total;
@@ -53,7 +53,7 @@ class Dashboard extends BaseModel {
     // Total Centres
     const centreCount = await this.query(`
       SELECT COUNT(*) as total 
-      FROM centres 
+      FROM kivi_centres 
       WHERE status = 'active'
     `);
     stats.totalCentres = centreCount[0].total;
@@ -61,8 +61,8 @@ class Dashboard extends BaseModel {
     // Total Therapists
     const therapistCount = await this.query(`
       SELECT COUNT(DISTINCT t.id) as total 
-      FROM therapists t 
-      LEFT JOIN sessions s ON t.id = s.therapist_id 
+      FROM kivi_therapists t 
+      LEFT JOIN kivi_sessions s ON t.id = s.therapist_id 
       WHERE t.status = 'active' ${dateCondition} ${centreCondition} ${therapistCondition}
     `, params);
     stats.totalTherapists = therapistCount[0].total;
@@ -70,7 +70,7 @@ class Dashboard extends BaseModel {
     // Active Programmes
     const programmeCount = await this.query(`
       SELECT COUNT(*) as total 
-      FROM programmes 
+      FROM kivi_programmes 
       WHERE status = 'active'
     `);
     stats.activeProgrammes = programmeCount[0].total;
@@ -78,8 +78,8 @@ class Dashboard extends BaseModel {
     // Total Revenue
     const revenueQuery = await this.query(`
       SELECT COALESCE(SUM(br.total_amount), 0) as total 
-      FROM billing_records br 
-      LEFT JOIN sessions s ON br.session_id = s.id 
+      FROM kivi_billing_records br 
+      LEFT JOIN kivi_sessions s ON br.session_id = s.id 
       WHERE br.payment_status IN ('paid', 'partial') ${dateCondition} ${centreCondition} ${therapistCondition}
     `, params);
     stats.totalRevenue = revenueQuery[0].total;
@@ -116,12 +116,12 @@ class Dashboard extends BaseModel {
         CONCAT(u.first_name, ' ', u.last_name) as therapist_name,
         c.name as centre_name,
         p.name as programme_name
-      FROM sessions s
-      LEFT JOIN students st ON s.student_id = st.id
-      LEFT JOIN therapists t ON s.therapist_id = t.id
-      LEFT JOIN users u ON t.user_id = u.id
-      LEFT JOIN centres c ON s.centre_id = c.id
-      LEFT JOIN programmes p ON s.programme_id = p.id
+      FROM kivi_sessions s
+      LEFT JOIN kivi_students st ON s.student_id = st.id
+      LEFT JOIN kivi_therapists t ON s.therapist_id = t.id
+      LEFT JOIN kivi_users u ON t.user_id = u.id
+      LEFT JOIN kivi_centres c ON s.centre_id = c.id
+      LEFT JOIN kivi_programmes p ON s.programme_id = p.id
       WHERE s.session_date >= CURDATE() 
         AND s.status IN ('scheduled', 'confirmed', 'awaiting_confirmation')
         ${centreCondition} ${therapistCondition}
@@ -158,11 +158,11 @@ class Dashboard extends BaseModel {
         c.name as centre_name,
         COUNT(s.id) as session_count,
         COALESCE(SUM(br.total_amount), 0) as total_revenue
-      FROM therapists t
-      LEFT JOIN users u ON t.user_id = u.id
-      LEFT JOIN centres c ON t.centre_id = c.id
-      LEFT JOIN sessions s ON t.id = s.therapist_id ${dateCondition} ${centreCondition}
-      LEFT JOIN billing_records br ON s.id = br.session_id AND br.payment_status = 'paid'
+      FROM kivi_therapists t
+      LEFT JOIN kivi_users u ON t.user_id = u.id
+      LEFT JOIN kivi_centres c ON t.centre_id = c.id
+      LEFT JOIN kivi_sessions s ON t.id = s.therapist_id ${dateCondition} ${centreCondition}
+      LEFT JOIN kivi_billing_records br ON s.id = br.session_id AND br.payment_status = 'paid'
       WHERE t.status = 'active'
       GROUP BY t.id, u.first_name, u.last_name, c.name
       ORDER BY session_count DESC, total_revenue DESC
@@ -199,7 +199,7 @@ class Dashboard extends BaseModel {
       SELECT 
         status,
         COUNT(*) as count
-      FROM sessions
+      FROM kivi_sessions
       WHERE 1=1 ${dateCondition} ${centreCondition} ${therapistCondition}
       GROUP BY status
       ORDER BY count DESC

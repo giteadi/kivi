@@ -1,4 +1,4 @@
-# 🎓 MindSaid Learning - Complete Educational Therapy Management System
+# 🎓 Kivi - Complete Educational Therapy Management System
 
 A comprehensive educational therapy management system built with **React**, **Redux Toolkit**, **Node.js**, **Express**, and **MySQL2**.
 
@@ -75,7 +75,7 @@ A comprehensive educational therapy management system built with **React**, **Re
 ### **1. Clone Repository**
 ```bash
 git clone <repository-url>
-cd mindsaid-learning
+cd kivi
 ```
 
 ### **2. Backend Setup**
@@ -87,7 +87,7 @@ npm install
 
 # Configure environment variables
 # Update .env file with your MySQL credentials:
-DATABASE=mindsaid_learning
+DATABASE=kivi
 HOST=localhost
 DB_USER=root
 PASSWORD=your_mysql_password
@@ -98,7 +98,7 @@ npm run dev
 ```
 
 The server will:
-- ✅ Automatically create the `mindsaid_learning` database
+- ✅ Automatically create the `kivi` database
 - ✅ Create all required tables with relationships
 - ✅ Insert sample data
 - ✅ Start on port 3005
@@ -119,14 +119,14 @@ The frontend will start on port 5173.
 ## 🔑 **Default Login Credentials**
 
 ```
-Email: admin@mindsaidlearning.com
+Email: admin@kivi.com
 Password: admin123
 ```
 
 ## 📁 **Project Structure**
 
 ```
-mindsaid-learning/
+kivi/
 ├── client/                     # React Frontend
 │   ├── src/
 │   │   ├── components/         # React Components
@@ -171,8 +171,8 @@ mindsaid-learning/
 - `GET|POST|PUT|DELETE /api/sessions` - Sessions management
 - `GET|POST|PUT|DELETE /api/students` - Students management
 - `GET|POST|PUT|DELETE /api/therapists` - Therapists management
-- `GET|POST|PUT|DELETE /api/centers` - Centers management
-- `GET|POST|PUT|DELETE /api/services` - Services management
+- `GET|POST|PUT|DELETE /api/centres` - Centers management
+- `GET|POST|PUT|DELETE /api/programmes` - Services management
 - `GET|POST|PUT|DELETE /api/encounters` - Sessions management
 
 ## 🎯 **Key Features Implemented**

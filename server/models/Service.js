@@ -2,7 +2,7 @@ const BaseModel = require('./BaseModel');
 
 class Service extends BaseModel {
   constructor() {
-    super('programmes'); // Use programmes table for backward compatibility
+    super('kivi_programmes'); // Use programmes table for backward compatibility
   }
 
   // Get services with filters (mapped to programmes)

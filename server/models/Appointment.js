@@ -2,17 +2,17 @@ const BaseModel = require('./BaseModel');
 
 class Appointment extends BaseModel {
   constructor() {
-    super('sessions'); // Use sessions table for backward compatibility
+    super('kivi_sessions'); // Use sessions table for backward compatibility
   }
 
   // Get appointments with related data (mapped to sessions)
   async getAppointments(filters = {}) {
     let conditions = `
-      LEFT JOIN students st ON s.student_id = st.id
-      LEFT JOIN therapists t ON s.therapist_id = t.id
-      LEFT JOIN users tu ON t.user_id = tu.id
-      LEFT JOIN centres c ON s.centre_id = c.id
-      LEFT JOIN programmes p ON s.programme_id = p.id
+      LEFT JOIN kivi_students st ON s.student_id = st.id
+      LEFT JOIN kivi_therapists t ON s.therapist_id = t.id
+      LEFT JOIN kivi_users tu ON t.user_id = tu.id
+      LEFT JOIN kivi_centres c ON s.centre_id = c.id
+      LEFT JOIN kivi_programmes p ON s.programme_id = p.id
       WHERE 1=1
     `;
     const params = [];
@@ -58,7 +58,7 @@ class Appointment extends BaseModel {
              t.specialty as doctor_specialty,
              c.name as clinic_name, c.name as centre_name,
              p.name as service_name, p.fee as service_price
-      FROM sessions s ${conditions}
+      FROM kivi_sessions s ${conditions}
     `;
 
     return await this.query(sql, params);
@@ -72,9 +72,9 @@ class Appointment extends BaseModel {
   // Get upcoming appointments (mapped to upcoming sessions)
   async getUpcomingAppointments(limit = 5, filters = {}) {
     let conditions = `
-      LEFT JOIN students st ON s.student_id = st.id
-      LEFT JOIN therapists t ON s.therapist_id = t.id
-      LEFT JOIN users tu ON t.user_id = tu.id
+      LEFT JOIN kivi_students st ON s.student_id = st.id
+      LEFT JOIN kivi_therapists t ON s.therapist_id = t.id
+      LEFT JOIN kivi_users tu ON t.user_id = tu.id
       WHERE s.session_date >= CURDATE() AND s.status IN ('scheduled', 'confirmed', 'awaiting_confirmation')
     `;
     const params = [];
@@ -98,7 +98,7 @@ class Appointment extends BaseModel {
              s.session_time as appointment_time,
              st.first_name as patient_first_name, st.last_name as patient_last_name,
              tu.first_name as doctor_first_name, tu.last_name as doctor_last_name
-      FROM sessions s ${conditions}
+      FROM kivi_sessions s ${conditions}
     `;
 
     return await this.query(sql, params);

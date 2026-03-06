@@ -208,34 +208,40 @@ class ApiService {
     });
   }
 
-  // Programmes endpoints (mapped from services for frontend compatibility)
-  async getServices(filters = {}) {
-    const queryParams = new URLSearchParams(filters);
-    return this.request(`/programmes?${queryParams}`);
+  // Payment endpoints
+  async getPaymentHistory() {
+    return this.request('/payment/history');
   }
 
-  async getService(id) {
-    return this.request(`/programmes/${id}`);
-  }
-
-  async createService(serviceData) {
-    return this.request('/programmes', {
+  async createPaymentOrder(orderData) {
+    return this.request('/payment/create-order', {
       method: 'POST',
-      body: JSON.stringify(serviceData),
+      body: JSON.stringify(orderData),
     });
   }
 
-  async updateService(id, serviceData) {
-    return this.request(`/programmes/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(serviceData),
+  async verifyPayment(verificationData) {
+    return this.request('/payment/verify', {
+      method: 'POST',
+      body: JSON.stringify(verificationData),
     });
   }
 
-  async deleteService(id) {
-    return this.request(`/programmes/${id}`, {
-      method: 'DELETE',
-    });
+  // User dashboard endpoints
+  async getUserSessions() {
+    return this.request('/user/sessions');
+  }
+
+  async getUserPayments() {
+    return this.request('/user/payments');
+  }
+
+  async getUserTherapist() {
+    return this.request('/user/therapist');
+  }
+
+  async getUserStats() {
+    return this.request('/user/stats');
   }
 }
 

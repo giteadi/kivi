@@ -2,14 +2,14 @@ const BaseModel = require('./BaseModel');
 
 class Doctor extends BaseModel {
   constructor() {
-    super('therapists'); // Use therapists table for backward compatibility
+    super('kivi_therapists'); // Use therapists table for backward compatibility
   }
 
   // Get doctors with user info (mapped to therapists)
   async getDoctors(filters = {}) {
     let conditions = `
-      LEFT JOIN users u ON t.user_id = u.id
-      LEFT JOIN centres c ON t.centre_id = c.id
+      LEFT JOIN kivi_users u ON t.user_id = u.id
+      LEFT JOIN kivi_centres c ON t.centre_id = c.id
       WHERE 1=1
     `;
     const params = [];
@@ -41,7 +41,7 @@ class Doctor extends BaseModel {
       SELECT t.*, 
              u.first_name, u.last_name, u.email, u.phone,
              c.name as clinic_name, c.name as centre_name
-      FROM therapists t ${conditions}
+      FROM kivi_therapists t ${conditions}
     `;
 
     return await this.query(sql, params);
@@ -55,10 +55,10 @@ class Doctor extends BaseModel {
              c.name as clinic_name, c.name as centre_name,
              COUNT(s.id) as total_appointments, COUNT(s.id) as total_sessions,
              AVG(CASE WHEN s.status = 'completed' THEN 5 ELSE 0 END) as avg_rating
-      FROM therapists t
-      LEFT JOIN users u ON t.user_id = u.id
-      LEFT JOIN centres c ON t.centre_id = c.id
-      LEFT JOIN sessions s ON t.id = s.therapist_id
+      FROM kivi_therapists t
+      LEFT JOIN kivi_users u ON t.user_id = u.id
+      LEFT JOIN kivi_centres c ON t.centre_id = c.id
+      LEFT JOIN kivi_sessions s ON t.id = s.therapist_id
       WHERE t.id = ?
       GROUP BY t.id
     `;

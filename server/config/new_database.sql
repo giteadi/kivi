@@ -5,7 +5,7 @@ CREATE DATABASE kivi;
 USE kivi;
 
 -- Users table (for authentication and basic user info)
-CREATE TABLE users (
+CREATE TABLE kivi_users (
   id INT PRIMARY KEY AUTO_INCREMENT,
   email VARCHAR(255) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL,
@@ -21,7 +21,7 @@ CREATE TABLE users (
 );
 
 -- Learning Centres table (previously clinics)
-CREATE TABLE centres (
+CREATE TABLE kivi_centres (
   id INT PRIMARY KEY AUTO_INCREMENT,
   name VARCHAR(255) NOT NULL,
   address TEXT,
@@ -48,7 +48,7 @@ CREATE TABLE centres (
 );
 
 -- Therapists table (previously doctors)
-CREATE TABLE therapists (
+CREATE TABLE kivi_therapists (
   id INT PRIMARY KEY AUTO_INCREMENT,
   user_id INT,
   centre_id INT,
@@ -75,12 +75,12 @@ CREATE TABLE therapists (
   status ENUM('active', 'inactive', 'on_leave', 'suspended') DEFAULT 'active',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (centre_id) REFERENCES centres(id) ON DELETE SET NULL
+  FOREIGN KEY (user_id) REFERENCES kivi_users(id) ON DELETE CASCADE,
+  FOREIGN KEY (centre_id) REFERENCES kivi_centres(id) ON DELETE SET NULL
 );
 
 -- Students table (previously patients)
-CREATE TABLE students (
+CREATE TABLE kivi_students (
   id INT PRIMARY KEY AUTO_INCREMENT,
   student_id VARCHAR(50) UNIQUE,
   first_name VARCHAR(100) NOT NULL,
@@ -129,11 +129,11 @@ CREATE TABLE students (
   status ENUM('active', 'inactive', 'on_leave', 'graduated', 'transferred') DEFAULT 'active',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (centre_id) REFERENCES centres(id) ON DELETE SET NULL
+  FOREIGN KEY (centre_id) REFERENCES kivi_centres(id) ON DELETE SET NULL
 );
 
 -- Staff table (previously receptionists)
-CREATE TABLE staff (
+CREATE TABLE kivi_staff (
   id INT PRIMARY KEY AUTO_INCREMENT,
   user_id INT,
   centre_id INT,
@@ -156,12 +156,12 @@ CREATE TABLE staff (
   status ENUM('active', 'inactive', 'on_leave', 'terminated') DEFAULT 'active',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (centre_id) REFERENCES centres(id) ON DELETE SET NULL
+  FOREIGN KEY (user_id) REFERENCES kivi_users(id) ON DELETE CASCADE,
+  FOREIGN KEY (centre_id) REFERENCES kivi_centres(id) ON DELETE SET NULL
 );
 
 -- Programmes table (previously services)
-CREATE TABLE programmes (
+CREATE TABLE kivi_programmes (
   id INT PRIMARY KEY AUTO_INCREMENT,
   programme_id VARCHAR(10) UNIQUE NOT NULL,
   name VARCHAR(255) NOT NULL,
@@ -178,11 +178,11 @@ CREATE TABLE programmes (
   status ENUM('active', 'inactive', 'suspended') DEFAULT 'active',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (centre_id) REFERENCES centres(id) ON DELETE SET NULL
+  FOREIGN KEY (centre_id) REFERENCES kivi_centres(id) ON DELETE SET NULL
 );
 
 -- Sessions table (previously appointments)
-CREATE TABLE sessions (
+CREATE TABLE kivi_sessions (
   id INT PRIMARY KEY AUTO_INCREMENT,
   session_id VARCHAR(50) UNIQUE,
   student_id INT NOT NULL,
@@ -201,14 +201,14 @@ CREATE TABLE sessions (
   session_goals TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
-  FOREIGN KEY (therapist_id) REFERENCES therapists(id) ON DELETE CASCADE,
-  FOREIGN KEY (centre_id) REFERENCES centres(id) ON DELETE CASCADE,
-  FOREIGN KEY (programme_id) REFERENCES programmes(id) ON DELETE SET NULL
+  FOREIGN KEY (student_id) REFERENCES kivi_students(id) ON DELETE CASCADE,
+  FOREIGN KEY (therapist_id) REFERENCES kivi_therapists(id) ON DELETE CASCADE,
+  FOREIGN KEY (centre_id) REFERENCES kivi_centres(id) ON DELETE CASCADE,
+  FOREIGN KEY (programme_id) REFERENCES kivi_programmes(id) ON DELETE SET NULL
 );
 
 -- Encounter templates table
-CREATE TABLE encounter_templates (
+CREATE TABLE kivi_encounter_templates (
   id INT PRIMARY KEY AUTO_INCREMENT,
   name VARCHAR(255) NOT NULL,
   description TEXT,
@@ -223,11 +223,11 @@ CREATE TABLE encounter_templates (
   status ENUM('active', 'inactive', 'draft') DEFAULT 'active',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+  FOREIGN KEY (created_by) REFERENCES kivi_users(id) ON DELETE SET NULL
 );
 
 -- Encounters table (session reports)
-CREATE TABLE encounters (
+CREATE TABLE kivi_encounters (
   id INT PRIMARY KEY AUTO_INCREMENT,
   encounter_id VARCHAR(50) UNIQUE,
   session_id INT,
@@ -275,15 +275,15 @@ CREATE TABLE encounters (
   status ENUM('draft', 'completed', 'reviewed', 'signed', 'archived') DEFAULT 'draft',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE SET NULL,
-  FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
-  FOREIGN KEY (therapist_id) REFERENCES therapists(id) ON DELETE CASCADE,
-  FOREIGN KEY (centre_id) REFERENCES centres(id) ON DELETE CASCADE,
-  FOREIGN KEY (template_id) REFERENCES encounter_templates(id) ON DELETE SET NULL
+  FOREIGN KEY (session_id) REFERENCES kivi_sessions(id) ON DELETE SET NULL,
+  FOREIGN KEY (student_id) REFERENCES kivi_students(id) ON DELETE CASCADE,
+  FOREIGN KEY (therapist_id) REFERENCES kivi_therapists(id) ON DELETE CASCADE,
+  FOREIGN KEY (centre_id) REFERENCES kivi_centres(id) ON DELETE CASCADE,
+  FOREIGN KEY (template_id) REFERENCES kivi_encounter_templates(id) ON DELETE SET NULL
 );
 
 -- Billing records table
-CREATE TABLE billing_records (
+CREATE TABLE kivi_billing_records (
   id INT PRIMARY KEY AUTO_INCREMENT,
   invoice_number VARCHAR(50) UNIQUE NOT NULL,
   student_id INT NOT NULL,
@@ -312,15 +312,15 @@ CREATE TABLE billing_records (
   
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
-  FOREIGN KEY (therapist_id) REFERENCES therapists(id) ON DELETE SET NULL,
-  FOREIGN KEY (centre_id) REFERENCES centres(id) ON DELETE CASCADE,
-  FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE SET NULL,
-  FOREIGN KEY (encounter_id) REFERENCES encounters(id) ON DELETE SET NULL
+  FOREIGN KEY (student_id) REFERENCES kivi_students(id) ON DELETE CASCADE,
+  FOREIGN KEY (therapist_id) REFERENCES kivi_therapists(id) ON DELETE SET NULL,
+  FOREIGN KEY (centre_id) REFERENCES kivi_centres(id) ON DELETE CASCADE,
+  FOREIGN KEY (session_id) REFERENCES kivi_sessions(id) ON DELETE SET NULL,
+  FOREIGN KEY (encounter_id) REFERENCES kivi_encounters(id) ON DELETE SET NULL
 );
 
 -- Taxes table
-CREATE TABLE taxes (
+CREATE TABLE kivi_taxes (
   id INT PRIMARY KEY AUTO_INCREMENT,
   name VARCHAR(255) NOT NULL,
   rate DECIMAL(5,2) NOT NULL,
@@ -332,7 +332,7 @@ CREATE TABLE taxes (
 );
 
 -- Student Progress Tracking
-CREATE TABLE student_progress (
+CREATE TABLE kivi_student_progress (
   id INT PRIMARY KEY AUTO_INCREMENT,
   student_id INT NOT NULL,
   therapist_id INT NOT NULL,
@@ -364,13 +364,13 @@ CREATE TABLE student_progress (
   
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
-  FOREIGN KEY (therapist_id) REFERENCES therapists(id) ON DELETE CASCADE,
-  FOREIGN KEY (programme_id) REFERENCES programmes(id) ON DELETE SET NULL
+  FOREIGN KEY (student_id) REFERENCES kivi_students(id) ON DELETE CASCADE,
+  FOREIGN KEY (therapist_id) REFERENCES kivi_therapists(id) ON DELETE CASCADE,
+  FOREIGN KEY (programme_id) REFERENCES kivi_programmes(id) ON DELETE SET NULL
 );
 
 -- Communication Log (between therapists, parents, staff)
-CREATE TABLE communications (
+CREATE TABLE kivi_communications (
   id INT PRIMARY KEY AUTO_INCREMENT,
   student_id INT NOT NULL,
   sender_id INT NOT NULL,
@@ -385,13 +385,13 @@ CREATE TABLE communications (
   due_date DATE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
-  FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE SET NULL
+  FOREIGN KEY (student_id) REFERENCES kivi_students(id) ON DELETE CASCADE,
+  FOREIGN KEY (sender_id) REFERENCES kivi_users(id) ON DELETE CASCADE,
+  FOREIGN KEY (receiver_id) REFERENCES kivi_users(id) ON DELETE SET NULL
 );
 
 -- System Settings
-CREATE TABLE system_settings (
+CREATE TABLE kivi_system_settings (
   id INT PRIMARY KEY AUTO_INCREMENT,
   setting_key VARCHAR(100) UNIQUE NOT NULL,
   setting_value TEXT,
@@ -402,22 +402,45 @@ CREATE TABLE system_settings (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Insert default admin user
-INSERT INTO users (email, password, role, first_name, last_name, phone) 
-VALUES ('admin@mindsaidlearning.com', 'admin123', 'admin', 'Admin', 'User', '+1-555-0001');
+-- Insert admin user
+INSERT INTO kivi_users (email, password, role, first_name, last_name, phone) VALUES
+('admin@kivi.com', 'admin123', 'admin', 'Admin', 'User', '+91-9876543210');
 
 -- Insert sample learning centres
-INSERT INTO centres (name, address, city, state, zip_code, phone, email, website, specialties, facilities, description, established_date, operating_hours, emergency_services) VALUES
+INSERT INTO kivi_centres (name, address, city, state, zip_code, phone, email, website, specialties, facilities, description, established_date, operating_hours, emergency_services) VALUES
 ('MindSaid Learning Centre', '123 Education Drive, Learning District', 'New York', 'NY', '10001', '+1 (555) 123-4567', 'center_main@kivicare.com', 'www.kivicare.com', '["Learning Therapy", "Behavioral Therapy", "Speech Therapy"]', '["Assessment Room", "Therapy Room", "Sensory Room", "Library", "Computer Lab"]', 'Premier educational therapy center providing comprehensive learning support services', '2020-01-15', '8:00 AM - 8:00 PM', TRUE),
-
 ('Green Valley Learning Centre', '456 Green Valley Road, Education Plaza', 'Los Angeles', 'CA', '90210', '+1 (555) 987-6543', 'greenvalley@kivicare.com', 'www.greenvalleylearning.com', '["Occupational Therapy", "Educational Psychology", "Special Needs Support"]', '["Therapy Rooms", "Assessment Center", "Parent Meeting Room", "Playground"]', 'Specialized center for occupational therapy and special needs support', '2018-06-20', '7:00 AM - 9:00 PM', TRUE),
-
 ('Sunrise Learning Centre', '789 Sunrise Boulevard, Learning Complex', 'Miami', 'FL', '33101', '+1 (555) 456-7890', 'sunrise@kivicare.com', 'www.sunriselearning.com', '["Learning Support", "Therapy Services", "Assessment"]', '["Individual Therapy Rooms", "Group Session Room", "Testing Center", "Family Room"]', 'Comprehensive learning support center with 24/7 emergency services', '2019-03-10', '24/7', TRUE),
-
 ('Downtown Learning Centre', '321 Downtown Street, City Center', 'Chicago', 'IL', '60601', '+1 (555) 321-0987', 'downtown@kivicare.com', 'www.downtownlearning.com', '["Family Support", "Child Development", "Educational Guidance"]', '["Consultation Rooms", "Play Therapy Room", "Parent Education Center"]', 'Family-focused learning center specializing in child development', '2017-11-05', '8:00 AM - 6:00 PM', FALSE);
 
+-- Insert sample therapist users
+INSERT INTO kivi_users (email, password, role, first_name, last_name, phone) VALUES
+('dr.sarah.johnson@mindsaidlearning.com', 'therapist123', 'therapist', 'Sarah', 'Johnson', '+91-9876543211'),
+('dr.michael.brown@mindsaidlearning.com', 'therapist123', 'therapist', 'Michael', 'Brown', '+91-9876543212'),
+('dr.emily.davis@mindsaidlearning.com', 'therapist123', 'therapist', 'Emily', 'Davis', '+91-9876543213');
+
+-- Insert sample therapists
+INSERT INTO kivi_therapists (user_id, centre_id, employee_id, specialty, qualification, license_number, experience_years, session_fee, bio, date_of_birth, gender, joining_date, status) VALUES
+(3, 1, 'TH001', 'Learning Therapy', 'M.Ed, Ph.D in Special Education', 'LIC123456', 8, 2000.00, 'Experienced learning therapist specializing in remedial education and special needs support.', '1985-03-15', 'female', '2020-01-15', 'active'),
+(4, 2, 'TH002', 'Occupational Therapy', 'BOT, MOT in Occupational Therapy', 'LIC123457', 6, 1500.00, 'Certified occupational therapist with expertise in sensory integration and motor skills development.', '1987-07-22', 'male', '2021-03-10', 'active'),
+(5, 3, 'TH003', 'Speech Language Therapy', 'MASLP in Speech Language Pathology', 'LIC123458', 5, 1500.00, 'Speech language pathologist focused on communication disorders and language development.', '1988-11-08', 'female', '2022-05-20', 'active');
+
+-- Insert sample student user
+INSERT INTO kivi_users (email, password, role, first_name, last_name, phone) VALUES
+('student@example.com', 'student123', 'student', 'John', 'Doe', '+91-9876543214');
+
+-- Insert sample student
+INSERT INTO kivi_students (student_id, first_name, last_name, email, phone, date_of_birth, age, gender, centre_id, registration_date, status, user_id) VALUES
+('ST001', 'John', 'Doe', 'student@example.com', '+91-9876543214', '2010-05-15', 14, 'male', 1, '2024-01-15', 'active', 6);
+
+-- Insert sample sessions for the student with therapist
+INSERT INTO kivi_sessions (session_id, student_id, therapist_id, centre_id, programme_id, session_date, session_time, duration, session_type, status, notes) VALUES
+('SES001', 1, 3, 1, 1, '2026-03-10', '10:00:00', 60, 'individual', 'scheduled', 'Initial assessment and goal setting'),
+('SES002', 1, 3, 1, 1, '2026-03-05', '14:00:00', 60, 'individual', 'completed', 'Good progress in reading comprehension'),
+('SES003', 1, 3, 1, 1, '2026-02-28', '10:00:00', 60, 'individual', 'completed', 'Worked on phonetic awareness');
+
 -- Insert sample programmes
-INSERT INTO programmes (programme_id, name, category, centre_id, fee, duration, description, objectives, target_age_group) VALUES
+INSERT INTO kivi_programmes (programme_id, name, category, centre_id, fee, duration, description, objectives, target_age_group) VALUES
 ('LS', 'Learning Support Session', 'Learning Support', 1, 150.00, 30, 'Individual learning support session for academic improvement', 'Improve reading, writing, and math skills through personalized instruction', '6-18 years'),
 ('BA', 'Behavioral Assessment', 'Educational Assessment', 1, 200.00, 45, 'Comprehensive behavioral assessment for learning needs', 'Assess behavioral patterns and develop intervention strategies', '4-16 years'),
 ('ST', 'Speech Therapy', 'Speech Therapy', 2, 100.00, 30, 'Speech therapy session for communication development', 'Improve speech clarity, language skills, and communication abilities', '3-12 years'),
@@ -428,14 +451,14 @@ INSERT INTO programmes (programme_id, name, category, centre_id, fee, duration, 
 ('GS', 'Group Social Skills', 'Social Skills', 1, 80.00, 45, 'Group sessions for developing social skills', 'Improve peer interaction, communication, and social awareness', '8-16 years');
 
 -- Insert sample taxes
-INSERT INTO taxes (name, rate, type, applicable_to) VALUES
+INSERT INTO kivi_taxes (name, rate, type, applicable_to) VALUES
 ('GST 18%', 18.00, 'percentage', 'all'),
 ('GST 12%', 12.00, 'percentage', 'programmes'),
 ('GST 5%', 5.00, 'percentage', 'assessments'),
 ('Service Tax', 100.00, 'fixed', 'sessions');
 
 -- Insert default encounter templates
-INSERT INTO encounter_templates (name, description, category, template_type, fields, sections, estimated_time, created_by, is_default) VALUES
+INSERT INTO kivi_encounter_templates (name, description, category, template_type, fields, sections, estimated_time, created_by, is_default) VALUES
 ('General Session Report', 'Standard template for regular therapy sessions', 'General', 'session', 
 '[{"name": "session_goals", "type": "textarea", "required": true}, {"name": "activities", "type": "textarea", "required": true}, {"name": "student_response", "type": "select", "options": ["Excellent", "Good", "Fair", "Needs Improvement"], "required": true}, {"name": "progress_notes", "type": "textarea", "required": true}]',
 '[{"title": "Session Overview", "fields": ["session_goals", "activities"]}, {"title": "Student Performance", "fields": ["student_response", "progress_notes"]}]',
@@ -452,7 +475,7 @@ INSERT INTO encounter_templates (name, description, category, template_type, fie
 25, 1, TRUE);
 
 -- Insert system settings
-INSERT INTO system_settings (setting_key, setting_value, setting_type, description, is_public) VALUES
+INSERT INTO kivi_system_settings (setting_key, setting_value, setting_type, description, is_public) VALUES
 ('system_name', 'KiviCare', 'string', 'System name displayed in the application', TRUE),
 ('default_session_duration', '30', 'number', 'Default session duration in minutes', FALSE),
 ('max_file_size', '10485760', 'number', 'Maximum file size for uploads in bytes (10MB)', FALSE),
@@ -461,7 +484,7 @@ INSERT INTO system_settings (setting_key, setting_value, setting_type, descripti
 ('session_reminder_hours', '24', 'number', 'Hours before session to send reminder', FALSE);
 
 -- Create plans table for therapy and assessment packages
-CREATE TABLE IF NOT EXISTS plans (
+CREATE TABLE IF NOT EXISTS kivi_plans (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL,
     type ENUM('session', 'assessment') NOT NULL,
@@ -475,18 +498,18 @@ CREATE TABLE IF NOT EXISTS plans (
 );
 
 -- Create user_plans table to track user selected plans
-CREATE TABLE IF NOT EXISTS user_plans (
+CREATE TABLE IF NOT EXISTS kivi_user_plans (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     plan_id INT NOT NULL,
     selected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT TRUE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (plan_id) REFERENCES plans(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES kivi_users(id) ON DELETE CASCADE,
+    FOREIGN KEY (plan_id) REFERENCES kivi_plans(id) ON DELETE CASCADE
 );
 
 -- Insert therapy session plans
-INSERT INTO plans (name, type, price, duration, description, features) VALUES
+INSERT INTO kivi_plans (name, type, price, duration, description, features) VALUES
 ('Remedial Therapy', 'session', 2000.00, '1 Hour', 'Comprehensive remedial therapy sessions for learning difficulties', 
  '["One-on-one therapy session", "Customized learning approach", "Progress tracking", "Parent consultation"]'),
 ('Occupational Therapy', 'session', 1500.00, '1 Hour', 'Specialized occupational therapy for daily living skills', 
@@ -497,7 +520,7 @@ INSERT INTO plans (name, type, price, duration, description, features) VALUES
  '["Individual counselling", "Behavioral therapy", "Emotional support", "Coping strategies"]');
 
 -- Insert assessment packages
-INSERT INTO plans (name, type, price, description, features) VALUES
+INSERT INTO kivi_plans (name, type, price, description, features) VALUES
 ('Package I - Comprehensive Assessment', 'assessment', 45500.00, 'Complete psycho-educational assessment with detailed report', 
  '["Full cognitive assessment", "Academic achievement testing", "Behavioral evaluation", "Detailed written report", "Parent consultation", "School recommendations"]'),
 ('Package II - Standard Assessment', 'assessment', 32500.00, 'Standard psycho-educational assessment package', 
