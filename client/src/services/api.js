@@ -265,6 +265,46 @@ class ApiService {
   async getUserStats() {
     return this.request('/user/stats');
   }
+
+  async getPlans() {
+    return this.request('/plans');
+  }
+
+  async getPlan(id) {
+    return this.request(`/plans/${id}`);
+  }
+
+  async getPlansWithAvailability(filters = {}) {
+    const queryParams = new URLSearchParams(filters);
+    return this.request(`/plans/availability?${queryParams}`);
+  }
+
+  // Booking endpoints
+  async getAvailableTherapists(filters = {}) {
+    const queryParams = new URLSearchParams(filters);
+    return this.request(`/booking/therapists?${queryParams}`);
+  }
+
+  async getTherapistAvailability(therapistId, date) {
+    return this.request(`/booking/therapists/${therapistId}/availability/${date}`);
+  }
+
+  async getAvailableTimeSlots(therapistId, date) {
+    const queryParams = new URLSearchParams({ date });
+    return this.request(`/booking/therapists/${therapistId}/slots?${queryParams}`);
+  }
+
+  async bookSession(bookingData) {
+    return this.request('/booking/session', {
+      method: 'POST',
+      body: JSON.stringify(bookingData),
+    });
+  }
+
+  async getBookingCalendar(therapistId, filters = {}) {
+    const queryParams = new URLSearchParams(filters);
+    return this.request(`/booking/therapists/${therapistId}/calendar?${queryParams}`);
+  }
 }
 
 export default new ApiService();

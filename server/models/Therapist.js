@@ -65,6 +65,165 @@ class Therapist extends BaseModel {
     const results = await this.query(sql, [id]);
     return results[0] || null;
   }
+
+  // Get therapist availability
+  async getTherapistAvailability(therapistId, date) {
+    try {
+      const sql = `
+        SELECT 
+          t.id,
+          t.first_name,
+          t.last_name,
+          t.specialty,
+          t.experience_years,
+          t.working_hours,
+          t.available_days,
+          s.session_date,
+          s.session_time,
+          s.status as session_status
+        FROM kivi_therapists t
+        LEFT JOIN kivi_sessions s ON t.id = s.therapist_id 
+          AND s.session_date = ? 
+          AND s.status IN ('scheduled', 'confirmed')
+        WHERE t.id = ? AND t.is_active = 1
+        ORDER BY s.session_time
+      `;
+      
+      const results = await this.query(sql, [date, therapistId]);
+      return results;
+    } catch (error) {
+      console.error('Error in getTherapistAvailability:', error);
+      throw error;
+    }
+  }
+
+  // Get all available therapists with their schedules
+  async getAvailableTherapists(date = null, specialty = null) {
+    try {
+      let whereConditions = 'WHERE t.is_active = 1';
+      const params = [];
+
+      if (specialty) {
+        whereConditions += ' AND t.specialty = ?';
+        params.push(specialty);
+      }
+
+      const sql = `
+        SELECT 
+          t.id,
+          t.first_name,
+          t.last_name,
+          t.specialty,
+          t.experience_years,
+          t.qualification,
+          t.working_hours,
+          t.available_days,
+          u.email,
+          u.phone,
+          c.name as centre_name,
+          COUNT(s.id) as total_sessions_today,
+          GROUP_CONCAT(
+            CASE WHEN s.session_date = ? AND s.status IN ('scheduled', 'confirmed')
+            THEN CONCAT(s.session_time, '-', s.status)
+            END
+          ) as booked_slots
+        FROM kivi_therapists t
+        LEFT JOIN kivi_users u ON t.user_id = u.id
+        LEFT JOIN kivi_centres c ON t.centre_id = c.id
+        LEFT JOIN kivi_sessions s ON t.id = s.therapist_id 
+          AND s.session_date = ?
+        ${whereConditions}
+        GROUP BY t.id
+        ORDER BY t.first_name, t.last_name
+      `;
+
+      const queryParams = date ? [date, date, ...params] : [null, null, ...params];
+      return await this.query(sql, queryParams);
+    } catch (error) {
+      console.error('Error in getAvailableTherapists:', error);
+      throw error;
+    }
+  }
+
+  // Get available time slots for a therapist on a specific date
+  async getAvailableTimeSlots(therapistId, date) {
+    try {
+      // First get therapist's working hours and available days
+      const therapistSql = `
+        SELECT working_hours, available_days 
+        FROM kivi_therapists 
+        WHERE id = ? AND is_active = 1
+      `;
+      
+      const therapistResults = await this.query(therapistSql, [therapistId]);
+      if (therapistResults.length === 0) {
+        return [];
+      }
+
+      const therapist = therapistResults[0];
+      const workingHours = JSON.parse(therapist.working_hours || '{}');
+      const availableDays = JSON.parse(therapist.available_days || '[]');
+
+      // Check if the date is in available days
+      const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'lowercase' });
+      if (!availableDays.includes(dayOfWeek)) {
+        return [];
+      }
+
+      // Get already booked slots
+      const bookedSql = `
+        SELECT session_time, status 
+        FROM kivi_sessions 
+        WHERE therapist_id = ? AND session_date = ? 
+        AND status IN ('scheduled', 'confirmed')
+      `;
+      
+      const bookedSlots = await this.query(bookedSql, [therapistId, date]);
+
+      // Generate available time slots
+      const daySchedule = workingHours[dayOfWeek];
+      if (!daySchedule || !daySchedule.start || !daySchedule.end) {
+        return [];
+      }
+
+      const startTime = new Date(`${date} ${daySchedule.start}`);
+      const endTime = new Date(`${date} ${daySchedule.end}`);
+      const slotDuration = 60; // 60 minutes slots
+      const slots = [];
+
+      // Generate all possible slots
+      let currentTime = new Date(startTime);
+      while (currentTime < endTime) {
+        const timeString = currentTime.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: false 
+        });
+
+        // Check if this slot is booked
+        const isBooked = bookedSlots.some(slot => {
+          const bookedTime = new Date(`${date} ${slot.session_time}`);
+          return Math.abs(bookedTime - currentTime) < slotDuration * 60 * 1000;
+        });
+
+        if (!isBooked) {
+          slots.push({
+            time: timeString,
+            available: true,
+            therapist_id: therapistId,
+            date: date
+          });
+        }
+
+        currentTime = new Date(currentTime.getTime() + slotDuration * 60 * 1000);
+      }
+
+      return slots;
+    } catch (error) {
+      console.error('Error in getAvailableTimeSlots:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = Therapist;

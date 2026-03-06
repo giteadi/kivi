@@ -20,6 +20,8 @@ const startServer = async () => {
     app.use('/api/dashboard', require('./routes/dashboardRoutes'));
     app.use('/api/payment', require('./routes/paymentRoutes'));
     app.use('/api/user', require('./routes/userRoutes'));
+    app.use('/api/plans', require('./routes/planRoutes'));
+    app.use('/api/booking', require('./routes/bookingRoutes'));
     
     // New routes with updated naming
     app.use('/api/sessions', require('./routes/sessionRoutes'));

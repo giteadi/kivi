@@ -88,7 +88,7 @@ const initializeDatabase = async () => {
 
 const checkTablesExist = async (db) => {
   try {
-    const requiredTables = ['kivi_users', 'kivi_centres', 'kivi_therapists', 'kivi_students', 'kivi_sessions', 'kivi_encounters'];
+    const requiredTables = ['kivi_users', 'kivi_centres', 'kivi_therapists', 'kivi_students', 'kivi_sessions', 'kivi_encounters', 'kivi_plans'];
     
     for (const table of requiredTables) {
       const result = await new Promise((resolve, reject) => {

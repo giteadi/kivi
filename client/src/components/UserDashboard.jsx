@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../store/slices/authSlice';
+import { fetchPlans } from '../store/slices/plansSlice';
 import { motion } from 'framer-motion';
 import { 
   FiCalendar, 
@@ -16,9 +17,12 @@ import {
 } from 'react-icons/fi';
 import api from '../services/api';
 import PaymentModal from './PaymentModal';
+import UserSidebar from './UserSidebar';
+import BookingModal from './BookingModal';
 
 const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
   const { user } = useSelector((state) => state.auth);
+  const { plans, loading: plansLoading } = useSelector((state) => state.plans);
   const dispatch = useDispatch();
   const [userSessions, setUserSessions] = useState([]);
   const [paymentHistory, setPaymentHistory] = useState([]);
@@ -32,6 +36,9 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [planToPayFor, setPlanToPayFor] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeItem, setActiveItem] = useState('dashboard');
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [selectedPlanForBooking, setSelectedPlanForBooking] = useState(null);
 
   // Fetch user dashboard data
   useEffect(() => {
@@ -52,6 +59,9 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
           api.getUserTherapist(),
           api.getUserStats()
         ]);
+
+        // Fetch plans
+        dispatch(fetchPlans());
 
         if (sessionsRes.success) {
           setUserSessions(sessionsRes.data);
@@ -168,8 +178,26 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
     dispatch(logout());
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
+  const handlePlanSelect = (plan) => {
+    setSelectedPlanForBooking(plan);
+    setShowBookingModal(true);
+    setActiveItem('booking');
+  };
+
+  const handleBookSession = () => {
+    setShowBookingModal(true);
+    setActiveItem('booking');
+  };
+
+  const handleBookingSuccess = () => {
+    setShowBookingModal(false);
+    setSelectedPlanForBooking(null);
+    // Refresh user data
+    fetchUserData();
+  };
+
+  const renderDashboardContent = () => (
+    <div className="flex-1">
       {/* Header */}
       <div className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -379,13 +407,111 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
           </div>
         </div>
       </div>
+    </div>
+  );
 
+  const renderPlansContent = () => (
+    <div className="flex-1">
+      {/* Header */}
+      <div className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Plans & Packages</h1>
+              <p className="text-gray-600">Choose the perfect plan for your therapy journey</p>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {plansLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white rounded-xl shadow-sm p-6 animate-pulse">
+                <div className="h-6 bg-gray-200 rounded mb-4"></div>
+                <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded mb-4"></div>
+                <div className="h-8 bg-gray-200 rounded"></div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {plans.map((plan) => (
+              <motion.div
+                key={plan.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ scale: 1.02 }}
+                className="bg-white rounded-xl shadow-sm p-6 border hover:border-blue-300 cursor-pointer"
+                onClick={() => handlePlanSelect(plan)}
+              >
+                <div className="mb-4">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                  <p className="text-gray-600 text-sm mb-4">{plan.description}</p>
+                  <div className="text-3xl font-bold text-blue-600 mb-4">
+                    ₹{parseFloat(plan.price).toLocaleString()}
+                  </div>
+                  <div className="text-sm text-gray-500 mb-4">
+                    Duration: {plan.duration}
+                  </div>
+                </div>
+                <button className="w-full bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 transition-colors font-medium">
+                  Select Plan
+                </button>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderMainContent = () => {
+    switch (activeItem) {
+      case 'plans':
+        return renderPlansContent();
+      case 'dashboard':
+      default:
+        return renderDashboardContent();
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar */}
+      <UserSidebar 
+        activeItem={activeItem}
+        setActiveItem={setActiveItem}
+        onLogout={handleLogout}
+        onPlanSelect={handlePlanSelect}
+        onBookSession={handleBookSession}
+      />
+      
+      {/* Main Content */}
+      {renderMainContent()}
+      
       {/* Payment Modal */}
       <PaymentModal
         isOpen={showPaymentModal}
         onClose={handleClosePaymentModal}
         selectedPlan={planToPayFor || selectedPlan}
         onPaymentSuccess={handlePaymentSuccess}
+      />
+      
+      {/* Booking Modal */}
+      <BookingModal
+        isOpen={showBookingModal}
+        onClose={() => setShowBookingModal(false)}
+        selectedPlan={selectedPlanForBooking}
+        onSuccess={handleBookingSuccess}
       />
     </div>
   );
