@@ -6,28 +6,38 @@ export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async (credentials, { rejectWithValue }) => {
     try {
-      console.log('🚀 Auth slice: Starting login with credentials:', { email: credentials.email, password: '***' });
-      
       const response = await api.login(credentials);
-      console.log('📨 Auth slice: API response received:', response);
       
       // Store token in localStorage
       if (response.data.token) {
-        console.log('💾 Auth slice: Storing token and user in localStorage');
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
-      } else {
-        console.warn('⚠️ Auth slice: No token in response');
       }
       
-      console.log('✅ Auth slice: Login successful, returning:', response.data);
       return response.data;
     } catch (error) {
-      console.error('❌ Auth slice: Login error:', error);
-      console.error('❌ Auth slice: Error details:', { message: error.message, stack: error.stack });
-      return rejectWithValue(
-        error.message || 'Login failed'
-      );
+      console.error('Login Error:', {
+        message: error.message,
+        type: error.type,
+        status: error.status,
+        url: error.url
+      });
+      
+      let errorMessage = 'Login failed';
+      
+      if (error.status === 401) {
+        errorMessage = 'Invalid email or password';
+      } else if (error.status === 422) {
+        errorMessage = 'Please check your email and password';
+      } else if (error.status >= 500) {
+        errorMessage = 'Server error - please try again later';
+      } else if (error.type === 'network_error') {
+        errorMessage = 'Network error - please check your connection';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      return rejectWithValue(errorMessage);
     }
   }
 );

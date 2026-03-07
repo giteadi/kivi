@@ -7,12 +7,9 @@ class ApiService {
 
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
-    console.log('🌐 API Service: Making request to:', url);
-    console.log('🌐 API Service: Request options:', { ...options, body: options.body ? '***' : undefined });
     
     // Get token from localStorage for authenticated requests
     const token = localStorage.getItem('token');
-    console.log('🌐 API Service: Token available:', !!token);
     
     const config = {
       headers: {
@@ -24,32 +21,72 @@ class ApiService {
     };
 
     try {
-      console.log('🌐 API Service: Sending fetch request...');
       const response = await fetch(url, config);
-      console.log('🌐 API Service: Response status:', response.status, response.statusText);
       
-      const data = await response.json();
-      console.log('🌐 API Service: Response data:', data);
+      // Handle different response types
+      let data;
+      const contentType = response.headers.get('content-type');
       
-      // Handle unauthorized responses
-      if (response.status === 401) {
-        console.log('🌐 API Service: Unauthorized response, clearing localStorage');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.reload();
-        return;
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        data = { message: await response.text() };
       }
-      
+
+      // Handle HTTP errors
       if (!response.ok) {
-        console.error('🌐 API Service: Response not OK:', response.status, data);
-        throw new Error(data.message || 'API request failed');
+        const error = new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
+        error.status = response.status;
+        error.statusText = response.statusText;
+        error.response = { status: response.status, statusText: response.statusText, data };
+        error.url = url;
+        error.method = config.method || 'GET';
+        
+        // Handle specific status codes
+        if (response.status === 401) {
+          // Unauthorized - clear auth data
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          
+          // Only reload if not already on login page
+          if (!window.location.pathname.includes('/login')) {
+            window.location.reload();
+          }
+        }
+        
+        console.error('API Error:', {
+          url,
+          method: config.method || 'GET',
+          status: response.status,
+          statusText: response.statusText,
+          message: data.message,
+          data
+        });
+        
+        throw error;
       }
       
-      console.log('🌐 API Service: Request successful, returning data');
       return data;
     } catch (error) {
-      console.error('🌐 API Service: Request error:', error);
-      console.error('🌐 API Service: Error details:', { message: error.message, stack: error.stack });
+      // Network or other errors
+      if (!error.response) {
+        const networkError = new Error('Network request failed - please check your connection');
+        networkError.type = 'network_error';
+        networkError.originalError = error;
+        networkError.url = url;
+        networkError.method = config.method || 'GET';
+        
+        console.error('Network Error:', {
+          url,
+          method: config.method || 'GET',
+          error: error.message,
+          type: 'network_error'
+        });
+        
+        throw networkError;
+      }
+      
+      // Re-throw API errors
       throw error;
     }
   }

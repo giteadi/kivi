@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import { setCredentials } from './store/slices/authSlice';
+import ErrorBoundary from './components/ErrorBoundary';
+import ErrorToast from './components/ErrorToast';
+import useErrorHandler from './hooks/useErrorHandler';
 import Login from './components/Login';
 import Register from './components/Register';
 import Homepage from './components/Homepage';
@@ -45,6 +48,7 @@ import SessionCreateForm from './components/SessionCreateForm';
 function App() {
   const dispatch = useDispatch();
   const { isAuthenticated, user, token } = useSelector((state) => state.auth);
+  const { errors, removeError, handleApiError } = useErrorHandler();
   
   // All useState hooks at the top level
   const [showLogin, setShowLogin] = useState(false);
@@ -923,39 +927,57 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Sidebar 
-        activeItem={activeItem} 
-        setActiveItem={handleSetActiveItem} 
-        shouldExpandEncounters={activeItem === 'encounters-list' || activeItem === 'encounter-templates'}
-      />
-      <MobileMenu 
-        isOpen={isMobileMenuOpen} 
-        setIsOpen={setIsMobileMenuOpen}
-        activeItem={activeItem} 
-        setActiveItem={handleSetActiveItem} 
-      />
-      <Header 
-        onMenuClick={() => setIsMobileMenuOpen(true)} 
-        onBackClick={handleBackNavigation}
-        showBackButton={shouldShowBackButton}
-      />
-      
-      <motion.main
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        {renderContent()}
-      </motion.main>
+    <ErrorBoundary>
+      <div className="min-h-screen bg-gray-50">
+        <Sidebar 
+          activeItem={activeItem} 
+          setActiveItem={handleSetActiveItem} 
+          shouldExpandEncounters={activeItem === 'encounters-list' || activeItem === 'encounter-templates'}
+        />
+        <MobileMenu 
+          isOpen={isMobileMenuOpen} 
+          setIsOpen={setIsMobileMenuOpen}
+          activeItem={activeItem} 
+          setActiveItem={handleSetActiveItem} 
+        />
+        <Header 
+          onMenuClick={() => setIsMobileMenuOpen(true)} 
+          onBackClick={handleBackNavigation}
+          showBackButton={shouldShowBackButton}
+        />
+        
+        <motion.main
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="transition-all duration-300"
+        >
+          {renderContent()}
+        </motion.main>
 
-      {/* Session Create Modal */}
-      <SessionCreateForm
-        isOpen={isSessionCreateModalOpen}
-        onClose={() => setIsSessionCreateModalOpen(false)}
-        onSave={handleSaveSession}
-      />
-    </div>
+        {/* Session Create Modal */}
+        {isSessionCreateModalOpen && (
+          <SessionCreateForm
+            isOpen={isSessionCreateModalOpen}
+            onClose={() => setIsSessionCreateModalOpen(false)}
+            onSave={handleSaveSession}
+          />
+        )}
+
+        {/* Error Toasts */}
+        <div className="fixed top-4 right-4 z-50 space-y-2">
+          {errors.map((error) => (
+            <ErrorToast
+              key={error.id}
+              message={error.message}
+              type="error"
+              details={error.details}
+              errorId={error.id}
+              onClose={() => removeError(error.id)}
+            />
+          ))}
+        </div>
+      </div>
+    </ErrorBoundary>
   );
 }
 
