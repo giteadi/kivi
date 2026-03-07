@@ -21,27 +21,27 @@ const AppointmentsList = ({ onViewAppointment, onEditAppointment, onDeleteAppoin
   // Transform API data to match frontend format
   const transformedAppointments = appointments.map(appointment => ({
     id: appointment.id,
-    patient: `${appointment.patient_first_name} ${appointment.patient_last_name}`,
-    doctor: `${appointment.doctor_first_name} ${appointment.doctor_last_name}`,
-    clinic: appointment.clinic_name || 'Unknown Clinic',
-    date: new Date(appointment.appointment_date).toLocaleDateString('en-US', { 
+    patient: `${appointment.student_first_name || 'Unknown'} ${appointment.student_last_name || 'Student'}`,
+    doctor: `${appointment.therapist_first_name || 'Unknown'} ${appointment.therapist_last_name || 'Therapist'}`,
+    clinic: appointment.centre_name || 'Unknown Clinic',
+    date: appointment.session_date ? new Date(appointment.session_date).toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 
-    }),
-    time: new Date(`1970-01-01T${appointment.appointment_time}`).toLocaleTimeString('en-US', {
+    }) : 'Invalid Date',
+    time: appointment.session_time ? new Date(`1970-01-01T${appointment.session_time}`).toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true
-    }),
-    type: appointment.notes || 'General Visit',
+    }) : 'Invalid Date',
+    type: appointment.notes || 'General Consultation',
     status: appointment.status === 'scheduled' ? 'Scheduled' : 
             appointment.status === 'confirmed' ? 'Confirmed' :
             appointment.status === 'completed' ? 'Completed' :
             appointment.status === 'cancelled' ? 'Cancelled' : 'Awaiting Confirmation',
-    duration: `${appointment.duration || 30} min`,
-    service: appointment.service_name || 'General Consultation',
-    amount: `₹${appointment.service_price || 0}.00`
+    duration: `${appointment.duration || 60} min`,
+    service: appointment.programme_name || 'General Consultation',
+    amount: `₹${appointment.programme_fee || 0}.00`
   }));
 
   const filteredAppointments = transformedAppointments.filter(appointment => {
