@@ -254,25 +254,28 @@ class ApiService {
     return this.request('/user/sessions');
   }
 
-  async getUserPayments() {
-    return this.request('/user/payments');
-  }
+async getUserPayments() {
+  return this.request('/user/payments');
+}
 
-  async getUserTherapist() {
-    return this.request('/user/therapist');
-  }
+async getUserTherapist() {
+  return this.request('/user/therapist');
+}
 
-  async getUserStats() {
-    return this.request('/user/stats');
-  }
+async getUserStats() {
+  return this.request('/user/stats');
+}
 
-  async getPlans() {
-    return this.request('/plans');
-  }
+async updateUserProfile(profileData) {
+  return this.request('/user/profile', {
+    method: 'PUT',
+    body: JSON.stringify(profileData)
+  });
+}
 
-  async getPlan(id) {
-    return this.request(`/plans/${id}`);
-  }
+async getPlans() {
+  return this.request('/plans');
+}
 
   async getPlansWithAvailability(filters = {}) {
     const queryParams = new URLSearchParams(filters);

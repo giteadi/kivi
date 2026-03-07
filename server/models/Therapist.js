@@ -85,7 +85,7 @@ class Therapist extends BaseModel {
         LEFT JOIN kivi_sessions s ON t.id = s.therapist_id 
           AND s.session_date = ? 
           AND s.status IN ('scheduled', 'confirmed')
-        WHERE t.id = ? AND t.is_active = 1
+        WHERE t.id = ? AND t.status = 'active'
         ORDER BY s.session_time
       `;
       
@@ -100,7 +100,7 @@ class Therapist extends BaseModel {
   // Get all available therapists with their schedules
   async getAvailableTherapists(date = null, specialty = null) {
     try {
-      let whereConditions = 'WHERE t.is_active = 1';
+      let whereConditions = "WHERE t.status = 'active'";
       const params = [];
 
       if (specialty) {
@@ -111,13 +111,13 @@ class Therapist extends BaseModel {
       const sql = `
         SELECT 
           t.id,
-          t.first_name,
-          t.last_name,
+          u.first_name,
+          u.last_name,
           t.specialty,
           t.experience_years,
           t.qualification,
-          t.working_hours,
-          t.available_days,
+          t.availability as working_hours,
+          t.availability as available_days,
           u.email,
           u.phone,
           c.name as centre_name,
@@ -134,7 +134,7 @@ class Therapist extends BaseModel {
           AND s.session_date = ?
         ${whereConditions}
         GROUP BY t.id
-        ORDER BY t.first_name, t.last_name
+        ORDER BY u.first_name, u.last_name
       `;
 
       const queryParams = date ? [date, date, ...params] : [null, null, ...params];
@@ -148,21 +148,24 @@ class Therapist extends BaseModel {
   // Get available time slots for a therapist on a specific date
   async getAvailableTimeSlots(therapistId, date) {
     try {
-      // First get therapist's working hours and available days
+      // First get therapist's availability data
       const therapistSql = `
-        SELECT working_hours, available_days 
-        FROM kivi_therapists 
-        WHERE id = ? AND is_active = 1
+        SELECT availability
+        FROM kivi_therapists
+        WHERE id = ? AND status = 'active'
       `;
-      
+
       const therapistResults = await this.query(therapistSql, [therapistId]);
       if (therapistResults.length === 0) {
         return [];
       }
 
       const therapist = therapistResults[0];
-      const workingHours = JSON.parse(therapist.working_hours || '{}');
-      const availableDays = JSON.parse(therapist.available_days || '[]');
+      const availability = JSON.parse(therapist.availability || '{}');
+
+      // Extract available days from the availability object
+      const availableDays = Object.keys(availability);
+      const workingHours = availability;
 
       // Check if the date is in available days
       const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'lowercase' });

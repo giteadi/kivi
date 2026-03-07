@@ -1,20 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { logout } from '../store/slices/authSlice';
+import { logout, updateUser } from '../store/slices/authSlice';
 import { fetchPlans } from '../store/slices/plansSlice';
 import { motion } from 'framer-motion';
 import { 
   FiCalendar, 
   FiClock, 
   FiUser, 
-  FiDollarSign, 
-  FiFileText,
-  FiActivity,
   FiTrendingUp,
   FiCheckCircle,
   FiAlertCircle,
   FiPlus,
-  FiMenu
+  FiMenu,
+  FiFileText
 } from 'react-icons/fi';
 import api from '../services/api';
 import PaymentModal from './PaymentModal';
@@ -41,6 +39,13 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedPlanForBooking, setSelectedPlanForBooking] = useState(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: ''
+  });
 
   // Fetch user dashboard data
   useEffect(() => {
@@ -167,6 +172,59 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
     setSelectedPlanForBooking(null);
     // Refresh user data
     fetchUserData();
+  };
+
+  const handleEditProfile = () => {
+    console.log('Edit profile clicked, user:', user);
+    setEditFormData({
+      first_name: user?.first_name || '',
+      last_name: user?.last_name || '',
+      email: user?.email || '',
+      phone: user?.phone || ''
+    });
+    console.log('Setting edit form data:', {
+      first_name: user?.first_name || '',
+      last_name: user?.last_name || '',
+      email: user?.email || '',
+      phone: user?.phone || ''
+    });
+    setIsEditingProfile(true);
+    console.log('isEditingProfile set to true');
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      const response = await api.updateUserProfile(editFormData);
+      if (response.success) {
+        // Update user in Redux store
+        dispatch(updateUser(response.data));
+        setIsEditingProfile(false);
+        alert('Profile updated successfully!');
+      } else {
+        alert('Failed to update profile');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Error updating profile');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingProfile(false);
+    setEditFormData({
+      first_name: '',
+      last_name: '',
+      email: '',
+      phone: ''
+    });
+  };
+
+  const handleInputChange = (e) => {
+    console.log('Input changed:', e.target.name, e.target.value);
+    setEditFormData({
+      ...editFormData,
+      [e.target.name]: e.target.value
+    });
   };
 
   const renderDashboardContent = () => (
@@ -425,7 +483,7 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
                       <div key={payment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div className="flex items-center space-x-3">
                           <div className="p-2 bg-green-100 rounded-lg">
-                            <FiDollarSign className="w-4 h-4 text-green-600" />
+                            <span className="text-green-600 font-bold text-sm">₹</span>
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="font-semibold text-gray-900 text-sm lg:text-base">₹{payment.amount.toLocaleString()}</p>
@@ -443,7 +501,7 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
                   </div>
                 ) : (
                   <div className="text-center py-6 lg:py-8">
-                    <FiDollarSign className="w-10 h-10 lg:w-12 lg:h-12 text-gray-400 mx-auto mb-4" />
+                    <span className="text-gray-400 font-bold text-2xl lg:text-3xl">₹</span>
                     <h3 className="text-base lg:text-lg font-medium text-gray-900 mb-2">No Payment History</h3>
                     <p className="text-sm text-gray-500">Your payment history will appear here once you make payments.</p>
                   </div>
@@ -592,7 +650,7 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
                   <div key={payment.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 lg:p-4 bg-gray-50 rounded-lg hover:bg-white hover:shadow-sm transition-shadow gap-3">
                     <div className="flex items-center space-x-3 lg:space-x-4 flex-1 min-w-0">
                       <div className="p-2 bg-green-100 rounded-lg flex-shrink-0">
-                        <FiDollarSign className="w-4 h-4 lg:w-5 lg:h-5 text-green-600" />
+                        <span className="text-green-600 font-bold text-sm">₹</span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-gray-900 text-sm lg:text-base">₹{payment.amount.toLocaleString()}</h3>
@@ -617,7 +675,7 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
               </div>
             ) : (
               <div className="text-center py-8 lg:py-12">
-                <FiDollarSign className="w-12 h-12 lg:w-16 lg:h-16 text-gray-400 mx-auto mb-4" />
+                <span className="text-gray-400 font-bold text-3xl lg:text-4xl">₹</span>
                 <h3 className="text-lg lg:text-xl font-medium text-gray-900 mb-2">No Payment History</h3>
                 <p className="text-sm text-gray-500">Your payment transactions will appear here once you make payments.</p>
               </div>
@@ -682,27 +740,68 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
-                <div className="p-3 bg-gray-50 rounded-lg text-gray-900 text-sm lg:text-base">
-                  {user?.first_name || 'Not provided'}
-                </div>
+                {isEditingProfile ? (
+                  <input
+                    type="text"
+                    name="first_name"
+                    value={editFormData.first_name}
+                    onChange={handleInputChange}
+                    autoFocus
+                    className="w-full p-3 border border-gray-300 rounded-lg text-gray-900 text-sm lg:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pointer-events-auto relative z-10"
+                  />
+                ) : (
+                  <div className="p-3 bg-gray-50 rounded-lg text-gray-900 text-sm lg:text-base">
+                    {user?.first_name || 'Not provided'}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
-                <div className="p-3 bg-gray-50 rounded-lg text-gray-900 text-sm lg:text-base">
-                  {user?.last_name || 'Not provided'}
-                </div>
+                {isEditingProfile ? (
+                  <input
+                    type="text"
+                    name="last_name"
+                    value={editFormData.last_name}
+                    onChange={handleInputChange}
+                    className="w-full p-3 border border-gray-300 rounded-lg text-gray-900 text-sm lg:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pointer-events-auto relative z-10"
+                  />
+                ) : (
+                  <div className="p-3 bg-gray-50 rounded-lg text-gray-900 text-sm lg:text-base">
+                    {user?.last_name || 'Not provided'}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                <div className="p-3 bg-gray-50 rounded-lg text-gray-900 text-sm lg:text-base">
-                  {user?.email || 'Not provided'}
-                </div>
+                {isEditingProfile ? (
+                  <input
+                    type="email"
+                    name="email"
+                    value={editFormData.email}
+                    onChange={handleInputChange}
+                    className="w-full p-3 border border-gray-300 rounded-lg text-gray-900 text-sm lg:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pointer-events-auto relative z-10"
+                  />
+                ) : (
+                  <div className="p-3 bg-gray-50 rounded-lg text-gray-900 text-sm lg:text-base">
+                    {user?.email || 'Not provided'}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                <div className="p-3 bg-gray-50 rounded-lg text-gray-900 text-sm lg:text-base">
-                  {user?.phone || 'Not provided'}
-                </div>
+                {isEditingProfile ? (
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={editFormData.phone}
+                    onChange={handleInputChange}
+                    className="w-full p-3 border border-gray-300 rounded-lg text-gray-900 text-sm lg:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pointer-events-auto relative z-10"
+                  />
+                ) : (
+                  <div className="p-3 bg-gray-50 rounded-lg text-gray-900 text-sm lg:text-base">
+                    {user?.phone || 'Not provided'}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
@@ -719,9 +818,29 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
             </div>
 
             <div className="mt-6 lg:mt-8 pt-4 lg:pt-6 border-t">
-              <button className="px-4 py-2 lg:px-6 lg:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm lg:text-base">
-                Edit Profile
-              </button>
+              {isEditingProfile ? (
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleSaveProfile}
+                    className="px-4 py-2 lg:px-6 lg:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm lg:text-base"
+                  >
+                    Save Changes
+                  </button>
+                  <button
+                    onClick={handleCancelEdit}
+                    className="px-4 py-2 lg:px-6 lg:py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium text-sm lg:text-base"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleEditProfile}
+                  className="px-4 py-2 lg:px-6 lg:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm lg:text-base"
+                >
+                  Edit Profile
+                </button>
+              )}
             </div>
           </div>
         </motion.div>

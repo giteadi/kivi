@@ -3,7 +3,7 @@ const BaseModel = require('../models/BaseModel');
 
 class UserController extends BaseModel {
   constructor() {
-    super();
+    super('kivi_users'); // Pass table name to BaseModel
   }
 
   // Get user sessions
@@ -152,6 +152,60 @@ class UserController extends BaseModel {
       res.status(500).json({
         success: false,
         message: 'Failed to fetch user therapist'
+      });
+    }
+  }
+
+  // Update user profile
+  async updateUserProfile(req, res) {
+    try {
+      const userId = req.user.id;
+      const { first_name, last_name, email, phone } = req.body;
+
+      // Validate required fields
+      if (!first_name || !last_name || !email) {
+        return res.status(400).json({
+          success: false,
+          message: 'First name, last name, and email are required'
+        });
+      }
+
+      // Check if email is already taken by another user
+      const existingUser = await this.query(
+        'SELECT id FROM kivi_users WHERE email = ? AND id != ?',
+        [email, userId]
+      );
+
+      if (existingUser.length > 0) {
+        return res.status(409).json({
+          success: false,
+          message: 'Email is already taken by another user'
+        });
+      }
+
+      // Update user profile
+      await this.query(
+        'UPDATE kivi_users SET first_name = ?, last_name = ?, email = ?, phone = ? WHERE id = ?',
+        [first_name, last_name, email, phone || null, userId]
+      );
+
+      // Get updated user data
+      const updatedUser = await this.query(
+        'SELECT id, first_name, last_name, email, phone, role, created_at FROM kivi_users WHERE id = ?',
+        [userId]
+      );
+
+      res.json({
+        success: true,
+        message: 'Profile updated successfully',
+        data: updatedUser[0]
+      });
+
+    } catch (error) {
+      console.error('Update user profile error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to update profile'
       });
     }
   }

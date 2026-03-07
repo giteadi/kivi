@@ -9,7 +9,7 @@ class BookingController extends Therapist {
   async getAvailableTherapists(req, res) {
     try {
       const { date, specialty } = req.query;
-      const therapists = await this.getAvailableTherapists(date, specialty);
+      const therapists = await super.getAvailableTherapists(date, specialty);
 
       res.json({
         success: true,
