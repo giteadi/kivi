@@ -78,13 +78,20 @@ class ServiceController {
   // Update service
   async updateService(req, res) {
     try {
+      console.log('=== Update Service Called ===');
+      console.log('Params:', req.params);
+      console.log('Body:', req.body);
+
       const { id } = req.params;
       const updateData = {
         ...req.body,
         updated_at: new Date()
       };
 
+      console.log('Update data:', updateData);
+
       const updated = await this.serviceModel.update(id, updateData);
+      console.log('Update result:', updated);
 
       if (!updated) {
         return res.status(404).json({

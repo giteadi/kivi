@@ -1,8 +1,13 @@
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiSave, FiX, FiActivity, FiClock, FiDollarSign } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchServices } from '../store/slices/serviceSlice';
 
 const ServiceEditForm = ({ serviceId, onSave, onCancel }) => {
+  const dispatch = useDispatch();
+  const { services: servicesData } = useSelector((state) => state.services);
+  
   const [formData, setFormData] = useState({
     name: '',
     category: '',
@@ -30,31 +35,37 @@ const ServiceEditForm = ({ serviceId, onSave, onCancel }) => {
   ];
 
   const centres = [
-    'MindSaid Learning Centre',
-    'Green Valley Learning Centre', 
-    'Sunrise Learning Centre',
-    'Downtown Learning Centre'
+    { id: 1, name: 'MindSaid Learning Centre' },
+    { id: 2, name: 'Green Valley Learning Centre' }, 
+    { id: 3, name: 'Sunrise Learning Centre' },
+    { id: 4, name: 'Downtown Learning Centre' }
   ];
 
-  // Mock data - in real app, fetch based on serviceId
+  // Fetch service data based on serviceId
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      const mockService = {
-        id: serviceId,
-        name: 'Learning Support Session',
-        category: 'Learning Support',
-        price: '150',
-        duration: '30 mins',
-        centre: 'Green Valley Learning Centre',
-        description: 'Individual learning support session for academic improvement',
-        status: 'Active'
-      };
-      
-      setFormData(mockService);
+    console.log('=== ServiceEditForm: Loading service ===', serviceId);
+    
+    // Find service from Redux data
+    const service = servicesData.find(s => s.id == serviceId);
+    
+    if (service) {
+      console.log('=== ServiceEditForm: Found service ===', service);
+      setFormData({
+        id: service.id,
+        name: service.name,
+        category: service.category,
+        price: service.fee,
+        duration: service.duration,
+        centre: service.centre_id,
+        description: service.description,
+        status: service.status
+      });
       setLoading(false);
-    }, 500);
-  }, [serviceId]);
+    } else {
+      console.log('=== ServiceEditForm: Service not found ===');
+      setLoading(false);
+    }
+  }, [serviceId, servicesData]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -74,7 +85,7 @@ const ServiceEditForm = ({ serviceId, onSave, onCancel }) => {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.name.trim()) {
+    if (!formData.name || formData.name.trim() === '') {
       newErrors.name = 'Programme name is required';
     }
     
@@ -86,12 +97,16 @@ const ServiceEditForm = ({ serviceId, onSave, onCancel }) => {
       newErrors.price = 'Valid price is required';
     }
     
-    if (!formData.duration.trim()) {
+    if (!formData.duration || formData.duration <= 0) {
       newErrors.duration = 'Duration is required';
     }
     
     if (!formData.centre) {
       newErrors.centre = 'Centre is required';
+    }
+    
+    if (!formData.description || formData.description.trim() === '') {
+      newErrors.description = 'Description is required';
     }
 
     setErrors(newErrors);
@@ -289,8 +304,8 @@ const ServiceEditForm = ({ serviceId, onSave, onCancel }) => {
                 >
                   <option value="">Select centre</option>
                   {centres.map((centre) => (
-                    <option key={centre} value={centre}>
-                      {centre}
+                    <option key={centre.id} value={centre.id}>
+                      {centre.name}
                     </option>
                   ))}
                 </select>

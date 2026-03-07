@@ -631,12 +631,55 @@ function App() {
     }
   };
 
-  const handleSaveService = (serviceData) => {
-    // In a real app, this would save to backend
-    console.log('Saving service:', serviceData);
-    alert(`Programme "${serviceData.name}" saved successfully!`);
-    setCurrentView('services-list');
-    setActiveItem('services');
+  const handleSaveService = async (serviceData) => {
+    try {
+      console.log('=== Saving service ===', serviceData);
+
+      // Prepare data for API
+      const apiData = {
+        programme_id: serviceData.name.substring(0, 2).toUpperCase(), // Generate programme_id from name
+        name: serviceData.name,
+        category: serviceData.category,
+        centre_id: parseInt(serviceData.centre),
+        fee: parseFloat(serviceData.price),
+        duration: parseInt(serviceData.duration),
+        description: serviceData.description,
+        status: serviceData.status
+      };
+
+      const response = await fetch(`http://localhost:3005/api/services/${serviceData.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(apiData)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        console.log('=== Service saved successfully ===');
+        alert(`Programme "${serviceData.name}" updated successfully!`);
+
+        // Refresh services data
+        const servicesResponse = await fetch('http://localhost:3005/api/services');
+        const servicesResult = await servicesResponse.json();
+
+        if (servicesResult.success) {
+          // Update Redux store
+          dispatch({ type: 'services/fetchServices/fulfilled', payload: servicesResult.data });
+        }
+
+        setCurrentView('services-list');
+        setActiveItem('services');
+      } else {
+        console.error('=== Save failed ===', result);
+        alert('Failed to save programme. Please try again.');
+      }
+    } catch (error) {
+      console.error('=== Save error ===', error);
+      alert('An error occurred while saving the programme. Please try again.');
+    }
   };
 
   const handleCancelServiceEdit = () => {

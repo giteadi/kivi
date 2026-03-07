@@ -1,127 +1,67 @@
-import { useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import { FiClock, FiUser, FiCheck, FiArrowRight } from 'react-icons/fi';
+import { fetchServices } from '../store/slices/serviceSlice';
 import PaymentModal from './PaymentModal';
 import LogoImage from './LogoImage';
 
 const Homepage = ({ onSelectPlan, onShowLogin }) => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const { services: servicesData } = useSelector((state) => state.services);
+  const dispatch = useDispatch();
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-  const sessionPlans = [
-    {
-      id: 'remedial',
-      title: 'Remedial Therapy',
+  // Load services on component mount
+  useEffect(() => {
+    console.log('=== Homepage: Fetching services for plans ===');
+    dispatch(fetchServices());
+  }, [dispatch]);
+
+  // Transform services data to plan format
+  const sessionPlans = servicesData
+    .filter(service => service.category && (
+      service.category.includes('Therapy') || 
+      service.category.includes('Learning') || 
+      service.category.includes('Counselling')
+    ))
+    .map(service => ({
+      id: service.programme_id,
+      title: service.name,
       duration: '1 Hour',
-      price: 2000,
-      description: 'Comprehensive remedial therapy sessions for learning difficulties',
+      price: parseInt(service.fee) * 100, // Convert to paisa
+      description: service.description,
       features: [
-        'One-on-one therapy session',
+        'Professional therapy session',
         'Customized learning approach',
         'Progress tracking',
         'Parent consultation'
       ]
-    },
-    {
-      id: 'occupational',
-      title: 'Occupational Therapy',
-      duration: '1 Hour',
-      price: 1500,
-      description: 'Specialized occupational therapy for daily living skills',
-      features: [
-        'Sensory integration therapy',
-        'Fine motor skill development',
-        'Daily living activities',
-        'Equipment recommendations'
-      ]
-    },
-    {
-      id: 'speech',
-      title: 'Speech Language Therapy',
-      duration: '1 Hour',
-      price: 1500,
-      description: 'Professional speech and language development therapy',
-      features: [
-        'Speech articulation training',
-        'Language development',
-        'Communication skills',
-        'Swallowing therapy'
-      ]
-    },
-    {
-      id: 'counselling',
-      title: 'Counselling',
-      duration: '1 Hour',
-      price: 1500,
-      description: 'Professional counselling and psychological support',
-      features: [
-        'Individual counselling',
-        'Behavioral therapy',
-        'Emotional support',
-        'Coping strategies'
-      ]
-    }
-  ];
+    }));
 
-  const assessmentPlans = [
-    {
-      id: 'package1',
-      title: 'Package I',
-      subtitle: 'Comprehensive Assessment',
-      price: 45500,
-      description: 'Complete psycho-educational assessment with detailed report',
+  const assessmentPlans = servicesData
+    .filter(service => service.category && service.category.includes('Assessment'))
+    .map(service => ({
+      id: service.programme_id,
+      title: `Package ${service.programme_id}`,
+      subtitle: service.category,
+      price: parseInt(service.fee) * 100, // Convert to paisa
+      description: service.description,
       features: [
-        'Full cognitive assessment',
-        'Academic achievement testing',
-        'Behavioral evaluation',
-        'Detailed written report',
+        'Comprehensive assessment',
+        'Detailed report',
         'Parent consultation',
         'School recommendations'
       ]
-    },
-    {
-      id: 'package2',
-      title: 'Package II',
-      subtitle: 'Standard Assessment',
-      price: 32500,
-      description: 'Standard psycho-educational assessment package',
-      features: [
-        'Cognitive assessment',
-        'Academic testing',
-        'Written report',
-        'Parent consultation',
-        'Basic recommendations'
-      ]
-    },
-    {
-      id: 'package3',
-      title: 'Package III',
-      subtitle: 'Essential Assessment',
-      price: 28500,
-      description: 'Essential assessment for learning difficulties',
-      features: [
-        'Core cognitive testing',
-        'Academic screening',
-        'Summary report',
-        'Parent meeting'
-      ]
-    },
-    {
-      id: 'package4',
-      title: 'Package IV',
-      subtitle: 'Basic Assessment',
-      price: 15500,
-      description: 'Basic screening and assessment package',
-      features: [
-        'Basic cognitive screening',
-        'Academic review',
-        'Brief report',
-        'Consultation'
-      ]
-    }
-  ];
+    }));
+
+  // Debug services data
+  useEffect(() => {
+    console.log('=== Homepage: Services data ===', servicesData);
+    console.log('=== Homepage: Session plans ===', sessionPlans);
+    console.log('=== Homepage: Assessment plans ===', assessmentPlans);
+  }, [servicesData, sessionPlans, assessmentPlans]);
 
   const handlePlanSelect = (plan, type) => {
     const planWithType = { ...plan, type };
@@ -129,9 +69,16 @@ const Homepage = ({ onSelectPlan, onShowLogin }) => {
     
     // Check if user is authenticated
     if (isAuthenticated && user) {
-      // User is logged in, show payment modal
-      console.log('User authenticated, showing payment modal');
-      setShowPaymentModal(true);
+      // User is logged in and is admin, redirect to admin panel for editing
+      if (user.role === 'admin') {
+        console.log('Admin user authenticated, redirecting to admin panel');
+        // Redirect to admin programs section
+        window.location.href = '/admin?section=programs';
+      } else {
+        // Regular user, show payment modal
+        console.log('User authenticated, showing payment modal');
+        setShowPaymentModal(true);
+      }
     } else {
       // User not logged in, redirect to login with selected plan
       console.log('User not authenticated, redirecting to login');
@@ -146,9 +93,16 @@ const Homepage = ({ onSelectPlan, onShowLogin }) => {
     if (selectedPlan) {
       // Check if user is authenticated
       if (isAuthenticated && user) {
-        // User is logged in, show payment modal
-        console.log('User authenticated, showing payment modal');
-        setShowPaymentModal(true);
+        // User is logged in and is admin, redirect to admin panel for editing
+        if (user.role === 'admin') {
+          console.log('Admin user authenticated, redirecting to admin panel');
+          // Redirect to admin programs section
+          window.location.href = '/admin?section=programs';
+        } else {
+          // Regular user, show payment modal
+          console.log('User authenticated, showing payment modal');
+          setShowPaymentModal(true);
+        }
       } else {
         // User not logged in, redirect to login with selected plan
         console.log('User not authenticated, redirecting to login');
@@ -199,6 +153,17 @@ const Homepage = ({ onSelectPlan, onShowLogin }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Hero Section */}
         <div className="text-center mb-16">
+          {isAuthenticated && user?.role === 'admin' && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg"
+            >
+              <p className="text-green-800 font-medium">
+                🎯 Admin Access: Click on any plan to edit it in the admin panel
+              </p>
+            </motion.div>
+          )}
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

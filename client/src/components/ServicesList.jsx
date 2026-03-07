@@ -1,13 +1,32 @@
 import { motion } from 'framer-motion';
 import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiFilter, FiUpload, FiActivity } from 'react-icons/fi';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchServices } from '../store/slices/serviceSlice';
 import ImportModal from './ImportModal';
 
 const ServicesList = ({ onViewService, onEditService, onDeleteService, onCreateNewService }) => {
+  const dispatch = useDispatch();
+  const { services: servicesData, isLoading, error } = useSelector((state) => state.services);
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
+  // Load services on component mount
+  useEffect(() => {
+    console.log('=== ServicesList: Fetching services ===');
+    dispatch(fetchServices());
+  }, [dispatch]);
+
+  // Debug services data
+  useEffect(() => {
+    console.log('=== ServicesList: Services state ===', servicesData);
+    console.log('=== ServicesList: isLoading ===', isLoading);
+    console.log('=== ServicesList: error ===', error);
+    console.log('=== ServicesList: Component re-rendered ===');
+  }, [servicesData, isLoading, error]);
 
   const categories = [
     'General',
@@ -22,119 +41,14 @@ const ServicesList = ({ onViewService, onEditService, onDeleteService, onCreateN
     'Educational Psychology'
   ];
 
-  const services = [
-    {
-      id: 8,
-      serviceId: 'LS',
-      name: 'Learning Support Session',
-      category: 'General',
-      center: 'Green Valley Learning Center',
-      centerInitials: 'GV',
-      centerEmail: 'kjaggi+center3@mindsaidlearning.com',
-      price: 150,
-      duration: '30 mins',
-      status: 'Active',
-      description: 'Individual learning support session for academic improvement'
-    },
-    {
-      id: 7,
-      serviceId: 'BA',
-      name: 'Behavioral Assessment',
-      category: 'Educational Assessment',
-      center: 'Green Valley Learning Center',
-      centerInitials: 'GV',
-      centerEmail: 'kjaggi+center3@mindsaidlearning.com',
-      price: 200,
-      duration: '45 mins',
-      status: 'Active',
-      description: 'Comprehensive behavioral assessment for learning needs'
-    },
-    {
-      id: 6,
-      serviceId: 'ST',
-      name: 'Speech Therapy',
-      category: 'Speech Therapy',
-      center: 'Green Valley Learning Center',
-      centerInitials: 'GV',
-      centerEmail: 'kjaggi+center3@mindsaidlearning.com',
-      price: 100,
-      duration: '15 mins',
-      status: 'Active',
-      description: 'Speech therapy session for communication development'
-    },
-    {
-      id: 5,
-      serviceId: 'LA',
-      name: 'Learning Assessment',
-      category: 'Educational Assessment',
-      center: 'Green Valley Learning Center',
-      centerInitials: 'GV',
-      centerEmail: 'kjaggi+center3@mindsaidlearning.com',
-      price: 80,
-      duration: '10 mins',
-      status: 'Active',
-      description: 'Complete learning abilities assessment'
-    },
-    {
-      id: 4,
-      serviceId: 'OT',
-      name: 'Occupational Therapy',
-      category: 'Occupational Therapy',
-      center: 'Downtown Learning Center',
-      centerInitials: 'DL',
-      centerEmail: 'kjaggi+center2@mindsaidlearning.com',
-      price: 120,
-      duration: '60 mins',
-      status: 'Active',
-      description: 'Occupational therapy for skill development'
-    },
-    {
-      id: 3,
-      serviceId: 'FC',
-      name: 'Family Counseling',
-      category: 'Family Counseling',
-      center: 'Sunrise Learning Center',
-      centerInitials: 'SL',
-      centerEmail: 'kjaggi+center1@mindsaidlearning.com',
-      price: 180,
-      duration: '45 mins',
-      status: 'Active',
-      description: 'Family counseling and support sessions'
-    },
-    {
-      id: 2,
-      serviceId: 'EP',
-      name: 'Educational Psychology',
-      category: 'Educational Psychology',
-      center: 'MindSaid Learning Center',
-      centerInitials: 'ML',
-      centerEmail: 'center_kjaggi@mindsaidlearning.com',
-      price: 200,
-      duration: '50 mins',
-      status: 'Active',
-      description: 'Educational psychology consultation and therapy sessions'
-    },
-    {
-      id: 1,
-      serviceId: 'GC',
-      name: 'General Consultation',
-      category: 'General',
-      center: 'MindSaid Learning Center',
-      centerInitials: 'ML',
-      centerEmail: 'center_kjaggi@mindsaidlearning.com',
-      price: 100,
-      duration: '30 mins',
-      status: 'Active',
-      description: 'General educational consultation with experienced therapists'
-    }
-  ];
+  // Remove hardcoded services array - will use Redux data instead
 
-  const filteredServices = services.filter(service => {
+  const filteredServices = servicesData.filter(service => {
     const matchesSearch = service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         service.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         service.center.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !selectedCategory || service.category === selectedCategory;
-    const matchesStatus = filterStatus === 'all' || service.status.toLowerCase() === filterStatus.toLowerCase();
+                         (service.category && service.category.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                         (service.centre_name && service.centre_name.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesCategory = !selectedCategory || (service.category && service.category === selectedCategory);
+    const matchesStatus = filterStatus === 'all' || (service.status && service.status.toLowerCase() === filterStatus.toLowerCase());
     
     return matchesSearch && matchesCategory && matchesStatus;
   });
@@ -348,14 +262,18 @@ const ServicesList = ({ onViewService, onEditService, onDeleteService, onCreateN
                         animate={{ opacity: 1 }}
                         transition={{ delay: index * 0.05 }}
                         whileHover={{ backgroundColor: '#f9fafb' }}
-                        className="hover:bg-gray-50 transition-colors"
+                        className="hover:bg-gray-50 transition-colors cursor-pointer"
+                        onClick={() => onEditService && onEditService(service.id)}
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                              <span className="text-sm font-semibold text-blue-600">{service.serviceId}</span>
+                              <span className="text-sm font-semibold text-blue-600">{service.programme_id}</span>
                             </div>
-                            <span className="text-sm font-medium text-gray-900">{service.id}</span>
+                            <div>
+                              <span className="text-sm font-medium text-gray-900">{service.id}</span>
+                              <div className="text-xs text-blue-600 mt-1">Click to edit</div>
+                            </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -367,19 +285,19 @@ const ServicesList = ({ onViewService, onEditService, onDeleteService, onCreateN
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-2">
-                              <span className="text-xs font-semibold text-purple-600">{service.centerInitials}</span>
+                              <span className="text-xs font-semibold text-purple-600">{service.centre_id}</span>
                             </div>
                             <div>
-                              <div className="text-sm font-medium text-gray-900">{service.center}</div>
-                              <div className="text-sm text-gray-500">{service.centerEmail}</div>
+                              <div className="text-sm font-medium text-gray-900">Centre {service.centre_id}</div>
+                              <div className="text-sm text-gray-500">Center Location</div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-medium text-green-600">₹{service.price}</span>
+                          <span className="text-sm font-medium text-green-600">₹{service.fee}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {service.duration}
+                          {service.duration} mins
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(service.status)}`}>
@@ -433,16 +351,18 @@ const ServicesList = ({ onViewService, onEditService, onDeleteService, onCreateN
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
-                        className="p-4 hover:bg-gray-50 transition-colors"
+                        className="p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                        onClick={() => onEditService && onEditService(service.id)}
                       >
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center space-x-3">
                             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                              <span className="text-sm font-semibold text-blue-600">{service.serviceId}</span>
+                              <span className="text-sm font-semibold text-blue-600">{service.programme_id}</span>
                             </div>
                             <div>
                               <h3 className="text-sm font-medium text-gray-900">{service.name}</h3>
                               <p className="text-xs text-gray-500">{service.category}</p>
+                              <div className="text-xs text-blue-600 mt-1">Tap to edit</div>
                             </div>
                           </div>
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(service.status)}`}>
@@ -453,22 +373,22 @@ const ServicesList = ({ onViewService, onEditService, onDeleteService, onCreateN
                         <div className="grid grid-cols-2 gap-3 mb-3 text-sm">
                           <div>
                             <span className="text-gray-500">Price:</span>
-                            <span className="ml-1 font-medium text-green-600">₹{service.price}</span>
+                            <span className="ml-1 font-medium text-green-600">₹{service.fee}</span>
                           </div>
                           <div>
                             <span className="text-gray-500">Duration:</span>
-                            <span className="ml-1 text-gray-900">{service.duration}</span>
+                            <span className="ml-1 text-gray-900">{service.duration} mins</span>
                           </div>
                         </div>
                         
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
                             <div className="w-6 h-6 bg-purple-100 rounded flex items-center justify-center">
-                              <span className="text-xs font-semibold text-purple-600">{service.centerInitials}</span>
+                              <span className="text-xs font-semibold text-purple-600">{service.centre_id}</span>
                             </div>
                             <div>
-                              <div className="text-xs font-medium text-gray-900">{service.center}</div>
-                              <div className="text-xs text-gray-500 truncate max-w-32">{service.centerEmail}</div>
+                              <div className="text-xs font-medium text-gray-900">Centre {service.centre_id}</div>
+                              <div className="text-xs text-gray-500">Center Location</div>
                             </div>
                           </div>
                           
@@ -541,7 +461,7 @@ const ServicesList = ({ onViewService, onEditService, onDeleteService, onCreateN
                     <FiActivity className="w-4 h-4 lg:w-6 lg:h-6 text-blue-600" />
                   </div>
                   <div>
-                    <div className="text-lg lg:text-2xl font-bold text-blue-600">{services.length}</div>
+                    <div className="text-lg lg:text-2xl font-bold text-blue-600">{servicesData.length}</div>
                     <div className="text-xs lg:text-sm text-gray-600">Total Services</div>
                   </div>
                 </div>
@@ -554,7 +474,7 @@ const ServicesList = ({ onViewService, onEditService, onDeleteService, onCreateN
                   </div>
                   <div>
                     <div className="text-lg lg:text-2xl font-bold text-green-600">
-                      {services.filter(s => s.status === 'Active').length}
+                      {servicesData.filter(s => s.status === 'active').length}
                     </div>
                     <div className="text-xs lg:text-sm text-gray-600">Active Services</div>
                   </div>
@@ -582,7 +502,7 @@ const ServicesList = ({ onViewService, onEditService, onDeleteService, onCreateN
                   </div>
                   <div>
                     <div className="text-lg lg:text-2xl font-bold text-yellow-600">
-                      ₹{Math.round(services.reduce((sum, service) => sum + service.price, 0) / services.length)}
+                      ₹{servicesData.length > 0 ? Math.round(servicesData.reduce((sum, service) => sum + parseFloat(service.fee || 0), 0) / servicesData.length) : 0}
                     </div>
                     <div className="text-xs lg:text-sm text-gray-600">Avg Price</div>
                   </div>

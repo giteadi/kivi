@@ -15,8 +15,16 @@ const AppointmentsList = ({ onViewAppointment, onEditAppointment, onDeleteAppoin
 
   // Load appointments on component mount
   useEffect(() => {
+    console.log('=== AppointmentsList: Fetching appointments ===');
     dispatch(fetchAppointments());
   }, [dispatch]);
+
+  // Debug appointments data
+  useEffect(() => {
+    console.log('=== AppointmentsList: Appointments state ===', appointments);
+    console.log('=== AppointmentsList: isLoading ===', isLoading);
+    console.log('=== AppointmentsList: error ===', error);
+  }, [appointments, isLoading, error]);
 
   // Transform API data to match frontend format
   const transformedAppointments = appointments.map(appointment => ({
@@ -43,6 +51,9 @@ const AppointmentsList = ({ onViewAppointment, onEditAppointment, onDeleteAppoin
     service: appointment.programme_name || 'General Consultation',
     amount: `₹${appointment.programme_fee || 0}.00`
   }));
+
+  // Debug transformed appointments
+  console.log('=== AppointmentsList: Transformed appointments ===', transformedAppointments);
 
   const filteredAppointments = transformedAppointments.filter(appointment => {
     const matchesSearch = appointment.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
