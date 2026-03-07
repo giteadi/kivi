@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import { setCredentials } from './store/slices/authSlice';
+import { fetchDoctors } from './store/slices/doctorSlice';
 import ErrorBoundary from './components/ErrorBoundary';
 import ErrorToast from './components/ErrorToast';
 import useErrorHandler from './hooks/useErrorHandler';
@@ -9,6 +10,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Homepage from './components/Homepage';
 import UserDashboard from './components/UserDashboard';
+import TherapistDashboard from './components/TherapistDashboard';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
@@ -227,8 +229,10 @@ function App() {
 
   // Role-based dashboard rendering
   if (isAuthenticated && user) {
-    // Show user dashboard for non-admin users
-    if (user.role !== 'admin') {
+    // Show role-specific dashboard for non-admin users
+    if (user.role === 'therapist') {
+      return <TherapistDashboard />;
+    } else if (user.role !== 'admin') {
       return <UserDashboard selectedPlan={selectedPlan} />;
     }
     
@@ -477,6 +481,8 @@ function App() {
         alert(`Therapist ${updatedData.firstName} ${updatedData.lastName} created successfully!`);
         setCurrentView('doctors-list');
         setActiveItem('doctors');
+        // Refresh the doctors list
+        dispatch(fetchDoctors());
       } else {
         alert(`Failed to create therapist: ${result.message}`);
       }
@@ -489,6 +495,61 @@ function App() {
   const handleCancelDoctorEdit = () => {
     setCurrentView('doctors-list');
     setActiveItem('doctors');
+  };
+
+  // Handle doctor edit (separate from create)
+  const handleSaveDoctorEdit = async (updatedData) => {
+    try {
+      // Extract numeric ID from doctorId
+      const numericId = updatedData.id?.replace('#', '');
+      
+      const therapistData = {
+        first_name: updatedData.name?.split(' ')[0] || '',
+        last_name: updatedData.name?.split(' ').slice(1).join(' ') || '',
+        email: updatedData.email,
+        phone: updatedData.phone,
+        specialty: updatedData.specialty,
+        qualification: updatedData.qualification,
+        license_number: updatedData.licenseNumber,
+        experience_years: parseInt(updatedData.experience) || 0,
+        session_fee: parseFloat(updatedData.consultationFee) || 0,
+        bio: updatedData.specializations,
+        date_of_birth: updatedData.dateOfBirth,
+        gender: updatedData.gender,
+        address: updatedData.address,
+        emergency_contact_name: updatedData.emergencyContactName,
+        emergency_contact_phone: updatedData.emergencyContactPhone,
+        status: updatedData.status?.toLowerCase()
+      };
+
+      // Only include password if it was provided
+      if (updatedData.password && updatedData.password.trim()) {
+        therapistData.password = updatedData.password;
+      }
+
+      const response = await fetch(`http://localhost:3005/api/therapists/${numericId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(therapistData),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert(`Therapist updated successfully!`);
+        setCurrentView('doctors-list');
+        setActiveItem('doctors');
+        // Dispatch fetchDoctors to refresh the list
+        dispatch(fetchDoctors());
+      } else {
+        alert(`Failed to update therapist: ${result.message}`);
+      }
+    } catch (error) {
+      console.error('Error updating therapist:', error);
+      alert('Failed to update therapist. Please try again.');
+    }
   };
 
   // Edit handlers
@@ -699,7 +760,7 @@ function App() {
       return (
         <DoctorEditForm
           doctorId={selectedDoctorId}
-          onSave={handleSaveDoctor}
+          onSave={handleSaveDoctorEdit}
           onCancel={handleCancelDoctorEdit}
         />
       );
@@ -764,6 +825,7 @@ function App() {
         <DoctorProfile
           doctorId={selectedDoctorId}
           onBack={handleBackToDoctors}
+          onEditProfile={handleEditDoctor}
         />
       );
     }

@@ -41,6 +41,9 @@ const startServer = async () => {
     app.use('/api/encounters', require('./routes/encounterRoutes'));
     app.use('/api/templates', require('./routes/templateRoutes'));
     app.use('/api/financial', require('./routes/financialRoutes'));
+    
+    // Migration routes (for database maintenance)
+    app.use('/api/migration', require('./routes/migrationRoutes'));
 
     // Test endpoint
     app.get('/api/test', (req, res) => {

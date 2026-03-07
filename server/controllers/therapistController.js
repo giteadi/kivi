@@ -72,7 +72,7 @@ class TherapistController {
 
         const userData = {
           email: therapistData.email,
-          password: 'therapist123', // Default password, should be changed
+          password: therapistData.password || 'therapist123', // Use provided password or default
           role: 'therapist',
           first_name: therapistData.first_name,
           last_name: therapistData.last_name,
@@ -133,7 +133,67 @@ class TherapistController {
         updated_at: new Date()
       };
 
-      const updated = await this.therapistModel.update(id, updateData);
+      // Separate user data and therapist data
+      const userData = {};
+      const therapistData = {};
+
+      // Fields that go to kivi_users table
+      if (updateData.first_name !== undefined) userData.first_name = updateData.first_name;
+      if (updateData.last_name !== undefined) userData.last_name = updateData.last_name;
+      if (updateData.email !== undefined) userData.email = updateData.email;
+      if (updateData.phone !== undefined) userData.phone = updateData.phone;
+      if (updateData.password !== undefined) userData.password = updateData.password;
+      if (updateData.date_of_birth !== undefined) userData.date_of_birth = updateData.date_of_birth;
+      if (updateData.relation !== undefined) userData.relation = updateData.relation;
+
+      // Fields that go to kivi_therapists table
+      const therapistFields = [
+        'specialty', 'qualification', 'license_number', 'experience_years', 
+        'session_fee', 'bio', 'date_of_birth', 'date_of_birth_text', 'gender', 'address', 'city', 
+        'state', 'zip_code', 'emergency_contact_name', 'emergency_contact_phone',
+        'joining_date', 'status', 'centre_id', 'languages', 'certifications', 
+        'professional_certifications', 'spoken_languages', 'relation', 
+        'primary_clinic_id', 'availability_status', 'session_duration', 
+        'login_time', 'logout_time', 'is_available'
+      ];
+
+      therapistFields.forEach(field => {
+        if (updateData[field] !== undefined) {
+          // Convert arrays to JSON strings for JSON fields
+          if (Array.isArray(updateData[field])) {
+            therapistData[field] = JSON.stringify(updateData[field]);
+          } else {
+            therapistData[field] = updateData[field];
+          }
+        }
+      });
+
+      therapistData.updated_at = new Date();
+
+      // Get therapist to find user_id
+      const therapist = await this.therapistModel.findById(id);
+      if (!therapist) {
+        return res.status(404).json({
+          success: false,
+          message: 'Therapist not found'
+        });
+      }
+
+      // Update user table if there's user data
+      if (Object.keys(userData).length > 0) {
+        const User = require('../models/User');
+        const userModel = new User();
+        
+        // Use plain text password (no hashing for now)
+        // if (userData.password) {
+        //   userData.password = userData.password; // Plain text
+        // }
+        
+        await userModel.update(therapist.user_id, userData);
+      }
+
+      // Update therapist table
+      const updated = await this.therapistModel.update(id, therapistData);
 
       if (!updated) {
         return res.status(404).json({

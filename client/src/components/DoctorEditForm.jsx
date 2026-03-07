@@ -1,38 +1,38 @@
 import { motion } from 'framer-motion';
-import { FiArrowLeft, FiSave, FiX, FiUser, FiMail, FiPhone, FiMapPin, FiAward, FiDollarSign } from 'react-icons/fi';
-import { useState } from 'react';
+import { FiArrowLeft, FiSave, FiX, FiUser, FiMail, FiPhone, FiLock, FiMapPin, FiAward, FiDollarSign, FiEye, FiEyeOff } from 'react-icons/fi';
+import { useState, useEffect } from 'react';
 
 const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
-  // Mock data - in real app this would come from API based on doctorId
-  const initialData = {
-    id: '#9424',
-    name: 'Dr. Kjaggi',
-    email: 'dr.kjaggi@clinic.com',
-    phone: '+1 6530 66',
-    clinic: 'Clinic Kjaggi',
-    specialty: 'General Medicine',
-    qualification: 'MBBS, MD',
-    experience: '15',
+  const [formData, setFormData] = useState({
+    id: '',
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    clinic: '',
+    specialty: '',
+    qualification: '',
+    experience: '',
     status: 'Active',
     availability: 'Available',
-    joinDate: '2020-01-15',
-    dateOfBirth: '1975-03-10',
-    gender: 'Male',
-    address: '456 Medical Plaza, New York, NY 10002',
-    licenseNumber: 'MD123456789',
-    consultationFee: '500',
-    workingHours: '9:00 AM - 6:00 PM',
-    emergencyContactName: 'Dr. Sarah Kjaggi',
-    emergencyContactRelation: 'Spouse',
-    emergencyContactPhone: '+1 6530 67',
-    specializations: 'Internal Medicine, Preventive Care',
-    certifications: 'Board Certified Internal Medicine, CPR Certified',
-    languages: 'English, Spanish, Hindi'
-  };
-
-  const [formData, setFormData] = useState(initialData);
+    joinDate: '',
+    dateOfBirth: '',
+    gender: '',
+    address: '',
+    licenseNumber: '',
+    consultationFee: '',
+    workingHours: '',
+    emergencyContactName: '',
+    emergencyContactRelation: '',
+    emergencyContactPhone: '',
+    specializations: '',
+    certifications: '',
+    languages: ''
+  });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
 
   const clinics = ['Clinic Kjaggi', 'Green Valley Clinic', 'Sunrise Health Center', 'Downtown Family Clinic'];
   const specialties = ['General Medicine', 'Cardiology', 'Pediatrics', 'Orthopedics', 'Dermatology', 'Neurology', 'Psychiatry'];
@@ -54,6 +54,60 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
       }));
     }
   };
+
+  // Fetch therapist data when component mounts
+  useEffect(() => {
+    const fetchTherapistData = async () => {
+      try {
+        // Extract numeric ID from doctorId (remove # prefix)
+        const numericId = doctorId?.replace('#', '');
+        
+        const response = await fetch(`http://localhost:3005/api/therapists/${numericId}`);
+        const result = await response.json();
+
+        if (result.success) {
+          const therapist = result.data;
+          setFormData({
+            id: therapist.id,
+            name: `${therapist.first_name} ${therapist.last_name}`,
+            email: therapist.email,
+            phone: therapist.phone,
+            password: '', // Password field for admin to set/update
+            clinic: therapist.centre_name || '',
+            specialty: therapist.specialty,
+            qualification: therapist.qualification,
+            experience: therapist.experience_years || '',
+            status: therapist.status === 'active' ? 'Active' : 'Inactive',
+            availability: 'Available',
+            joinDate: therapist.joining_date,
+            dateOfBirth: therapist.date_of_birth,
+            gender: therapist.gender,
+            address: therapist.address,
+            licenseNumber: therapist.license_number,
+            consultationFee: therapist.session_fee || '',
+            workingHours: '9:00 AM - 6:00 PM', // Default, could be enhanced
+            emergencyContactName: therapist.emergency_contact_name,
+            emergencyContactRelation: '',
+            emergencyContactPhone: therapist.emergency_contact_phone,
+            specializations: therapist.bio || '',
+            certifications: '',
+            languages: ''
+          });
+        } else {
+          alert('Failed to load therapist data');
+        }
+      } catch (error) {
+        console.error('Error fetching therapist data:', error);
+        alert('Error loading therapist data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (doctorId) {
+      fetchTherapistData();
+    }
+  }, [doctorId]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -99,19 +153,50 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
     setIsSubmitting(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const updatedData = {
-        ...formData,
-        consultationFee: `₹${formData.consultationFee}`,
-        lastModified: new Date().toISOString()
+      // Prepare therapist data for API
+      const therapistData = {
+        first_name: formData.name.split(' ')[0] || '',
+        last_name: formData.name.split(' ').slice(1).join(' ') || '',
+        email: formData.email,
+        phone: formData.phone,
+        specialty: formData.specialty,
+        qualification: formData.qualification,
+        license_number: formData.licenseNumber,
+        experience_years: parseInt(formData.experience) || 0,
+        session_fee: parseFloat(formData.consultationFee) || 0,
+        bio: formData.specializations,
+        date_of_birth: formData.dateOfBirth,
+        gender: formData.gender,
+        address: formData.address,
+        emergency_contact_name: formData.emergencyContactName,
+        emergency_contact_phone: formData.emergencyContactPhone,
+        status: formData.status.toLowerCase()
       };
-      
-      onSave(updatedData);
+
+      // Only include password if it was provided (for admin to update)
+      if (formData.password.trim()) {
+        therapistData.password = formData.password;
+      }
+
+      const response = await fetch(`http://localhost:3005/api/therapists/${formData.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(therapistData),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert('Therapist updated successfully!');
+        onSave({ ...formData, id: doctorId });
+      } else {
+        alert(`Failed to update therapist: ${result.message}`);
+      }
     } catch (error) {
-      console.error('Error updating doctor:', error);
-      alert('Error updating doctor. Please try again.');
+      console.error('Error updating therapist:', error);
+      alert('Failed to update therapist. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -119,67 +204,79 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
   return (
     <div className="lg:ml-64 min-h-screen bg-gray-50">
       <div className="p-4 lg:p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-4">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={onCancel}
-              className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-            >
-              <FiArrowLeft className="w-5 h-5 text-gray-600" />
-            </motion.button>
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-800">Edit Doctor</h1>
-              <p className="text-gray-600">Update doctor information and professional details</p>
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-center">
+              <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading therapist data...</p>
             </div>
           </div>
-          
-          <div className="flex items-center space-x-3">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={onCancel}
-              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <FiX className="w-4 h-4" />
-              <span>Cancel</span>
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                isSubmitting
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700'
-              } text-white`}
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Saving...</span>
-                </>
-              ) : (
-                <>
-                  <FiSave className="w-4 h-4" />
-                  <span>Save Changes</span>
-                </>
-              )}
-            </motion.button>
-          </div>
-        </div>
+        )}
 
-        {/* Breadcrumb */}
-        <div className="flex items-center text-sm text-gray-500 mb-6">
-          <span>Home</span>
-          <span className="mx-2">›</span>
-          <span>Doctors</span>
-          <span className="mx-2">›</span>
-          <span className="text-gray-800">Edit Doctor</span>
-        </div>
+        {!isLoading && (
+          <>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-4">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={onCancel}
+                  className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                >
+                  <FiArrowLeft className="w-5 h-5 text-gray-600" />
+                </motion.button>
+                <div>
+                  <h1 className="text-2xl font-semibold text-gray-800">Edit Therapist</h1>
+                  <p className="text-gray-600">Update therapist information and professional details</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-3">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={onCancel}
+                  className="flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <FiX className="w-4 h-4" />
+                  <span>Cancel</span>
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    isSubmitting
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-700'
+                  } text-white`}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FiSave className="w-4 h-4" />
+                      <span>Save Changes</span>
+                    </>
+                  )}
+                </motion.button>
+              </div>
+            </div>
+
+            {/* Breadcrumb */}
+            <div className="flex items-center text-sm text-gray-500 mb-6">
+              <span>Home</span>
+              <span className="mx-2">›</span>
+              <span>Therapists</span>
+              <span className="mx-2">›</span>
+              <span className="text-gray-800">Edit Therapist</span>
+            </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Personal Information */}
@@ -298,6 +395,30 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
                   placeholder="Enter phone number"
                 />
                 {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Password
+                </label>
+                <div className="relative">
+                  <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter new password (leave empty to keep current)"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                  >
+                    {showPassword ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <p className="mt-1 text-sm text-gray-500">Leave empty to keep current password</p>
               </div>
             </div>
           </motion.div>
@@ -576,6 +697,8 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
             </div>
           </motion.div>
         </form>
+          </>
+        )}
       </div>
     </div>
   );

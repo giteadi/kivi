@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiUser, FiPhone, FiMail, FiMapPin, FiCalendar, FiUsers, FiFilter, FiUpload } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiUser, FiPhone, FiMail, FiMapPin, FiCalendar, FiUsers, FiFilter, FiUpload, FiRefreshCw } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDoctors } from '../store/slices/doctorSlice';
@@ -16,11 +16,38 @@ const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDo
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState({});
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Load doctors on component mount
   useEffect(() => {
     dispatch(fetchDoctors());
   }, [dispatch]);
+
+  // Refresh data function
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await dispatch(fetchDoctors()).unwrap();
+    } catch (error) {
+      console.error('Failed to refresh data:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Apply filters when they change
+  useEffect(() => {
+    const filters = {};
+    if (searchTerm) filters.search = searchTerm;
+    if (filterClinic !== 'all') filters.clinic = filterClinic;
+    if (filterSpecialty !== 'all') filters.specialty = filterSpecialty;
+    
+    dispatch(fetchDoctors(filters));
+  }, [searchTerm, filterClinic, filterSpecialty, dispatch]);
+
+  // Get dynamic clinics and specialties from data
+  const availableClinics = ['all', ...new Set(doctors.map(d => d.centre_name).filter(Boolean))];
+  const availableSpecialties = ['all', ...new Set(doctors.map(d => d.specialty).filter(Boolean))];
 
   // Transform API data to match frontend format
   const transformedDoctors = doctors.map(doctor => ({
@@ -29,7 +56,7 @@ const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDo
     initials: `${doctor.first_name?.[0] || ''}${doctor.last_name?.[0] || ''}`,
     email: doctor.email,
     phone: doctor.phone,
-    clinic: doctor.clinic_name || 'Unknown Clinic',
+    clinic: doctor.centre_name || 'Unknown Clinic',
     clinicColor: 'bg-blue-100 text-blue-800', // Default color
     specialty: doctor.specialty || 'General Medicine',
     specialtyColor: 'bg-green-100 text-green-800', // Default color
@@ -44,11 +71,8 @@ const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDo
     totalPatients: doctor.total_patients || 0,
     todayAppointments: doctor.today_appointments || 0,
     rating: doctor.rating || 4.5,
-    availability: doctor.status === 'active' ? 'Available' : 'Unavailable'
+    availability: doctor.is_available ? 'Available' : 'Unavailable'
   }));
-
-  const clinics = ['all', 'MindSaid Learning Main', 'MindSaid Learning North', 'MindSaid Learning South', 'MindSaid Learning East'];
-  const specialties = ['all', 'Learning Therapy', 'Behavioral Therapy', 'Speech Therapy', 'Occupational Therapy', 'Educational Psychology'];
 
   const filteredDoctors = transformedDoctors.filter(doctor => {
     const matchesSearch = doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -93,9 +117,24 @@ const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDo
           <div>
             <h1 className="text-2xl font-semibold text-gray-800">All Therapists</h1>
             <p className="text-gray-600">Manage and view all therapist profiles</p>
+            {error && (
+              <div className="mt-2 text-sm text-red-600">
+                Error: {error}
+              </div>
+            )}
           </div>
           
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="flex items-center space-x-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors disabled:opacity-50"
+            >
+              <FiRefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
+            </motion.button>
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -140,8 +179,9 @@ const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDo
                 value={filterClinic}
                 onChange={(e) => setFilterClinic(e.target.value)}
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                disabled={isLoading}
               >
-                {clinics.map(clinic => (
+                {availableClinics.map(clinic => (
                   <option key={clinic} value={clinic}>
                     {clinic === 'all' ? 'All Centers' : clinic}
                   </option>
@@ -156,8 +196,9 @@ const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDo
                 value={filterSpecialty}
                 onChange={(e) => setFilterSpecialty(e.target.value)}
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                disabled={isLoading}
               >
-                {specialties.map(specialty => (
+                {availableSpecialties.map(specialty => (
                   <option key={specialty} value={specialty}>
                     {specialty === 'all' ? 'All Specialties' : specialty}
                   </option>
@@ -176,6 +217,7 @@ const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDo
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  disabled={isLoading}
                 />
               </div>
             </div>

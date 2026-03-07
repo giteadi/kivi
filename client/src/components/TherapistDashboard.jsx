@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { logout } from '../store/slices/authSlice';
+import { logout, updateUser } from '../store/slices/authSlice';
 import { motion } from 'framer-motion';
 import {
   FiCalendar,
@@ -10,7 +10,14 @@ import {
   FiLogOut,
   FiCheckCircle,
   FiXCircle,
-  FiSave
+  FiSave,
+  FiEdit2,
+  FiDollarSign,
+  FiMail,
+  FiPhone,
+  FiMapPin,
+  FiAward,
+  FiFileText
 } from 'react-icons/fi';
 import api from '../services/api';
 
@@ -23,36 +30,80 @@ const TherapistDashboard = () => {
     logout_time: '18:00',
     is_available: true
   });
+  const [profileData, setProfileData] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    specialty: '',
+    qualification: '',
+    experience_years: '',
+    session_fee: '',
+    bio: '',
+    address: '',
+    emergency_contact_name: '',
+    emergency_contact_phone: ''
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
+  const [activeView, setActiveView] = useState('dashboard');
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
 
-  // Fetch therapist availability on component mount
+  // Fetch therapist data on component mount
   useEffect(() => {
-    const fetchAvailability = async () => {
+    const fetchTherapistData = async () => {
       try {
-        const response = await api.getMyTherapistAvailabilitySettings();
-        if (response.success) {
-          const data = response.data;
+        // Fetch availability
+        const availabilityResponse = await api.getMyTherapistAvailabilitySettings();
+        if (availabilityResponse.success) {
+          const data = availabilityResponse.data;
           setAvailability({
             login_time: data.login_time ? data.login_time.substring(0, 5) : '09:00',
             logout_time: data.logout_time ? data.logout_time.substring(0, 5) : '18:00',
             is_available: data.is_available !== undefined ? data.is_available : true
           });
         }
+
+        // Fetch profile data
+        const profileResponse = await api.getProfile();
+        if (profileResponse.success) {
+          const data = profileResponse.data;
+          setProfileData({
+            first_name: data.first_name || '',
+            last_name: data.last_name || '',
+            email: data.email || '',
+            phone: data.phone || '',
+            specialty: data.specialty || '',
+            qualification: data.qualification || '',
+            experience_years: data.experience_years || '',
+            session_fee: data.session_fee || '',
+            bio: data.bio || '',
+            address: data.address || '',
+            emergency_contact_name: data.emergency_contact_name || '',
+            emergency_contact_phone: data.emergency_contact_phone || ''
+          });
+        }
       } catch (error) {
-        console.error('Error fetching availability:', error);
-        setMessage({ type: 'error', text: 'Failed to load availability settings' });
+        console.error('Error fetching therapist data:', error);
+        setMessage({ type: 'error', text: 'Failed to load therapist data' });
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAvailability();
+    fetchTherapistData();
   }, []);
 
   const handleAvailabilityChange = (field, value) => {
     setAvailability(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleProfileChange = (field, value) => {
+    setProfileData(prev => ({
       ...prev,
       [field]: value
     }));
@@ -77,6 +128,29 @@ const TherapistDashboard = () => {
     } catch (error) {
       console.error('Error updating availability:', error);
       setMessage({ type: 'error', text: 'Failed to update availability' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    setMessage(null);
+
+    try {
+      const response = await api.updateUserProfile(profileData);
+
+      if (response.success) {
+        // Update Redux store with new user data
+        dispatch(updateUser(response.data));
+        setMessage({ type: 'success', text: 'Profile updated successfully!' });
+        setIsEditingProfile(false);
+      } else {
+        setMessage({ type: 'error', text: response.message || 'Failed to update profile' });
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setMessage({ type: 'error', text: 'Failed to update profile' });
     } finally {
       setSaving(false);
     }
@@ -117,25 +191,53 @@ const TherapistDashboard = () => {
         <nav className="flex-1 p-4">
           <ul className="space-y-2">
             <li>
-              <button className="w-full flex items-center space-x-3 px-4 py-3 bg-blue-50 text-blue-600 rounded-lg">
+              <button 
+                onClick={() => setActiveView('dashboard')}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                  activeView === 'dashboard' 
+                    ? 'bg-blue-50 text-blue-600' 
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
                 <FiCalendar className="w-5 h-5" />
                 <span>Dashboard</span>
               </button>
             </li>
             <li>
-              <button className="w-full flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
+              <button 
+                onClick={() => setActiveView('sessions')}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                  activeView === 'sessions' 
+                    ? 'bg-blue-50 text-blue-600' 
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
                 <FiClock className="w-5 h-5" />
                 <span>My Sessions</span>
               </button>
             </li>
             <li>
-              <button className="w-full flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
+              <button 
+                onClick={() => setActiveView('profile')}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                  activeView === 'profile' 
+                    ? 'bg-blue-50 text-blue-600' 
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
                 <FiUser className="w-5 h-5" />
                 <span>Profile</span>
               </button>
             </li>
             <li>
-              <button className="w-full flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
+              <button 
+                onClick={() => setActiveView('settings')}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                  activeView === 'settings' 
+                    ? 'bg-blue-50 text-blue-600' 
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
                 <FiSettings className="w-5 h-5" />
                 <span>Settings</span>
               </button>
@@ -172,172 +274,395 @@ const TherapistDashboard = () => {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Availability Management */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-xl shadow-sm p-6 mb-8"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Availability Settings</h2>
-              <div className="flex items-center space-x-2">
-                {availability.is_available ? (
-                  <FiCheckCircle className="w-5 h-5 text-green-500" />
-                ) : (
-                  <FiXCircle className="w-5 h-5 text-red-500" />
-                )}
-                <span className={`text-sm font-medium ${availability.is_available ? 'text-green-600' : 'text-red-600'}`}>
-                  {availability.is_available ? 'Available' : 'Unavailable'}
-                </span>
-              </div>
-            </div>
-
-            {/* Message */}
-            {message && (
-              <div className={`mb-4 p-4 rounded-lg ${message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
-                {message.text}
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Login Time */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Login Time
-                </label>
-                <input
-                  type="time"
-                  value={availability.login_time}
-                  onChange={(e) => handleAvailabilityChange('login_time', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              {/* Logout Time */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Logout Time
-                </label>
-                <input
-                  type="time"
-                  value={availability.logout_time}
-                  onChange={(e) => handleAvailabilityChange('logout_time', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              {/* Availability Status */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Status
-                </label>
-                <div className="flex items-center space-x-3">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="availability"
-                      checked={availability.is_available}
-                      onChange={() => handleAvailabilityChange('is_available', true)}
-                      className="mr-2"
-                    />
-                    <span className="text-sm">Available</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="availability"
-                      checked={!availability.is_available}
-                      onChange={() => handleAvailabilityChange('is_available', false)}
-                      className="mr-2"
-                    />
-                    <span className="text-sm">Unavailable</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            {/* Save Button */}
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={handleSaveAvailability}
-                disabled={saving}
-                className="flex items-center space-x-2 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          {/* Dashboard View */}
+          {activeView === 'dashboard' && (
+            <>
+              {/* Availability Management */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-xl shadow-sm p-6 mb-8"
               >
-                <FiSave className="w-4 h-4" />
-                <span>{saving ? 'Saving...' : 'Save Changes'}</span>
-              </button>
-            </div>
-          </motion.div>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-gray-900">Availability Settings</h2>
+                  <div className="flex items-center space-x-2">
+                    {availability.is_available ? (
+                      <FiCheckCircle className="w-5 h-5 text-green-500" />
+                    ) : (
+                      <FiXCircle className="w-5 h-5 text-red-500" />
+                    )}
+                    <span className={`text-sm font-medium ${availability.is_available ? 'text-green-600' : 'text-red-600'}`}>
+                      {availability.is_available ? 'Available' : 'Unavailable'}
+                    </span>
+                  </div>
+                </div>
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                {/* Message */}
+                {message && (
+                  <div className={`mb-4 p-4 rounded-lg ${message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+                    {message.text}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Login Time */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Login Time
+                    </label>
+                    <input
+                      type="time"
+                      value={availability.login_time}
+                      onChange={(e) => handleAvailabilityChange('login_time', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  {/* Logout Time */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Logout Time
+                    </label>
+                    <input
+                      type="time"
+                      value={availability.logout_time}
+                      onChange={(e) => handleAvailabilityChange('logout_time', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  {/* Availability Status */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Status
+                    </label>
+                    <div className="flex items-center space-x-3">
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name="availability"
+                          checked={availability.is_available}
+                          onChange={() => handleAvailabilityChange('is_available', true)}
+                          className="mr-2"
+                        />
+                        <span className="text-sm">Available</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name="availability"
+                          checked={!availability.is_available}
+                          onChange={() => handleAvailabilityChange('is_available', false)}
+                          className="mr-2"
+                        />
+                        <span className="text-sm">Unavailable</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Save Button */}
+                <div className="mt-6 flex justify-end">
+                  <button
+                    onClick={handleSaveAvailability}
+                    disabled={saving}
+                    className="flex items-center space-x-2 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <FiSave className="w-4 h-4" />
+                    <span>{saving ? 'Saving...' : 'Save Changes'}</span>
+                  </button>
+                </div>
+              </motion.div>
+
+              {/* Quick Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-xl shadow-sm p-6"
+                >
+                  <div className="flex items-center">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <FiCalendar className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm text-gray-600">Today's Sessions</p>
+                      <p className="text-2xl font-bold text-gray-900">3</p>
+                    </div>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="bg-white rounded-xl shadow-sm p-6"
+                >
+                  <div className="flex items-center">
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <FiCheckCircle className="w-6 h-6 text-green-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm text-gray-600">Completed</p>
+                      <p className="text-2xl font-bold text-gray-900">12</p>
+                    </div>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="bg-white rounded-xl shadow-sm p-6"
+                >
+                  <div className="flex items-center">
+                    <div className="p-2 bg-yellow-100 rounded-lg">
+                      <FiClock className="w-6 h-6 text-yellow-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm text-gray-600">Upcoming</p>
+                      <p className="text-2xl font-bold text-gray-900">5</p>
+                    </div>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="bg-white rounded-xl shadow-sm p-6"
+                >
+                  <div className="flex items-center">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <FiUser className="w-6 h-6 text-purple-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm text-gray-600">Active Students</p>
+                      <p className="text-2xl font-bold text-gray-900">8</p>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+            </>
+          )}
+
+          {/* Profile View */}
+          {activeView === 'profile' && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="bg-white rounded-xl shadow-sm p-6"
             >
-              <div className="flex items-center">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <FiCalendar className="w-6 h-6 text-blue-600" />
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900">Profile Information</h2>
+                <button
+                  onClick={() => setIsEditingProfile(!isEditingProfile)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  <FiEdit2 className="w-4 h-4" />
+                  <span>{isEditingProfile ? 'Cancel' : 'Edit Profile'}</span>
+                </button>
+              </div>
+
+              {/* Message */}
+              {message && (
+                <div className={`mb-4 p-4 rounded-lg ${message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+                  {message.text}
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm text-gray-600">Today's Sessions</p>
-                  <p className="text-2xl font-bold text-gray-900">3</p>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Personal Information */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Personal Information</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                      <input
+                        type="text"
+                        value={profileData.first_name}
+                        onChange={(e) => handleProfileChange('first_name', e.target.value)}
+                        disabled={!isEditingProfile}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                      <input
+                        type="text"
+                        value={profileData.last_name}
+                        onChange={(e) => handleProfileChange('last_name', e.target.value)}
+                        disabled={!isEditingProfile}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                      <input
+                        type="email"
+                        value={profileData.email}
+                        onChange={(e) => handleProfileChange('email', e.target.value)}
+                        disabled={!isEditingProfile}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                      <input
+                        type="tel"
+                        value={profileData.phone}
+                        onChange={(e) => handleProfileChange('phone', e.target.value)}
+                        disabled={!isEditingProfile}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Professional Information */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Professional Information</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Specialty</label>
+                      <input
+                        type="text"
+                        value={profileData.specialty}
+                        onChange={(e) => handleProfileChange('specialty', e.target.value)}
+                        disabled={!isEditingProfile}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Qualification</label>
+                      <input
+                        type="text"
+                        value={profileData.qualification}
+                        onChange={(e) => handleProfileChange('qualification', e.target.value)}
+                        disabled={!isEditingProfile}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Experience (years)</label>
+                      <input
+                        type="number"
+                        value={profileData.experience_years}
+                        onChange={(e) => handleProfileChange('experience_years', e.target.value)}
+                        disabled={!isEditingProfile}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Session Fee (₹)</label>
+                      <input
+                        type="number"
+                        value={profileData.session_fee}
+                        onChange={(e) => handleProfileChange('session_fee', e.target.value)}
+                        disabled={!isEditingProfile}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
-            </motion.div>
 
+              {/* Bio */}
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                <textarea
+                  value={profileData.bio}
+                  onChange={(e) => handleProfileChange('bio', e.target.value)}
+                  disabled={!isEditingProfile}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                />
+              </div>
+
+              {/* Address */}
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                <input
+                  type="text"
+                  value={profileData.address}
+                  onChange={(e) => handleProfileChange('address', e.target.value)}
+                  disabled={!isEditingProfile}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                />
+              </div>
+
+              {/* Emergency Contact */}
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Emergency Contact</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Contact Name</label>
+                    <input
+                      type="text"
+                      value={profileData.emergency_contact_name}
+                      onChange={(e) => handleProfileChange('emergency_contact_name', e.target.value)}
+                      disabled={!isEditingProfile}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Contact Phone</label>
+                    <input
+                      type="tel"
+                      value={profileData.emergency_contact_phone}
+                      onChange={(e) => handleProfileChange('emergency_contact_phone', e.target.value)}
+                      disabled={!isEditingProfile}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Save Button */}
+              {isEditingProfile && (
+                <div className="mt-6 flex justify-end">
+                  <button
+                    onClick={handleSaveProfile}
+                    disabled={saving}
+                    className="flex items-center space-x-2 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <FiSave className="w-4 h-4" />
+                    <span>{saving ? 'Saving...' : 'Save Profile'}</span>
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {/* Sessions View */}
+          {activeView === 'sessions' && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
               className="bg-white rounded-xl shadow-sm p-6"
             >
-              <div className="flex items-center">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <FiCheckCircle className="w-6 h-6 text-green-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm text-gray-600">Completed</p>
-                  <p className="text-2xl font-bold text-gray-900">12</p>
-                </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-6">My Sessions</h2>
+              <div className="text-center py-12">
+                <FiCalendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">Session management coming soon...</p>
               </div>
             </motion.div>
+          )}
 
+          {/* Settings View */}
+          {activeView === 'settings' && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
               className="bg-white rounded-xl shadow-sm p-6"
             >
-              <div className="flex items-center">
-                <div className="p-2 bg-yellow-100 rounded-lg">
-                  <FiClock className="w-6 h-6 text-yellow-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm text-gray-600">Upcoming</p>
-                  <p className="text-2xl font-bold text-gray-900">5</p>
-                </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-6">Settings</h2>
+              <div className="text-center py-12">
+                <FiSettings className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">Settings panel coming soon...</p>
               </div>
             </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-white rounded-xl shadow-sm p-6"
-            >
-              <div className="flex items-center">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <FiUser className="w-6 h-6 text-purple-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm text-gray-600">Active Students</p>
-                  <p className="text-2xl font-bold text-gray-900">8</p>
-                </div>
-              </div>
-            </motion.div>
-          </div>
+          )}
         </div>
       </div>
     </div>
