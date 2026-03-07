@@ -47,9 +47,9 @@ function App() {
   const { isAuthenticated, user, token } = useSelector((state) => state.auth);
   
   // All useState hooks at the top level
-  const [showLogin, setShowLogin] = useState(true);
+  const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
-  const [showHomepage, setShowHomepage] = useState(false); // Changed to false to force login
+  const [showHomepage, setShowHomepage] = useState(true); // Show homepage by default
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [activeItem, setActiveItem] = useState('dashboard');
@@ -432,13 +432,54 @@ function App() {
     setActiveItem('patients');
   };
 
-  const handleSaveDoctor = (updatedData) => {
-    // In a real app, this would save to backend
-    console.log('Saving therapist:', updatedData);
-    alert(`Therapist ${updatedData.name} updated successfully!`);
-    setSelectedDoctorId(null);
-    setCurrentView('doctors-list');
-    setActiveItem('doctors');
+  const handleSaveDoctor = async (updatedData) => {
+    try {
+      // Remove client-side id and prepare data for API
+      const therapistData = {
+        first_name: updatedData.firstName,
+        last_name: updatedData.lastName,
+        email: updatedData.email,
+        phone: updatedData.phone,
+        specialty: updatedData.specialty,
+        qualification: updatedData.qualification,
+        experience_years: parseInt(updatedData.experience) || 0,
+        session_fee: parseFloat(updatedData.sessionFee) || 0,
+        bio: updatedData.bio,
+        date_of_birth: updatedData.dateOfBirth,
+        gender: updatedData.gender,
+        address: updatedData.address,
+        city: updatedData.city,
+        state: updatedData.state,
+        zip_code: updatedData.zipCode,
+        emergency_contact_name: updatedData.emergencyContactName,
+        emergency_contact_phone: updatedData.emergencyContactPhone,
+        joining_date: updatedData.joiningDate,
+        license_number: updatedData.licenseNumber,
+        centre_id: 1, // Default centre, should be configurable
+        status: 'active'
+      };
+
+      const response = await fetch('http://localhost:3005/api/therapists', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(therapistData),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert(`Therapist ${updatedData.firstName} ${updatedData.lastName} created successfully!`);
+        setCurrentView('doctors-list');
+        setActiveItem('doctors');
+      } else {
+        alert(`Failed to create therapist: ${result.message}`);
+      }
+    } catch (error) {
+      console.error('Error saving therapist:', error);
+      alert('Failed to save therapist. Please try again.');
+    }
   };
 
   const handleCancelDoctorEdit = () => {

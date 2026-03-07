@@ -425,6 +425,11 @@ INSERT INTO kivi_therapists (user_id, centre_id, employee_id, specialty, qualifi
 (4, 2, 'TH002', 'Occupational Therapy', 'BOT, MOT in Occupational Therapy', 'LIC123457', 6, 1500.00, 'Certified occupational therapist with expertise in sensory integration and motor skills development.', '1987-07-22', 'male', '2021-03-10', 'active'),
 (5, 3, 'TH003', 'Speech Language Therapy', 'MASLP in Speech Language Pathology', 'LIC123458', 5, 1500.00, 'Speech language pathologist focused on communication disorders and language development.', '1988-11-08', 'female', '2022-05-20', 'active');
 
+-- Set availability for dummy therapists (Monday to Friday, 9 AM to 5 PM)
+UPDATE kivi_therapists SET availability = '{"monday": ["09:00-17:00"], "tuesday": ["09:00-17:00"], "wednesday": ["09:00-17:00"], "thursday": ["09:00-17:00"], "friday": ["09:00-17:00"]}' WHERE id = 1;
+UPDATE kivi_therapists SET availability = '{"monday": ["09:00-17:00"], "tuesday": ["09:00-17:00"], "wednesday": ["09:00-17:00"], "thursday": ["09:00-17:00"], "friday": ["09:00-17:00"]}' WHERE id = 2;
+UPDATE kivi_therapists SET availability = '{"monday": ["09:00-17:00"], "tuesday": ["09:00-17:00"], "wednesday": ["09:00-17:00"], "thursday": ["09:00-17:00"], "friday": ["09:00-17:00"]}' WHERE id = 3;
+
 -- Insert sample student user
 INSERT INTO kivi_users (email, password, role, first_name, last_name, phone) VALUES
 ('student@example.com', 'student123', 'student', 'John', 'Doe', '+91-9876543214');

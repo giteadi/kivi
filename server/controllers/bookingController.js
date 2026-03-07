@@ -37,7 +37,7 @@ class BookingController extends Therapist {
         });
       }
 
-      const availability = await this.getTherapistAvailability(therapistId, date);
+      const availability = await super.getTherapistAvailability(therapistId, date);
 
       res.json({
         success: true,
@@ -66,7 +66,7 @@ class BookingController extends Therapist {
         });
       }
 
-      const timeSlots = await this.getAvailableTimeSlots(therapistId, date);
+      const timeSlots = await super.getAvailableTimeSlots(therapistId, date);
 
       res.json({
         success: true,
@@ -97,7 +97,7 @@ class BookingController extends Therapist {
       }
 
       // Check if the time slot is still available
-      const timeSlots = await this.getAvailableTimeSlots(therapistId, date);
+      const timeSlots = await super.getAvailableTimeSlots(therapistId, date);
       const isSlotAvailable = timeSlots.some(slot => slot.time === time && slot.available);
 
       if (!isSlotAvailable) {

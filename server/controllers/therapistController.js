@@ -61,13 +61,54 @@ class TherapistController {
   // Create therapist
   async createTherapist(req, res) {
     try {
-      const therapistData = {
-        ...req.body,
+      const therapistData = req.body;
+
+      // Check if user_id is provided, if not create a new user
+      let userId = therapistData.user_id;
+      if (!userId) {
+        // Create user first
+        const User = require('../models/User');
+        const userModel = new User();
+
+        const userData = {
+          email: therapistData.email,
+          password: 'therapist123', // Default password, should be changed
+          role: 'therapist',
+          first_name: therapistData.first_name,
+          last_name: therapistData.last_name,
+          phone: therapistData.phone,
+          is_active: true
+        };
+
+        userId = await userModel.create(userData);
+      }
+
+      // Prepare therapist data
+      const finalTherapistData = {
+        user_id: userId,
+        centre_id: therapistData.centre_id || 1,
+        employee_id: therapistData.employee_id || `TH${Date.now()}`,
+        specialty: therapistData.specialty,
+        qualification: therapistData.qualification,
+        license_number: therapistData.license_number,
+        experience_years: therapistData.experience_years || 0,
+        session_fee: therapistData.session_fee || 0,
+        bio: therapistData.bio,
+        date_of_birth: therapistData.date_of_birth,
+        gender: therapistData.gender,
+        address: therapistData.address,
+        city: therapistData.city,
+        state: therapistData.state,
+        zip_code: therapistData.zip_code,
+        emergency_contact_name: therapistData.emergency_contact_name,
+        emergency_contact_phone: therapistData.emergency_contact_phone,
+        joining_date: therapistData.joining_date,
+        status: therapistData.status || 'active',
         created_at: new Date(),
         updated_at: new Date()
       };
 
-      const therapistId = await this.therapistModel.create(therapistData);
+      const therapistId = await this.therapistModel.create(finalTherapistData);
 
       res.status(201).json({
         success: true,
