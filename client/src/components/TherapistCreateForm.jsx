@@ -124,7 +124,7 @@ const TherapistCreateForm = ({ onSave, onCancel }) => {
         email: formData.email,
         phone: formData.phone,
         password: formData.password,
-        date_of_birth: formData.dateOfBirth,
+        date_of_birth: formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString().split('T')[0] : null,
         gender: formData.gender,
         specialty: formData.specialty,
         qualification: formData.qualification,

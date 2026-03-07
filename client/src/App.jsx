@@ -6,6 +6,8 @@ import { fetchDoctors } from './store/slices/doctorSlice';
 import ErrorBoundary from './components/ErrorBoundary';
 import ErrorToast from './components/ErrorToast';
 import useErrorHandler from './hooks/useErrorHandler';
+import { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import Login from './components/Login';
 import Register from './components/Register';
 import Homepage from './components/Homepage';
@@ -478,17 +480,17 @@ function App() {
       const result = await response.json();
 
       if (result.success) {
-        alert(`Therapist ${updatedData.firstName} ${updatedData.lastName} created successfully!`);
+        toast.success(`Therapist ${updatedData.firstName} ${updatedData.lastName} created successfully!`);
         setCurrentView('doctors-list');
         setActiveItem('doctors');
         // Refresh the doctors list
         dispatch(fetchDoctors());
       } else {
-        alert(`Failed to create therapist: ${result.message}`);
+        toast.error(`Failed to create therapist: ${result.message}`);
       }
     } catch (error) {
       console.error('Error saving therapist:', error);
-      alert('Failed to save therapist. Please try again.');
+      toast.error('Failed to save therapist. Please try again.');
     }
   };
 
@@ -499,57 +501,12 @@ function App() {
 
   // Handle doctor edit (separate from create)
   const handleSaveDoctorEdit = async (updatedData) => {
-    try {
-      // Extract numeric ID from doctorId
-      const numericId = updatedData.id?.replace('#', '');
-      
-      const therapistData = {
-        first_name: updatedData.name?.split(' ')[0] || '',
-        last_name: updatedData.name?.split(' ').slice(1).join(' ') || '',
-        email: updatedData.email,
-        phone: updatedData.phone,
-        specialty: updatedData.specialty,
-        qualification: updatedData.qualification,
-        license_number: updatedData.licenseNumber,
-        experience_years: parseInt(updatedData.experience) || 0,
-        session_fee: parseFloat(updatedData.consultationFee) || 0,
-        bio: updatedData.specializations,
-        date_of_birth: updatedData.dateOfBirth,
-        gender: updatedData.gender,
-        address: updatedData.address,
-        emergency_contact_name: updatedData.emergencyContactName,
-        emergency_contact_phone: updatedData.emergencyContactPhone,
-        status: updatedData.status?.toLowerCase()
-      };
-
-      // Only include password if it was provided
-      if (updatedData.password && updatedData.password.trim()) {
-        therapistData.password = updatedData.password;
-      }
-
-      const response = await fetch(`http://localhost:3005/api/therapists/${numericId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(therapistData),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        alert(`Therapist updated successfully!`);
-        setCurrentView('doctors-list');
-        setActiveItem('doctors');
-        // Dispatch fetchDoctors to refresh the list
-        dispatch(fetchDoctors());
-      } else {
-        alert(`Failed to update therapist: ${result.message}`);
-      }
-    } catch (error) {
-      console.error('Error updating therapist:', error);
-      alert('Failed to update therapist. Please try again.');
-    }
+    // This function is called by DoctorEditForm after successful update
+    // Just handle navigation, no need for duplicate API call or toast
+    setCurrentView('doctors-list');
+    setActiveItem('doctors');
+    // Dispatch fetchDoctors to refresh the list
+    dispatch(fetchDoctors());
   };
 
   // Edit handlers
@@ -588,7 +545,7 @@ function App() {
 
   const handleDeleteDoctor = (doctorId) => {
     if (window.confirm('Are you sure you want to delete this therapist?')) {
-      alert(`Therapist ${doctorId} deleted successfully!`);
+      toast.success(`Therapist ${doctorId} deleted successfully!`);
     }
   };
 
@@ -1038,6 +995,32 @@ function App() {
             />
           ))}
         </div>
+
+        {/* React Hot Toast */}
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#363636',
+              color: '#fff',
+            },
+            success: {
+              duration: 3000,
+              iconTheme: {
+                primary: '#10b981',
+                secondary: '#fff',
+              },
+            },
+            error: {
+              duration: 5000,
+              iconTheme: {
+                primary: '#ef4444',
+                secondary: '#fff',
+              },
+            },
+          }}
+        />
       </div>
     </ErrorBoundary>
   );

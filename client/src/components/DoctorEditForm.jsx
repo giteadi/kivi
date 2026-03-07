@@ -1,6 +1,13 @@
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiSave, FiX, FiUser, FiMail, FiPhone, FiLock, FiMapPin, FiAward, FiDollarSign, FiEye, FiEyeOff } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
+
+// Utility function to format date for HTML input
+const formatDateForInput = (dateString) => {
+  if (!dateString) return '';
+  return new Date(dateString).toISOString().split('T')[0];
+};
 
 const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -33,6 +40,8 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [updateSuccess, setUpdateSuccess] = useState(false);
+  const [passwordUpdated, setPasswordUpdated] = useState(false);
 
   const clinics = ['Clinic Kjaggi', 'Green Valley Clinic', 'Sunrise Health Center', 'Downtown Family Clinic'];
   const specialties = ['General Medicine', 'Cardiology', 'Pediatrics', 'Orthopedics', 'Dermatology', 'Neurology', 'Psychiatry'];
@@ -72,15 +81,15 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
             name: `${therapist.first_name} ${therapist.last_name}`,
             email: therapist.email,
             phone: therapist.phone,
-            password: '', // Password field for admin to set/update
+            password: therapist.password || '', // Show current password from database
             clinic: therapist.centre_name || '',
             specialty: therapist.specialty,
             qualification: therapist.qualification,
             experience: therapist.experience_years || '',
             status: therapist.status === 'active' ? 'Active' : 'Inactive',
             availability: 'Available',
-            joinDate: therapist.joining_date,
-            dateOfBirth: therapist.date_of_birth,
+            joinDate: formatDateForInput(therapist.joining_date),
+            dateOfBirth: formatDateForInput(therapist.date_of_birth),
             gender: therapist.gender,
             address: therapist.address,
             licenseNumber: therapist.license_number,
@@ -94,11 +103,11 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
             languages: ''
           });
         } else {
-          alert('Failed to load therapist data');
+          toast.error('Failed to load therapist data');
         }
       } catch (error) {
         console.error('Error fetching therapist data:', error);
-        alert('Error loading therapist data');
+        toast.error('Error loading therapist data');
       } finally {
         setIsLoading(false);
       }
@@ -139,6 +148,11 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
       newErrors.consultationFee = 'Consultation fee must be a number';
     }
     
+    // Password validation (only if provided)
+    if (formData.password && formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters long';
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -151,6 +165,8 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
     }
 
     setIsSubmitting(true);
+    setUpdateSuccess(false);
+    setPasswordUpdated(false);
     
     try {
       // Prepare therapist data for API
@@ -165,7 +181,7 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
         experience_years: parseInt(formData.experience) || 0,
         session_fee: parseFloat(formData.consultationFee) || 0,
         bio: formData.specializations,
-        date_of_birth: formData.dateOfBirth,
+        date_of_birth: formatDateForInput(formData.dateOfBirth),
         gender: formData.gender,
         address: formData.address,
         emergency_contact_name: formData.emergencyContactName,
@@ -173,8 +189,11 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
         status: formData.status.toLowerCase()
       };
 
+      // Track if password is being updated
+      const isPasswordUpdate = formData.password.trim().length > 0;
+      
       // Only include password if it was provided (for admin to update)
-      if (formData.password.trim()) {
+      if (isPasswordUpdate) {
         therapistData.password = formData.password;
       }
 
@@ -189,14 +208,24 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
       const result = await response.json();
 
       if (result.success) {
-        alert('Therapist updated successfully!');
+        setUpdateSuccess(true);
+        if (isPasswordUpdate) {
+          setPasswordUpdated(true);
+        }
+        
+        // Keep password field for admin visibility (don't clear it)
+        // setFormData(prev => ({ ...prev, password: '' }));
+        
+        // Show success toast
+        toast.success(`Therapist updated successfully!${isPasswordUpdate ? ' Password has been changed.' : ''}`);
+        
         onSave({ ...formData, id: doctorId });
       } else {
-        alert(`Failed to update therapist: ${result.message}`);
+        toast.error(`Failed to update therapist: ${result.message}`);
       }
     } catch (error) {
       console.error('Error updating therapist:', error);
-      alert('Failed to update therapist. Please try again.');
+      toast.error('Failed to update therapist. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -400,6 +429,11 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Password
+                  {passwordUpdated && (
+                    <span className="ml-2 text-xs text-green-600 font-medium">
+                      ✓ Updated
+                    </span>
+                  )}
                 </label>
                 <div className="relative">
                   <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -407,7 +441,10 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
                     type={showPassword ? 'text' : 'password'}
                     value={formData.password}
                     onChange={(e) => handleInputChange('password', e.target.value)}
-                    className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={`w-full pl-10 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      errors.password ? 'border-red-500 bg-red-50' : 
+                      passwordUpdated ? 'border-green-500 bg-green-50' : 'border-gray-300'
+                    }`}
                     placeholder="Enter new password (leave empty to keep current)"
                   />
                   <button
@@ -418,7 +455,13 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
                     {showPassword ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
                   </button>
                 </div>
-                <p className="mt-1 text-sm text-gray-500">Leave empty to keep current password</p>
+                <p className="mt-1 text-sm text-gray-500">
+                  Leave empty to keep current password
+                  {passwordUpdated && (
+                    <span className="ml-1 text-green-600">• Password successfully updated</span>
+                  )}
+                </p>
+                {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
               </div>
             </div>
           </motion.div>

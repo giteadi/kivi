@@ -143,7 +143,15 @@ class TherapistController {
       if (updateData.email !== undefined) userData.email = updateData.email;
       if (updateData.phone !== undefined) userData.phone = updateData.phone;
       if (updateData.password !== undefined) userData.password = updateData.password;
-      if (updateData.date_of_birth !== undefined) userData.date_of_birth = updateData.date_of_birth;
+      if (updateData.date_of_birth !== undefined) {
+        // Format date properly - handle both ISO strings and date objects
+        if (updateData.date_of_birth) {
+          const date = new Date(updateData.date_of_birth);
+          userData.date_of_birth = date.toISOString().split('T')[0];
+        } else {
+          userData.date_of_birth = null;
+        }
+      }
       if (updateData.relation !== undefined) userData.relation = updateData.relation;
 
       // Fields that go to kivi_therapists table
@@ -159,8 +167,16 @@ class TherapistController {
 
       therapistFields.forEach(field => {
         if (updateData[field] !== undefined) {
-          // Convert arrays to JSON strings for JSON fields
-          if (Array.isArray(updateData[field])) {
+          // Handle date fields specifically
+          if (field === 'date_of_birth' || field === 'joining_date') {
+            if (updateData[field]) {
+              const date = new Date(updateData[field]);
+              therapistData[field] = date.toISOString().split('T')[0];
+            } else {
+              therapistData[field] = null;
+            }
+          } else if (Array.isArray(updateData[field])) {
+            // Convert arrays to JSON strings for JSON fields
             therapistData[field] = JSON.stringify(updateData[field]);
           } else {
             therapistData[field] = updateData[field];
@@ -183,11 +199,6 @@ class TherapistController {
       if (Object.keys(userData).length > 0) {
         const User = require('../models/User');
         const userModel = new User();
-        
-        // Use plain text password (no hashing for now)
-        // if (userData.password) {
-        //   userData.password = userData.password; // Plain text
-        // }
         
         await userModel.update(therapist.user_id, userData);
       }

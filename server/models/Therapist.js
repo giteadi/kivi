@@ -51,7 +51,7 @@ class Therapist extends BaseModel {
   async getTherapistWithStats(id) {
     const sql = `
       SELECT t.*, 
-             u.first_name, u.last_name, u.email, u.phone,
+             u.first_name, u.last_name, u.email, u.phone, u.password,
              c.name as centre_name,
              COUNT(s.id) as total_sessions,
              AVG(CASE WHEN s.status = 'completed' THEN 5 ELSE 0 END) as avg_rating
