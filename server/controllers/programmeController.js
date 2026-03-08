@@ -50,6 +50,25 @@ class ProgrammeController {
     }
   }
 
+  // Get available therapists for programme creation
+  async getAvailableTherapists(req, res) {
+    try {
+      const { centreId } = req.params;
+      const therapists = await this.programmeModel.getAvailableTherapistsForProgramme(centreId);
+
+      res.json({
+        success: true,
+        data: therapists
+      });
+    } catch (error) {
+      console.error('Get available therapists error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
   // Create programme
   async createProgramme(req, res) {
     try {
@@ -80,9 +99,15 @@ class ProgrammeController {
     try {
       const { id } = req.params;
       const updateData = {
-        ...req.body,
         updated_at: new Date()
       };
+
+      // Only include fields that are provided and not null
+      Object.keys(req.body).forEach(key => {
+        if (req.body[key] !== null && req.body[key] !== undefined && req.body[key] !== '') {
+          updateData[key] = req.body[key];
+        }
+      });
 
       const updated = await this.programmeModel.update(id, updateData);
 

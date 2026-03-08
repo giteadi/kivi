@@ -241,6 +241,9 @@ const ServicesList = ({ onViewService, onEditService, onDeleteService, onCreateN
                         Center
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                        Therapist
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                         Price
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
@@ -291,6 +294,27 @@ const ServicesList = ({ onViewService, onEditService, onDeleteService, onCreateN
                               <div className="text-sm font-medium text-gray-900">Centre {service.centre_id}</div>
                               <div className="text-sm text-gray-500">Center Location</div>
                             </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            {service.therapist_first_name ? (
+                              <>
+                                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-2">
+                                  <span className="text-xs font-semibold text-green-600">
+                                    {service.therapist_first_name.charAt(0)}{service.therapist_last_name.charAt(0)}
+                                  </span>
+                                </div>
+                                <div>
+                                  <div className="text-sm font-medium text-gray-900">
+                                    {service.therapist_first_name} {service.therapist_last_name}
+                                  </div>
+                                  <div className="text-sm text-gray-500">{service.therapist_specialty}</div>
+                                </div>
+                              </>
+                            ) : (
+                              <div className="text-sm text-gray-500">Not assigned</div>
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">

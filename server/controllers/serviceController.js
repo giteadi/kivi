@@ -83,6 +83,15 @@ class ServiceController {
       console.log('Body:', req.body);
 
       const { id } = req.params;
+      
+      // Validate ID
+      if (!id || id === 'undefined') {
+        return res.status(400).json({
+          success: false,
+          message: 'Valid service ID is required'
+        });
+      }
+      
       const updateData = {
         ...req.body,
         updated_at: new Date()

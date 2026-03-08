@@ -635,20 +635,30 @@ function App() {
     try {
       console.log('=== Saving service ===', serviceData);
 
+      // Determine if this is a create or update operation
+      const isUpdate = serviceData.id && serviceData.id !== 'undefined' && serviceData.id !== undefined;
+
       // Prepare data for API
       const apiData = {
-        programme_id: serviceData.name.substring(0, 2).toUpperCase(), // Generate programme_id from name
+        programme_id: serviceData.programme_id || serviceData.name.substring(0, 2).toUpperCase(), // Use existing programme_id or generate from name
         name: serviceData.name,
         category: serviceData.category,
-        centre_id: parseInt(serviceData.centre),
-        fee: parseFloat(serviceData.price),
+        centre_id: parseInt(serviceData.centre_id || serviceData.centre),
+        fee: parseFloat(serviceData.fee || serviceData.price),
         duration: parseInt(serviceData.duration),
         description: serviceData.description,
-        status: serviceData.status
+        status: serviceData.status,
+        therapist_id: serviceData.therapist_id || null
       };
 
-      const response = await fetch(`http://localhost:3005/api/services/${serviceData.id}`, {
-        method: 'PUT',
+      const url = isUpdate 
+        ? `http://localhost:3005/api/programmes/${serviceData.id}`
+        : 'http://localhost:3005/api/programmes';
+
+      const method = isUpdate ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -659,10 +669,11 @@ function App() {
 
       if (result.success) {
         console.log('=== Service saved successfully ===');
-        alert(`Programme "${serviceData.name}" updated successfully!`);
+        const action = isUpdate ? 'updated' : 'created';
+        alert(`Programme "${serviceData.name}" ${action} successfully!`);
 
         // Refresh services data
-        const servicesResponse = await fetch('http://localhost:3005/api/services');
+        const servicesResponse = await fetch('http://localhost:3005/api/programmes');
         const servicesResult = await servicesResponse.json();
 
         if (servicesResult.success) {

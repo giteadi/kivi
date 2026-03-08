@@ -7,6 +7,9 @@ const programmeController = new ProgrammeController();
 // GET /api/programmes - Get all programmes
 router.get('/', programmeController.getProgrammes.bind(programmeController));
 
+// GET /api/programmes/therapists/:centreId - Get available therapists for programme creation
+router.get('/therapists/:centreId', programmeController.getAvailableTherapists.bind(programmeController));
+
 // GET /api/programmes/:id - Get single programme
 router.get('/:id', programmeController.getProgramme.bind(programmeController));
 
