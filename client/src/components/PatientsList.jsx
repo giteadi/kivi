@@ -232,7 +232,7 @@ const PatientsList = ({ onViewPatient, onEditPatient, onDeletePatient, onCreateN
                       transition={{ delay: index * 0.05 }}
                       whileHover={{ backgroundColor: '#f9fafb' }}
                       className="hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => onViewPatient(patient.id)}
+                      onClick={() => onViewPatient(patient.id.replace('#', ''))}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <input 
@@ -281,7 +281,7 @@ const PatientsList = ({ onViewPatient, onEditPatient, onDeletePatient, onCreateN
                             whileTap={{ scale: 0.95 }}
                             onClick={(e) => {
                               e.stopPropagation();
-                              onViewPatient(patient.id);
+                              onViewPatient(patient.id.replace('#', ''));
                             }}
                             className="text-blue-600 hover:text-blue-900 p-1 rounded"
                             title="View Profile"

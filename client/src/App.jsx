@@ -431,7 +431,7 @@ function App() {
   const handleSavePatient = (updatedData) => {
     // In a real app, this would save to backend
     console.log('Saving student:', updatedData);
-    alert(`Student ${updatedData.name} updated successfully!`);
+    toast.success(`Student ${updatedData.name} updated successfully!`);
     setSelectedPatientId(null);
     setCurrentView('patients-list');
     setActiveItem('patients');
@@ -539,7 +539,7 @@ function App() {
   // Delete handlers
   const handleDeletePatient = (patientId) => {
     if (window.confirm('Are you sure you want to delete this student?')) {
-      alert(`Student ${patientId} deleted successfully!`);
+      toast.success(`Student ${patientId} deleted successfully!`);
     }
   };
 
@@ -945,9 +945,9 @@ function App() {
       
       case 'clinics':
         if (currentView === 'clinics-list' || currentView === 'dashboard') {
-          return <ClinicsList onViewClinic={handleViewClinic} onEditClinic={handleEditClinic} onDeleteClinic={handleDeleteClinic} onCreateNewClinic={handleCreateNewClinic} />;
+          return <ClinicsList onViewClinic={handleViewClinic} onEditClinic={handleEditClinic} onCreateNewClinic={handleCreateNewClinic} />;
         }
-        return <ClinicsList onViewClinic={handleViewClinic} onEditClinic={handleEditClinic} onDeleteClinic={handleDeleteClinic} onCreateNewClinic={handleCreateNewClinic} />;
+        return <ClinicsList onViewClinic={handleViewClinic} onEditClinic={handleEditClinic} onCreateNewClinic={handleCreateNewClinic} />;
       
       case 'encounters-list':
         if (currentView === 'appointments-list') {

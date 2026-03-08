@@ -1,8 +1,10 @@
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiSave, FiX, FiUser, FiMail, FiPhone, FiMapPin, FiHeart } from 'react-icons/fi';
 import { useState } from 'react';
+import { useToast } from './Toast';
 
 const PatientEditForm = ({ patientId, onSave, onCancel }) => {
+  const toast = useToast();
   // Mock data - in real app this would come from API based on patientId
   const initialData = {
     id: '#14958',
@@ -101,7 +103,7 @@ const PatientEditForm = ({ patientId, onSave, onCancel }) => {
       onSave(updatedData);
     } catch (error) {
       console.error('Error updating patient:', error);
-      alert('Error updating patient. Please try again.');
+      toast.error('Error updating patient. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

@@ -1,9 +1,12 @@
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiSave, FiX, FiUser, FiMail, FiPhone, FiMapPin } from 'react-icons/fi';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useToast } from './Toast';
 
-const StudentCreateForm = ({ onSave, onCancel }) => {
+const StudentEditForm = ({ studentId, onSave, onCancel }) => {
+  const toast = useToast();
   const [formData, setFormData] = useState({
+    id: '',
     firstName: '',
     lastName: '',
     email: '',
@@ -20,15 +23,61 @@ const StudentCreateForm = ({ onSave, onCancel }) => {
     emergencyContactRelation: '',
     learningNeeds: '',
     supportRequirements: '',
-    status: 'active'
+    status: 'Active'
   });
 
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const centres = [
     { id: 1, name: 'MindSaid Learning Centre' },
     { id: 5, name: 'Test' }
   ];
+
+  useEffect(() => {
+    const fetchStudent = async () => {
+      try {
+        const response = await fetch(`http://localhost:3005/api/students/${studentId}`);
+        const result = await response.json();
+        
+        if (result.success) {
+          const student = result.data;
+          setFormData({
+            id: student.id,
+            firstName: student.first_name,
+            lastName: student.last_name,
+            email: student.email,
+            phone: student.phone,
+            dateOfBirth: student.date_of_birth,
+            gender: student.gender,
+            address: student.address,
+            city: student.city,
+            state: student.state,
+            zipCode: student.zip_code,
+            centreId: student.centre_id,
+            emergencyContactName: student.emergency_contact_name,
+            emergencyContactPhone: student.emergency_contact_phone,
+            emergencyContactRelation: student.emergency_contact_relation,
+            learningNeeds: student.learning_needs,
+            supportRequirements: student.support_requirements,
+            status: student.status
+          });
+        } else {
+          toast.error('Failed to fetch student data');
+        }
+      } catch (error) {
+        console.error('Error fetching student:', error);
+        toast.error('Error loading student data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (studentId) {
+      fetchStudent();
+    }
+  }, [studentId, toast]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -36,7 +85,6 @@ const StudentCreateForm = ({ onSave, onCancel }) => {
       [field]: value
     }));
     
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({
         ...prev,
@@ -85,30 +133,44 @@ const StudentCreateForm = ({ onSave, onCancel }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (validateForm()) {
-      try {
-        const response = await fetch('http://localhost:3005/api/students', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData)
-        });
+    if (!validateForm()) {
+      return;
+    }
 
-        const result = await response.json();
-        
-        if (result.success) {
-          onSave(result.data);
-        } else {
-          console.error('Error creating student:', result.message);
-          // You might want to show an error message to the user here
-        }
-      } catch (error) {
-        console.error('Error creating student:', error);
-        // You might want to show an error message to the user here
+    setIsSubmitting(true);
+    
+    try {
+      const response = await fetch(`http://localhost:3005/api/students/${studentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success('Student updated successfully');
+        onSave(result.data);
+      } else {
+        toast.error(result.message || 'Failed to update student');
       }
+    } catch (error) {
+      console.error('Error updating student:', error);
+      toast.error('Error updating student');
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="lg:ml-64 min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-500">Loading student data...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="lg:ml-64 min-h-screen bg-gray-50">
@@ -141,10 +203,11 @@ const StudentCreateForm = ({ onSave, onCancel }) => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleSubmit}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              disabled={isSubmitting}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50"
             >
               <FiSave className="w-4 h-4" />
-              <span>Create Student</span>
+              <span>{isSubmitting ? 'Saving...' : 'Update Student'}</span>
             </motion.button>
           </div>
         </div>
@@ -155,7 +218,7 @@ const StudentCreateForm = ({ onSave, onCancel }) => {
           <span className="mx-2">›</span>
           <span>Students</span>
           <span className="mx-2">›</span>
-          <span className="text-gray-800">Create New Student</span>
+          <span className="text-gray-800">Edit Student</span>
         </div>
 
         {/* Form */}
@@ -170,8 +233,8 @@ const StudentCreateForm = ({ onSave, onCancel }) => {
                 <FiUser className="w-6 h-6 text-blue-600" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-gray-800">Create New Student</h2>
-                <p className="text-gray-600">Add a new student to the learning centre</p>
+                <h2 className="text-xl font-semibold text-gray-800">Edit Student</h2>
+                <p className="text-gray-600">Update student information</p>
               </div>
             </div>
           </div>
@@ -475,4 +538,4 @@ const StudentCreateForm = ({ onSave, onCancel }) => {
   );
 };
 
-export default StudentCreateForm;
+export default StudentEditForm;

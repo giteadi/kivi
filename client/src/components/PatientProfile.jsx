@@ -1,102 +1,117 @@
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiEdit3, FiPhone, FiMail, FiMapPin, FiCalendar, FiUser, FiFileText, FiActivity, FiClock, FiDollarSign } from 'react-icons/fi';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useToast } from './Toast';
 
 const PatientProfile = ({ patientId, onBack }) => {
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState('overview');
+  const [patientData, setPatientData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Mock patient data - in real app this would come from API based on patientId
-  const patientData = {
-    id: '#14958',
-    name: 'Thomas Thompson',
-    initials: 'TT',
-    email: 'kjaggi+patient8@mindsalelearning.com',
-    phone: '+1 5557741269',
-    clinic: 'Clinic Kjaggi',
-    status: 'Active',
-    registrationDate: 'February 15, 2026',
-    dateOfBirth: 'January 15, 1988',
-    age: '38 years',
-    gender: 'Male',
-    bloodGroup: 'O+',
-    address: '123 Main Street, New York, NY 10001',
-    emergencyContact: {
-      name: 'Sarah Thompson',
-      relation: 'Spouse',
-      phone: '+1 5557741270'
-    },
-    medicalInfo: {
-      allergies: ['Penicillin', 'Shellfish'],
-      chronicConditions: ['Hypertension', 'Diabetes Type 2'],
-      currentMedications: ['Metformin 500mg', 'Lisinopril 10mg'],
-      lastVisit: 'February 20, 2026',
-      nextAppointment: 'March 5, 2026'
-    },
-    appointments: [
-      {
-        id: 1,
-        date: 'February 20, 2026',
-        time: '9:00 AM',
-        doctor: 'Dr. Kjaggi',
-        type: 'Follow Up Visit',
-        status: 'Completed',
-        clinic: 'Clinic Kjaggi'
-      },
-      {
-        id: 2,
-        date: 'January 15, 2026',
-        time: '2:30 PM',
-        doctor: 'Dr. Johnson',
-        type: 'Initial Consultation',
-        status: 'Completed',
-        clinic: 'Clinic Kjaggi'
-      },
-      {
-        id: 3,
-        date: 'March 5, 2026',
-        time: '11:00 AM',
-        doctor: 'Dr. Kjaggi',
-        type: 'Follow Up Visit',
-        status: 'Scheduled',
-        clinic: 'Clinic Kjaggi'
+  console.log('PatientProfile rendered with patientId:', patientId); // Debug log
+
+  useEffect(() => {
+    const fetchPatientData = async () => {
+      if (!patientId) {
+        setError('No patient ID provided');
+        setLoading(false);
+        return;
       }
-    ],
-    encounters: [
-      {
-        id: 1,
-        date: 'February 20, 2026',
-        type: 'Follow Up Visit',
-        doctor: 'Dr. Kjaggi',
-        diagnosis: 'Diabetes Management',
-        status: 'Completed'
-      },
-      {
-        id: 2,
-        date: 'January 15, 2026',
-        type: 'Initial Consultation',
-        doctor: 'Dr. Johnson',
-        diagnosis: 'Hypertension, Diabetes Type 2',
-        status: 'Completed'
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await fetch(`http://localhost:3005/api/patients/${patientId}`);
+        const result = await response.json();
+
+        if (result.success) {
+          const patient = result.data;
+          console.log('Raw patient data from API:', patient); // Debug log
+
+          // Transform the data to match component expectations
+          const transformedData = {
+            id: `#${patient.student_id || patient.id}`,
+            name: `${patient.first_name || 'Unknown'} ${patient.last_name || 'Unknown'}`,
+            initials: `${(patient.first_name || '')[0] || ''}${(patient.last_name || '')[0] || ''}`.toUpperCase(),
+            email: patient.email || 'Not provided',
+            phone: patient.phone || 'Not provided',
+            clinic: 'MindSaid Learning Centre', // Default clinic name
+            status: patient.status ? patient.status.charAt(0).toUpperCase() + patient.status.slice(1) : 'Unknown',
+            registrationDate: patient.registration_date ? new Date(patient.registration_date).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            }) : 'Not provided',
+            dateOfBirth: patient.date_of_birth ? new Date(patient.date_of_birth).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            }) : 'Not provided',
+            age: patient.date_of_birth ? calculateAge(patient.date_of_birth) : 'Not available',
+            gender: patient.gender ? patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1) : 'Not specified',
+            address: patient.address ? `${patient.address}${patient.city ? `, ${patient.city}` : ''}${patient.state ? `, ${patient.state}` : ''}${patient.zip_code ? ` ${patient.zip_code}` : ''}`.trim() : 'Not provided',
+            emergencyContact: {
+              name: patient.emergency_contact_name || 'Not provided',
+              relation: patient.emergency_contact_relation || 'Not provided',
+              phone: patient.emergency_contact_phone || 'Not provided'
+            },
+            medicalInfo: {
+              allergies: [], // Students table doesn't have allergies - could be added later
+              chronicConditions: [], // Students table doesn't have chronic conditions
+              currentMedications: [], // Students table doesn't have medications
+              lastVisit: patient.last_appointment ? new Date(patient.last_appointment).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              }) : 'No visits yet',
+              nextAppointment: 'Not scheduled' // Would need appointments API
+            },
+            appointments: [], // Would need separate appointments API
+            encounters: [], // Would need separate encounters API
+            billing: [] // Would need separate billing API
+          };
+
+          console.log('Transformed patient data:', transformedData); // Debug log
+          setPatientData(transformedData);
+        } else {
+          setError(result.message || 'Failed to fetch patient data');
+          toast.error(result.message || 'Failed to fetch patient data');
+        }
+      } catch (error) {
+        console.error('Error fetching patient data:', error);
+        setError('Error loading patient data');
+        toast.error('Error loading patient data');
+      } finally {
+        setLoading(false);
       }
-    ],
-    billing: [
-      {
-        id: 1,
-        date: 'February 20, 2026',
-        service: 'Follow Up Consultation',
-        amount: '₹350.00',
-        status: 'Paid',
-        paymentMethod: 'Cash'
-      },
-      {
-        id: 2,
-        date: 'January 15, 2026',
-        service: 'Initial Consultation',
-        amount: '₹500.00',
-        status: 'Paid',
-        paymentMethod: 'Card'
+    };
+
+    fetchPatientData();
+  }, [patientId]); // Removed toast from dependencies
+
+  const calculateAge = (dateOfBirth) => {
+    try {
+      const birthDate = new Date(dateOfBirth);
+      const today = new Date();
+      
+      if (isNaN(birthDate.getTime())) {
+        return 'Invalid date';
       }
-    ]
+      
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+
+      return age > 0 ? `${age} years` : 'Less than 1 year';
+    } catch (error) {
+      return 'Not available';
+    }
   };
 
   const tabs = [
@@ -107,7 +122,8 @@ const PatientProfile = ({ patientId, onBack }) => {
   ];
 
   const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
+    const statusStr = String(status || '').toLowerCase();
+    switch (statusStr) {
       case 'active':
         return 'bg-green-100 text-green-800';
       case 'completed':
@@ -404,6 +420,23 @@ const PatientProfile = ({ patientId, onBack }) => {
           </motion.button>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-gray-500">Loading patient data...</div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div className="text-red-800">{error}</div>
+          </div>
+        )}
+
+        {/* Patient Data */}
+        {patientData && !loading && !error && (
+        <>
         {/* Breadcrumb */}
         <div className="flex items-center text-sm text-gray-500 mb-6">
           <span>Home</span>
@@ -479,6 +512,8 @@ const PatientProfile = ({ patientId, onBack }) => {
         >
           {renderTabContent()}
         </motion.div>
+        </>
+        )}
       </div>
     </div>
   );

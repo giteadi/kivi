@@ -1,8 +1,10 @@
 import { motion } from 'framer-motion';
 import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiMapPin, FiPhone, FiMail, FiUsers, FiCalendar, FiFilter, FiUpload } from 'react-icons/fi';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ImportModal from './ImportModal';
 import FiltersPanel from './FiltersPanel';
+import CentreCreateForm from './CentreCreateForm';
+import { useToast } from './Toast';
 
 const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewClinic }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -10,119 +12,88 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState({});
+  const [centres, setCentres] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const toast = useToast();
 
-  const clinics = [
-    {
-      id: 'CL001',
-      name: 'Clinic Kjaggi',
-      initials: 'CK',
-      address: '123 Medical Center Drive, Healthcare District',
-      city: 'New York',
-      state: 'NY',
-      zipCode: '10001',
-      phone: '+1 (555) 123-4567',
-      email: 'clinic_kjaggi@kivicare.com',
-      website: 'www.clinickjaggi.com',
-      status: 'Active',
-      established: '2020-01-15',
-      totalDoctors: 8,
-      totalPatients: 245,
-      totalAppointments: 1250,
-      specialties: ['Learning Therapy', 'Behavioral Therapy', 'Speech Therapy'],
+  // Fetch centres from API
+  useEffect(() => {
+    fetchCentres();
+  }, []);
+
+  const fetchCentres = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/centres');
+      const data = await response.json();
+      
+      if (data.success) {
+        setCentres(data.data);
+      } else {
+        setError('Failed to fetch centres');
+      }
+    } catch (err) {
+      setError('Error connecting to server');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete centre
+  const handleDeleteCentre = async (id) => {
+    if (window.confirm('Are you sure you want to delete this centre?')) {
+      try {
+        const response = await fetch(`/api/centres/${id}`, {
+          method: 'DELETE'
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          // Refresh the centres list
+          fetchCentres();
+          toast.success('Centre deleted successfully!', { duration: 3000 });
+          // Call the prop handler if it exists (for backward compatibility)
+          if (onDeleteClinic) {
+            onDeleteClinic(id);
+          }
+        } else {
+          toast.error('Failed to delete centre: ' + data.message, { duration: 4000 });
+        }
+      } catch (err) {
+        toast.error('Error deleting centre', { duration: 4000 });
+      }
+    }
+  };
+
+  // Transform API data to match component structure
+  const transformCentreData = (centre) => {
+    return {
+      id: centre.id.toString(),
+      name: centre.name || 'Unknown Centre',
+      initials: centre.name ? centre.name.substring(0, 2).toUpperCase() : 'UC',
+      address: centre.address || 'Address not available',
+      city: centre.city || 'Unknown City',
+      state: centre.state || 'Unknown State',
+      zipCode: centre.zip_code || 'N/A',
+      phone: centre.phone || 'N/A',
+      email: centre.email || 'N/A',
+      website: centre.website || '',
+      status: centre.status || 'inactive',
+      established: centre.created_at ? new Date(centre.created_at).toISOString().split('T')[0] : 'Unknown',
+      totalDoctors: centre.total_therapists || 0,
+      totalPatients: centre.total_students || 0,
+      totalAppointments: centre.total_sessions || 0,
+      specialties: centre.specialties ? (Array.isArray(centre.specialties) ? centre.specialties : JSON.parse(centre.specialties || '[]')) : [],
       operatingHours: '8:00 AM - 8:00 PM',
       emergencyServices: true,
-      rating: 4.8,
-      badgeColor: 'bg-blue-100 text-blue-800'
-    },
-    {
-      id: 'CL002',
-      name: 'Green Valley Clinic',
-      initials: 'GV',
-      address: '456 Green Valley Road, Medical Plaza',
-      city: 'Los Angeles',
-      state: 'CA',
-      zipCode: '90210',
-      phone: '+1 (555) 987-6543',
-      email: 'info@greenvalleyclinic.com',
-      website: 'www.greenvalleyclinic.com',
-      status: 'Active',
-      established: '2018-06-20',
-      totalDoctors: 12,
-      totalPatients: 380,
-      totalAppointments: 2100,
-      specialties: ['Occupational Therapy', 'Educational Psychology', 'Special Needs Support'],
-      operatingHours: '7:00 AM - 9:00 PM',
-      emergencyServices: true,
-      rating: 4.6,
-      badgeColor: 'bg-green-100 text-green-800'
-    },
-    {
-      id: 'CL003',
-      name: 'Sunrise Health Center',
-      initials: 'SH',
-      address: '789 Sunrise Boulevard, Health Complex',
-      city: 'Miami',
-      state: 'FL',
-      zipCode: '33101',
-      phone: '+1 (555) 456-7890',
-      email: 'contact@sunrisehealthcenter.com',
-      website: 'www.sunrisehealthcenter.com',
-      status: 'Active',
-      established: '2019-03-10',
-      totalDoctors: 15,
-      totalPatients: 520,
-      totalAppointments: 3200,
-      specialties: ['Learning Support', 'Therapy Services', 'Assessment'],
-      operatingHours: '24/7',
-      emergencyServices: true,
-      rating: 4.9,
-      badgeColor: 'bg-yellow-100 text-yellow-800'
-    },
-    {
-      id: 'CL004',
-      name: 'Downtown Family Clinic',
-      initials: 'DF',
-      address: '321 Downtown Street, City Center',
-      city: 'Chicago',
-      state: 'IL',
-      zipCode: '60601',
-      phone: '+1 (555) 321-0987',
-      email: 'info@downtownfamilyclinic.com',
-      website: 'www.downtownfamilyclinic.com',
-      status: 'Active',
-      established: '2017-11-05',
-      totalDoctors: 6,
-      totalPatients: 180,
-      totalAppointments: 890,
-      specialties: ['Family Support', 'Child Development', 'Educational Guidance'],
-      operatingHours: '8:00 AM - 6:00 PM',
-      emergencyServices: false,
       rating: 4.5,
-      badgeColor: 'bg-purple-100 text-purple-800'
-    },
-    {
-      id: 'CL005',
-      name: 'Metro Medical Center',
-      initials: 'MM',
-      address: '654 Metro Avenue, Medical District',
-      city: 'Houston',
-      state: 'TX',
-      zipCode: '77001',
-      phone: '+1 (555) 654-3210',
-      email: 'admin@metromedicalcenter.com',
-      website: 'www.metromedicalcenter.com',
-      status: 'Inactive',
-      established: '2021-08-12',
-      totalDoctors: 4,
-      totalPatients: 95,
-      totalAppointments: 320,
-      specialties: ['Learning Assessment', 'Behavioral Support'],
-      operatingHours: '9:00 AM - 5:00 PM',
-      emergencyServices: false,
-      rating: 4.2,
-      badgeColor: 'bg-gray-100 text-gray-800'
-    }
-  ];
+      badgeColor: centre.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+    };
+  };
+
+  const clinics = centres.map(transformCentreData);
 
   const filteredClinics = clinics.filter(clinic => {
     const matchesSearch = clinic.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -195,7 +166,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => onCreateNewClinic && onCreateNewClinic()}
+              onClick={() => setIsCreateModalOpen(true)}
               className="flex items-center space-x-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
             >
               <FiPlus className="w-4 h-4" />
@@ -259,7 +230,34 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
           </div>
         </motion.div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-12">
+            <div className="text-gray-500">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-lg font-medium">Loading centres...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="text-center py-12">
+            <div className="text-red-500">
+              <FiMapPin className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg font-medium">{error}</p>
+              <button 
+                onClick={fetchCentres}
+                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Clinics Grid */}
+        {!loading && !error && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -382,7 +380,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
                     whileTap={{ scale: 0.95 }}
                     onClick={(e) => {
                       e.stopPropagation();
-                      onDeleteClinic && onDeleteClinic(clinic.id);
+                      handleDeleteCentre(clinic.id);
                     }}
                     className="text-red-600 hover:text-red-900 p-1 rounded"
                     title="Delete"
@@ -394,8 +392,9 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
             </motion.div>
           ))}
         </motion.div>
+        )}
 
-        {filteredClinics.length === 0 && (
+        {filteredClinics.length === 0 && !loading && !error && (
           <div className="text-center py-12">
             <div className="text-gray-500">
               <FiMapPin className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -406,6 +405,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
         )}
 
         {/* Summary Stats */}
+        {!loading && !error && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -466,6 +466,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
             </div>
           </div>
         </motion.div>
+        )}
       </div>
 
       {/* Import Modal */}
@@ -482,6 +483,14 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
         onApplyFilters={handleApplyFilters}
         filterType="clinics"
       />
+
+      {/* Centre Create Form */}
+      {isCreateModalOpen && (
+        <CentreCreateForm
+          onClose={() => setIsCreateModalOpen(false)}
+          onSuccess={fetchCentres}
+        />
+      )}
     </div>
   );
 };

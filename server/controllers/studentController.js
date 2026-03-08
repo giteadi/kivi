@@ -56,13 +56,44 @@ class StudentController {
   // Create student
   async createStudent(req, res) {
     try {
+      console.log('Request body received:', req.body);
+      
+      // Map camelCase to snake_case for database
       const studentData = {
-        ...req.body,
-        created_at: new Date(),
-        updated_at: new Date()
+        student_id: req.body.studentId || `STU${Date.now()}`,
+        first_name: req.body.firstName,
+        last_name: req.body.lastName,
+        email: req.body.email,
+        phone: req.body.phone,
+        date_of_birth: req.body.dateOfBirth,
+        gender: req.body.gender,
+        centre_id: req.body.centreId || 1, // Default to centre_id 1 if not provided
+        address: req.body.address,
+        city: req.body.city,
+        state: req.body.state,
+        zip_code: req.body.zipCode,
+        emergency_contact_name: req.body.emergencyContactName,
+        emergency_contact_phone: req.body.emergencyContactPhone,
+        emergency_contact_relation: req.body.emergencyContactRelation,
+        learning_needs: req.body.learningNeeds,
+        support_requirements: req.body.supportRequirements,
+        registration_date: req.body.registrationDate || new Date().toISOString().split('T')[0],
+        status: req.body.status || 'active'
       };
 
+      console.log('Processed student data:', studentData);
+      
+      // Remove undefined values
+      Object.keys(studentData).forEach(key => {
+        if (studentData[key] === undefined || studentData[key] === '') {
+          delete studentData[key];
+        }
+      });
+      
+      console.log('Final student data to save:', studentData);
+      
       const studentId = await this.studentModel.create(studentData);
+      console.log('Student created with ID:', studentId);
 
       res.status(201).json({
         success: true,
@@ -71,9 +102,11 @@ class StudentController {
       });
     } catch (error) {
       console.error('Create student error:', error);
+      console.error('Error details:', error.sqlMessage || error.message);
       res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: 'Internal server error',
+        error: error.sqlMessage || error.message
       });
     }
   }
@@ -82,10 +115,35 @@ class StudentController {
   async updateStudent(req, res) {
     try {
       const { id } = req.params;
+      
+      // Map camelCase to snake_case for database
       const updateData = {
-        ...req.body,
-        updated_at: new Date()
+        first_name: req.body.firstName,
+        last_name: req.body.lastName,
+        email: req.body.email,
+        phone: req.body.phone,
+        date_of_birth: req.body.dateOfBirth,
+        gender: req.body.gender,
+        centre_id: req.body.centre,
+        address: req.body.address,
+        city: req.body.city,
+        state: req.body.state,
+        zip_code: req.body.zipCode,
+        emergency_contact_name: req.body.emergencyContactName,
+        emergency_contact_phone: req.body.emergencyContactPhone,
+        emergency_contact_relation: req.body.emergencyContactRelation,
+        learning_needs: req.body.learningNeeds,
+        support_requirements: req.body.supportRequirements,
+        registration_date: req.body.registrationDate,
+        status: req.body.status
       };
+
+      // Remove undefined values
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key] === undefined) {
+          delete updateData[key];
+        }
+      });
 
       const updated = await this.studentModel.update(id, updateData);
 
