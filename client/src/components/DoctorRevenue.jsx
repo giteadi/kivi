@@ -1,208 +1,84 @@
 import { motion } from 'framer-motion';
-import { FiSearch, FiFilter, FiDownload, FiUser, FiMail, FiDollarSign } from 'react-icons/fi';
-import { useState } from 'react';
+import { FiSearch, FiFilter, FiDownload, FiUser, FiMail, FiDollarSign, FiRefreshCw } from 'react-icons/fi';
+import { useState, useEffect } from 'react';
+import { useToast } from './Toast';
 
 const DoctorRevenue = () => {
+  const toast = useToast();
   const [searchTerm, setSearchTerm] = useState('');
+  const [doctorRevenueData, setDoctorRevenueData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const doctorRevenueData = [
-    {
-      id: 1,
-      rank: 10,
-      sessions: 5,
-      doctor: {
-        name: 'Dr. Matthew Jackson',
-        initials: 'MJ',
-        email: 'kjaggi+doctor3@mindsalelearning.com',
-        badge: 'DM',
-        badgeColor: 'bg-blue-100 text-blue-800'
-      },
-      clinic: {
-        name: 'Downtown Family Clinic',
-        initials: 'DF',
-        email: 'kjaggi+clinic2@mindsale',
-        badge: 'CK',
-        badgeColor: 'bg-purple-100 text-purple-800'
+  useEffect(() => {
+    fetchDoctorRevenue();
+  }, []);
+
+  const fetchDoctorRevenue = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch('http://localhost:3005/api/financial/doctor-revenue');
+      const result = await response.json();
+
+      if (result.success) {
+        // Transform the data for the component
+        const transformedData = result.data.map((item, index) => ({
+          id: index + 1,
+          rank: index + 1,
+          sessions: parseInt(item.total_transactions) || 0,
+          revenue: parseFloat(item.total_revenue) || 0,
+          doctor: {
+            name: `Dr. ${item.first_name} ${item.last_name}`,
+            initials: `${(item.first_name || '')[0]}${(item.last_name || '')[0]}`.toUpperCase(),
+            email: 'Not provided', // API doesn't return email
+            badge: item.specialty?.substring(0, 2).toUpperCase() || 'MD',
+            badgeColor: 'bg-blue-100 text-blue-800'
+          },
+          clinic: {
+            name: 'MindSaid Learning Centre', // Default clinic name
+            initials: 'ML',
+            email: 'Not provided',
+            badge: 'MS',
+            badgeColor: 'bg-purple-100 text-purple-800'
+          }
+        }));
+
+        setDoctorRevenueData(transformedData);
+      } else {
+        setError(result.message || 'Failed to fetch doctor revenue data');
+        toast.error(result.message || 'Failed to fetch doctor revenue data');
       }
-    },
-    {
-      id: 2,
-      rank: 9,
-      sessions: 4,
-      doctor: {
-        name: 'Dr. Mark Hall',
-        initials: 'MH',
-        email: 'kjaggi+doctor2@mindsalelearning.com',
-        badge: 'DM',
-        badgeColor: 'bg-blue-100 text-blue-800'
-      },
-      clinic: {
-        name: 'Sunrise Health Center',
-        initials: 'SH',
-        email: 'kjaggi+clinic1@mindsale',
-        badge: 'GV',
-        badgeColor: 'bg-green-100 text-green-800'
-      }
-    },
-    {
-      id: 3,
-      rank: 8,
-      sessions: 3,
-      doctor: {
-        name: 'Dr. Samantha Gray',
-        initials: 'SG',
-        email: 'kjaggi+doctor1@mindsalelearning.com',
-        badge: 'DS',
-        badgeColor: 'bg-indigo-100 text-indigo-800'
-      },
-      clinic: {
-        name: 'Clinic Kjaggi',
-        initials: 'CK',
-        email: 'clinic_kjaggi@kivicare.com',
-        badge: 'DF',
-        badgeColor: 'bg-pink-100 text-pink-800'
-      }
-    },
-    {
-      id: 4,
-      rank: 7,
-      sessions: 2,
-      doctor: {
-        name: 'Dr. Paul Sanders',
-        initials: 'PS',
-        email: 'kjaggi+doctor6@mindsalelearning.com',
-        badge: 'DP',
-        badgeColor: 'bg-blue-100 text-blue-800'
-      },
-      clinic: {
-        name: 'Green Valley Clinic',
-        initials: 'GV',
-        email: 'kjaggi+clinic3@mindsale',
-        badge: 'SH',
-        badgeColor: 'bg-yellow-100 text-yellow-800'
-      }
-    },
-    {
-      id: 5,
-      rank: 6,
-      sessions: 1,
-      doctor: {
-        name: 'Dr. Kjaggi',
-        initials: 'DK',
-        email: 'doctor_kjaggi@kivicare.com',
-        badge: 'DK',
-        badgeColor: 'bg-orange-100 text-orange-800'
-      },
-      clinic: {
-        name: 'Clinic Kjaggi',
-        initials: 'CK',
-        email: 'clinic_kjaggi@kivicare.com',
-        badge: 'CK',
-        badgeColor: 'bg-blue-100 text-blue-800'
-      }
-    },
-    {
-      id: 6,
-      rank: 5,
-      sessions: 5,
-      doctor: {
-        name: 'Dr. Matthew Jackson',
-        initials: 'MJ',
-        email: 'kjaggi+doctor3@mindsalelearning.com',
-        badge: 'DM',
-        badgeColor: 'bg-blue-100 text-blue-800'
-      },
-      clinic: {
-        name: 'Clinic Kjaggi',
-        initials: 'CK',
-        email: 'clinic_kjaggi@kivicare.com',
-        badge: 'CK',
-        badgeColor: 'bg-blue-100 text-blue-800'
-      }
-    },
-    {
-      id: 7,
-      rank: 4,
-      sessions: 4,
-      doctor: {
-        name: 'Dr. Mark Hall',
-        initials: 'MH',
-        email: 'kjaggi+doctor2@mindsalelearning.com',
-        badge: 'DM',
-        badgeColor: 'bg-blue-100 text-blue-800'
-      },
-      clinic: {
-        name: 'Green Valley Clinic',
-        initials: 'GV',
-        email: 'kjaggi+clinic3@mindsale',
-        badge: 'GV',
-        badgeColor: 'bg-green-100 text-green-800'
-      }
-    },
-    {
-      id: 8,
-      rank: 3,
-      sessions: 3,
-      doctor: {
-        name: 'Dr. Samantha Gray',
-        initials: 'SG',
-        email: 'kjaggi+doctor1@mindsalelearning.com',
-        badge: 'DS',
-        badgeColor: 'bg-indigo-100 text-indigo-800'
-      },
-      clinic: {
-        name: 'Downtown Family Clinic',
-        initials: 'DF',
-        email: 'kjaggi+clinic2@mindsale',
-        badge: 'DF',
-        badgeColor: 'bg-pink-100 text-pink-800'
-      }
-    },
-    {
-      id: 9,
-      rank: 2,
-      sessions: 2,
-      doctor: {
-        name: 'Dr. Paul Sanders',
-        initials: 'PS',
-        email: 'kjaggi+doctor6@mindsalelearning.com',
-        badge: 'DP',
-        badgeColor: 'bg-blue-100 text-blue-800'
-      },
-      clinic: {
-        name: 'Sunrise Health Center',
-        initials: 'SH',
-        email: 'kjaggi+clinic1@mindsale',
-        badge: 'SH',
-        badgeColor: 'bg-yellow-100 text-yellow-800'
-      }
-    },
-    {
-      id: 10,
-      rank: 1,
-      sessions: 1,
-      doctor: {
-        name: 'Dr. Kjaggi',
-        initials: 'DK',
-        email: 'doctor_kjaggi@kivicare.com',
-        badge: 'DK',
-        badgeColor: 'bg-orange-100 text-orange-800'
-      },
-      clinic: {
-        name: 'Clinic Kjaggi',
-        initials: 'CK',
-        email: 'clinic_kjaggi@kivicare.com',
-        badge: 'CK',
-        badgeColor: 'bg-blue-100 text-blue-800'
-      }
+    } catch (error) {
+      console.error('Error fetching doctor revenue:', error);
+      setError('Error loading doctor revenue data');
+      toast.error('Error loading doctor revenue data');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const filteredData = doctorRevenueData.filter(item =>
     item.doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.doctor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.clinic.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const getStatusColor = (status) => {
+    const statusStr = String(status || '').toLowerCase();
+    switch (statusStr) {
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'inactive':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const totalRevenue = doctorRevenueData.reduce((sum, item) => sum + item.revenue, 0);
+  const totalSessions = doctorRevenueData.reduce((sum, item) => sum + item.sessions, 0);
 
   return (
     <div className="lg:ml-64 min-h-screen bg-gray-50">
@@ -235,7 +111,7 @@ const DoctorRevenue = () => {
           <span className="text-gray-800">Doctor Revenue</span>
         </div>
 
-        {/* Search and Filters */}
+        {/* Search */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -263,7 +139,36 @@ const DoctorRevenue = () => {
           </div>
         </motion.div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <FiRefreshCw className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-4" />
+              <p className="text-gray-500">Loading doctor revenue data...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="text-red-800">{error}</div>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={fetchDoctorRevenue}
+                className="flex items-center space-x-2 px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-sm"
+              >
+                <FiRefreshCw className="w-4 h-4" />
+                <span>Retry</span>
+              </motion.button>
+            </div>
+          </div>
+        )}
+
         {/* Doctor Revenue Table */}
+        {!loading && !error && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -279,6 +184,9 @@ const DoctorRevenue = () => {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                     Sessions
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    Revenue
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                     Doctor
@@ -304,6 +212,9 @@ const DoctorRevenue = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {item.sessions}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      ₹{(item.revenue / 100000).toFixed(1)}L
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 ${item.doctor.badgeColor}`}>
@@ -320,16 +231,10 @@ const DoctorRevenue = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 ${item.clinic.badgeColor}`}>
-                          <span className="text-sm font-semibold">{item.clinic.badge}</span>
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-2 ${item.clinic.badgeColor}`}>
+                          <span className="text-xs font-semibold">{item.clinic.badge}</span>
                         </div>
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{item.clinic.name}</div>
-                          <div className="text-sm text-gray-500 flex items-center">
-                            <FiMail className="w-3 h-3 mr-1" />
-                            {item.clinic.email}
-                          </div>
-                        </div>
+                        <span className="text-sm text-gray-900">{item.clinic.name}</span>
                       </div>
                     </td>
                   </motion.tr>
@@ -342,14 +247,16 @@ const DoctorRevenue = () => {
             <div className="text-center py-12">
               <div className="text-gray-500">
                 <FiUser className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium">No revenue data found</p>
+                <p className="text-lg font-medium">No doctor revenue data found</p>
                 <p className="text-sm">Try adjusting your search criteria</p>
               </div>
             </div>
           )}
         </motion.div>
+        )}
 
         {/* Revenue Stats */}
+        {!loading && !error && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -374,10 +281,8 @@ const DoctorRevenue = () => {
                 <FiDollarSign className="w-6 h-6 text-green-600" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-green-600">
-                  {doctorRevenueData.reduce((sum, item) => sum + item.sessions, 0)}
-                </div>
-                <div className="text-sm text-gray-600">Total Sessions</div>
+                <div className="text-2xl font-bold text-green-600">₹{(totalRevenue / 100000).toFixed(1)}L</div>
+                <div className="text-sm text-gray-600">Total Revenue</div>
               </div>
             </div>
           </div>
@@ -388,10 +293,8 @@ const DoctorRevenue = () => {
                 <FiUser className="w-6 h-6 text-yellow-600" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-yellow-600">
-                  {Math.max(...doctorRevenueData.map(item => item.sessions))}
-                </div>
-                <div className="text-sm text-gray-600">Max Sessions</div>
+                <div className="text-2xl font-bold text-yellow-600">{totalSessions}</div>
+                <div className="text-sm text-gray-600">Total Sessions</div>
               </div>
             </div>
           </div>
@@ -403,13 +306,14 @@ const DoctorRevenue = () => {
               </div>
               <div>
                 <div className="text-2xl font-bold text-purple-600">
-                  {(doctorRevenueData.reduce((sum, item) => sum + item.sessions, 0) / doctorRevenueData.length).toFixed(1)}
+                  {doctorRevenueData.length > 0 ? `₹${(totalRevenue / doctorRevenueData.length / 100000).toFixed(1)}L` : '₹0L'}
                 </div>
-                <div className="text-sm text-gray-600">Avg Sessions</div>
+                <div className="text-sm text-gray-600">Avg Revenue</div>
               </div>
             </div>
           </div>
         </motion.div>
+        )}
       </div>
     </div>
   );

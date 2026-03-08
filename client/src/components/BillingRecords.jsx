@@ -1,115 +1,71 @@
 import { motion } from 'framer-motion';
-import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiDownload, FiCalendar, FiUser, FiDollarSign, FiFilter } from 'react-icons/fi';
-import { useState } from 'react';
+import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiDownload, FiCalendar, FiUser, FiDollarSign, FiFilter, FiRefreshCw } from 'react-icons/fi';
+import { useState, useEffect } from 'react';
+import { useToast } from './Toast';
 
 const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreateNewBilling }) => {
+  const toast = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [billingData, setBillingData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const billingData = [
-    {
-      id: '#INV-001',
-      patient: {
-        name: 'Thomas Thompson',
-        initials: 'TT',
-        email: 'thomas.thompson@email.com'
-      },
-      doctor: {
-        name: 'Dr. Matthew Jackson',
-        initials: 'MJ'
-      },
-      clinic: 'Clinic Kjaggi',
-      service: 'General Consultation',
-      amount: 150,
-      tax: 15,
-      total: 165,
-      date: '2026-03-01',
-      status: 'Paid',
-      paymentMethod: 'Credit Card'
-    },
-    {
-      id: '#INV-002',
-      patient: {
-        name: 'Larry Lopez',
-        initials: 'LL',
-        email: 'larry.lopez@email.com'
-      },
-      doctor: {
-        name: 'Dr. Mark Hall',
-        initials: 'MH'
-      },
-      clinic: 'Green Valley Clinic',
-      service: 'Specialist Consultation',
-      amount: 200,
-      tax: 20,
-      total: 220,
-      date: '2026-03-02',
-      status: 'Pending',
-      paymentMethod: 'Cash'
-    },
-    {
-      id: '#INV-003',
-      patient: {
-        name: 'Raymond Rogers',
-        initials: 'RR',
-        email: 'raymond.rogers@email.com'
-      },
-      doctor: {
-        name: 'Dr. Samantha Gray',
-        initials: 'SG'
-      },
-      clinic: 'Sunrise Health Center',
-      service: 'Follow-up Visit',
-      amount: 100,
-      tax: 10,
-      total: 110,
-      date: '2026-03-03',
-      status: 'Overdue',
-      paymentMethod: 'Insurance'
-    },
-    {
-      id: '#INV-004',
-      patient: {
-        name: 'Steven Torres',
-        initials: 'ST',
-        email: 'steven.torres@email.com'
-      },
-      doctor: {
-        name: 'Dr. Paul Sanders',
-        initials: 'PS'
-      },
-      clinic: 'Downtown Family Clinic',
-      service: 'Emergency Visit',
-      amount: 300,
-      tax: 30,
-      total: 330,
-      date: '2026-02-28',
-      status: 'Paid',
-      paymentMethod: 'Debit Card'
-    },
-    {
-      id: '#INV-005',
-      patient: {
-        name: 'Maria Garcia',
-        initials: 'MG',
-        email: 'maria.garcia@email.com'
-      },
-      doctor: {
-        name: 'Dr. Kjaggi',
-        initials: 'DK'
-      },
-      clinic: 'Clinic Kjaggi',
-      service: 'Routine Checkup',
-      amount: 120,
-      tax: 12,
-      total: 132,
-      date: '2026-02-27',
-      status: 'Cancelled',
-      paymentMethod: 'Cash'
+  useEffect(() => {
+    fetchBillingRecords();
+  }, []);
+
+  const fetchBillingRecords = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch('http://localhost:3005/api/financial/billing-records');
+      const result = await response.json();
+
+      if (result.success) {
+        // Transform the data for the component
+        const transformedData = result.data.map((record, index) => ({
+          id: `#INV-${String(record.id).padStart(3, '0')}`,
+          patient: {
+            name: record.student_first_name + ' ' + record.student_last_name,
+            initials: (record.student_first_name?.[0] || '') + (record.student_last_name?.[0] || ''),
+            email: 'Not provided' // API doesn't return email
+          },
+          doctor: {
+            name: `Dr. ${record.therapist_first_name} ${record.therapist_last_name}`,
+            initials: (record.therapist_first_name?.[0] || '') + (record.therapist_last_name?.[0] || '')
+          },
+          clinic: 'MindSaid Learning Centre', // Default clinic name
+          service: 'Session', // Default service name
+          amount: parseFloat(record.amount) || 0,
+          tax: 0, // Calculate tax if needed
+          total: parseFloat(record.amount) || 0,
+          date: record.created_at ? new Date(record.created_at).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          }) : 'Not available',
+          status: record.status || 'Pending',
+          paymentMethod: 'Not specified',
+          rawId: record.id // Keep original ID for API calls
+        }));
+
+        setBillingData(transformedData);
+      } else {
+        setError(result.message || 'Failed to fetch billing records');
+        toast.error(result.message || 'Failed to fetch billing records');
+      }
+    } catch (error) {
+      console.error('Error fetching billing records:', error);
+      setError('Error loading billing records');
+      toast.error('Error loading billing records');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const filteredBilling = billingData.filter(bill => {
     const matchesSearch = bill.patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -117,7 +73,7 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
                          bill.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          bill.clinic.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || bill.status.toLowerCase() === filterStatus.toLowerCase();
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -132,7 +88,8 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
   };
 
   const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
+    const statusStr = String(status || '').toLowerCase();
+    switch (statusStr) {
       case 'paid':
         return 'bg-green-100 text-green-800';
       case 'pending':
@@ -147,8 +104,8 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
   };
 
   const totalRevenue = billingData.reduce((sum, bill) => sum + bill.total, 0);
-  const paidAmount = billingData.filter(bill => bill.status === 'Paid').reduce((sum, bill) => sum + bill.total, 0);
-  const pendingAmount = billingData.filter(bill => bill.status === 'Pending').reduce((sum, bill) => sum + bill.total, 0);
+  const paidAmount = billingData.filter(bill => bill.status.toLowerCase() === 'paid').reduce((sum, bill) => sum + bill.total, 0);
+  const pendingAmount = billingData.filter(bill => bill.status.toLowerCase() === 'pending').reduce((sum, bill) => sum + bill.total, 0);
 
   return (
     <div className="lg:ml-64 min-h-screen bg-gray-50">
@@ -159,7 +116,7 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
             <h1 className="text-2xl font-semibold text-gray-800">Billing Records</h1>
             <p className="text-gray-600">Manage patient billing and invoices</p>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -236,7 +193,36 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
           </div>
         </motion.div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <FiRefreshCw className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-4" />
+              <p className="text-gray-500">Loading billing records...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="text-red-800">{error}</div>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={fetchBillingRecords}
+                className="flex items-center space-x-2 px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-sm"
+              >
+                <FiRefreshCw className="w-4 h-4" />
+                <span>Retry</span>
+              </motion.button>
+            </div>
+          </div>
+        )}
+
         {/* Billing Table */}
+        {!loading && !error && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -319,8 +305,8 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">₹{bill.total}</div>
-                        <div className="text-xs text-gray-500">Base: ₹{bill.amount} + Tax: ₹{bill.tax}</div>
+                        <div className="text-sm font-medium text-gray-900">₹{(bill.total / 100000).toFixed(1)}L</div>
+                        <div className="text-xs text-gray-500">Amount: ₹{(bill.amount / 100000).toFixed(1)}L</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -331,7 +317,7 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center text-sm text-gray-900">
                         <FiCalendar className="w-4 h-4 mr-2 text-gray-400" />
-                        {new Date(bill.date).toLocaleDateString()}
+                        {bill.date}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -339,7 +325,7 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          onClick={() => onViewBilling && onViewBilling(bill.id)}
+                          onClick={() => onViewBilling && onViewBilling(bill.rawId)}
                           className="text-blue-600 hover:text-blue-900 p-1 rounded"
                           title="View Invoice"
                         >
@@ -348,7 +334,7 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          onClick={() => onEditBilling && onEditBilling(bill.id)}
+                          onClick={() => onEditBilling && onEditBilling(bill.rawId)}
                           className="text-green-600 hover:text-green-900 p-1 rounded"
                           title="Edit"
                         >
@@ -365,7 +351,7 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          onClick={() => onDeleteBilling && onDeleteBilling(bill.id)}
+                          onClick={() => onDeleteBilling && onDeleteBilling(bill.rawId)}
                           className="text-red-600 hover:text-red-900 p-1 rounded"
                           title="Delete"
                         >
@@ -389,9 +375,10 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
             </div>
           )}
         </motion.div>
+        )}
 
         {/* Pagination */}
-        {filteredBilling.length > 0 && (
+        {!loading && !error && filteredBilling.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -428,7 +415,7 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
               >
                 Previous
               </button>
-              
+
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                 <button
                   key={page}
@@ -442,7 +429,7 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
                   {page}
                 </button>
               ))}
-              
+
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
@@ -455,6 +442,7 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
         )}
 
         {/* Financial Stats */}
+        {!loading && !error && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -467,36 +455,36 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
                 <FiDollarSign className="w-6 h-6 text-blue-600" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-blue-600">₹{totalRevenue}</div>
+                <div className="text-2xl font-bold text-blue-600">₹{(totalRevenue / 100000).toFixed(1)}L</div>
                 <div className="text-sm text-gray-600">Total Revenue</div>
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg p-4 shadow-sm border">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-green-100 rounded-lg">
                 <FiDollarSign className="w-6 h-6 text-green-600" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-green-600">₹{paidAmount}</div>
+                <div className="text-2xl font-bold text-green-600">₹{(paidAmount / 100000).toFixed(1)}L</div>
                 <div className="text-sm text-gray-600">Paid Amount</div>
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg p-4 shadow-sm border">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-yellow-100 rounded-lg">
                 <FiDollarSign className="w-6 h-6 text-yellow-600" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-yellow-600">₹{pendingAmount}</div>
+                <div className="text-2xl font-bold text-yellow-600">₹{(pendingAmount / 100000).toFixed(1)}L</div>
                 <div className="text-sm text-gray-600">Pending Amount</div>
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg p-4 shadow-sm border">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-purple-100 rounded-lg">
@@ -509,6 +497,7 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
             </div>
           </div>
         </motion.div>
+        )}
       </div>
     </div>
   );

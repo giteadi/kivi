@@ -13,9 +13,9 @@ class FinancialController extends BaseModel {
       let sql = `
         SELECT 
           c.name as clinic_name,
-          SUM(br.amount) as total_revenue,
+          SUM(br.total_amount) as total_revenue,
           COUNT(br.id) as total_transactions,
-          AVG(br.amount) as avg_transaction
+          AVG(br.total_amount) as avg_transaction
         FROM kivi_billing_records br
         JOIN kivi_sessions a ON br.session_id = a.id
         JOIN kivi_centres c ON a.centre_id = c.id
@@ -64,7 +64,7 @@ class FinancialController extends BaseModel {
         SELECT 
           u.first_name, u.last_name,
           t.specialty,
-          SUM(br.amount) as total_revenue,
+          SUM(br.total_amount) as total_revenue,
           COUNT(br.id) as total_transactions
         FROM kivi_billing_records br
         JOIN kivi_sessions a ON br.session_id = a.id
@@ -89,7 +89,7 @@ class FinancialController extends BaseModel {
         params.push(endDate);
       }
 
-      sql += ' GROUP BY d.id ORDER BY total_revenue DESC';
+      sql += ' GROUP BY t.id ORDER BY total_revenue DESC';
 
       const results = await this.query(sql, params);
 
@@ -113,7 +113,7 @@ class FinancialController extends BaseModel {
       let sql = `
         SELECT 
           t.*,
-          SUM(br.amount * t.rate / 100) as tax_amount,
+          SUM(br.total_amount * t.rate / 100) as tax_amount,
           COUNT(br.id) as applicable_transactions
         FROM kivi_taxes t
         LEFT JOIN kivi_billing_records br ON 1=1

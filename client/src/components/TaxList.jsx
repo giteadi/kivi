@@ -1,71 +1,59 @@
 import { motion } from 'framer-motion';
-import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiPercent, FiDollarSign, FiFilter } from 'react-icons/fi';
-import { useState } from 'react';
+import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiPercent, FiDollarSign, FiFilter, FiRefreshCw } from 'react-icons/fi';
+import { useState, useEffect } from 'react';
+import { useToast } from './Toast';
 
 const TaxList = ({ onViewTax, onEditTax, onDeleteTax, onCreateNewTax }) => {
+  const toast = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [taxData, setTaxData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const taxData = [
-    {
-      id: 5,
-      taxName: 'Equipment Handling Tax',
-      taxRate: '$15',
-      center: {
-        name: 'All Centers',
-        badge: '',
-        badgeColor: 'bg-gray-100 text-gray-800'
-      },
-      therapist: 'All Therapists'
-    },
-    {
-      id: 4,
-      taxName: 'Specialist Fee Tax',
-      taxRate: '3%',
-      center: {
-        name: 'All Centers',
-        badge: '',
-        badgeColor: 'bg-gray-100 text-gray-800'
-      },
-      therapist: 'All Therapists'
-    },
-    {
-      id: 3,
-      taxName: 'Center Maintenance Tax',
-      taxRate: '2%',
-      center: {
-        name: 'MindSaid Learning Center',
-        initials: 'ML',
-        email: 'center_kjaggi@mindsaidlearning.com',
-        badge: 'ML',
-        badgeColor: 'bg-blue-100 text-blue-800'
-      },
-      therapist: 'All Therapists'
-    },
-    {
-      id: 2,
-      taxName: 'Service Tax',
-      taxRate: '$10',
-      center: {
-        name: 'All Centers',
-        badge: '',
-        badgeColor: 'bg-gray-100 text-gray-800'
-      },
-      therapist: 'All Therapists'
-    },
-    {
-      id: 1,
-      taxName: 'VAT',
-      taxRate: '5%',
-      center: {
-        name: 'All Centers',
-        badge: '',
-        badgeColor: 'bg-gray-100 text-gray-800'
-      },
-      therapist: 'All Therapists'
+  useEffect(() => {
+    fetchTaxes();
+  }, []);
+
+  const fetchTaxes = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch('http://localhost:3005/api/financial/taxes');
+      const result = await response.json();
+
+      if (result.success) {
+        // Transform the data for the component
+        const transformedData = result.data.map((tax, index) => ({
+          id: tax.id,
+          taxName: tax.name,
+          taxRate: `${tax.rate}%`,
+          taxAmount: parseFloat(tax.tax_amount) || 0,
+          applicableTransactions: parseInt(tax.applicable_transactions) || 0,
+          center: {
+            name: 'All Centers', // API doesn't specify center, default to all
+            badge: '',
+            badgeColor: 'bg-gray-100 text-gray-800'
+          },
+          therapist: 'All Therapists',
+          status: tax.status
+        }));
+
+        setTaxData(transformedData);
+      } else {
+        setError(result.message || 'Failed to fetch tax data');
+        toast.error(result.message || 'Failed to fetch tax data');
+      }
+    } catch (error) {
+      console.error('Error fetching taxes:', error);
+      setError('Error loading tax data');
+      toast.error('Error loading tax data');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const filteredTaxes = taxData.filter(tax =>
     tax.taxName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -147,7 +135,36 @@ const TaxList = ({ onViewTax, onEditTax, onDeleteTax, onCreateNewTax }) => {
           </div>
         </motion.div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <FiRefreshCw className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-4" />
+              <p className="text-gray-500">Loading tax data...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="text-red-800">{error}</div>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={fetchTaxes}
+                className="flex items-center space-x-2 px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-sm"
+              >
+                <FiRefreshCw className="w-4 h-4" />
+                <span>Retry</span>
+              </motion.button>
+            </div>
+          </div>
+        )}
+
         {/* Tax Table */}
+        {!loading && !error && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -171,10 +188,10 @@ const TaxList = ({ onViewTax, onEditTax, onDeleteTax, onCreateNewTax }) => {
                     Tax Rate
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                    Center
+                    Tax Amount
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                    Therapist
+                    Applicable Transactions
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                     Actions
@@ -212,23 +229,11 @@ const TaxList = ({ onViewTax, onEditTax, onDeleteTax, onCreateNewTax }) => {
                           {tax.taxRate}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {tax.center.badge ? (
-                          <div className="flex items-center">
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-2 ${tax.center.badgeColor}`}>
-                              <span className="text-xs font-semibold">{tax.center.badge}</span>
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">{tax.center.name}</div>
-                              <div className="text-xs text-gray-500">{tax.center.email}</div>
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-gray-900">{tax.center.name}</span>
-                        )}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ₹{(tax.taxAmount / 100000).toFixed(1)}L
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {tax.therapist}
+                        {tax.applicableTransactions}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-2">
@@ -278,9 +283,10 @@ const TaxList = ({ onViewTax, onEditTax, onDeleteTax, onCreateNewTax }) => {
             </div>
           )}
         </motion.div>
+        )}
 
         {/* Pagination */}
-        {filteredTaxes.length > 0 && (
+        {!loading && !error && filteredTaxes.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -344,6 +350,7 @@ const TaxList = ({ onViewTax, onEditTax, onDeleteTax, onCreateNewTax }) => {
         )}
 
         {/* Tax Stats */}
+        {!loading && !error && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -369,9 +376,9 @@ const TaxList = ({ onViewTax, onEditTax, onDeleteTax, onCreateNewTax }) => {
               </div>
               <div>
                 <div className="text-2xl font-bold text-green-600">
-                  {taxData.filter(tax => tax.taxRate.includes('%')).length}
+                  ₹{(taxData.reduce((sum, tax) => sum + tax.taxAmount, 0) / 100000).toFixed(1)}L
                 </div>
-                <div className="text-sm text-gray-600">Percentage Taxes</div>
+                <div className="text-sm text-gray-600">Total Tax Amount</div>
               </div>
             </div>
           </div>
@@ -379,13 +386,13 @@ const TaxList = ({ onViewTax, onEditTax, onDeleteTax, onCreateNewTax }) => {
           <div className="bg-white rounded-lg p-4 shadow-sm border">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-yellow-100 rounded-lg">
-                <FiDollarSign className="w-6 h-6 text-yellow-600" />
+                <FiPercent className="w-6 h-6 text-yellow-600" />
               </div>
               <div>
                 <div className="text-2xl font-bold text-yellow-600">
-                  {taxData.filter(tax => tax.taxRate.includes('$')).length}
+                  {taxData.reduce((sum, tax) => sum + tax.applicableTransactions, 0)}
                 </div>
-                <div className="text-sm text-gray-600">Fixed Amount Taxes</div>
+                <div className="text-sm text-gray-600">Applicable Transactions</div>
               </div>
             </div>
           </div>
@@ -397,13 +404,14 @@ const TaxList = ({ onViewTax, onEditTax, onDeleteTax, onCreateNewTax }) => {
               </div>
               <div>
                 <div className="text-2xl font-bold text-purple-600">
-                  {taxData.filter(tax => tax.center.name === 'All Centers').length}
+                  {taxData.filter(tax => tax.status === 'active').length}
                 </div>
-                <div className="text-sm text-gray-600">Global Taxes</div>
+                <div className="text-sm text-gray-600">Active Taxes</div>
               </div>
             </div>
           </div>
         </motion.div>
+        )}
       </div>
     </div>
   );
