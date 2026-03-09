@@ -72,16 +72,17 @@ class Therapist extends BaseModel {
       const sql = `
         SELECT 
           t.id,
-          t.first_name,
-          t.last_name,
+          u.first_name,
+          u.last_name,
           t.specialty,
           t.experience_years,
-          t.working_hours,
-          t.available_days,
+          t.availability as working_hours,
+          t.availability as available_days,
           s.session_date,
           s.session_time,
           s.status as session_status
         FROM kivi_therapists t
+        LEFT JOIN kivi_users u ON t.user_id = u.id
         LEFT JOIN kivi_sessions s ON t.id = s.therapist_id 
           AND s.session_date = ? 
           AND s.status IN ('scheduled', 'confirmed')
@@ -89,7 +90,7 @@ class Therapist extends BaseModel {
         ORDER BY s.session_time
       `;
       
-      const results = await this.query(sql, [date, therapistId]);
+      const results = await this.query(sql, [date || null, therapistId]);
       return results;
     } catch (error) {
       console.error('Error in getTherapistAvailability:', error);

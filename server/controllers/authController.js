@@ -119,9 +119,35 @@ class AuthController {
       // Remove password from response
       const { password: _, ...userWithoutPassword } = user;
 
+      // Check if user is a therapist and get therapist details
+      let therapistData = null;
+      if (user.role === 'therapist') {
+        const Therapist = require('../models/Therapist');
+        const therapistModel = new Therapist();
+        const therapistQuery = await therapistModel.query(
+          'SELECT * FROM kivi_therapists WHERE user_id = ?',
+          [user.id]
+        );
+        if (therapistQuery.length > 0) {
+          therapistData = therapistQuery[0];
+        }
+      }
+
       res.json({
         success: true,
-        data: userWithoutPassword
+        data: {
+          ...userWithoutPassword,
+          ...(therapistData && {
+            specialty: therapistData.specialty,
+            qualification: therapistData.qualification,
+            experience_years: therapistData.experience_years,
+            session_fee: therapistData.session_fee,
+            bio: therapistData.bio,
+            address: therapistData.address,
+            emergency_contact_name: therapistData.emergency_contact_name,
+            emergency_contact_phone: therapistData.emergency_contact_phone
+          })
+        }
       });
 
     } catch (error) {

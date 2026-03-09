@@ -30,14 +30,14 @@ const DoctorProfile = ({ doctorId, onBack, onEditProfile }) => {
           // Transform API data to match component format
           const transformedData = {
             id: `#${therapist.id}`,
-            name: `${therapist.first_name} ${therapist.last_name}`,
-            initials: `${therapist.first_name?.[0] || ''}${therapist.last_name?.[0] || ''}`,
-            email: therapist.email,
-            phone: therapist.phone,
+            name: `${therapist.first_name || ''} ${therapist.last_name || ''}`.trim() || 'Unknown Name',
+            initials: `${therapist.first_name?.[0] || ''}${therapist.last_name?.[0] || ''}` || 'N/A',
+            email: therapist.email || 'Not specified',
+            phone: therapist.phone || 'Not specified',
             clinic: therapist.centre_name || 'Unknown Clinic',
-            specialty: therapist.specialty || 'General Medicine',
-            qualification: therapist.qualification || 'MBBS',
-            experience: `${therapist.experience_years || 0} years`,
+            specialty: therapist.specialty || 'Not specified',
+            qualification: therapist.qualification || 'Not specified',
+            experience: therapist.experience_years ? `${therapist.experience_years} years` : 'Not specified',
             status: therapist.status === 'active' ? 'Active' : 'Inactive',
             availability: therapist.is_available ? 'Available' : 'Unavailable',
             joinDate: therapist.joining_date ? new Date(therapist.joining_date).toLocaleDateString('en-US', { 

@@ -1,5 +1,6 @@
 const express = require('express');
 const TherapistController = require('../controllers/therapistController');
+const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -27,16 +28,16 @@ router.put('/:id', therapistController.updateTherapist.bind(therapistController)
 // DELETE /api/therapists/:id - Delete therapist
 router.delete('/:id', therapistController.deleteTherapist.bind(therapistController));
 
+// GET /api/therapists/my/availability - Get current user's availability
+router.get('/my/availability', authenticateToken, therapistController.getMyAvailability.bind(therapistController));
+
+// PUT /api/therapists/my/availability - Update current user's availability
+router.put('/my/availability', authenticateToken, therapistController.updateMyAvailability.bind(therapistController));
+
 // GET /api/therapists/:id/availability - Get therapist availability
 router.get('/:id/availability', therapistController.getTherapistAvailability.bind(therapistController));
 
 // PUT /api/therapists/:id/availability - Update therapist availability
 router.put('/:id/availability', therapistController.updateTherapistAvailability.bind(therapistController));
-
-// GET /api/therapists/my/availability - Get current user's availability
-router.get('/my/availability', therapistController.getMyAvailability.bind(therapistController));
-
-// PUT /api/therapists/my/availability - Update current user's availability
-router.put('/my/availability', therapistController.updateMyAvailability.bind(therapistController));
 
 module.exports = router;

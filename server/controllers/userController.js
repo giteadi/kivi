@@ -41,12 +41,12 @@ class UserController extends BaseModel {
           s.session_time,
           s.status,
           s.notes,
-          CONCAT(t.first_name, ' ', t.last_name) as therapist_name,
+          CONCAT(u.first_name, ' ', u.last_name) as therapist_name,
           c.name as centre_name,
           p.name as programme_name
         FROM kivi_sessions s
         LEFT JOIN kivi_therapists th ON s.therapist_id = th.id
-        LEFT JOIN kivi_users t ON th.user_id = t.id
+        LEFT JOIN kivi_users u ON th.user_id = u.id
         LEFT JOIN kivi_centres c ON s.centre_id = c.id
         LEFT JOIN kivi_programmes p ON s.programme_id = p.id
         WHERE s.student_id = ?
