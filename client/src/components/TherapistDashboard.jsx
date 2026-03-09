@@ -28,7 +28,7 @@ const TherapistDashboard = () => {
   const [availability, setAvailability] = useState({
     login_time: '09:00',
     logout_time: '18:00',
-    is_available: true
+    is_available: true,
   });
   const [profileData, setProfileData] = useState({
     first_name: '',
@@ -42,11 +42,13 @@ const TherapistDashboard = () => {
     bio: '',
     address: '',
     emergency_contact_name: '',
-    emergency_contact_phone: ''
+    emergency_contact_phone: '',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
+  const [sessions, setSessions] = useState([]);
+  const [loadingSessions, setLoadingSessions] = useState(false);
   const [activeView, setActiveView] = useState('dashboard');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
 
@@ -95,6 +97,30 @@ const TherapistDashboard = () => {
     fetchTherapistData();
   }, []);
 
+  // Fetch sessions when sessions view is selected
+  useEffect(() => {
+    if (activeView === 'sessions') {
+      fetchSessions();
+    }
+  }, [activeView]);
+
+  const fetchSessions = async () => {
+    setLoadingSessions(true);
+    try {
+      const response = await api.request('/therapists/my/sessions');
+      if (response.success) {
+        setSessions(response.data);
+      } else {
+        setMessage({ type: 'error', text: 'Failed to load sessions' });
+      }
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+      setMessage({ type: 'error', text: 'Failed to load sessions' });
+    } finally {
+      setLoadingSessions(false);
+    }
+  };
+
   const handleAvailabilityChange = (field, value) => {
     setAvailability(prev => ({
       ...prev,
@@ -138,11 +164,21 @@ const TherapistDashboard = () => {
     setMessage(null);
 
     try {
-      const response = await api.updateUserProfile(profileData);
+      // Call therapist profile update endpoint instead of user profile
+      const response = await api.request('/therapists/my/profile', {
+        method: 'PUT',
+        body: JSON.stringify(profileData),
+      });
 
       if (response.success) {
-        // Update Redux store with new user data
-        dispatch(updateUser(response.data));
+        // Update Redux store with new user data (only basic fields)
+        const userUpdateData = {
+          first_name: profileData.first_name,
+          last_name: profileData.last_name,
+          email: profileData.email,
+          phone: profileData.phone
+        };
+        dispatch(updateUser(userUpdateData));
         setMessage({ type: 'success', text: 'Profile updated successfully!' });
         setIsEditingProfile(false);
       } else {
@@ -641,11 +677,129 @@ const TherapistDashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               className="bg-white rounded-xl shadow-sm p-6"
             >
-              <h2 className="text-xl font-bold text-gray-900 mb-6">My Sessions</h2>
-              <div className="text-center py-12">
-                <FiCalendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">Session management coming soon...</p>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900">My Sessions</h2>
+                <div className="text-sm text-gray-500">
+                  {sessions.length} session{sessions.length !== 1 ? 's' : ''}
+                </div>
               </div>
+
+              {/* Message */}
+              {message && (
+                <div className={`mb-4 p-4 rounded-lg ${message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+                  {message.text}
+                </div>
+              )}
+
+              {loadingSessions ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : sessions.length === 0 ? (
+                <div className="text-center py-12">
+                  <FiCalendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">No sessions found</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {sessions.map((session) => (
+                    <motion.div
+                      key={session.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          {/* Session Header */}
+                          <div className="flex items-center space-x-3 mb-3">
+                            <div className="flex items-center space-x-2">
+                              <FiCalendar className="w-4 h-4 text-blue-500" />
+                              <span className="font-medium text-gray-900">
+                                {new Date(session.session_date).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <FiClock className="w-4 h-4 text-blue-500" />
+                              <span className="text-gray-700">{session.session_time}</span>
+                            </div>
+                            <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              session.status === 'completed' ? 'bg-green-100 text-green-800' :
+                              session.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                              session.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {session.status}
+                            </div>
+                          </div>
+
+                          {/* Student Details */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                            <div>
+                              <h4 className="font-medium text-gray-900 mb-1">Student</h4>
+                              <div className="text-sm text-gray-700">
+                                <div className="flex items-center space-x-2">
+                                  <FiUser className="w-4 h-4" />
+                                  <span>{session.student_first_name} {session.student_last_name}</span>
+                                </div>
+                                {session.student_email && (
+                                  <div className="flex items-center space-x-2 mt-1">
+                                    <FiMail className="w-4 h-4" />
+                                    <span>{session.student_email}</span>
+                                  </div>
+                                )}
+                                {session.student_phone && (
+                                  <div className="flex items-center space-x-2 mt-1">
+                                    <FiPhone className="w-4 h-4" />
+                                    <span>{session.student_phone}</span>
+                                  </div>
+                                )}
+                                {session.age && (
+                                  <div className="text-gray-600 mt-1">
+                                    Age: {session.age} • Gender: {session.gender}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            <div>
+                              <h4 className="font-medium text-gray-900 mb-1">Session Details</h4>
+                              <div className="text-sm text-gray-700">
+                                <div className="flex items-center space-x-2">
+                                  <FiFileText className="w-4 h-4" />
+                                  <span>{session.programme_name || 'General Session'}</span>
+                                </div>
+                                <div className="flex items-center space-x-2 mt-1">
+                                  <FiMapPin className="w-4 h-4" />
+                                  <span>{session.centre_name || 'Centre'}</span>
+                                </div>
+                                <div className="text-gray-600 mt-1">
+                                  Duration: {session.duration} minutes
+                                </div>
+                                {session.programme_fee && (
+                                  <div className="text-gray-600">
+                                    Fee: ₹{session.programme_fee}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Notes */}
+                          {session.notes && (
+                            <div className="mt-3">
+                              <h4 className="font-medium text-gray-900 mb-1">Notes</h4>
+                              <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                                {session.notes}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
             </motion.div>
           )}
 

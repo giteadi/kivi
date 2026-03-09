@@ -28,11 +28,11 @@ router.put('/:id', therapistController.updateTherapist.bind(therapistController)
 // DELETE /api/therapists/:id - Delete therapist
 router.delete('/:id', therapistController.deleteTherapist.bind(therapistController));
 
-// GET /api/therapists/my/availability - Get current user's availability
-router.get('/my/availability', authenticateToken, therapistController.getMyAvailability.bind(therapistController));
+// GET /api/therapists/my/sessions - Get current user's therapist sessions
+router.get('/my/sessions', authenticateToken, therapistController.getMySessions.bind(therapistController));
 
-// PUT /api/therapists/my/availability - Update current user's availability
-router.put('/my/availability', authenticateToken, therapistController.updateMyAvailability.bind(therapistController));
+// PUT /api/therapists/my/profile - Update current user's therapist profile
+router.put('/my/profile', authenticateToken, therapistController.updateMyProfile.bind(therapistController));
 
 // GET /api/therapists/:id/availability - Get therapist availability
 router.get('/:id/availability', therapistController.getTherapistAvailability.bind(therapistController));

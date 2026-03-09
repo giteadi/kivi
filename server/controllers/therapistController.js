@@ -347,8 +347,8 @@ class TherapistController {
     }
   }
 
-  // Update current user's therapist availability
-  async updateMyAvailability(req, res) {
+  // Get current user's therapist sessions
+  async getMySessions(req, res) {
     try {
       // Find therapist record for current user
       const therapistQuery = await this.therapistModel.query(
@@ -365,28 +365,143 @@ class TherapistController {
 
       const therapistId = therapistQuery[0].id;
 
+      // Get sessions for this therapist with student and programme details
+      const sessions = await this.therapistModel.query(`
+        SELECT
+          s.id,
+          s.session_id,
+          s.session_date,
+          s.session_time,
+          s.duration,
+          s.status,
+          s.notes,
+          s.session_type,
+          s.created_at,
+          -- Student details
+          st.student_id,
+          st.first_name as student_first_name,
+          st.last_name as student_last_name,
+          st.email as student_email,
+          st.phone as student_phone,
+          st.age,
+          st.gender,
+          -- Programme details
+          p.name as programme_name,
+          p.fee as programme_fee,
+          -- Centre details
+          c.name as centre_name
+        FROM kivi_sessions s
+        LEFT JOIN kivi_students st ON s.student_id = st.id
+        LEFT JOIN kivi_programmes p ON s.programme_id = p.id
+        LEFT JOIN kivi_centres c ON s.centre_id = c.id
+        WHERE s.therapist_id = ?
+        ORDER BY s.session_date DESC, s.session_time DESC
+      `, [therapistId]);
+
+      res.json({
+        success: true,
+        data: sessions
+      });
+    } catch (error) {
+      console.error('Get my sessions error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  // Update current user's therapist profile
+  async updateMyProfile(req, res) {
+    try {
+      const userId = req.user.id;
+
+      // Find therapist record for current user
+      const therapistQuery = await this.therapistModel.query(
+        'SELECT id FROM kivi_therapists WHERE user_id = ?',
+        [userId]
+      );
+
+      if (therapistQuery.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Therapist profile not found'
+        });
+      }
+
+      const therapistId = therapistQuery[0].id;
+
       const updateData = {
-        login_time: req.body.login_time,
-        logout_time: req.body.logout_time,
-        is_available: req.body.is_available,
-        last_availability_update: new Date()
+        ...req.body,
+        updated_at: new Date()
       };
 
-      const updated = await this.therapistModel.updateAvailability(therapistId, updateData);
+      // Separate user data and therapist data
+      const userData = {};
+      const therapistData = {};
+
+      // Fields that go to kivi_users table
+      if (updateData.first_name !== undefined) userData.first_name = updateData.first_name;
+      if (updateData.last_name !== undefined) userData.last_name = updateData.last_name;
+      if (updateData.email !== undefined) userData.email = updateData.email;
+      if (updateData.phone !== undefined) userData.phone = updateData.phone;
+
+      // Fields that go to kivi_therapists table
+      const therapistFields = [
+        'specialty', 'qualification', 'license_number', 'experience_years', 
+        'session_fee', 'bio', 'date_of_birth', 'date_of_birth_text', 'gender', 'address', 'city', 
+        'state', 'zip_code', 'emergency_contact_name', 'emergency_contact_phone',
+        'joining_date', 'status', 'centre_id', 'languages', 'certifications', 
+        'professional_certifications', 'spoken_languages', 'relation', 
+        'primary_clinic_id', 'availability_status', 'session_duration', 
+        'login_time', 'logout_time', 'is_available'
+      ];
+
+      therapistFields.forEach(field => {
+        if (updateData[field] !== undefined) {
+          // Handle date fields specifically
+          if (field === 'date_of_birth' || field === 'joining_date') {
+            if (updateData[field]) {
+              const date = new Date(updateData[field]);
+              therapistData[field] = date.toISOString().split('T')[0];
+            } else {
+              therapistData[field] = null;
+            }
+          } else if (Array.isArray(updateData[field])) {
+            // Convert arrays to JSON strings for JSON fields
+            therapistData[field] = JSON.stringify(updateData[field]);
+          } else {
+            therapistData[field] = updateData[field];
+          }
+        }
+      });
+
+      therapistData.updated_at = new Date();
+
+      // Update user table if there's user data
+      if (Object.keys(userData).length > 0) {
+        const User = require('../models/User');
+        const userModel = new User();
+        
+        await userModel.update(userId, userData);
+      }
+
+      // Update therapist table
+      const updated = await this.therapistModel.update(therapistId, therapistData);
 
       if (!updated) {
-        return res.status(500).json({
+        return res.status(404).json({
           success: false,
-          message: 'Failed to update availability'
+          message: 'Therapist not found'
         });
       }
 
       res.json({
         success: true,
-        message: 'Your availability updated successfully'
+        message: 'Profile updated successfully'
       });
     } catch (error) {
-      console.error('Update my availability error:', error);
+      console.error('Update my profile error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
