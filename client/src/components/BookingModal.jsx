@@ -205,9 +205,34 @@ const BookingModal = ({ isOpen, onClose, selectedPlan, onSuccess }) => {
                     // Check if therapist is currently available based on login/logout times
                     const now = new Date();
                     const currentTime = now.getHours() * 60 + now.getMinutes();
-                    const loginTime = therapist.login_time ? therapist.login_time.split(':').reduce((h, m) => parseInt(h) * 60 + parseInt(m)) : 9 * 60; // Default 9:00
-                    const logoutTime = therapist.logout_time ? therapist.logout_time.split(':').reduce((h, m) => parseInt(h) * 60 + parseInt(m)) : 18 * 60; // Default 18:00
+                    let loginTime = 9 * 60; // Default 9:00
+                    let logoutTime = 18 * 60; // Default 18:00
+                    
+                    if (therapist.login_time) {
+                      const [hours, minutes] = therapist.login_time.split(':').map(Number);
+                      loginTime = hours * 60 + minutes;
+                    }
+                    
+                    if (therapist.logout_time) {
+                      const [hours, minutes] = therapist.logout_time.split(':').map(Number);
+                      logoutTime = hours * 60 + minutes;
+                    }
+                    
                     const isCurrentlyAvailable = therapist.is_available && currentTime >= loginTime && currentTime <= logoutTime;
+
+                    // Debug logging
+                    console.log('Therapist availability debug:', {
+                      therapistId: therapist.id,
+                      name: `${therapist.first_name} ${therapist.last_name}`,
+                      is_available: therapist.is_available,
+                      login_time: therapist.login_time,
+                      logout_time: therapist.logout_time,
+                      currentTime,
+                      loginTime,
+                      logoutTime,
+                      isCurrentlyAvailable,
+                      now: now.toLocaleString()
+                    });
 
                     return (
                       <div

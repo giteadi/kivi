@@ -86,10 +86,11 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
       totalPatients: centre.total_students || 0,
       totalAppointments: centre.total_sessions || 0,
       specialties: centre.specialties ? (Array.isArray(centre.specialties) ? centre.specialties : JSON.parse(centre.specialties || '[]')) : [],
-      operatingHours: '8:00 AM - 8:00 PM',
-      emergencyServices: true,
-      rating: 4.5,
-      badgeColor: centre.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+      operatingHours: centre.operating_hours || 'Not specified',
+      emergencyServices: centre.emergency_services || false,
+      rating: centre.rating || 0,
+      // Add all other fields from API to avoid data loss
+      ...centre
     };
   };
 
@@ -264,7 +265,9 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
           transition={{ delay: 0.1 }}
           className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
         >
-          {filteredClinics.map((clinic, index) => (
+          {filteredClinics.map((clinic, index) => {
+            const badgeColor = clinic.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
+            return (
             <motion.div
               key={clinic.id}
               initial={{ opacity: 0, y: 20 }}
@@ -277,7 +280,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
               {/* Clinic Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center space-x-3">
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${clinic.badgeColor}`}>
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${badgeColor}`}>
                     <span className="text-lg font-bold">{clinic.initials}</span>
                   </div>
                   <div>
@@ -285,7 +288,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
                     <p className="text-sm text-gray-500">{clinic.id}</p>
                   </div>
                 </div>
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(clinic.status)}`}>
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${badgeColor}`}>
                   {clinic.status}
                 </span>
               </div>
@@ -390,7 +393,8 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
                 </div>
               </div>
             </motion.div>
-          ))}
+            );
+          })}
         </motion.div>
         )}
 

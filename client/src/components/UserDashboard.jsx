@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout, updateUser } from '../store/slices/authSlice';
 import { fetchPlans } from '../store/slices/plansSlice';
+import { fetchServices } from '../store/slices/serviceSlice';
 import { motion } from 'framer-motion';
 import { 
   FiCalendar, 
@@ -22,18 +23,9 @@ import BookingModal from './BookingModal';
 const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
   const { user } = useSelector((state) => state.auth);
   const { plans, loading: plansLoading } = useSelector((state) => state.plans);
+  const { services: servicesData } = useSelector((state) => state.services);
   const dispatch = useDispatch();
-  const [userSessions, setUserSessions] = useState([]);
-  const [paymentHistory, setPaymentHistory] = useState([]);
-  const [assignedTherapist, setAssignedTherapist] = useState(null);
-  const [userStats, setUserStats] = useState({
-    totalSessions: 0,
-    completedSessions: 0,
-    upcomingSessions: 0,
-    progress: 0
-  });
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [planToPayFor, setPlanToPayFor] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [activeItem, setActiveItem] = useState('dashboard');
   const [showBookingModal, setShowBookingModal] = useState(false);
@@ -46,47 +38,121 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
     email: '',
     phone: ''
   });
+  const [userSessions, setUserSessions] = useState([]);
+  const [paymentHistory, setPaymentHistory] = useState([]);
+  const [assignedTherapist, setAssignedTherapist] = useState(null);
+  const [userStats, setUserStats] = useState({
+    totalSessions: 0,
+    completedSessions: 0,
+    upcomingSessions: 0,
+    progress: 0
+  });
+  const [requestCount, setRequestCount] = useState(0);
+  const abortControllerRef = useRef(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [planToPayFor, setPlanToPayFor] = useState(null);
+
+  // Transform services data to plan format like Homepage.jsx
+  const sessionPlans = servicesData
+    .filter(service => service.category && (
+      service.category.includes('Therapy') || 
+      service.category.includes('Learning') || 
+      service.category.includes('Counselling')
+    ))
+    .map(service => ({
+      id: service.programme_id,
+      name: service.name,
+      duration: '1 Hour',
+      price: parseInt(service.fee) * 100, // Convert to paisa
+      description: service.description,
+      features: [
+        'Professional therapy session',
+        'Customized learning approach',
+        'Progress tracking',
+        'Parent consultation'
+      ]
+    }));
+
+  const assessmentPlans = servicesData
+    .filter(service => service.category && service.category.includes('Assessment'))
+    .map(service => ({
+      id: service.programme_id,
+      name: `Package ${service.programme_id}`,
+      duration: 'Assessment Package',
+      price: parseInt(service.fee) * 100, // Convert to paisa
+      description: service.description,
+      features: [
+        'Comprehensive assessment',
+        'Detailed report',
+        'Parent consultation',
+        'School recommendations'
+      ]
+    }));
+
+  // Combine all dynamic plans
+  const allDynamicPlans = [...sessionPlans, ...assessmentPlans];
 
   // Fetch user dashboard data
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        setLoading(true);
+  const fetchUserData = async () => {
+    // Cancel previous request if still pending
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
 
-        // Show payment modal if selectedPlan is available (user selected plan before login)
-        if (selectedPlan) {
-          setPlanToPayFor(selectedPlan);
-          setShowPaymentModal(true);
-        }
+    // Create new abort controller for this request
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
 
-        // Fetch all user data in parallel
-        const [sessionsRes, paymentsRes, therapistRes, statsRes] = await Promise.all([
-          api.getUserSessions(),
-          api.getUserPayments(),
-          api.getUserTherapist(),
-          api.getUserStats()
-        ]);
+    try {
+      setLoading(true);
+      setRequestCount(prev => prev + 1);
 
-        // Fetch plans
-        dispatch(fetchPlans());
+      // Add delay to prevent rapid successive requests
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-        if (sessionsRes.success) {
-          setUserSessions(sessionsRes.data);
-        }
+      // Check if request was aborted during delay
+      if (abortController.signal.aborted) {
+        return;
+      }
 
-        if (paymentsRes.success) {
-          setPaymentHistory(paymentsRes.data);
-        }
+      // Fetch all user data in parallel with abort signal
+      const [sessionsRes, paymentsRes, therapistRes, statsRes] = await Promise.all([
+        api.getUserSessions(),
+        api.getUserPayments(),
+        api.getUserTherapist(),
+        api.getUserStats()
+      ]);
 
-        if (therapistRes.success && therapistRes.data) {
-          setAssignedTherapist(therapistRes.data);
-        }
+      // Check if request was aborted during API calls
+      if (abortController.signal.aborted) {
+        return;
+      }
 
-        if (statsRes.success) {
-          setUserStats(statsRes.data);
-        }
+      // Fetch plans
+      dispatch(fetchPlans());
 
-      } catch (error) {
+      // Fetch services for dynamic plans
+      dispatch(fetchServices());
+
+      if (sessionsRes.success) {
+        setUserSessions(sessionsRes.data);
+      }
+
+      if (paymentsRes.success) {
+        setPaymentHistory(paymentsRes.data);
+      }
+
+      if (therapistRes.success && therapistRes.data) {
+        setAssignedTherapist(therapistRes.data);
+      }
+
+      if (statsRes.success) {
+        setUserStats(statsRes.data);
+      }
+
+    } catch (error) {
+      // Don't log error if request was aborted
+      if (error.name !== 'AbortError') {
         console.error('Error fetching user data:', error);
         // Don't show fallback data - let components handle empty states
         setUserSessions([]);
@@ -98,12 +164,33 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
           upcomingSessions: 0,
           progress: 0
         });
-      } finally {
+      }
+    } finally {
+      // Only set loading to false if this is the latest request
+      if (!abortController.signal.aborted) {
         setLoading(false);
       }
-    };
+    }
+  };
 
+  // Fetch user dashboard data on component mount and when selectedPlan changes
+  useEffect(() => {
     fetchUserData();
+    
+    // Cleanup function to cancel pending requests when component unmounts
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []); // Remove selectedPlan dependency to prevent infinite loop
+
+  // Handle selectedPlan changes separately
+  useEffect(() => {
+    if (selectedPlan) {
+      setSelectedPlanForBooking(selectedPlan);
+      setShowBookingModal(true);
+    }
   }, [selectedPlan]);
 
   const getStatusColor = (status) => {
@@ -555,31 +642,80 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {plans.map((plan) => (
-              <motion.div
-                key={plan.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                whileHover={{ scale: 1.02 }}
-                className="bg-white rounded-xl shadow-sm p-6 border hover:border-blue-300 cursor-pointer"
-                onClick={() => handlePlanSelect(plan)}
-              >
-                <div className="mb-4">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                  <p className="text-gray-600 text-sm mb-4">{plan.description}</p>
-                  <div className="text-3xl font-bold text-blue-600 mb-4">
-                    ₹{parseFloat(plan.price).toLocaleString()}
-                  </div>
-                  <div className="text-sm text-gray-500 mb-4">
-                    Duration: {plan.duration}
-                  </div>
+          <div className="space-y-12">
+            {/* Session Plans */}
+            {sessionPlans.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Session Plans</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {sessionPlans.map((plan) => (
+                    <motion.div
+                      key={plan.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      whileHover={{ scale: 1.02 }}
+                      className="bg-white rounded-xl shadow-sm p-6 border hover:border-blue-300 cursor-pointer"
+                      onClick={() => handlePlanSelect(plan)}
+                    >
+                      <div className="mb-4">
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                        <p className="text-gray-600 text-sm mb-4">{plan.description}</p>
+                        <div className="text-3xl font-bold text-blue-600 mb-4">
+                          ₹{parseFloat(plan.price / 100).toLocaleString()}
+                        </div>
+                        <div className="text-sm text-gray-500 mb-4">
+                          Duration: {plan.duration}
+                        </div>
+                      </div>
+                      <button className="w-full bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 transition-colors font-medium">
+                        Select Plan
+                      </button>
+                    </motion.div>
+                  ))}
                 </div>
-                <button className="w-full bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 transition-colors font-medium">
-                  Select Plan
-                </button>
-              </motion.div>
-            ))}
+              </div>
+            )}
+
+            {/* Assessment Plans */}
+            {assessmentPlans.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Assessment Plans</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {assessmentPlans.map((plan) => (
+                    <motion.div
+                      key={plan.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      whileHover={{ scale: 1.02 }}
+                      className="bg-white rounded-xl shadow-sm p-6 border hover:border-purple-300 cursor-pointer"
+                      onClick={() => handlePlanSelect(plan)}
+                    >
+                      <div className="mb-4">
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                        <p className="text-gray-600 text-sm mb-4">{plan.description}</p>
+                        <div className="text-3xl font-bold text-purple-600 mb-4">
+                          ₹{parseFloat(plan.price / 100).toLocaleString()}
+                        </div>
+                        <div className="text-sm text-gray-500 mb-4">
+                          Duration: {plan.duration}
+                        </div>
+                      </div>
+                      <button className="w-full bg-purple-500 text-white py-3 px-4 rounded-lg hover:bg-purple-600 transition-colors font-medium">
+                        Select Plan
+                      </button>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {sessionPlans.length === 0 && assessmentPlans.length === 0 && (
+              <div className="text-center py-12">
+                <div className="text-gray-400 text-6xl mb-4">📋</div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">No Plans Available</h3>
+                <p className="text-gray-500">Plans will be available soon. Please check back later.</p>
+              </div>
+            )}
           </div>
         )}
       </div>

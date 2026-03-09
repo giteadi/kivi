@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const Razorpay = require('razorpay');
+const Payment = require('../models/Payment');
 
 class PaymentController {
   constructor() {
@@ -12,6 +13,9 @@ class PaymentController {
       key_id: this.razorpayKeyId,
       key_secret: this.razorpayKeySecret,
     });
+
+    // Initialize Payment model
+    this.paymentModel = new Payment();
   }
 
   // Create Razorpay order
@@ -115,10 +119,15 @@ class PaymentController {
         paidAt: new Date().toISOString()
       };
 
-      // Store payment record (you'll need to create payments table)
-      // await this.storePayment(paymentData);
+      // Get order details to fetch amount
+      const order = await this.razorpay.orders.fetch(razorpay_order_id);
+      paymentData.amount = order.amount / 100; // Convert from paise to rupees
+      paymentData.currency = order.currency;
 
-      // Update user plan subscription
+      // Store payment record in database
+      await this.storePayment(paymentData);
+
+      // Update user plan subscription (if needed)
       // await this.updateUserPlan(userId, planId);
 
       res.json({
@@ -143,26 +152,14 @@ class PaymentController {
   async getPaymentHistory(req, res) {
     try {
       const userId = req.user.id;
+      const { limit = 50, offset = 0 } = req.query;
 
-      // Mock payment history for demo
-      const paymentHistory = [
-        {
-          id: 1,
-          planName: 'Remedial Therapy',
-          amount: 2000,
-          status: 'completed',
-          paymentId: 'pay_demo123',
-          paidAt: '2026-03-01T10:00:00Z'
-        },
-        {
-          id: 2,
-          planName: 'Speech Language Therapy',
-          amount: 1500,
-          status: 'completed',
-          paymentId: 'pay_demo124',
-          paidAt: '2026-02-15T14:30:00Z'
-        }
-      ];
+      // Get payment history from database
+      const paymentHistory = await this.paymentModel.getUserPaymentHistory(
+        userId, 
+        parseInt(limit), 
+        parseInt(offset)
+      );
 
       res.json({
         success: true,
@@ -178,72 +175,39 @@ class PaymentController {
     }
   }
 
+  // Store payment in database
+  async storePayment(paymentData) {
+    try {
+      const paymentId = await this.paymentModel.create(paymentData);
+      console.log('Payment stored successfully with ID:', paymentId);
+      return paymentId;
+    } catch (error) {
+      console.error('Error storing payment:', error);
+      throw error;
+    }
+  }
+
   // Get available plans
   async getPlans(req, res) {
     try {
-      // Mock plans data (in real app, fetch from database)
-      const plans = [
-        {
-          id: 1,
-          name: 'Remedial Therapy',
-          type: 'session',
-          price: 2000,
-          duration: '1 Hour',
-          description: 'Comprehensive remedial therapy sessions for learning difficulties',
-          features: [
-            'One-on-one therapy session',
-            'Customized learning approach',
-            'Progress tracking',
-            'Parent consultation'
-          ]
-        },
-        {
-          id: 2,
-          name: 'Occupational Therapy',
-          type: 'session',
-          price: 1500,
-          duration: '1 Hour',
-          description: 'Specialized occupational therapy for daily living skills',
-          features: [
-            'Sensory integration therapy',
-            'Fine motor skill development',
-            'Daily living activities',
-            'Equipment recommendations'
-          ]
-        },
-        {
-          id: 3,
-          name: 'Speech Language Therapy',
-          type: 'session',
-          price: 1500,
-          duration: '1 Hour',
-          description: 'Professional speech and language development therapy',
-          features: [
-            'Speech articulation training',
-            'Language development',
-            'Communication skills',
-            'Swallowing therapy'
-          ]
-        },
-        {
-          id: 4,
-          name: 'Counselling',
-          type: 'session',
-          price: 1500,
-          duration: '1 Hour',
-          description: 'Professional counselling and psychological support',
-          features: [
-            'Individual counselling',
-            'Behavioral therapy',
-            'Emotional support',
-            'Coping strategies'
-          ]
-        }
-      ];
+      // Fetch plans from database
+      const query = 'SELECT * FROM kivi_plans WHERE is_active = TRUE ORDER BY id';
+      const plans = await this.paymentModel.executeQuery(query);
+
+      // Transform the data to match the expected format
+      const formattedPlans = plans.map(plan => ({
+        id: plan.id,
+        name: plan.name,
+        type: plan.type,
+        price: parseFloat(plan.price),
+        duration: plan.duration,
+        description: plan.description,
+        features: plan.features ? JSON.parse(plan.features) : []
+      }));
 
       res.json({
         success: true,
-        data: plans
+        data: formattedPlans
       });
 
     } catch (error) {

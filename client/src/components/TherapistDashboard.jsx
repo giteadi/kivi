@@ -10,6 +10,7 @@ import {
   FiLogOut,
   FiCheckCircle,
   FiXCircle,
+  FiX,
   FiSave,
   FiEdit2,
   FiDollarSign,
@@ -51,6 +52,8 @@ const TherapistDashboard = () => {
   const [loadingSessions, setLoadingSessions] = useState(false);
   const [activeView, setActiveView] = useState('dashboard');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [selectedSession, setSelectedSession] = useState(null);
+  const [showSessionDetails, setShowSessionDetails] = useState(false);
 
   // Fetch therapist data on component mount
   useEffect(() => {
@@ -104,10 +107,21 @@ const TherapistDashboard = () => {
     }
   }, [activeView]);
 
+  const handleSessionClick = (session) => {
+    setSelectedSession(session);
+    setShowSessionDetails(true);
+  };
+
+  const closeSessionDetails = () => {
+    setShowSessionDetails(false);
+    setSelectedSession(null);
+  };
+
   const fetchSessions = async () => {
     setLoadingSessions(true);
     try {
       const response = await api.request('/therapists/my/sessions');
+      console.log('🔍 Therapist sessions response:', response);
       if (response.success) {
         setSessions(response.data);
       } else {
@@ -707,7 +721,8 @@ const TherapistDashboard = () => {
                       key={session.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => handleSessionClick(session)}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -736,27 +751,38 @@ const TherapistDashboard = () => {
                           {/* Student Details */}
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                             <div>
-                              <h4 className="font-medium text-gray-900 mb-1">Student</h4>
+                              <h4 className="font-medium text-gray-900 mb-1">Student Details</h4>
                               <div className="text-sm text-gray-700">
                                 <div className="flex items-center space-x-2">
                                   <FiUser className="w-4 h-4" />
-                                  <span>{session.student_first_name} {session.student_last_name}</span>
+                                  <span className="font-medium">{session.student_first_name} {session.student_last_name}</span>
                                 </div>
                                 {session.student_email && (
-                                  <div className="flex items-center space-x-2 mt-1">
-                                    <FiMail className="w-4 h-4" />
-                                    <span>{session.student_email}</span>
+                                  <div className="flex items-center space-x-2 mt-2">
+                                    <FiMail className="w-4 h-4 text-blue-500" />
+                                    <button 
+                                      onClick={() => window.open(`mailto:${session.student_email}`)}
+                                      className="text-blue-600 hover:text-blue-800 underline"
+                                    >
+                                      {session.student_email}
+                                    </button>
                                   </div>
                                 )}
                                 {session.student_phone && (
-                                  <div className="flex items-center space-x-2 mt-1">
-                                    <FiPhone className="w-4 h-4" />
-                                    <span>{session.student_phone}</span>
+                                  <div className="flex items-center space-x-2 mt-2">
+                                    <FiPhone className="w-4 h-4 text-green-500" />
+                                    <button 
+                                      onClick={() => window.open(`tel:${session.student_phone}`)}
+                                      className="text-green-600 hover:text-green-800 underline"
+                                    >
+                                      {session.student_phone}
+                                    </button>
                                   </div>
                                 )}
                                 {session.age && (
-                                  <div className="text-gray-600 mt-1">
-                                    Age: {session.age} • Gender: {session.gender}
+                                  <div className="text-gray-600 mt-2">
+                                    <span className="font-medium">Age:</span> {session.age} • 
+                                    <span className="font-medium">Gender:</span> {session.gender}
                                   </div>
                                 )}
                               </div>
@@ -774,13 +800,24 @@ const TherapistDashboard = () => {
                                   <span>{session.centre_name || 'Centre'}</span>
                                 </div>
                                 <div className="text-gray-600 mt-1">
-                                  Duration: {session.duration} minutes
+                                  Duration: {session.duration || 60} minutes
                                 </div>
                                 {session.programme_fee && (
                                   <div className="text-gray-600">
-                                    Fee: ₹{session.programme_fee}
+                                    <span className="font-medium">Fee:</span> ₹{session.programme_fee}
                                   </div>
                                 )}
+                                {/* Payment Status */}
+                                <div className="mt-2 p-2 bg-gray-50 rounded">
+                                  <span className="font-medium text-gray-700">Payment Status: </span>
+                                  <span className={`font-bold ${
+                                    session.payment_status === 'paid' ? 'text-green-600' : 
+                                    session.payment_status === 'pending' ? 'text-yellow-600' : 
+                                    'text-red-600'
+                                  }`}>
+                                    {session.payment_status || 'Pending'}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -818,7 +855,150 @@ const TherapistDashboard = () => {
             </motion.div>
           )}
         </div>
-      </div>
+      </div>)}
+
+      {/* Session Details Modal */}
+      {showSessionDetails && selectedSession && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-gray-900">Session Details</h2>
+                <button
+                  onClick={closeSessionDetails}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <FiX className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Student Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Student Information</h3>
+                  
+                  {selectedSession.student_first_name || selectedSession.student_last_name ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <FiUser className="w-4 h-4 text-blue-500" />
+                        <span className="font-medium">
+                          {selectedSession.student_first_name} {selectedSession.student_last_name}
+                        </span>
+                      </div>
+                      
+                      {selectedSession.student_email && (
+                        <div className="flex items-center space-x-2">
+                          <FiMail className="w-4 h-4 text-blue-500" />
+                          <button 
+                            onClick={() => window.open(`mailto:${selectedSession.student_email}`)}
+                            className="text-blue-600 hover:text-blue-800 underline"
+                          >
+                            {selectedSession.student_email}
+                          </button>
+                        </div>
+                      )}
+                      
+                      {selectedSession.student_phone && (
+                        <div className="flex items-center space-x-2">
+                          <FiPhone className="w-4 h-4 text-green-500" />
+                          <button 
+                            onClick={() => window.open(`tel:${selectedSession.student_phone}`)}
+                            className="text-green-600 hover:text-green-800 underline"
+                          >
+                            {selectedSession.student_phone}
+                          </button>
+                        </div>
+                      )}
+                      
+                      {(selectedSession.age || selectedSession.gender) && (
+                        <div className="text-gray-600">
+                          {selectedSession.age && <span>Age: {selectedSession.age}</span>}
+                          {selectedSession.age && selectedSession.gender && <span> • </span>}
+                          {selectedSession.gender && <span>Gender: {selectedSession.gender}</span>}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-gray-500">
+                      <FiUser className="w-8 h-8 mb-2" />
+                      <p>Student information not available</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Session Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Session Information</h3>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <FiCalendar className="w-4 h-4 text-blue-500" />
+                      <span>{new Date(selectedSession.session_date).toLocaleDateString()}</span>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <FiClock className="w-4 h-4 text-blue-500" />
+                      <span>{selectedSession.session_time}</span>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <FiFileText className="w-4 h-4 text-blue-500" />
+                      <span>{selectedSession.programme_name || 'General Session'}</span>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <FiMapPin className="w-4 h-4 text-blue-500" />
+                      <span>{selectedSession.centre_name || 'Centre'}</span>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium">Duration:</span>
+                      <span>{selectedSession.duration || 60} minutes</span>
+                    </div>
+                    
+                    {selectedSession.programme_fee && (
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium">Fee:</span>
+                        <span className="text-lg font-bold text-green-600">₹{selectedSession.programme_fee}</span>
+                      </div>
+                    )}
+                    
+                    {/* Payment Status */}
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <span className="font-medium text-gray-700">Payment Status: </span>
+                      <span className={`font-bold text-lg ${
+                        selectedSession.payment_status === 'paid' ? 'text-green-600' : 
+                        selectedSession.payment_status === 'pending' ? 'text-yellow-600' : 
+                        'text-red-600'
+                      }`}>
+                        {selectedSession.payment_status || 'Pending'}
+                      </span>
+                    </div>
+                    
+                    {selectedSession.total_amount && parseFloat(selectedSession.total_amount) > 0 && (
+                      <div className="text-sm text-gray-600">
+                        Amount Paid: ₹{selectedSession.total_amount}
+                        {selectedSession.payment_date && (
+                          <span> on {new Date(selectedSession.payment_date).toLocaleDateString()}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {selectedSession.notes && (
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-2">Notes</h4>
+                      <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                        {selectedSession.notes}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

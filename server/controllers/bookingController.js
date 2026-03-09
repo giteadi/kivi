@@ -9,7 +9,15 @@ class BookingController extends Therapist {
   async getAvailableTherapists(req, res) {
     try {
       const { date, specialty } = req.query;
+      console.log('🔍 Backend: Fetching available therapists with filters:', { date, specialty });
       const therapists = await super.getAvailableTherapists(date, specialty);
+      console.log('✅ Backend: Therapists fetched from DB:', therapists.map(t => ({
+        id: t.id,
+        name: `${t.first_name} ${t.last_name}`,
+        is_available: t.is_available,
+        login_time: t.login_time,
+        logout_time: t.logout_time
+      })));
 
       res.json({
         success: true,
@@ -107,9 +115,24 @@ class BookingController extends Therapist {
         });
       }
 
+      // Get therapist's centre_id
+      const therapistSql = 'SELECT centre_id FROM kivi_therapists WHERE id = ?';
+      const therapistResult = await this.query(therapistSql, [therapistId]);
+      
+      if (therapistResult.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Therapist not found'
+        });
+      }
+
       // Create the session
+      const sessionId = `SES${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
       const sessionData = {
+        session_id: sessionId,
         therapist_id: therapistId,
+        student_id: userId, // Link session to the booking user (student)
+        centre_id: therapistResult[0].centre_id,
         session_date: date,
         session_time: time,
         status: 'scheduled',
@@ -119,7 +142,26 @@ class BookingController extends Therapist {
         updated_at: new Date()
       };
 
-      const sessionId = await this.create(sessionData);
+      const sql = `
+        INSERT INTO kivi_sessions (session_id, therapist_id, student_id, centre_id, session_date, session_time, status, notes, programme_id, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+
+      const params = [
+        sessionData.session_id,
+        sessionData.therapist_id,
+        sessionData.student_id,
+        sessionData.centre_id,
+        sessionData.session_date,
+        sessionData.session_time,
+        sessionData.status,
+        sessionData.notes,
+        sessionData.programme_id,
+        sessionData.created_at,
+        sessionData.updated_at
+      ];
+
+      const result = await this.query(sql, params);
 
       res.status(201).json({
         success: true,

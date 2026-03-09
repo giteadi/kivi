@@ -318,6 +318,12 @@ class TherapistController {
   // Get current user's therapist availability (for therapist dashboard)
   async getMyAvailability(req, res) {
     try {
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({
+          success: false,
+          message: 'Unauthorized'
+        });
+      }
       // Find therapist record for current user
       const therapistQuery = await this.therapistModel.query(
         'SELECT id FROM kivi_therapists WHERE user_id = ?',
@@ -350,6 +356,12 @@ class TherapistController {
   // Get current user's therapist sessions
   async getMySessions(req, res) {
     try {
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({
+          success: false,
+          message: 'Unauthorized'
+        });
+      }
       // Find therapist record for current user
       const therapistQuery = await this.therapistModel.query(
         'SELECT id FROM kivi_therapists WHERE user_id = ?',
@@ -389,11 +401,16 @@ class TherapistController {
           p.name as programme_name,
           p.fee as programme_fee,
           -- Centre details
-          c.name as centre_name
+          c.name as centre_name,
+          -- Payment details
+          COALESCE(br.payment_status, 'pending') as payment_status,
+          COALESCE(br.total_amount, 0) as total_amount,
+          br.created_at as payment_date
         FROM kivi_sessions s
         LEFT JOIN kivi_students st ON s.student_id = st.id
         LEFT JOIN kivi_programmes p ON s.programme_id = p.id
         LEFT JOIN kivi_centres c ON s.centre_id = c.id
+        LEFT JOIN kivi_billing_records br ON s.id = br.session_id
         WHERE s.therapist_id = ?
         ORDER BY s.session_date DESC, s.session_time DESC
       `, [therapistId]);

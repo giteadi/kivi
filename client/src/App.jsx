@@ -43,6 +43,7 @@ import ClinicsList from './components/ClinicsList';
 import ClinicProfile from './components/ClinicProfile';
 import ClinicEditForm from './components/ClinicEditForm';
 import ServicesList from './components/ServicesList';
+import ServiceCards from './components/ServiceCards';
 import ServiceCreateForm from './components/ServiceCreateForm';
 import ServiceEditForm from './components/ServiceEditForm';
 import StudentCreateForm from './components/StudentCreateForm';
@@ -941,7 +942,11 @@ function App() {
         return <ReceptionistsList onViewReceptionist={handleViewReceptionist} onEditReceptionist={handleEditReceptionist} onDeleteReceptionist={handleDeleteReceptionist} onCreateNewReceptionist={handleCreateNewReceptionist} />;
       
       case 'services':
+      case 'services-list':
         return <ServicesList onViewService={handleViewService} onEditService={handleEditService} onDeleteService={handleDeleteService} onCreateNewService={handleCreateNewService} />;
+      
+      case 'service-cards':
+        return <ServiceCards onViewService={handleViewService} onEditService={handleEditService} onDeleteService={handleDeleteService} onCreateNewService={handleCreateNewService} />;
       
       case 'clinics':
         if (currentView === 'clinics-list' || currentView === 'dashboard') {

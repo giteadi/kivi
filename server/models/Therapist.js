@@ -117,8 +117,9 @@ class Therapist extends BaseModel {
           t.specialty,
           t.experience_years,
           t.qualification,
-          t.availability as working_hours,
-          t.availability as available_days,
+          t.is_available,
+          t.login_time,
+          t.logout_time,
           u.email,
           u.phone,
           c.name as centre_name,
@@ -151,7 +152,7 @@ class Therapist extends BaseModel {
     try {
       // First get therapist's availability data
       const therapistSql = `
-        SELECT availability
+        SELECT availability, login_time, logout_time
         FROM kivi_therapists
         WHERE id = ? AND status = 'active'
       `;
@@ -162,15 +163,40 @@ class Therapist extends BaseModel {
       }
 
       const therapist = therapistResults[0];
-      const availability = JSON.parse(therapist.availability || '{}');
+      let availability;
+      try {
+        availability = typeof therapist.availability === 'string' ? JSON.parse(therapist.availability) : (therapist.availability || {});
+      } catch (e) {
+        console.error('Error parsing therapist availability:', e);
+        availability = {};
+      }
+
+      // Fallback: if no availability set, use login/logout times for weekdays
+      if ((!availability || Object.keys(availability).length === 0) && therapist.login_time && therapist.logout_time) {
+        const start = therapist.login_time.substring(0, 5); // e.g., '09:00'
+        const end = therapist.logout_time.substring(0, 5); // e.g., '18:00'
+        availability = {
+          "monday": { start: start, end: end },
+          "tuesday": { start: start, end: end },
+          "wednesday": { start: start, end: end },
+          "thursday": { start: start, end: end },
+          "friday": { start: start, end: end }
+        };
+        console.log(`🔍 Therapist ${therapistId}: Using fallback availability:`, availability);
+      }
 
       // Extract available days from the availability object
       const availableDays = Object.keys(availability);
       const workingHours = availability;
 
       // Check if the date is in available days
-      const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'lowercase' });
+      if (!date) return [];
+      const dateObj = new Date(date);
+      if (isNaN(dateObj.getTime())) return [];
+      const dayOfWeek = dateObj.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+      console.log(`🔍 Therapist ${therapistId}: Checking availability for date ${date}, dayOfWeek: ${dayOfWeek}, availableDays: ${availableDays}`);
       if (!availableDays.includes(dayOfWeek)) {
+        console.log(`❌ Therapist ${therapistId}: No availability for ${dayOfWeek}`);
         return [];
       }
 

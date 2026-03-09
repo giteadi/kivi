@@ -2,50 +2,48 @@ import { motion } from 'framer-motion';
 import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiCalendar, FiUser } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchEncounters } from '../store/slices/encounterSlice';
+import { fetchServices } from '../store/slices/serviceSlice';
 
 const EncountersList = ({ onViewEncounter, onEditEncounter, onDeleteEncounter, onCreateNewEncounter }) => {
   const dispatch = useDispatch();
-  const { encounters, isLoading, error } = useSelector((state) => state.encounters);
+  const { services: encounters, isLoading, error } = useSelector((state) => state.services);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
-  // Load encounters on component mount
+  // Load services on component mount
   useEffect(() => {
-    dispatch(fetchEncounters());
+    dispatch(fetchServices());
   }, [dispatch]);
 
   // Transform API data to match frontend format
   const transformedEncounters = encounters.map(encounter => ({
     id: encounter.id,
-    patient: `${encounter.patient_first_name} ${encounter.patient_last_name}`,
-    doctor: `${encounter.doctor_first_name} ${encounter.doctor_last_name}`,
-    clinic: encounter.clinic_name || 'Unknown Clinic',
-    date: new Date(encounter.encounter_date).toLocaleDateString('en-US', { 
+    patient: `Student ${encounter.id}`,
+    doctor: encounter.therapist_first_name ? 
+      `${encounter.therapist_first_name} ${encounter.therapist_last_name}` : 
+      'Not Assigned',
+    clinic: `Centre ${encounter.centre_id}`,
+    date: new Date(encounter.created_at).toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 
     }),
-    time: new Date(`1970-01-01T${encounter.encounter_time}`).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    }),
-    type: encounter.chief_complaint || 'General Visit',
-    status: encounter.status === 'draft' ? 'Active' : 
-            encounter.status === 'completed' ? 'Completed' :
-            encounter.status === 'signed' ? 'Closed' : 'Active',
-    duration: '45 min', // Default duration
-    problems: encounter.diagnosis ? 1 : 0,
-    observations: encounter.examination_findings ? 1 : 0,
-    notes: encounter.treatment_plan ? 1 : 0
+    time: '10:00 AM', // Default time since not in API
+    type: encounter.name || 'General Session',
+    status: encounter.status === 'active' ? 'Active' : 
+            encounter.status === 'inactive' ? 'Completed' : 'Closed',
+    duration: `${encounter.duration} min`,
+    problems: encounter.description ? 1 : 0,
+    observations: encounter.objectives ? 1 : 0,
+    notes: encounter.target_age_group ? 1 : 0
   }));
 
   const filteredEncounters = transformedEncounters.filter(encounter => {
     const matchesSearch = encounter.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          encounter.doctor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         encounter.type.toLowerCase().includes(searchTerm.toLowerCase());
+                         encounter.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         encounter.clinic.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterStatus === 'all' || encounter.status.toLowerCase() === filterStatus;
     return matchesSearch && matchesFilter;
   });
@@ -138,13 +136,13 @@ const EncountersList = ({ onViewEncounter, onEditEncounter, onDeleteEncounter, o
             <div className="text-center py-12">
               <div className="text-gray-500">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-lg font-medium">Loading encounters...</p>
+                <p className="text-lg font-medium">Loading programs...</p>
               </div>
             </div>
           ) : error ? (
             <div className="text-center py-12">
               <div className="text-red-500">
-                <p className="text-lg font-medium">Error loading encounters</p>
+                <p className="text-lg font-medium">Error loading programs</p>
                 <p className="text-sm">{error}</p>
               </div>
             </div>

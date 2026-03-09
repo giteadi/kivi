@@ -75,9 +75,9 @@ const Homepage = ({ onSelectPlan, onShowLogin }) => {
         // Redirect to admin programs section
         window.location.href = '/admin?section=programs';
       } else {
-        // Regular user, show payment modal
-        console.log('User authenticated, showing payment modal');
-        setShowPaymentModal(true);
+        // Regular user - redirect to booking flow instead of direct payment
+        console.log('User authenticated, redirecting to booking flow');
+        onSelectPlan(planWithType); // This should trigger the booking modal in the parent component
       }
     } else {
       // User not logged in, redirect to login with selected plan

@@ -33,7 +33,17 @@ const MobileMenu = ({ isOpen, setIsOpen, activeItem, setActiveItem }) => {
         { id: 'encounter-templates', label: 'Session Templates', icon: FiFileText }
       ]
     },
-    { id: 'services', label: 'Programs', icon: FiActivity, section: 'MAIN' },
+    { 
+      id: 'services', 
+      label: 'Programs', 
+      icon: FiActivity, 
+      section: 'MAIN',
+      hasSubmenu: true,
+      submenu: [
+        { id: 'services-list', label: 'Program List', icon: FiList },
+        { id: 'service-cards', label: 'Program Cards', icon: FiActivity }
+      ]
+    },
     { id: 'patients', label: 'Students', icon: FiUser, section: 'USERS' },
     { id: 'doctors', label: 'Therapists', icon: FiUserCheck, section: 'USERS' },
     { id: 'receptionists', label: 'Staff', icon: FiUser, section: 'USERS' },
@@ -65,6 +75,9 @@ const MobileMenu = ({ isOpen, setIsOpen, activeItem, setActiveItem }) => {
   const isActiveItem = (itemId) => {
     if (itemId === 'encounters') {
       return activeItem === 'encounters-list' || activeItem === 'encounter-templates';
+    }
+    if (itemId === 'services') {
+      return activeItem === 'services-list' || activeItem === 'service-cards';
     }
     return activeItem === itemId;
   };
