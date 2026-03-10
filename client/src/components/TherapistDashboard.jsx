@@ -18,7 +18,9 @@ import {
   FiPhone,
   FiMapPin,
   FiAward,
-  FiFileText
+  FiFileText,
+  FiTrash2,
+  FiPlus
 } from 'react-icons/fi';
 import api from '../services/api';
 
@@ -54,6 +56,14 @@ const TherapistDashboard = () => {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [selectedSession, setSelectedSession] = useState(null);
   const [showSessionDetails, setShowSessionDetails] = useState(false);
+  const [editingSession, setEditingSession] = useState(null);
+  const [showAddSession, setShowAddSession] = useState(false);
+  const [newSession, setNewSession] = useState({
+    session_date: '',
+    session_time: '',
+    duration: 60,
+    notes: ''
+  });
 
   // Fetch therapist data on component mount
   useEffect(() => {
@@ -208,6 +218,99 @@ const TherapistDashboard = () => {
 
   const handleLogout = () => {
     dispatch(logout());
+  };
+
+  // Session CRUD operations
+  const handleEditSession = (session) => {
+    setEditingSession(session);
+    setShowSessionDetails(false);
+  };
+
+  const handleDeleteSession = async (sessionId) => {
+    if (!window.confirm('Are you sure you want to delete this session?')) {
+      return;
+    }
+
+    try {
+      const response = await api.request(`/sessions/${sessionId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.success) {
+        setMessage({ type: 'success', text: 'Session deleted successfully!' });
+        fetchSessions(); // Refresh sessions list
+        setShowSessionDetails(false);
+      } else {
+        setMessage({ type: 'error', text: response.message || 'Failed to delete session' });
+      }
+    } catch (error) {
+      console.error('Error deleting session:', error);
+      setMessage({ type: 'error', text: 'Failed to delete session' });
+    }
+  };
+
+  const handleUpdateSession = async () => {
+    if (!editingSession) return;
+
+    try {
+      const response = await api.request(`/sessions/${editingSession.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(editingSession)
+      });
+
+      if (response.success) {
+        setMessage({ type: 'success', text: 'Session updated successfully!' });
+        setEditingSession(null);
+        fetchSessions(); // Refresh sessions list
+      } else {
+        setMessage({ type: 'error', text: response.message || 'Failed to update session' });
+      }
+    } catch (error) {
+      console.error('Error updating session:', error);
+      setMessage({ type: 'error', text: 'Failed to update session' });
+    }
+  };
+
+  const handleCreateSession = async () => {
+    try {
+      const sessionData = {
+        ...newSession,
+        therapist_id: user?.id,
+        status: 'scheduled'
+      };
+
+      const response = await api.request('/sessions', {
+        method: 'POST',
+        body: JSON.stringify(sessionData)
+      });
+
+      if (response.success) {
+        setMessage({ type: 'success', text: 'Session created successfully!' });
+        setNewSession({
+          session_date: '',
+          session_time: '',
+          duration: 60,
+          notes: ''
+        });
+        setShowAddSession(false);
+        fetchSessions(); // Refresh sessions list
+      } else {
+        setMessage({ type: 'error', text: response.message || 'Failed to create session' });
+      }
+    } catch (error) {
+      console.error('Error creating session:', error);
+      setMessage({ type: 'error', text: 'Failed to create session' });
+    }
+  };
+
+  const handleSessionChange = (field, value) => {
+    if (editingSession) {
+      setEditingSession(prev => ({ ...prev, [field]: value }));
+    }
+  };
+
+  const handleNewSessionChange = (field, value) => {
+    setNewSession(prev => ({ ...prev, [field]: value }));
   };
 
   if (loading) {
@@ -693,8 +796,17 @@ const TherapistDashboard = () => {
             >
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-gray-900">My Sessions</h2>
-                <div className="text-sm text-gray-500">
-                  {sessions.length} session{sessions.length !== 1 ? 's' : ''}
+                <div className="flex items-center space-x-4">
+                  <div className="text-sm text-gray-500">
+                    {sessions.length} session{sessions.length !== 1 ? 's' : ''}
+                  </div>
+                  <button
+                    onClick={() => setShowAddSession(true)}
+                    className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                  >
+                    <FiPlus className="w-4 h-4" />
+                    <span>Add Session</span>
+                  </button>
                 </div>
               </div>
 
@@ -725,7 +837,7 @@ const TherapistDashboard = () => {
                       onClick={() => handleSessionClick(session)}
                     >
                       <div className="flex items-start justify-between">
-                        <div className="flex-1">
+                        <div className="flex-1" onClick={() => handleSessionClick(session)}>
                           {/* Session Header */}
                           <div className="flex items-center space-x-3 mb-3">
                             <div className="flex items-center space-x-2">
@@ -831,6 +943,30 @@ const TherapistDashboard = () => {
                               </p>
                             </div>
                           )}
+                        </div>
+                        
+                        {/* Action Buttons */}
+                        <div className="flex items-center space-x-2 ml-4">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditSession(session);
+                            }}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Edit Session"
+                          >
+                            <FiEdit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteSession(session.id);
+                            }}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete Session"
+                          >
+                            <FiTrash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
                     </motion.div>
@@ -994,6 +1130,203 @@ const TherapistDashboard = () => {
                     </div>
                   )}
                 </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3 mt-6 pt-6 border-t">
+                <button
+                  onClick={() => handleEditSession(selectedSession)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  <FiEdit2 className="w-4 h-4" />
+                  <span>Edit Session</span>
+                </button>
+                <button
+                  onClick={() => handleDeleteSession(selectedSession.id)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                >
+                  <FiTrash2 className="w-4 h-4" />
+                  <span>Delete Session</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Session Modal */}
+      {editingSession && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Edit Session</h2>
+                <button
+                  onClick={() => setEditingSession(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <FiX className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Message */}
+              {message && (
+                <div className={`mb-4 p-4 rounded-lg ${message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+                  {message.text}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Session Date</label>
+                  <input
+                    type="date"
+                    value={editingSession.session_date ? editingSession.session_date.split('T')[0] : ''}
+                    onChange={(e) => handleSessionChange('session_date', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Session Time</label>
+                  <input
+                    type="time"
+                    value={editingSession.session_time}
+                    onChange={(e) => handleSessionChange('session_time', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Duration (minutes)</label>
+                  <input
+                    type="number"
+                    value={editingSession.duration || 60}
+                    onChange={(e) => handleSessionChange('duration', parseInt(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                  <select
+                    value={editingSession.status}
+                    onChange={(e) => handleSessionChange('status', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="scheduled">Scheduled</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                <textarea
+                  value={editingSession.notes || ''}
+                  onChange={(e) => handleSessionChange('notes', e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setEditingSession(null)}
+                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpdateSession}
+                  disabled={saving}
+                  className="flex items-center space-x-2 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <FiSave className="w-4 h-4" />
+                  <span>{saving ? 'Saving...' : 'Save Changes'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Session Modal */}
+      {showAddSession && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Add New Session</h2>
+                <button
+                  onClick={() => setShowAddSession(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <FiX className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Message */}
+              {message && (
+                <div className={`mb-4 p-4 rounded-lg ${message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+                  {message.text}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Session Date</label>
+                  <input
+                    type="date"
+                    value={newSession.session_date}
+                    onChange={(e) => handleNewSessionChange('session_date', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Session Time</label>
+                  <input
+                    type="time"
+                    value={newSession.session_time}
+                    onChange={(e) => handleNewSessionChange('session_time', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Duration (minutes)</label>
+                  <input
+                    type="number"
+                    value={newSession.duration}
+                    onChange={(e) => handleNewSessionChange('duration', parseInt(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                <textarea
+                  value={newSession.notes}
+                  onChange={(e) => handleNewSessionChange('notes', e.target.value)}
+                  rows={3}
+                  placeholder="Enter any notes for this session..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setShowAddSession(false)}
+                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateSession}
+                  disabled={saving}
+                  className="flex items-center space-x-2 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <FiPlus className="w-4 h-4" />
+                  <span>{saving ? 'Creating...' : 'Create Session'}</span>
+                </button>
               </div>
             </div>
           </div>

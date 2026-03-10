@@ -49,10 +49,13 @@ import ServiceEditForm from './components/ServiceEditForm';
 import StudentCreateForm from './components/StudentCreateForm';
 import TherapistCreateForm from './components/TherapistCreateForm';
 import SessionCreateForm from './components/SessionCreateForm';
+import SessionEditForm from './components/SessionEditForm';
+import SessionList from './components/SessionList';
 
 function App() {
   const dispatch = useDispatch();
   const { isAuthenticated, user, token } = useSelector((state) => state.auth);
+  const { services: servicesData } = useSelector((state) => state.services);
   const { errors, removeError, handleApiError } = useErrorHandler();
   
   // All useState hooks at the top level
@@ -73,6 +76,8 @@ function App() {
   const [selectedServiceId, setSelectedServiceId] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSessionCreateModalOpen, setIsSessionCreateModalOpen] = useState(false);
+  const [isSessionEditModalOpen, setIsSessionEditModalOpen] = useState(false);
+  const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [navigationHistory, setNavigationHistory] = useState(['dashboard']);
 
   // Check authentication on app load
@@ -534,7 +539,8 @@ function App() {
   };
 
   const handleEditEncounter = (encounterId) => {
-    alert(`Edit encounter ${encounterId} - Edit form coming soon`);
+    setSelectedSessionId(encounterId);
+    setIsSessionEditModalOpen(true);
   };
 
   // Delete handlers
@@ -615,9 +621,50 @@ function App() {
     // You might want to add this session to the Redux store
   };
 
+  const handleSaveSessionEdit = (sessionData) => {
+    console.log('Updating session:', sessionData);
+    alert('Session updated successfully!');
+    setIsSessionEditModalOpen(false);
+    setSelectedSessionId(null);
+    // Here you would typically dispatch an action to update the session
+    // dispatch(updateSession(sessionData));
+    
+    // Refresh the encounters list to show the updated session
+  };
+
   // Service CRUD handlers
   const handleViewService = (serviceId) => {
-    alert(`View service ${serviceId} - Detail view coming soon`);
+    // Find the service data and show details in a modal or navigate to detail view
+    const service = servicesData.find(s => s.id === serviceId);
+    if (service) {
+      const details = `
+╔════════════════════════════════════════╗
+║         SERVICE DETAILS                 ║
+╚════════════════════════════════════════╝
+
+📋 NAME: ${service.name}
+🏷️  CATEGORY: ${service.category}
+💰 FEE: ₹${service.fee}
+⏱️  DURATION: ${service.duration} minutes
+📍 CENTRE: Centre ${service.centre_id}
+📊 STATUS: ${service.status.toUpperCase()}
+🆔 PROGRAMME ID: ${service.programme_id}
+
+📝 DESCRIPTION:
+${service.description || 'No description available'}
+
+🎯 OBJECTIVES:
+${service.objectives || 'No objectives specified'}
+
+👥 TARGET AGE GROUP:
+${service.target_age_group || 'Not specified'}
+
+👨‍⚕️ THERAPIST: ${service.therapist_first_name ? 
+  `${service.therapist_first_name} ${service.therapist_last_name}` : 
+  'Not Assigned'}
+      `;
+      alert(details);
+    }
   };
 
   const handleEditService = (serviceId) => {
@@ -626,9 +673,35 @@ function App() {
     setActiveItem('services');
   };
 
-  const handleDeleteService = (serviceId) => {
+  const handleDeleteService = async (serviceId) => {
     if (window.confirm('Are you sure you want to delete this programme?')) {
-      alert(`Programme ${serviceId} deleted successfully!`);
+      try {
+        const response = await fetch(`http://localhost:3005/api/programmes/${serviceId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          toast.success(`Programme deleted successfully!`);
+          // Refresh the services data
+          const servicesResponse = await fetch('http://localhost:3005/api/programmes');
+          const servicesResult = await servicesResponse.json();
+
+          if (servicesResult.success) {
+            // Update Redux store
+            dispatch({ type: 'services/fetchServices/fulfilled', payload: servicesResult.data });
+          }
+        } else {
+          toast.error(`Failed to delete programme: ${result.message}`);
+        }
+      } catch (error) {
+        console.error('Error deleting service:', error);
+        toast.error('An error occurred while deleting the programme. Please try again.');
+      }
     }
   };
 
@@ -971,6 +1044,9 @@ function App() {
           />
         );
       
+      case 'sessions':
+        return <SessionList />;
+      
       case 'clinic-revenue':
         return <ClinicRevenue />;
       
@@ -1038,6 +1114,19 @@ function App() {
             isOpen={isSessionCreateModalOpen}
             onClose={() => setIsSessionCreateModalOpen(false)}
             onSave={handleSaveSession}
+          />
+        )}
+
+        {/* Session Edit Modal */}
+        {isSessionEditModalOpen && (
+          <SessionEditForm
+            isOpen={isSessionEditModalOpen}
+            onClose={() => {
+              setIsSessionEditModalOpen(false);
+              setSelectedSessionId(null);
+            }}
+            onSave={handleSaveSessionEdit}
+            sessionId={selectedSessionId}
           />
         )}
 

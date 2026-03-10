@@ -40,6 +40,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters }) => {
       section: 'MAIN',
       hasSubmenu: true,
       submenu: [
+        { id: 'sessions', label: 'Sessions Management', icon: FiList },
         { id: 'encounters-list', label: 'Sessions List', icon: FiList },
         { id: 'encounter-templates', label: 'Session Templates', icon: FiFileText }
       ]
