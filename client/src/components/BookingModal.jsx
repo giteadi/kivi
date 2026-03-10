@@ -36,6 +36,34 @@ const BookingModal = ({ isOpen, onClose, selectedPlan, onSuccess }) => {
   // Local state for UI only
   const [localLoading, setLocalLoading] = useState(false);
 
+  // Pre-select therapist from plan data if available
+  useEffect(() => {
+    console.log('🎯 BookingModal: Plan pre-selection check');
+    console.log('🎯 BookingModal: selectedPlan:', selectedPlan);
+    
+    // Check if plan has therapist information (from services/programmes)
+    if (selectedPlan && selectedPlan.therapist_id) {
+      console.log('🎯 BookingModal: Pre-selecting therapist from plan');
+      const preSelectedTherapist = {
+        id: selectedPlan.therapist_id,
+        first_name: selectedPlan.therapist_first_name,
+        last_name: selectedPlan.therapist_last_name,
+        specialty: selectedPlan.therapist_specialty,
+        centre_name: selectedPlan.centre_name,
+        is_available: true, // Assume available since it's from plan
+        isPreSelected: true // Mark as pre-selected to preserve it
+      };
+      console.log('🎯 BookingModal: Pre-selected therapist object:', preSelectedTherapist);
+      dispatch(setSelectedTherapist(preSelectedTherapist));
+    } else {
+      console.log('🎯 BookingModal: No therapist information found in plan');
+      console.log('🎯 BookingModal: Plan fields available:', selectedPlan ? Object.keys(selectedPlan) : 'Plan is null or undefined');
+      
+      // If no plan is provided, we'll let the user select a therapist manually
+      // Don't show an error, just continue to therapist selection step
+    }
+  }, [selectedPlan, dispatch]);
+
   useEffect(() => {
     if (isOpen && currentStep === 2 && selectedDate) {
       dispatch(fetchAvailableTherapists({ date: selectedDate }));
@@ -43,10 +71,12 @@ const BookingModal = ({ isOpen, onClose, selectedPlan, onSuccess }) => {
   }, [isOpen, currentStep, selectedDate, dispatch]);
 
   useEffect(() => {
-    if (selectedTherapist && selectedDate) {
+    // Only fetch time slots when user is on step 3 and has both therapist and date
+    if (currentStep === 3 && selectedTherapist && selectedDate) {
+      console.log('🚀 BookingModal: Calling fetchAvailableTimeSlots');
       dispatch(fetchAvailableTimeSlots({ therapistId: selectedTherapist.id, date: selectedDate }));
     }
-  }, [selectedTherapist, selectedDate, dispatch]);
+  }, [currentStep, selectedTherapist, selectedDate, dispatch]);
 
   // Handle booking success
   useEffect(() => {
@@ -57,35 +87,54 @@ const BookingModal = ({ isOpen, onClose, selectedPlan, onSuccess }) => {
   }, [bookingSuccess, bookingResult, onSuccess, onClose]);
 
   const handleDateSelect = (date) => {
+    console.log('🗓️ BookingModal: Date selected:', date);
+    console.log('🗓️ BookingModal: Current selectedTherapist before date selection:', selectedTherapist);
+    console.log('🗓️ BookingModal: selectedTherapist.id:', selectedTherapist?.id);
+    console.log('🗓️ BookingModal: selectedTherapist truthy check:', !!(selectedTherapist && selectedTherapist.id));
     dispatch(setSelectedDate(date));
-    dispatch(nextStep());
+    
+    // If therapist is already selected from plan, skip to time slots (step 3)
+    // Otherwise go to therapist selection (step 2)
+    if (selectedTherapist && selectedTherapist.id) {
+      console.log('🗓️ BookingModal: Therapist already selected, skipping to time slots');
+      dispatch(nextStep()); // Go to step 2 first
+      dispatch(nextStep()); // Then go to step 3 (time slots)
+    } else {
+      console.log('🗓️ BookingModal: No therapist selected, going to therapist selection');
+      dispatch(nextStep()); // Go to step 2 (therapist selection)
+    }
   };
 
   const handleTherapistSelect = (therapist) => {
+    console.log('👨‍⚕️ BookingModal: Therapist selected:', therapist);
     dispatch(setSelectedTherapist(therapist));
+    // Automatically advance to time slots step
+    dispatch(nextStep());
   };
 
+  // Handle time slot selection - go to payment instead of booking
   const handleTimeSelect = (time) => {
+    console.log('⏰ BookingModal: Time selected:', time);
     dispatch(setSelectedTime(time));
+    // Go directly to payment without creating session
+    dispatch(nextStep()); // Go to step 4 (confirmation/payment)
   };
 
-  const handleBooking = async () => {
+  const handleProceedToPayment = async () => {
     try {
       setLocalLoading(true);
-      const bookingData = {
-        therapistId: selectedTherapist.id,
+      console.log('💳 BookingModal: Proceeding to payment with data:', {
+        therapist: selectedTherapist,
         date: selectedDate,
         time: selectedTime,
-        notes: bookingNotes,
-        planId: selectedPlanRedux?.id
-      };
+        plan: selectedPlanRedux
+      });
       
-      const result = await dispatch(bookSession(bookingData));
-      if (result.meta.requestStatus === 'fulfilled') {
-        // Success will be handled by useEffect
-      }
+      // Close booking modal and trigger payment
+      onSuccess?.();
+      onClose?.();
     } catch (error) {
-      console.error('Booking failed:', error);
+      console.error('Payment initiation failed:', error);
     } finally {
       setLocalLoading(false);
     }
@@ -188,12 +237,12 @@ const BookingModal = ({ isOpen, onClose, selectedPlan, onSuccess }) => {
             </motion.div>
           )}
 
-          {currentStep === 2 && (
+          {currentStep === 2 && !(selectedTherapist && selectedTherapist.id) && (
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
             >
-              <h3 className="text-lg font-semibold mb-4">Available Therapists</h3>
+              <h3 className="text-lg font-semibold mb-4">Select Therapist</h3>
               {loading.therapists ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -300,7 +349,7 @@ const BookingModal = ({ isOpen, onClose, selectedPlan, onSuccess }) => {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
                   <p className="text-gray-500 mt-2">Loading time slots...</p>
                 </div>
-              ) : (
+              ) : availableTimeSlots.length > 0 ? (
                 <div className="grid grid-cols-3 gap-3">
                   {availableTimeSlots.map((slot) => (
                     <button
@@ -319,6 +368,10 @@ const BookingModal = ({ isOpen, onClose, selectedPlan, onSuccess }) => {
                       <div className="text-sm font-medium">{slot.time}</div>
                     </button>
                   ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No time slots available</p>
                 </div>
               )}
             </motion.div>
@@ -388,11 +441,11 @@ const BookingModal = ({ isOpen, onClose, selectedPlan, onSuccess }) => {
             </button>
           ) : (
             <button
-              onClick={handleBooking}
-              disabled={loading.booking || localLoading}
+              onClick={handleProceedToPayment}
+              disabled={localLoading}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
-              {(loading.booking || localLoading) ? 'Booking...' : 'Confirm Booking'}
+              {localLoading ? 'Processing...' : 'Proceed to Payment'}
             </button>
           )}
         </div>

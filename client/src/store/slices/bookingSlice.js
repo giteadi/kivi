@@ -86,6 +86,15 @@ const initialState = {
   selectedTime: '',
   bookingNotes: '',
   
+  // Consolidated booking data
+  bookingData: {
+    therapistId: undefined,
+    date: '',
+    time: '',
+    notes: '',
+    planId: undefined
+  },
+  
   // Data
   availableTherapists: [],
   availableTimeSlots: [],
@@ -124,6 +133,7 @@ const bookingSlice = createSlice({
     openBookingModal: (state, action) => {
       state.isBookingModalOpen = true;
       state.selectedPlan = action.payload?.plan || null;
+      state.bookingData.planId = action.payload?.plan?.id || undefined;
       state.currentStep = 1;
       state.bookingSuccess = false;
       state.bookingResult = null;
@@ -138,6 +148,13 @@ const bookingSlice = createSlice({
       state.selectedTherapist = null;
       state.selectedTime = '';
       state.bookingNotes = '';
+      state.bookingData = {
+        therapistId: undefined,
+        date: '',
+        time: '',
+        notes: '',
+        planId: undefined
+      };
       state.availableTherapists = [];
       state.availableTimeSlots = [];
       state.bookingResult = null;
@@ -177,12 +194,16 @@ const bookingSlice = createSlice({
     setSelectedDate: (state, action) => {
       state.selectedDate = action.payload;
       state.bookingData = { ...state.bookingData, date: action.payload };
-      // Reset dependent selections
-      state.selectedTherapist = null;
+      // Reset dependent selections but preserve therapist if it was already selected
+      // Only reset therapist if it was manually selected (not pre-selected from plan)
+      if (state.selectedTherapist && !state.selectedTherapist.isPreSelected) {
+        state.selectedTherapist = null;
+      }
       state.selectedTime = '';
       state.availableTherapists = [];
       state.availableTimeSlots = [];
       console.log('📖 Booking slice: Date selected:', action.payload);
+      console.log('📖 Booking slice: Preserved therapist:', state.selectedTherapist);
     },
     
     setSelectedTherapist: (state, action) => {
@@ -270,6 +291,8 @@ const bookingSlice = createSlice({
         state.loading.timeSlots = false;
         state.availableTimeSlots = action.payload;
         state.errors.timeSlots = null;
+        console.log('✅ Redux: Time slots stored in state:', action.payload);
+        console.log('📊 Redux: Available time slots count:', action.payload?.length || 0);
       })
       .addCase(fetchAvailableTimeSlots.rejected, (state, action) => {
         state.loading.timeSlots = false;

@@ -35,7 +35,7 @@ const PaymentModal = ({ isOpen, onClose, selectedPlan, onPaymentSuccess }) => {
         },
         body: JSON.stringify({
           planId: selectedPlan.id,
-          amount: selectedPlan.price * 100, // Razorpay expects amount in paise
+          amount: selectedPlan.price, // Price is already in correct format (not paisa)
           currency: 'INR'
         })
       });
@@ -49,7 +49,7 @@ const PaymentModal = ({ isOpen, onClose, selectedPlan, onPaymentSuccess }) => {
       // Razorpay options
       const options = {
         key: orderData.data.key, // Using key from backend
-        amount: selectedPlan.price * 100,
+        amount: selectedPlan.price, // Price is already in correct format
         currency: 'INR',
         name: 'MindSaid Learning',
         description: `Payment for ${selectedPlan.title}`,

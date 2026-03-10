@@ -163,71 +163,51 @@ class Therapist extends BaseModel {
       }
 
       const therapist = therapistResults[0];
-      let availability;
-      try {
-        availability = typeof therapist.availability === 'string' ? JSON.parse(therapist.availability) : (therapist.availability || {});
-      } catch (e) {
-        console.error('Error parsing therapist availability:', e);
-        availability = {};
+      console.log(`🔍 Therapist ${therapistId}: Login time: ${therapist.login_time}, Logout time: ${therapist.logout_time}`);
+
+      // Check if therapist has login/logout times set
+      if (!therapist.login_time || !therapist.logout_time) {
+        console.log(`❌ Therapist ${therapistId}: No login/logout times set`);
+        return [];
       }
 
-      // Fallback: if no availability set, use login/logout times for weekdays
-      if ((!availability || Object.keys(availability).length === 0) && therapist.login_time && therapist.logout_time) {
-        const start = therapist.login_time.substring(0, 5); // e.g., '09:00'
-        const end = therapist.logout_time.substring(0, 5); // e.g., '18:00'
-        availability = {
-          "monday": { start: start, end: end },
-          "tuesday": { start: start, end: end },
-          "wednesday": { start: start, end: end },
-          "thursday": { start: start, end: end },
-          "friday": { start: start, end: end }
-        };
-        console.log(`🔍 Therapist ${therapistId}: Using fallback availability:`, availability);
-      }
-
-      // Extract available days from the availability object
-      const availableDays = Object.keys(availability);
-      const workingHours = availability;
-
-      // Check if the date is in available days
-      if (!date) return [];
+      // Check if the date is a working day (Monday-Friday for now)
       const dateObj = new Date(date);
       if (isNaN(dateObj.getTime())) return [];
       const dayOfWeek = dateObj.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-      console.log(`🔍 Therapist ${therapistId}: Checking availability for date ${date}, dayOfWeek: ${dayOfWeek}, availableDays: ${availableDays}`);
-      if (!availableDays.includes(dayOfWeek)) {
-        console.log(`❌ Therapist ${therapistId}: No availability for ${dayOfWeek}`);
+
+      // Only allow bookings Monday-Friday for now
+      const workingDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+      if (!workingDays.includes(dayOfWeek)) {
+        console.log(`❌ Therapist ${therapistId}: ${dayOfWeek} is not a working day`);
         return [];
       }
 
       // Get already booked slots
       const bookedSql = `
-        SELECT session_time, status 
-        FROM kivi_sessions 
-        WHERE therapist_id = ? AND session_date = ? 
+        SELECT session_time, status
+        FROM kivi_sessions
+        WHERE therapist_id = ? AND session_date = ?
         AND status IN ('scheduled', 'confirmed')
       `;
-      
+
       const bookedSlots = await this.query(bookedSql, [therapistId, date]);
 
-      // Generate available time slots
-      const daySchedule = workingHours[dayOfWeek];
-      if (!daySchedule || !daySchedule.start || !daySchedule.end) {
-        return [];
-      }
-
-      const startTime = new Date(`${date} ${daySchedule.start}`);
-      const endTime = new Date(`${date} ${daySchedule.end}`);
+      // Generate available time slots based on login/logout times
+      const startTime = new Date(`${date} ${therapist.login_time}`);
+      const endTime = new Date(`${date} ${therapist.logout_time}`);
       const slotDuration = 60; // 60 minutes slots
       const slots = [];
 
-      // Generate all possible slots
+      console.log(`🔍 Therapist ${therapistId}: Generating slots from ${therapist.login_time} to ${therapist.logout_time} on ${date}`);
+
+      // Generate all possible slots within login/logout time range
       let currentTime = new Date(startTime);
       while (currentTime < endTime) {
-        const timeString = currentTime.toLocaleTimeString('en-US', { 
-          hour: '2-digit', 
+        const timeString = currentTime.toLocaleTimeString('en-US', {
+          hour: '2-digit',
           minute: '2-digit',
-          hour12: false 
+          hour12: false
         });
 
         // Check if this slot is booked
@@ -248,6 +228,7 @@ class Therapist extends BaseModel {
         currentTime = new Date(currentTime.getTime() + slotDuration * 60 * 1000);
       }
 
+      console.log(`✅ Therapist ${therapistId}: Generated ${slots.length} available slots`);
       return slots;
     } catch (error) {
       console.error('Error in getAvailableTimeSlots:', error);

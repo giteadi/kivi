@@ -11,14 +11,44 @@ class UserController extends BaseModel {
     try {
       const userId = req.user.id;
 
-      // For parent users, return empty sessions if no linked student
+      // For parent users, get sessions for their children
       if (req.user.role === 'parent') {
+        console.log('🔍 Getting sessions for parent user:', userId);
+        
+        // Get sessions for students without user_id (unassigned students that parents can book)
+        const sessions = await this.query(`
+          SELECT
+            s.id,
+            s.session_date,
+            s.session_time,
+            s.status,
+            s.notes,
+            CONCAT(u.first_name, ' ', u.last_name) as therapist_name,
+            c.name as centre_name,
+            p.name as programme_name,
+            st.first_name as student_name,
+            st.last_name as student_last_name
+          FROM kivi_sessions s
+          LEFT JOIN kivi_therapists th ON s.therapist_id = th.id
+          LEFT JOIN kivi_users u ON th.user_id = u.id
+          LEFT JOIN kivi_centres c ON s.centre_id = c.id
+          LEFT JOIN kivi_programmes p ON s.programme_id = p.id
+          LEFT JOIN kivi_students st ON s.student_id = st.id
+          WHERE s.student_id IN (SELECT id FROM kivi_students WHERE user_id IS NULL)
+          ORDER BY s.session_date DESC, s.session_time DESC
+          LIMIT 10
+        `);
+
+        console.log('✅ Found sessions for parent:', sessions.length);
         return res.json({
           success: true,
-          data: []
+          data: sessions
         });
       }
 
+      // For student users, get their own sessions
+      console.log('🔍 Getting sessions for student user:', userId);
+      
       // Assuming user is linked to student, get student_id for the user
       const studentQuery = await this.query(
         'SELECT id FROM kivi_students WHERE user_id = ?',
@@ -26,6 +56,7 @@ class UserController extends BaseModel {
       );
 
       if (studentQuery.length === 0) {
+        console.log('❌ No student record found for user:', userId);
         return res.json({
           success: true,
           data: []
@@ -33,6 +64,7 @@ class UserController extends BaseModel {
       }
 
       const studentId = studentQuery[0].id;
+      console.log('✅ Found student record:', { userId, studentId });
 
       const sessions = await this.query(`
         SELECT
@@ -43,17 +75,21 @@ class UserController extends BaseModel {
           s.notes,
           CONCAT(u.first_name, ' ', u.last_name) as therapist_name,
           c.name as centre_name,
-          p.name as programme_name
+          p.name as programme_name,
+          st.first_name as student_name,
+          st.last_name as student_last_name
         FROM kivi_sessions s
         LEFT JOIN kivi_therapists th ON s.therapist_id = th.id
         LEFT JOIN kivi_users u ON th.user_id = u.id
         LEFT JOIN kivi_centres c ON s.centre_id = c.id
         LEFT JOIN kivi_programmes p ON s.programme_id = p.id
+        LEFT JOIN kivi_students st ON s.student_id = st.id
         WHERE s.student_id = ?
         ORDER BY s.session_date DESC, s.session_time DESC
         LIMIT 10
       `, [studentId]);
 
+      console.log('✅ Found sessions for student:', sessions.length);
       res.json({
         success: true,
         data: sessions
@@ -215,8 +251,46 @@ class UserController extends BaseModel {
     try {
       const userId = req.user.id;
 
-      // For parent users, return empty stats if no linked student
+      let studentIds = [];
+
       if (req.user.role === 'parent') {
+        // For parent users, get their children's student IDs
+        console.log('🔍 Getting stats for parent user:', userId);
+        
+        // Get students without user_id (children that parents can book for)
+        const studentsQuery = await this.query(
+          'SELECT id FROM kivi_students WHERE user_id IS NULL'
+        );
+        
+        studentIds = studentsQuery.map(s => s.id);
+        console.log('✅ Found student IDs for parent:', studentIds);
+      } else {
+        // For student users, get their own student ID
+        console.log('🔍 Getting stats for student user:', userId);
+        
+        const studentQuery = await this.query(
+          'SELECT id FROM kivi_students WHERE user_id = ?',
+          [userId]
+        );
+
+        if (studentQuery.length === 0) {
+          console.log('❌ No student record found for user:', userId);
+          return res.json({
+            success: true,
+            data: {
+              totalSessions: 0,
+              completedSessions: 0,
+              upcomingSessions: 0,
+              progress: 0
+            }
+          });
+        }
+
+        studentIds = [studentQuery[0].id];
+        console.log('✅ Found student ID for user:', studentIds);
+      }
+
+      if (studentIds.length === 0) {
         return res.json({
           success: true,
           data: {
@@ -228,42 +302,25 @@ class UserController extends BaseModel {
         });
       }
 
-      // Get student_id for the user
-      const studentQuery = await this.query(
-        'SELECT id FROM kivi_students WHERE user_id = ?',
-        [userId]
-      );
-
-      if (studentQuery.length === 0) {
-        return res.json({
-          success: true,
-          data: {
-            totalSessions: 0,
-            completedSessions: 0,
-            upcomingSessions: 0,
-            progress: 0
-          }
-        });
-      }
-
-      const studentId = studentQuery[0].id;
-
+      // Build WHERE clause for multiple student IDs
+      const studentIdsPlaceholder = studentIds.map(() => '?').join(',');
+      
       // Total sessions
       const totalSessionsQuery = await this.query(
-        'SELECT COUNT(*) as count FROM kivi_sessions WHERE student_id = ?',
-        [studentId]
+        `SELECT COUNT(*) as count FROM kivi_sessions WHERE student_id IN (${studentIdsPlaceholder})`,
+        studentIds
       );
 
       // Completed sessions
       const completedSessionsQuery = await this.query(
-        'SELECT COUNT(*) as count FROM kivi_sessions WHERE student_id = ? AND status = "completed"',
-        [studentId]
+        `SELECT COUNT(*) as count FROM kivi_sessions WHERE student_id IN (${studentIdsPlaceholder}) AND status = "completed"`,
+        studentIds
       );
 
-      // Upcoming sessions
+      // Upcoming sessions (future dates and scheduled/confirmed status)
       const upcomingSessionsQuery = await this.query(
-        'SELECT COUNT(*) as count FROM kivi_sessions WHERE student_id = ? AND session_date >= CURDATE() AND status IN ("scheduled", "confirmed")',
-        [studentId]
+        `SELECT COUNT(*) as count FROM kivi_sessions WHERE student_id IN (${studentIdsPlaceholder}) AND session_date >= CURDATE() AND status IN ("scheduled", "confirmed")`,
+        studentIds
       );
 
       const total = totalSessionsQuery[0].count;
@@ -272,6 +329,8 @@ class UserController extends BaseModel {
 
       // Calculate progress (completed / total * 100)
       const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+      console.log('📊 User stats calculated:', { total, completed, upcoming, progress, userRole: req.user.role });
 
       res.json({
         success: true,

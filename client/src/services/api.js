@@ -352,8 +352,16 @@ async getPlans() {
   }
 
   async getAvailableTimeSlots(therapistId, date) {
+    console.log('🚀 API: Fetching time slots:', { therapistId, date });
     const queryParams = new URLSearchParams({ date });
-    return this.request(`/booking/therapists/${therapistId}/slots?${queryParams}`);
+    const url = `/booking/therapists/${therapistId}/slots?${queryParams}`;
+    console.log('🚀 API: Full URL:', url);
+    const response = await this.request(url);
+    console.log('✅ API: Full response object:', response);
+    console.log('✅ API: Response.data:', response.data);
+    console.log('✅ API: Response.data type:', typeof response.data);
+    console.log('✅ API: Response.data length:', response.data?.length);
+    return response; // Return full response object
   }
 
   async bookSession(bookingData) {

@@ -17,17 +17,19 @@ class Payment extends BaseModel {
       
       const values = [
         paymentData.userId,
-        paymentData.planId,
+        typeof paymentData.planId === 'string' 
+          ? parseInt(paymentData.planId.replace(/\D/g, ''), 10) 
+          : paymentData.planId,
         paymentData.orderId,
         paymentData.paymentId,
         paymentData.signature,
         paymentData.status,
         paymentData.amount || 0,
         paymentData.currency || 'INR',
-        paymentData.paidAt
+        paymentData.paidAt ? new Date(paymentData.paidAt).toISOString().slice(0, 19).replace('T', ' ') : null
       ];
 
-      const result = await this.executeQuery(query, values);
+      const result = await this.query(query, values);
       return result.insertId;
     } catch (error) {
       console.error('Error creating payment:', error);
@@ -39,7 +41,7 @@ class Payment extends BaseModel {
   async getByPaymentId(paymentId) {
     try {
       const query = 'SELECT * FROM kivi_payments WHERE payment_id = ?';
-      const results = await this.executeQuery(query, [paymentId]);
+      const results = await this.query(query, [paymentId]);
       return results[0] || null;
     } catch (error) {
       console.error('Error getting payment by payment ID:', error);
@@ -59,7 +61,7 @@ class Payment extends BaseModel {
         LIMIT ? OFFSET ?
       `;
       
-      const results = await this.executeQuery(query, [userId, limit, offset]);
+      const results = await this.query(query, [userId, limit, offset]);
       return results;
     } catch (error) {
       console.error('Error getting user payment history:', error);
@@ -71,7 +73,7 @@ class Payment extends BaseModel {
   async getByOrderId(orderId) {
     try {
       const query = 'SELECT * FROM kivi_payments WHERE order_id = ?';
-      const results = await this.executeQuery(query, [orderId]);
+      const results = await this.query(query, [orderId]);
       return results[0] || null;
     } catch (error) {
       console.error('Error getting payment by order ID:', error);
@@ -98,7 +100,7 @@ class Payment extends BaseModel {
       query += ' WHERE payment_id = ?';
       values.push(paymentId);
 
-      await this.executeQuery(query, values);
+      await this.query(query, values);
       return true;
     } catch (error) {
       console.error('Error updating payment status:', error);
@@ -125,7 +127,7 @@ class Payment extends BaseModel {
         params.push(userId);
       }
 
-      const results = await this.executeQuery(query, params);
+      const results = await this.query(query, params);
       return results[0] || {};
     } catch (error) {
       console.error('Error getting payment stats:', error);

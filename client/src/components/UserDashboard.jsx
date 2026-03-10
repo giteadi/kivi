@@ -3,6 +3,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { logout, updateUser } from '../store/slices/authSlice';
 import { fetchPlans } from '../store/slices/plansSlice';
 import { fetchServices } from '../store/slices/serviceSlice';
+import { closeBookingModal } from '../store/slices/bookingSlice';
+import { store } from '../store/store';
 import { motion } from 'framer-motion';
 import { 
   FiCalendar, 
@@ -13,7 +15,8 @@ import {
   FiAlertCircle,
   FiPlus,
   FiMenu,
-  FiFileText
+  FiFileText,
+  FiActivity
 } from 'react-icons/fi';
 import api from '../services/api';
 import PaymentModal from './PaymentModal';
@@ -52,42 +55,173 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [planToPayFor, setPlanToPayFor] = useState(null);
 
-  // Transform services data to plan format like Homepage.jsx
-  const sessionPlans = servicesData
-    .filter(service => service.category && (
-      service.category.includes('Therapy') || 
-      service.category.includes('Learning') || 
-      service.category.includes('Counselling')
-    ))
-    .map(service => ({
-      id: service.programme_id,
-      name: service.name,
-      duration: '1 Hour',
-      price: parseInt(service.fee) * 100, // Convert to paisa
-      description: service.description,
-      features: [
-        'Professional therapy session',
-        'Customized learning approach',
-        'Progress tracking',
-        'Parent consultation'
-      ]
-    }));
+  // Transform services data to plan format with fallback to static data
+  const sessionPlans = servicesData.length > 0 
+    ? servicesData
+        .filter(service => service.category && (
+          service.category.includes('Session Plan') ||
+          service.category.includes('Therapy') || 
+          service.category.includes('Learning') || 
+          service.category.includes('Counselling')
+        ))
+        .map(service => ({
+          id: service.programme_id,
+          name: service.name,
+          duration: `${service.duration || 60} minutes`,
+          price: parseFloat(service.fee), // Use fee directly without multiplying
+          description: service.description || 'Professional therapy session',
+          therapist_id: service.therapist_id,
+          therapist_first_name: service.therapist_first_name,
+          therapist_last_name: service.therapist_last_name,
+          therapist_specialty: service.therapist_specialty,
+          centre_name: service.centre_name,
+          features: [
+            'Professional therapy session',
+            'Customized learning approach',
+            'Progress tracking',
+            'Parent consultation'
+          ]
+        }))
+    : [
+      // Fallback static data when API is empty
+      {
+        id: 'SP001',
+        name: 'Individual Therapy Session',
+        duration: '60 minutes',
+        price: 50.00,
+        description: 'One-on-one therapy session with personalized approach',
+        therapist_id: 'TH001',
+        therapist_first_name: 'Dr. Sarah',
+        therapist_last_name: 'Johnson',
+        therapist_specialty: 'Learning Therapy',
+        centre_name: 'MindSaid Learning Centre',
+        features: [
+          'Professional therapy session',
+          'Customized learning approach',
+          'Progress tracking',
+          'Parent consultation'
+        ]
+      },
+      {
+        id: 'SP002',
+        name: 'Group Therapy Session',
+        duration: '90 minutes',
+        price: 30.00,
+        description: 'Small group therapy for social skill development',
+        therapist_id: 'TH002',
+        therapist_first_name: 'Dr. Michael',
+        therapist_last_name: 'Chen',
+        therapist_specialty: 'Group Therapy',
+        centre_name: 'MindSaid Learning Centre',
+        features: [
+          'Group interaction activities',
+          'Social skill building',
+          'Peer learning',
+          'Progress reports'
+        ]
+      },
+      {
+        id: 'SP003',
+        name: 'Specialized Learning Session',
+        duration: '60 minutes',
+        price: 60.00,
+        description: 'Specialized session for specific learning needs',
+        therapist_id: 'TH003',
+        therapist_first_name: 'Dr. Emma',
+        therapist_last_name: 'Williams',
+        therapist_specialty: 'Special Education',
+        centre_name: 'MindSaid Learning Centre',
+        features: [
+          'Specialized curriculum',
+          'One-on-one attention',
+          'Customized materials',
+          'Expert therapist'
+        ]
+      }
+    ];
 
-  const assessmentPlans = servicesData
-    .filter(service => service.category && service.category.includes('Assessment'))
-    .map(service => ({
-      id: service.programme_id,
-      name: `Package ${service.programme_id}`,
-      duration: 'Assessment Package',
-      price: parseInt(service.fee) * 100, // Convert to paisa
-      description: service.description,
-      features: [
-        'Comprehensive assessment',
-        'Detailed report',
-        'Parent consultation',
-        'School recommendations'
-      ]
-    }));
+  const assessmentPlans = servicesData.length > 0
+    ? servicesData
+        .filter(service => service.category && (
+          service.category.includes('Assessment') ||
+          service.category.includes('Evaluation') ||
+          service.category.includes('Testing')
+        ))
+        .map(service => ({
+          id: service.programme_id,
+          name: service.name,
+          subtitle: service.category,
+          price: parseFloat(service.fee), // Use fee directly without multiplying
+          description: service.description || 'Comprehensive assessment service',
+          therapist_id: service.therapist_id,
+          therapist_first_name: service.therapist_first_name,
+          therapist_last_name: service.therapist_last_name,
+          therapist_specialty: service.therapist_specialty,
+          centre_name: service.centre_name,
+          features: [
+            'Comprehensive assessment',
+            'Detailed report',
+            'Parent consultation',
+            'School recommendations'
+          ]
+        }))
+    : [
+      // Fallback static data when API is empty
+      {
+        id: 'AP001',
+        name: 'Comprehensive Assessment',
+        subtitle: 'Full Evaluation',
+        price: 80.00,
+        description: 'Complete psychological and learning assessment',
+        therapist_id: 'TH004',
+        therapist_first_name: 'Dr. Robert',
+        therapist_last_name: 'Davis',
+        therapist_specialty: 'Assessment Specialist',
+        centre_name: 'MindSaid Learning Centre',
+        features: [
+          'Comprehensive assessment',
+          'Detailed report',
+          'Parent consultation',
+          'School recommendations'
+        ]
+      },
+      {
+        id: 'AP002',
+        name: 'Learning Disability Assessment',
+        subtitle: 'Specialized Evaluation',
+        price: 100.00,
+        description: 'Focused assessment for learning disabilities',
+        therapist_id: 'TH005',
+        therapist_first_name: 'Dr. Lisa',
+        therapist_last_name: 'Brown',
+        therapist_specialty: 'Neuropsychology',
+        centre_name: 'MindSaid Learning Centre',
+        features: [
+          'Specialized testing',
+          'Detailed diagnosis',
+          'Learning plan',
+          'Expert recommendations'
+        ]
+      },
+      {
+        id: 'AP003',
+        name: 'Behavioral Assessment',
+        subtitle: 'Behavior Analysis',
+        price: 70.00,
+        description: 'Assessment for behavioral challenges and interventions',
+        therapist_id: 'TH006',
+        therapist_first_name: 'Dr. James',
+        therapist_last_name: 'Wilson',
+        therapist_specialty: 'Behavioral Therapy',
+        centre_name: 'MindSaid Learning Centre',
+        features: [
+          'Behavior analysis',
+          'Intervention strategies',
+          'Parent guidance',
+          'Progress monitoring'
+        ]
+      }
+    ];
 
   // Combine all dynamic plans
   const allDynamicPlans = [...sessionPlans, ...assessmentPlans];
@@ -216,20 +350,68 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
     setShowPaymentModal(true);
   };
 
-  const handlePaymentSuccess = (plan, paymentResponse) => {
+  const handlePaymentSuccess = async (plan, paymentResponse) => {
     console.log('Payment successful:', paymentResponse);
-    alert(`Payment successful for ${plan.title}!`);
+    
+    // Create session after successful payment
+    try {
+      // Get preserved booking data or fallback to Redux state
+      let bookingData = window.preservedBookingData;
+      
+      if (!bookingData) {
+        // Fallback to Redux state if preserved data is not available
+        console.log('🔍 No preserved booking data, using Redux state');
+        const bookingState = store.getState().booking;
+        bookingData = {
+          therapistId: bookingState.selectedTherapist?.id || selectedPlanForBooking?.therapist_id,
+          date: bookingState.selectedDate,
+          time: bookingState.selectedTime,
+          notes: bookingState.bookingNotes || '',
+          planId: selectedPlanForBooking?.id
+        };
+      } else {
+        console.log('🔍 Using preserved booking data:', bookingData);
+      }
+      
+      console.log('🎯 Creating session after payment:', bookingData);
+      
+      // Check if we have all required data
+      if (!bookingData.therapistId || !bookingData.date || !bookingData.time) {
+        console.error('Missing booking data:', bookingData);
+        alert('Payment successful but missing booking information. Please select therapist, date, and time.');
+        return;
+      }
+      
+      // Import and use bookSession action
+      const { bookSession } = await import('../store/slices/bookingSlice');
+      const result = await dispatch(bookSession(bookingData));
+      
+      if (result.meta.requestStatus === 'fulfilled') {
+        alert(`Payment successful and session booked for ${plan.name}!`);
+        // Close booking modal after successful booking
+        dispatch(closeBookingModal());
+      } else {
+        alert('Payment successful but session booking failed. Please contact support.');
+      }
+    } catch (error) {
+      console.error('Session creation after payment failed:', error);
+      alert('Payment successful but session booking failed. Please contact support.');
+    } finally {
+      // Clear preserved booking data
+      window.preservedBookingData = null;
+    }
+    
     setShowPaymentModal(false);
     setPlanToPayFor(null);
     
     // Add to payment history
     const newPayment = {
-      id: Date.now(),
-      date: new Date().toISOString().split('T')[0],
-      amount: plan.price,
-      type: plan.title,
-      status: 'Paid',
-      method: 'Razorpay'
+      id: paymentResponse.id || Date.now(),
+      amount: plan.price || 0,
+      status: 'completed',
+      date: new Date().toISOString(),
+      method: paymentResponse.method || 'razorpay',
+      planName: plan.name
     };
     setPaymentHistory(prev => [newPayment, ...prev]);
   };
@@ -246,19 +428,49 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
   const handlePlanSelect = (plan) => {
     setSelectedPlanForBooking(plan);
     setShowBookingModal(true);
-    setActiveItem('booking');
   };
 
   const handleBookSession = () => {
+    // If no plan is selected, select the first available plan
+    if (!selectedPlanForBooking && allDynamicPlans.length > 0) {
+      const firstPlan = allDynamicPlans[0];
+      setSelectedPlanForBooking(firstPlan);
+      console.log('🎯 Auto-selecting first plan for booking:', firstPlan);
+    }
     setShowBookingModal(true);
     setActiveItem('booking');
   };
 
   const handleBookingSuccess = () => {
+    // Preserve booking data before closing modal
+    const bookingState = store.getState().booking;
+    const preservedBookingData = {
+      therapistId: bookingState.selectedTherapist?.id,
+      date: bookingState.selectedDate,
+      time: bookingState.selectedTime,
+      notes: bookingState.bookingNotes || '',
+      planId: selectedPlanForBooking?.id
+    };
+    
+    console.log('🎯 UserDashboard: Preserving booking data before payment:', preservedBookingData);
+    
+    // Store the preserved data in a ref or state for payment success handler
+    window.preservedBookingData = preservedBookingData;
+    
     setShowBookingModal(false);
     setSelectedPlanForBooking(null);
-    // Refresh user data
-    fetchUserData();
+    
+    // Open payment modal for the selected plan
+    if (selectedPlanForBooking) {
+      console.log('🎯 UserDashboard: Opening payment modal for plan:', selectedPlanForBooking);
+      setPlanToPayFor(selectedPlanForBooking);
+      setShowPaymentModal(true);
+    }
+    
+    // Refresh user data only if not already loading
+    if (!loading) {
+      fetchUserData();
+    }
   };
 
   const handleEditProfile = () => {
@@ -659,9 +871,12 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
                     >
                       <div className="mb-4">
                         <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                        <p className="text-gray-600 text-sm mb-2">
+                          with {plan.therapist_first_name} {plan.therapist_last_name}
+                        </p>
                         <p className="text-gray-600 text-sm mb-4">{plan.description}</p>
                         <div className="text-3xl font-bold text-blue-600 mb-4">
-                          ₹{parseFloat(plan.price / 100).toLocaleString()}
+                          ₹{parseFloat(plan.price).toLocaleString()}
                         </div>
                         <div className="text-sm text-gray-500 mb-4">
                           Duration: {plan.duration}
@@ -692,9 +907,12 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
                     >
                       <div className="mb-4">
                         <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                        <p className="text-gray-600 text-sm mb-2">
+                          with {plan.therapist_first_name} {plan.therapist_last_name}
+                        </p>
                         <p className="text-gray-600 text-sm mb-4">{plan.description}</p>
                         <div className="text-3xl font-bold text-purple-600 mb-4">
-                          ₹{parseFloat(plan.price / 100).toLocaleString()}
+                          ₹{parseFloat(plan.price).toLocaleString()}
                         </div>
                         <div className="text-sm text-gray-500 mb-4">
                           Duration: {plan.duration}
@@ -1159,7 +1377,11 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
       {/* Booking Modal */}
       <BookingModal
         isOpen={showBookingModal}
-        onClose={() => setShowBookingModal(false)}
+        onClose={() => {
+          setShowBookingModal(false);
+          // Also dispatch closeBookingModal to reset Redux state
+          dispatch(closeBookingModal());
+        }}
         selectedPlan={selectedPlanForBooking}
         onSuccess={handleBookingSuccess}
       />

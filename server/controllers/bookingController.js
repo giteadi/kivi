@@ -115,6 +115,75 @@ class BookingController extends Therapist {
         });
       }
 
+      // Get user details to determine role
+      const userQuery = 'SELECT first_name, last_name, email, phone, role FROM kivi_users WHERE id = ?';
+      const userResult = await this.query(userQuery, [userId]);
+      
+      if (userResult.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+      
+      const user = userResult[0];
+      let studentId;
+
+      if (user.role === 'parent') {
+        // For parents, find their children (students)
+        console.log('🔍 Parent user booking session, looking for children...');
+        
+        // First check if there are any students linked to this parent
+        // Note: This depends on your database schema - you might need a parent_id field
+        // For now, let's check if there are students without user_id (or create one)
+        const studentQuery = 'SELECT id FROM kivi_students WHERE user_id IS NULL LIMIT 1';
+        const studentResult = await this.query(studentQuery);
+        
+        if (studentResult.length === 0) {
+          // Create a student record for this parent's child
+          const studentInsertQuery = `
+            INSERT INTO kivi_students (first_name, last_name, email, phone, registration_date, status, created_at, updated_at)
+            VALUES (?, ?, ?, ?, CURDATE(), 'active', NOW(), NOW())
+          `;
+          const studentInsertResult = await this.query(studentInsertQuery, [
+            'Child of ' + user.first_name,
+            user.last_name,
+            user.email,
+            user.phone
+          ]);
+          studentId = studentInsertResult.insertId;
+          console.log('✅ Created student record for parent:', { userId, studentId });
+        } else {
+          studentId = studentResult[0].id;
+          console.log('✅ Found existing student record for parent:', { userId, studentId });
+        }
+      } else {
+        // For student users, find or create their student record
+        console.log('🔍 Student user booking session...');
+        const studentQuery = 'SELECT id FROM kivi_students WHERE user_id = ?';
+        const studentResult = await this.query(studentQuery, [userId]);
+        
+        if (studentResult.length === 0) {
+          // Create student record if it doesn't exist
+          const studentInsertQuery = `
+            INSERT INTO kivi_students (user_id, first_name, last_name, email, phone, registration_date, status, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, CURDATE(), 'active', NOW(), NOW())
+          `;
+          const studentInsertResult = await this.query(studentInsertQuery, [
+            userId,
+            user.first_name,
+            user.last_name,
+            user.email,
+            user.phone
+          ]);
+          studentId = studentInsertResult.insertId;
+          console.log('✅ Created student record for user:', { userId, studentId });
+        } else {
+          studentId = studentResult[0].id;
+          console.log('✅ Found existing student record for user:', { userId, studentId });
+        }
+      }
+
       // Get therapist's centre_id
       const therapistSql = 'SELECT centre_id FROM kivi_therapists WHERE id = ?';
       const therapistResult = await this.query(therapistSql, [therapistId]);
@@ -131,7 +200,7 @@ class BookingController extends Therapist {
       const sessionData = {
         session_id: sessionId,
         therapist_id: therapistId,
-        student_id: userId, // Link session to the booking user (student)
+        student_id: studentId, // Use proper student_id now
         centre_id: therapistResult[0].centre_id,
         session_date: date,
         session_time: time,
@@ -162,10 +231,11 @@ class BookingController extends Therapist {
       ];
 
       const result = await this.query(sql, params);
+      console.log('✅ Session created successfully:', { sessionId, studentId, therapistId, userRole: user.role });
 
       res.status(201).json({
         success: true,
-        data: { sessionId },
+        data: { sessionId, studentId },
         message: 'Session booked successfully'
       });
     } catch (error) {

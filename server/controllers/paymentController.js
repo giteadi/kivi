@@ -109,9 +109,14 @@ class PaymentController {
       }
 
       // Payment is verified, update database
+      // Extract numeric ID from planId (e.g., 'P39516' -> 39516)
+      const numericPlanId = typeof planId === 'string' 
+        ? parseInt(planId.replace(/\D/g, '')) || 0
+        : planId;
+      
       const paymentData = {
         userId: userId,
-        planId: planId,
+        planId: numericPlanId,
         orderId: razorpay_order_id,
         paymentId: razorpay_payment_id,
         signature: razorpay_signature,
