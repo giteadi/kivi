@@ -26,7 +26,6 @@ const SessionEditForm = ({ isOpen, onClose, onSave, sessionId }) => {
     session_type: 'individual',
     notes: '',
     preparation_notes: '',
-    room_number: '',
     materials_needed: '',
     session_goals: '',
     status: 'scheduled'
@@ -68,7 +67,6 @@ const SessionEditForm = ({ isOpen, onClose, onSave, sessionId }) => {
           session_type: session.session_type || 'individual',
           notes: session.notes || '',
           preparation_notes: session.preparation_notes || '',
-          room_number: session.room_number || '',
           materials_needed: session.materials_needed || '',
           session_goals: session.session_goals || '',
           status: session.status || 'scheduled'
@@ -170,7 +168,6 @@ const SessionEditForm = ({ isOpen, onClose, onSave, sessionId }) => {
       session_type: 'individual',
       notes: '',
       preparation_notes: '',
-      room_number: '',
       materials_needed: '',
       session_goals: '',
       status: 'scheduled'
@@ -432,21 +429,6 @@ const SessionEditForm = ({ isOpen, onClose, onSave, sessionId }) => {
                       className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
-                </div>
-
-                {/* Room Number */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Room Number
-                  </label>
-                  <input
-                    type="text"
-                    name="room_number"
-                    value={formData.room_number}
-                    onChange={handleInputChange}
-                    placeholder="e.g., Room 101"
-                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
                 </div>
 
                 {/* Session Goals */}

@@ -107,7 +107,18 @@ class SessionController {
         }
       }
 
+      // Generate unique session ID
+      const generateSessionId = () => {
+        const date = new Date();
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        return `SS${year}${month}${day}${random}`;
+      };
+
       const sessionData = {
+        session_id: generateSessionId(),
         ...req.body,
         created_at: new Date(),
         updated_at: new Date()

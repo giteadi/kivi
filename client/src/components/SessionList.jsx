@@ -376,11 +376,6 @@ const SessionList = () => {
                       <span className="inline-block px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
                         {session.session_type}
                       </span>
-                      {session.room_number && (
-                        <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded ml-2">
-                          Room {session.room_number}
-                        </span>
-                      )}
                     </div>
                   </div>
                 </motion.div>
