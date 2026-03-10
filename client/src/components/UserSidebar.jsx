@@ -21,7 +21,6 @@ const UserSidebar = ({ activeItem, setActiveItem, onLogout, onPlanSelect, onBook
     { id: 'dashboard', label: 'Dashboard', icon: FiHome },
     { id: 'plans', label: 'Plans & Packages', icon: FiPackage },
     { id: 'sessions', label: 'My Sessions', icon: FiCalendar },
-    { id: 'booking', label: 'Book Session', icon: FiClock },
     { id: 'payments', label: 'Payments', icon: FiCreditCard },
     { id: 'profile', label: 'My Profile', icon: FiUser },
     { id: 'reports', label: 'Reports', icon: FiFileText },

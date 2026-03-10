@@ -109,31 +109,51 @@ class UserController extends BaseModel {
     try {
       const userId = req.user.id;
 
-      // For parent users, return empty payments if no linked student
-      if (req.user.role === 'parent') {
-        return res.json({
-          success: true,
-          data: []
-        });
-      }
+      let payments = [];
 
-      // Get payments from kivi_billing_records linked to user's sessions
-      const payments = await this.query(`
-        SELECT
-          br.id,
-          br.total_amount as amount,
-          br.payment_status as status,
-          br.created_at as date,
-          br.payment_method as method,
-          p.name as plan_name
-        FROM kivi_billing_records br
-        LEFT JOIN kivi_sessions s ON br.session_id = s.id
-        LEFT JOIN kivi_programmes p ON s.programme_id = p.id
-        LEFT JOIN kivi_students st ON s.student_id = st.id
-        WHERE st.user_id = ? AND br.payment_status IN ('paid', 'partial')
-        ORDER BY br.created_at DESC
-        LIMIT 10
-      `, [userId]);
+      if (req.user.role === 'parent') {
+        // For parent users, get payments for their children's sessions
+        console.log('🔍 Getting payments for parent user:', userId);
+
+        // Get payments from kivi_payments table
+        payments = await this.query(`
+          SELECT
+            p.id,
+            p.amount,
+            p.status,
+            p.paid_at as date,
+            'razorpay' as method,
+            pr.name as plan_name
+          FROM kivi_payments p
+          LEFT JOIN kivi_programmes pr ON p.plan_id = pr.id
+          WHERE p.user_id = ?
+          ORDER BY p.paid_at DESC
+          LIMIT 10
+        `, [userId]);
+
+        console.log('✅ Found payments for parent:', payments.length);
+      } else {
+        // For student users, get their payments
+        console.log('🔍 Getting payments for student user:', userId);
+
+        // Get payments from kivi_payments table
+        payments = await this.query(`
+          SELECT
+            p.id,
+            p.amount,
+            p.status,
+            p.paid_at as date,
+            'razorpay' as method,
+            pr.name as plan_name
+          FROM kivi_payments p
+          LEFT JOIN kivi_programmes pr ON p.plan_id = pr.id
+          WHERE p.user_id = ?
+          ORDER BY p.paid_at DESC
+          LIMIT 10
+        `, [userId]);
+
+        console.log('✅ Found payments for student:', payments.length);
+      }
 
       res.json({
         success: true,

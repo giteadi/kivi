@@ -786,6 +786,9 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="font-semibold text-gray-900 text-sm lg:text-base">₹{payment.amount.toLocaleString()}</p>
+                            {payment.planName && (
+                              <p className="text-xs text-gray-600">{payment.planName}</p>
+                            )}
                             <p className="text-xs text-gray-500">{new Date(payment.date).toLocaleDateString()}</p>
                           </div>
                         </div>
