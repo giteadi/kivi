@@ -80,6 +80,7 @@ function App() {
   const [isSessionCreateModalOpen, setIsSessionCreateModalOpen] = useState(false);
   const [isSessionEditModalOpen, setIsSessionEditModalOpen] = useState(false);
   const [selectedEncounterId, setSelectedEncounterId] = useState(null);
+  const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [navigationHistory, setNavigationHistory] = useState(['dashboard']);
 
   // Check authentication on app load

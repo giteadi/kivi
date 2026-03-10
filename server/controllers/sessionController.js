@@ -88,17 +88,18 @@ class SessionController {
   async createSession(req, res) {
     try {
       const { therapist_id, session_date, session_time, duration = 30 } = req.body;
-      
-      // Check if the time slot is available before creating
+
+      // Only check availability if session_time is provided (for actual booking)
+      // For session plans, we don't need time slot validation
       if (therapist_id && session_date && session_time) {
         const availableSlots = await this.sessionModel.getAvailableTimeSlots(
-          therapist_id, 
-          session_date, 
+          therapist_id,
+          session_date,
           duration
         );
-        
+
         const isSlotAvailable = availableSlots.some(slot => slot.time === session_time);
-        
+
         if (!isSlotAvailable) {
           return res.status(409).json({
             success: false,
@@ -120,6 +121,8 @@ class SessionController {
       const sessionData = {
         session_id: generateSessionId(),
         ...req.body,
+        session_date: req.body.session_date || new Date().toISOString().split('T')[0], // Default to today
+        session_time: req.body.session_time || '00:00:00', // Default time for session plans
         created_at: new Date(),
         updated_at: new Date()
       };

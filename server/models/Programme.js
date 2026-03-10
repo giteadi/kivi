@@ -5,11 +5,22 @@ class Programme extends BaseModel {
     super('kivi_programmes');
   }
 
-  // Get programmes with filters
+  // Create new programme
+  async create(programmeData) {
+    const fields = Object.keys(programmeData).join(', ');
+    const placeholders = Object.keys(programmeData).map(() => '?').join(', ');
+    const values = Object.values(programmeData);
+
+    const sql = `INSERT INTO ${this.tableName} (${fields}) VALUES (${placeholders})`;
+    const result = await this.query(sql, values);
+    return result.insertId;
+  }
+
   async getProgrammes(filters = {}) {
     let conditions = `
       LEFT JOIN kivi_therapists th ON p.therapist_id = th.id
       LEFT JOIN kivi_users u ON th.user_id = u.id
+      LEFT JOIN kivi_centres c ON p.centre_id = c.id
       WHERE 1=1
     `;
     const params = [];
@@ -47,7 +58,8 @@ class Programme extends BaseModel {
              u.first_name as therapist_first_name,
              u.last_name as therapist_last_name,
              th.specialty as therapist_specialty,
-             th.employee_id as therapist_employee_id
+             th.employee_id as therapist_employee_id,
+             c.name as centre_name
       FROM kivi_programmes p ${conditions}
     `;
 
@@ -59,6 +71,7 @@ class Programme extends BaseModel {
     const conditions = `
       LEFT JOIN kivi_therapists th ON p.therapist_id = th.id
       LEFT JOIN kivi_users u ON th.user_id = u.id
+      LEFT JOIN kivi_centres c ON p.centre_id = c.id
       WHERE p.centre_id = ? AND p.status = "active" ORDER BY p.name
     `;
     const sql = `
@@ -66,7 +79,8 @@ class Programme extends BaseModel {
              u.first_name as therapist_first_name,
              u.last_name as therapist_last_name,
              th.specialty as therapist_specialty,
-             th.employee_id as therapist_employee_id
+             th.employee_id as therapist_employee_id,
+             c.name as centre_name
       FROM kivi_programmes p ${conditions}
     `;
     return await this.query(sql, [centreId]);
@@ -77,6 +91,7 @@ class Programme extends BaseModel {
     const conditions = `
       LEFT JOIN kivi_therapists th ON p.therapist_id = th.id
       LEFT JOIN kivi_users u ON th.user_id = u.id
+      LEFT JOIN kivi_centres c ON p.centre_id = c.id
       WHERE p.therapist_id = ? AND p.status = "active" ORDER BY p.name
     `;
     const sql = `
@@ -84,7 +99,8 @@ class Programme extends BaseModel {
              u.first_name as therapist_first_name,
              u.last_name as therapist_last_name,
              th.specialty as therapist_specialty,
-             th.employee_id as therapist_employee_id
+             th.employee_id as therapist_employee_id,
+             c.name as centre_name
       FROM kivi_programmes p ${conditions}
     `;
     return await this.query(sql, [therapistId]);

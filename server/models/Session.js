@@ -5,6 +5,17 @@ class Session extends BaseModel {
     super('kivi_sessions');
   }
 
+  // Create new session
+  async create(sessionData) {
+    const fields = Object.keys(sessionData).join(', ');
+    const placeholders = Object.keys(sessionData).map(() => '?').join(', ');
+    const values = Object.values(sessionData);
+
+    const sql = `INSERT INTO ${this.tableName} (${fields}) VALUES (${placeholders})`;
+    const result = await this.query(sql, values);
+    return result.insertId;
+  }
+
   // Get sessions with related data
   async getSessions(filters = {}) {
     let conditions = `
