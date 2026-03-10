@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiDownload, FiPhone } from 'react-icons/fi';
 
-const AppointmentDetail = ({ appointmentId, onBack, onViewEncounter, onCreateNewEncounter }) => {
-  // Mock data - in real app this would come from API based on appointmentId
-  const appointmentData = {
+const AppointmentDetail = ({ appointmentData, onBack, onViewEncounter, onCreateNewEncounter }) => {
+  // Use the passed appointment data or fallback to mock data if not provided
+  const data = appointmentData || {
     id: '#1',
     title: 'Follow Up Session',
     description: 'Regular checkup session',
@@ -38,6 +38,50 @@ const AppointmentDetail = ({ appointmentId, onBack, onViewEncounter, onCreateNew
     }
   };
 
+  // If appointmentData is provided, format the dynamic data
+  if (appointmentData) {
+    data.id = `#${appointmentData.id}`;
+    data.title = `Session with ${appointmentData.patient}`;
+    data.description = `Therapy session scheduled`;
+    data.date = appointmentData.date;
+    data.time = appointmentData.time;
+    data.serviceName = appointmentData.patient ? `Consultation for ${appointmentData.patient}` : 'General Consultation';
+    data.bookingStatus = 'Booked';
+    data.paymentMode = 'Manual';
+    data.paymentStatus = 'paid';
+    data.grandTotal = '₹350.00/-';
+    
+    // Student details
+    data.student = {
+      name: appointmentData.patient,
+      id: `+${appointmentData.id}`,
+      phone: 'N/A',
+      initials: appointmentData.initials
+    };
+
+    // Center details
+    data.center = {
+      name: appointmentData.clinic,
+      id: `+${appointmentData.id}`,
+      phone: 'N/A',
+      initials: appointmentData.clinic ? appointmentData.clinic.split(' ').map(word => word[0]).join('').toUpperCase() : 'CC'
+    };
+
+    // Therapist details
+    data.therapist = {
+      name: appointmentData.doctor,
+      id: `+${appointmentData.id}`,
+      phone: 'N/A',
+      initials: appointmentData.doctor ? appointmentData.doctor.split(' ').map(word => word[0]).join('').toUpperCase() : 'TD'
+    };
+
+    // Session details
+    data.session = {
+      description: 'Therapy session scheduled',
+      status: 'ACTIVE'
+    };
+  }
+
   return (
     <div className="lg:ml-64 min-h-screen bg-gray-50">
       <div className="p-4 lg:p-6">
@@ -62,8 +106,8 @@ const AppointmentDetail = ({ appointmentId, onBack, onViewEncounter, onCreateNew
               <FiArrowLeft className="w-5 h-5 text-blue-600" />
             </motion.button>
             <div>
-              <h1 className="text-2xl font-semibold text-gray-800">{appointmentData.title}</h1>
-              <p className="text-gray-600">Description: {appointmentData.description}</p>
+              <h1 className="text-2xl font-semibold text-gray-800">{data.title}</h1>
+              <p className="text-gray-600">Description: {data.description}</p>
             </div>
           </div>
         </div>
@@ -87,7 +131,7 @@ const AppointmentDetail = ({ appointmentId, onBack, onViewEncounter, onCreateNew
               </motion.button>
               <div className="bg-gray-100 px-4 py-2 rounded-lg">
                 <span className="text-sm text-gray-600">Payment Status: </span>
-                <span className="font-semibold text-green-600">{appointmentData.paymentStatus}</span>
+                <span className="font-semibold text-green-600">{data.paymentStatus}</span>
               </div>
             </div>
           </div>
@@ -96,21 +140,21 @@ const AppointmentDetail = ({ appointmentId, onBack, onViewEncounter, onCreateNew
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             <div>
               <label className="text-sm text-gray-500">Session ID:</label>
-              <p className="font-semibold text-gray-800">{appointmentData.id}</p>
+              <p className="font-semibold text-gray-800">{data.id}</p>
             </div>
             <div>
               <label className="text-sm text-gray-500">Date & Time:</label>
-              <p className="font-semibold text-gray-800">{appointmentData.date}</p>
-              <p className="font-semibold text-gray-800">{appointmentData.time}</p>
+              <p className="font-semibold text-gray-800">{data.date}</p>
+              <p className="font-semibold text-gray-800">{data.time}</p>
             </div>
             <div>
               <label className="text-sm text-gray-500">Service Name:</label>
-              <p className="font-semibold text-gray-800">{appointmentData.serviceName}</p>
+              <p className="font-semibold text-gray-800">{data.serviceName}</p>
             </div>
             <div>
               <label className="text-sm text-gray-500">Booking Status:</label>
               <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                {appointmentData.bookingStatus}
+                {data.bookingStatus}
               </span>
             </div>
           </div>
@@ -118,17 +162,17 @@ const AppointmentDetail = ({ appointmentId, onBack, onViewEncounter, onCreateNew
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="text-sm text-gray-500">Payment Mode:</label>
-              <p className="font-semibold text-gray-800">{appointmentData.paymentMode}</p>
+              <p className="font-semibold text-gray-800">{data.paymentMode}</p>
             </div>
             <div>
               <label className="text-sm text-gray-500">Grand Total:</label>
-              <p className="text-2xl font-bold text-blue-600">{appointmentData.grandTotal}</p>
+              <p className="text-2xl font-bold text-blue-600">{data.grandTotal}</p>
             </div>
           </div>
 
           <div className="mt-6">
             <label className="text-sm text-gray-500">Description:</label>
-            <p className="font-semibold text-gray-800">{appointmentData.description}</p>
+            <p className="font-semibold text-gray-800">{data.description}</p>
           </div>
         </motion.div>
 
@@ -144,16 +188,16 @@ const AppointmentDetail = ({ appointmentId, onBack, onViewEncounter, onCreateNew
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Student Detail</h3>
             <div className="flex items-center space-x-4 mb-4">
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <span className="text-sm font-semibold text-purple-700">{appointmentData.student.initials}</span>
+                <span className="text-sm font-semibold text-purple-700">{data.student.initials}</span>
               </div>
               <div>
-                <h4 className="font-semibold text-gray-800">{appointmentData.student.name}</h4>
-                <p className="text-sm text-gray-500">{appointmentData.student.id}</p>
+                <h4 className="font-semibold text-gray-800">{data.student.name}</h4>
+                <p className="text-sm text-gray-500">{data.student.id}</p>
               </div>
             </div>
             <div className="flex items-center space-x-2 text-gray-600">
               <FiPhone className="w-4 h-4" />
-              <span className="text-sm">{appointmentData.student.phone}</span>
+              <span className="text-sm">{data.student.phone}</span>
             </div>
           </motion.div>
 
@@ -167,16 +211,16 @@ const AppointmentDetail = ({ appointmentId, onBack, onViewEncounter, onCreateNew
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Center Detail</h3>
             <div className="flex items-center space-x-4 mb-4">
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <span className="text-sm font-semibold text-blue-700">{appointmentData.center.initials}</span>
+                <span className="text-sm font-semibold text-blue-700">{data.center.initials}</span>
               </div>
               <div>
-                <h4 className="font-semibold text-gray-800">{appointmentData.center.name}</h4>
-                <p className="text-sm text-gray-500">{appointmentData.center.id}</p>
+                <h4 className="font-semibold text-gray-800">{data.center.name}</h4>
+                <p className="text-sm text-gray-500">{data.center.id}</p>
               </div>
             </div>
             <div className="flex items-center space-x-2 text-gray-600">
               <FiPhone className="w-4 h-4" />
-              <span className="text-sm">{appointmentData.center.phone}</span>
+              <span className="text-sm">{data.center.phone}</span>
             </div>
           </motion.div>
 
@@ -190,16 +234,16 @@ const AppointmentDetail = ({ appointmentId, onBack, onViewEncounter, onCreateNew
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Therapist Detail</h3>
             <div className="flex items-center space-x-4 mb-4">
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <span className="text-sm font-semibold text-green-700">{appointmentData.therapist.initials}</span>
+                <span className="text-sm font-semibold text-green-700">{data.therapist.initials}</span>
               </div>
               <div>
-                <h4 className="font-semibold text-gray-800">{appointmentData.therapist.name}</h4>
-                <p className="text-sm text-gray-500">{appointmentData.therapist.id}</p>
+                <h4 className="font-semibold text-gray-800">{data.therapist.name}</h4>
+                <p className="text-sm text-gray-500">{data.therapist.id}</p>
               </div>
             </div>
             <div className="flex items-center space-x-2 text-gray-600">
               <FiPhone className="w-4 h-4" />
-              <span className="text-sm">{appointmentData.therapist.phone}</span>
+              <span className="text-sm">{data.therapist.phone}</span>
             </div>
           </motion.div>
         </div>
@@ -218,9 +262,9 @@ const AppointmentDetail = ({ appointmentId, onBack, onViewEncounter, onCreateNew
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => onCreateNewEncounter && onCreateNewEncounter({
-                  id: appointmentData.student.id,
-                  name: appointmentData.student.name,
-                  phone: appointmentData.student.phone
+                  id: data.student.id,
+                  name: data.student.name,
+                  phone: data.student.phone
                 })}
                 className="text-sm px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
               >
@@ -235,13 +279,13 @@ const AppointmentDetail = ({ appointmentId, onBack, onViewEncounter, onCreateNew
                 View Details
               </motion.button>
               <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                {appointmentData.session.status}
+                {data.session.status}
               </span>
             </div>
           </div>
           <div>
             <label className="text-sm text-gray-500">Description:</label>
-            <p className="font-semibold text-gray-800">{appointmentData.session.description}</p>
+            <p className="font-semibold text-gray-800">{data.session.description}</p>
           </div>
         </motion.div>
       </div>

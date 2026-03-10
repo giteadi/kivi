@@ -27,9 +27,13 @@ import api from '../services/api';
 import { useSidebar } from '../App';
 
 const SessionList = ({ onViewEncounter }) => {
+  console.log('🔍 SessionList: Component initialized');
+
   const dispatch = useDispatch();
   const { sessions, loading, error } = useSelector((state) => state.sessions);
   const { sidebarCollapsed } = useSidebar();
+
+  console.log('🔍 SessionList: Redux state - sessions:', sessions?.length || 0, 'loading:', loading, 'error:', error);
   
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
@@ -52,15 +56,18 @@ const SessionList = ({ onViewEncounter }) => {
   const pollingInterval = useRef(null);
 
   useEffect(() => {
+    console.log('🔍 SessionList: useEffect triggered - fetching sessions');
     dispatch(fetchSessions());
     
     // Set up polling for real-time updates
     pollingInterval.current = setInterval(() => {
+      console.log('🔍 SessionList: Polling - fetching updated sessions');
       dispatch(fetchSessions());
     }, 10000); // Poll every 10 seconds
     
     return () => {
       if (pollingInterval.current) {
+        console.log('🔍 SessionList: Cleaning up polling interval');
         clearInterval(pollingInterval.current);
       }
     };
@@ -68,8 +75,11 @@ const SessionList = ({ onViewEncounter }) => {
 
   // Detect new sessions
   useEffect(() => {
+    console.log('🔍 SessionList: Sessions updated, checking for new sessions. Previous count:', previousSessionsCount.current, 'Current count:', sessions.length);
+
     if (sessions.length > previousSessionsCount.current && previousSessionsCount.current > 0) {
       const latestSession = sessions[0]; // Assuming newest session is first
+      console.log('🔍 SessionList: New session detected:', latestSession);
       setNewSessions(prev => new Set(prev).add(latestSession.id));
       setShowNotification(true);
       setTimeout(() => setShowNotification(false), 5000);
@@ -93,8 +103,23 @@ const SessionList = ({ onViewEncounter }) => {
     const matchesDateFrom = filters.date_from === '' || new Date(session.session_date) >= new Date(filters.date_from);
     const matchesDateTo = filters.date_to === '' || new Date(session.session_date) <= new Date(filters.date_to);
 
-    return matchesSearch && matchesStatus && matchesCentre && matchesTherapist && matchesDateFrom && matchesDateTo;
+    const matches = matchesSearch && matchesStatus && matchesCentre && matchesTherapist && matchesDateFrom && matchesDateTo;
+
+    if (!matches) {
+      console.log('🔍 SessionList: Session filtered out:', session.id, {
+        matchesSearch,
+        matchesStatus,
+        matchesCentre,
+        matchesTherapist,
+        matchesDateFrom,
+        matchesDateTo
+      });
+    }
+
+    return matches;
   });
+
+  console.log('🔍 SessionList: Filtered sessions count:', filteredSessions.length, 'out of', sessions.length);
 
   // Pagination
   const indexOfLastSession = currentPage * sessionsPerPage;
@@ -102,12 +127,17 @@ const SessionList = ({ onViewEncounter }) => {
   const currentSessions = filteredSessions.slice(indexOfFirstSession, indexOfLastSession);
   const totalPages = Math.ceil(filteredSessions.length / sessionsPerPage);
 
+  console.log('🔍 SessionList: Pagination - currentPage:', currentPage, 'totalPages:', totalPages, 'currentSessions:', currentSessions.length);
+
   const handleCreateSession = async (sessionData) => {
+    console.log('🔍 SessionList: handleCreateSession called with data:', sessionData);
+
     try {
       await api.request('/sessions', {
         method: 'POST',
         body: JSON.stringify(sessionData)
       });
+      console.log('🔍 SessionList: Session created successfully, fetching updated sessions');
       dispatch(fetchSessions());
       setIsCreateFormOpen(false);
       
@@ -115,15 +145,17 @@ const SessionList = ({ onViewEncounter }) => {
       setShowNotification(true);
       setTimeout(() => setShowNotification(false), 5000);
     } catch (error) {
-      console.error('Error creating session:', error);
+      console.error('🔍 SessionList: Error creating session:', error);
     }
   };
 
   const handleRefreshSessions = () => {
+    console.log('🔍 SessionList: handleRefreshSessions called - manually refreshing sessions');
     dispatch(fetchSessions());
   };
 
   const clearNewSessionStatus = (sessionId) => {
+    console.log('🔍 SessionList: clearNewSessionStatus called for session:', sessionId);
     setNewSessions(prev => {
       const newSet = new Set(prev);
       newSet.delete(sessionId);
@@ -132,31 +164,40 @@ const SessionList = ({ onViewEncounter }) => {
   };
 
   const handleEditSession = async (sessionData) => {
+    console.log('🔍 SessionList: handleEditSession called with data:', sessionData);
+
     try {
       await api.request(`/sessions/${selectedSession.id}`, {
         method: 'PUT',
         body: JSON.stringify(sessionData)
       });
+      console.log('🔍 SessionList: Session updated successfully, fetching updated sessions');
       dispatch(fetchSessions());
       setIsEditFormOpen(false);
       setSelectedSession(null);
     } catch (error) {
-      console.error('Error updating session:', error);
+      console.error('🔍 SessionList: Error updating session:', error);
     }
   };
 
   const handleDeleteSession = async (sessionId) => {
+    console.log('🔍 SessionList: handleDeleteSession called for session:', sessionId);
+
     if (window.confirm('Are you sure you want to delete this session?')) {
       try {
         await dispatch(deleteSession(sessionId));
+        console.log('🔍 SessionList: Session deleted successfully, fetching updated sessions');
         dispatch(fetchSessions());
       } catch (error) {
-        console.error('Error deleting session:', error);
+        console.error('🔍 SessionList: Error deleting session:', error);
       }
+    } else {
+      console.log('🔍 SessionList: Session deletion cancelled by user');
     }
   };
 
   const openEditForm = (session) => {
+    console.log('🔍 SessionList: openEditForm called for session:', session.id);
     setSelectedSession(session);
     setIsEditFormOpen(true);
   };

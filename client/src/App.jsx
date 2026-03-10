@@ -170,6 +170,10 @@ function App() {
   // Enhanced setActiveItem to track navigation
   const handleSetActiveItem = (item) => {
     setActiveItem(item);
+    // Reset currentView when navigating to main sections to avoid conflicts
+    if (item === 'sessions' || item === 'dashboard' || item === 'patients' || item === 'doctors' || item === 'clinics' || item === 'services') {
+      setCurrentView(item);
+    }
     updateNavigationHistory(item);
   };
 
@@ -288,8 +292,10 @@ function App() {
   };
 
   const handleBackToAppointments = () => {
-    setCurrentView('appointments-list');
-    setActiveItem('encounters-list');
+    // Go back to sessions view instead of appointments-list to maintain consistency
+    setCurrentView('sessions');
+    setActiveItem('sessions');
+    setSelectedAppointmentId(null); // Clear the selected appointment
   };
 
   const handleBackToAppointment = () => {
@@ -1020,7 +1026,7 @@ ${service.target_age_group || 'Not specified'}
     if (currentView === 'appointment-detail') {
       return (
         <AppointmentDetail 
-          appointmentId={selectedAppointmentId}
+          appointmentData={selectedAppointmentId}
           onBack={handleBackToAppointments}
           onViewEncounter={handleViewEncounter}
           onCreateNewEncounter={handleCreateNewEncounter}

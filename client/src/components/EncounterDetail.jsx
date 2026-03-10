@@ -7,6 +7,8 @@ import PrintEncounter from './PrintEncounter';
 import CloseEncounter from './CloseEncounter';
 
 const EncounterDetail = ({ encounterId, onBack }) => {
+  console.log('🔍 EncounterDetail: Component initialized with encounterId:', encounterId);
+
   const [activeTab, setActiveTab] = useState('clinical-details');
   const [sessionData, setSessionData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -17,39 +19,65 @@ const EncounterDetail = ({ encounterId, onBack }) => {
 
   // Fetch session data when component mounts
   useEffect(() => {
+    console.log('🔍 EncounterDetail: useEffect triggered, encounterId:', encounterId);
+
     const fetchSessionData = async () => {
       if (!encounterId) {
+        console.log('🔍 EncounterDetail: No encounterId provided, setting loading to false');
         setLoading(false);
         return;
       }
 
       try {
-        console.log('Fetching session data for ID:', encounterId);
+        console.log('🔍 EncounterDetail: Fetching session data for ID:', encounterId);
         const response = await api.request(`/sessions/${encounterId}`);
-        console.log('API response:', response);
-        
+        console.log('🔍 EncounterDetail: API response received:', response);
+
         if (response.success) {
           const session = response.data;
-          console.log('Session data:', session);
+          console.log('🔍 EncounterDetail: Session data received:', session);
           setSessionData(session);
-          
+
           // Set initial data from session
-          setNotes(session.notes || '');
-          setProblems(session.session_goals ? [{ id: 1, text: session.session_goals }] : []);
-          setObservations(session.materials_needed ? [{ id: 1, text: session.materials_needed }] : []);
-          setRecommendedNotes(session.preparation_notes ? [session.preparation_notes] : []);
+          const initialNotes = session.notes || '';
+          const initialProblems = session.session_goals ? [{ id: 1, text: session.session_goals }] : [];
+          const initialObservations = session.materials_needed ? [{ id: 1, text: session.materials_needed }] : [];
+          const initialRecommendedNotes = session.preparation_notes ? [session.preparation_notes] : [];
+
+          console.log('🔍 EncounterDetail: Setting initial data:', {
+            notes: initialNotes,
+            problems: initialProblems,
+            observations: initialObservations,
+            recommendedNotes: initialRecommendedNotes
+          });
+
+          setNotes(initialNotes);
+          setProblems(initialProblems);
+          setObservations(initialObservations);
+          setRecommendedNotes(initialRecommendedNotes);
         } else {
-          console.error('API returned error:', response);
+          console.error('🔍 EncounterDetail: API returned error:', response);
         }
       } catch (error) {
-        console.error('Error fetching session data:', error);
+        console.error('🔍 EncounterDetail: Error fetching session data:', error);
       } finally {
+        console.log('🔍 EncounterDetail: Setting loading to false');
         setLoading(false);
       }
     };
 
     fetchSessionData();
   }, [encounterId]);
+
+  console.log('🔍 EncounterDetail: Current state:', {
+    activeTab,
+    loading,
+    sessionData: sessionData ? 'present' : 'null',
+    notes,
+    problemsCount: problems.length,
+    observationsCount: observations.length,
+    recommendedNotesCount: recommendedNotes.length
+  });
 
   // Show loading state while fetching data
   if (loading) {
@@ -110,6 +138,8 @@ const EncounterDetail = ({ encounterId, onBack }) => {
   ];
 
   const handleSave = async () => {
+    console.log('🔍 EncounterDetail: handleSave called');
+
     try {
       // Prepare encounter data for saving
       const encounterData = {
@@ -126,31 +156,40 @@ const EncounterDetail = ({ encounterId, onBack }) => {
         status: 'completed'
       };
 
+      console.log('🔍 EncounterDetail: Prepared encounter data for saving:', encounterData);
+
       // Save encounter data
       const response = await api.request('/encounters', {
         method: 'POST',
         body: JSON.stringify(encounterData)
       });
 
+      console.log('🔍 EncounterDetail: Save API response:', response);
+
       if (response.success) {
+        console.log('🔍 EncounterDetail: Encounter data saved successfully');
         alert('Encounter data saved successfully');
         onBack();
       } else {
+        console.error('🔍 EncounterDetail: Failed to save encounter data:', response);
         alert('Failed to save encounter data');
       }
     } catch (error) {
-      console.error('Error saving encounter data:', error);
+      console.error('🔍 EncounterDetail: Error saving encounter data:', error);
       alert('Error saving encounter data');
     }
   };
 
   const handleCloseEncounter = () => {
+    console.log('🔍 EncounterDetail: handleCloseEncounter called');
     // In a real app, this would close the encounter and navigate back
     alert('Encounter closed successfully');
     onBack();
   };
 
   const renderTabContent = () => {
+    console.log('🔍 EncounterDetail: renderTabContent called with activeTab:', activeTab);
+
     switch (activeTab) {
       case 'clinical-details':
         return (

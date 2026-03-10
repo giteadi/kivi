@@ -102,37 +102,43 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
   const formatAppointmentData = (appointments) => {
     return appointments.map(apt => ({
       id: apt.id,
-      patient: apt.patient_name,
-      date: new Date(apt.appointment_date).toLocaleDateString('en-US', { 
+      patient: apt.student_first_name && apt.student_last_name 
+        ? `${apt.student_first_name} ${apt.student_last_name}`
+        : apt.student_name || 'Unknown Student',
+      date: new Date(apt.session_date).toLocaleDateString('en-US', { 
         year: 'numeric', 
         month: 'long', 
         day: 'numeric' 
       }),
-      time: new Date(`2000-01-01T${apt.appointment_time}`).toLocaleTimeString('en-US', {
+      time: new Date(`2000-01-01T${apt.session_time}`).toLocaleTimeString('en-US', {
         hour: 'numeric',
         minute: '2-digit',
         hour12: true
       }),
-      clinic: apt.clinic_name,
-      doctor: apt.doctor_name,
-      initials: apt.patient_name ? apt.patient_name.split(' ').map(n => n[0]).join('') : 'PK',
+      clinic: apt.centre_name,
+      doctor: apt.therapist_first_name && apt.therapist_last_name
+        ? `${apt.therapist_first_name} ${apt.therapist_last_name}`
+        : apt.therapist_name || 'Unknown Therapist',
+      initials: apt.student_first_name && apt.student_last_name
+        ? `${apt.student_first_name[0]}${apt.student_last_name[0]}`
+        : apt.student_name ? apt.student_name.split(' ').map(n => n[0]).join('') : 'PK',
       bgColor: 'bg-purple-100'
     }));
   };
 
   const formatDoctorData = (doctors) => {
     return doctors.map(doc => ({
-      name: doc.doctor_name,
-      clinic: doc.clinic_name,
-      appointments: doc.appointment_count?.toString() || '0',
-      initials: doc.doctor_name ? doc.doctor_name.split(' ').map(n => n[0]).join('') : 'DK',
+      name: doc.therapist_name,
+      clinic: doc.centre_name,
+      appointments: doc.session_count?.toString() || '0',
+      initials: doc.therapist_name ? doc.therapist_name.split(' ').map(n => n[0]).join('') : 'DK',
       bgColor: 'bg-blue-100'
     }));
   };
 
   const handleAppointmentClick = (appointment) => {
     if (onAppointmentClick) {
-      onAppointmentClick(appointment.id);
+      onAppointmentClick(appointment);
     }
   };
 

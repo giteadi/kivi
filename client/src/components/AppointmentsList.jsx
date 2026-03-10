@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiCalendar, FiUser, FiClock, FiUpload } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
+import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAppointments } from '../store/slices/appointmentSlice';
 import ImportModal from './ImportModal';
@@ -26,42 +27,48 @@ const AppointmentsList = ({ onViewAppointment, onEditAppointment, onDeleteAppoin
     console.log('=== AppointmentsList: error ===', error);
   }, [appointments, isLoading, error]);
 
-  // Transform API data to match frontend format
-  const transformedAppointments = appointments.map(appointment => ({
-    id: appointment.id,
-    patient: `${appointment.student_first_name || 'Unknown'} ${appointment.student_last_name || 'Student'}`,
-    doctor: `${appointment.therapist_first_name || 'Unknown'} ${appointment.therapist_last_name || 'Therapist'}`,
-    clinic: appointment.centre_name || 'Unknown Clinic',
-    date: appointment.session_date ? new Date(appointment.session_date).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    }) : 'Invalid Date',
-    time: appointment.session_time ? new Date(`1970-01-01T${appointment.session_time}`).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    }) : 'Invalid Date',
-    type: appointment.notes || 'General Consultation',
-    status: appointment.status === 'scheduled' ? 'Scheduled' : 
-            appointment.status === 'confirmed' ? 'Confirmed' :
-            appointment.status === 'completed' ? 'Completed' :
-            appointment.status === 'cancelled' ? 'Cancelled' : 'Awaiting Confirmation',
-    duration: `${appointment.duration || 60} min`,
-    service: appointment.programme_name || 'General Consultation',
-    amount: `₹${appointment.programme_fee || 0}.00`
-  }));
+  // Transform API data to match frontend format - only when appointments change
+  const transformedAppointments = React.useMemo(() => {
+    console.log('=== AppointmentsList: Transforming appointments ===', appointments.length);
+    return appointments.map(appointment => ({
+      id: appointment.id,
+      patient: `${appointment.student_first_name || 'Unknown'} ${appointment.student_last_name || 'Student'}`,
+      doctor: `${appointment.therapist_first_name || 'Unknown'} ${appointment.therapist_last_name || 'Therapist'}`,
+      clinic: appointment.centre_name || 'Unknown Clinic',
+      date: appointment.session_date ? new Date(appointment.session_date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }) : 'Invalid Date',
+      time: appointment.session_time ? new Date(`1970-01-01T${appointment.session_time}`).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      }) : 'Invalid Date',
+      type: appointment.notes || 'General Consultation',
+      status: appointment.status === 'scheduled' ? 'Scheduled' :
+              appointment.status === 'confirmed' ? 'Confirmed' :
+              appointment.status === 'completed' ? 'Completed' :
+              appointment.status === 'cancelled' ? 'Cancelled' : 'Awaiting Confirmation',
+      duration: `${appointment.duration || 60} min`,
+      service: appointment.programme_name || 'General Consultation',
+      amount: `₹${appointment.programme_fee || 0}.00`
+    }));
+  }, [appointments]);
 
-  // Debug transformed appointments
-  console.log('=== AppointmentsList: Transformed appointments ===', transformedAppointments);
+  // Filter appointments - only when search/filter criteria change
+  const filteredAppointments = React.useMemo(() => {
+    return transformedAppointments.filter(appointment => {
+      const matchesSearch = appointment.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           appointment.doctor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           appointment.type.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesFilter = filterStatus === 'all' || appointment.status.toLowerCase() === filterStatus.toLowerCase();
+      return matchesSearch && matchesFilter;
+    });
+  }, [transformedAppointments, searchTerm, filterStatus]);
 
-  const filteredAppointments = transformedAppointments.filter(appointment => {
-    const matchesSearch = appointment.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         appointment.doctor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         appointment.type.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || appointment.status.toLowerCase() === filterStatus.toLowerCase();
-    return matchesSearch && matchesFilter;
-  });
+  // Remove the console.log that's causing multiple renders
+  // console.log('=== AppointmentsList: Transformed appointments ===', transformedAppointments);
 
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {

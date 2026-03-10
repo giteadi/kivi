@@ -1,12 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import { fetchUpcomingSessions } from './sessionSlice';
 
 const API_BASE_URL = 'http://localhost:3005/api';
 
 // Async thunks
 export const fetchDashboardData = createAsyncThunk(
   'dashboard/fetchDashboardData',
-  async (filters = {}, { rejectWithValue }) => {
+  async (filters = {}, { rejectWithValue, dispatch }) => {
     try {
       const queryParams = new URLSearchParams();
       if (filters.startDate) queryParams.append('startDate', filters.startDate);
@@ -14,8 +14,21 @@ export const fetchDashboardData = createAsyncThunk(
       if (filters.clinicId) queryParams.append('clinicId', filters.clinicId);
       if (filters.doctorId) queryParams.append('doctorId', filters.doctorId);
 
-      const response = await axios.get(`${API_BASE_URL}/dashboard/data?${queryParams}`);
-      return response.data.data;
+      // Fetch dashboard stats and other data from dashboard API
+      const response = await fetch(`${API_BASE_URL}/dashboard/data?${queryParams}`);
+      const data = await response.json();
+      
+      if (!data.success) {
+        return rejectWithValue(data.message || 'Failed to fetch dashboard data');
+      }
+
+      // Fetch upcoming sessions from session API
+      const upcomingSessionsResult = await dispatch(fetchUpcomingSessions({ limit: 5 }));
+      
+      return {
+        ...data.data,
+        upcomingSessions: upcomingSessionsResult.payload || []
+      };
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || 'Failed to fetch dashboard data'
@@ -137,9 +150,9 @@ const dashboardSlice = createSlice({
       .addCase(fetchDashboardData.fulfilled, (state, action) => {
         state.isLoading = false;
         state.stats = action.payload.stats || state.stats;
-        state.upcomingAppointments = action.payload.upcomingAppointments || [];
-        state.topDoctors = action.payload.topDoctors || [];
-        state.bookingChart = action.payload.bookingChart || [];
+        state.upcomingAppointments = action.payload.upcomingSessions || [];
+        state.topDoctors = action.payload.topTherapists || [];
+        state.bookingChart = action.payload.sessionChart || [];
       })
       .addCase(fetchDashboardData.rejected, (state, action) => {
         state.isLoading = false;

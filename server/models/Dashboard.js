@@ -33,57 +33,55 @@ class Dashboard extends BaseModel {
 
     const stats = {};
 
-    // Total Sessions
+    // Total Sessions (renamed from totalSessions to totalAppointments to match component)
     const sessionCount = await this.query(`
       SELECT COUNT(*) as total 
       FROM kivi_sessions s 
       WHERE 1=1 ${dateCondition} ${centreCondition} ${therapistCondition}
     `, params);
-    stats.totalSessions = sessionCount[0].total;
+    stats.totalAppointments = sessionCount[0].total;
 
-    // Total Students
+    // Total Students (renamed from totalStudents to totalPatients to match component)
     const studentCount = await this.query(`
       SELECT COUNT(DISTINCT st.id) as total 
       FROM kivi_students st 
-      LEFT JOIN kivi_sessions s ON st.id = s.student_id 
-      WHERE st.status = 'active' ${dateCondition} ${centreCondition} ${therapistCondition}
-    `, params);
-    stats.totalStudents = studentCount[0].total;
+      WHERE st.status = 'active'
+    `);
+    stats.totalPatients = studentCount[0].total;
 
-    // Total Centres
+    // Total Centres (renamed from totalCentres to totalClinics to match component)
     const centreCount = await this.query(`
       SELECT COUNT(*) as total 
       FROM kivi_centres 
       WHERE status = 'active'
     `);
-    stats.totalCentres = centreCount[0].total;
+    stats.totalClinics = centreCount[0].total;
 
-    // Total Therapists
+    // Total Therapists (renamed from totalTherapists to totalDoctors to match component)
     const therapistCount = await this.query(`
-      SELECT COUNT(DISTINCT t.id) as total 
+      SELECT COUNT(*) as total 
       FROM kivi_therapists t 
-      LEFT JOIN kivi_sessions s ON t.id = s.therapist_id 
-      WHERE t.status = 'active' ${dateCondition} ${centreCondition} ${therapistCondition}
-    `, params);
-    stats.totalTherapists = therapistCount[0].total;
+      WHERE t.status = 'active'
+    `);
+    stats.totalDoctors = therapistCount[0].total;
 
-    // Active Programmes
+    // Active Services (renamed from activeProgrammes to activeServices to match component)
     const programmeCount = await this.query(`
       SELECT COUNT(*) as total 
       FROM kivi_programmes 
       WHERE status = 'active'
     `);
-    stats.activeProgrammes = programmeCount[0].total;
+    stats.activeServices = programmeCount[0].total;
 
-    // Total Revenue
+    // Total Revenue - use kivi_payments table instead of kivi_billing_records
     const revenueQuery = await this.query(`
-      SELECT COALESCE(SUM(br.total_amount), 0) as total 
-      FROM kivi_billing_records br 
-      LEFT JOIN kivi_sessions s ON br.session_id = s.id 
-      WHERE br.payment_status IN ('paid', 'partial') ${dateCondition} ${centreCondition} ${therapistCondition}
+      SELECT COALESCE(SUM(p.amount), 0) as total 
+      FROM kivi_payments p 
+      WHERE p.status = 'completed' ${dateCondition.replace('s.session_date', 'DATE(p.paid_at)')}
     `, params);
-    stats.totalRevenue = revenueQuery[0].total;
+    stats.totalRevenue = parseFloat(revenueQuery[0].total);
 
+    console.log('📊 Dashboard stats calculated:', stats);
     return stats;
   }
 
