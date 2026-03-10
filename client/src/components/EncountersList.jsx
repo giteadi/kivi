@@ -165,10 +165,7 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
         
         // Refresh programmes list (only for creation, not updates)
         if (!isEditMode && onCreateNewProgramme) {
-          console.log('Calling onCreateNewProgramme callback for creation...');
-          setTimeout(() => {
-            onCreateNewProgramme();
-          }, 200);
+          console.log('Skipping onCreateNewProgramme callback - no navigation needed');
         } else if (isEditMode) {
           console.log('Skipping callback for edit mode - no navigation needed');
         }
@@ -184,17 +181,17 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
   // Transform API data to match frontend format
   const transformedProgrammes = programmes.map(programme => ({
     id: programme.id,
-    patient: `Student ${programme.id}`,
+    patient: programme.student_name || `Student ${programme.id}`, // Dynamic student name
     doctor: programme.therapist_first_name ? 
       `${programme.therapist_first_name} ${programme.therapist_last_name}` : 
       'Not Assigned',
-    clinic: `Centre ${programme.centre_id}`,
+    clinic: programme.centre_name || `Centre ${programme.centre_id}`, // Dynamic centre name
     date: new Date(programme.created_at).toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 
     }),
-    time: '10:00 AM', // Default time since not in API
+    time: programme.session_time || '10:00 AM', // Dynamic time if available
     type: programme.name || 'General Programme',
     status: programme.status === 'active' ? 'Active' : 
             programme.status === 'inactive' ? 'Inactive' : 'Archived',
@@ -239,7 +236,23 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => setShowNewSessionModal(true)}
+            onClick={() => {
+              setIsEditMode(false);
+              setEditingProgramme(null);
+              setNewSessionData({
+                title: '',
+                description: '',
+                duration: 30,
+                max_participants: 1,
+                session_type: 'individual',
+                therapist_id: '',
+                centre_id: '',
+                session_date: new Date().toISOString().split('T')[0], // Current date
+                price: '',
+                notes: ''
+              });
+              setShowNewSessionModal(true);
+            }}
             className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
           >
             <FiPlus className="w-4 h-4" />
@@ -317,7 +330,7 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
                 <thead className="bg-gray-50 border-b">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Student
+                      Plan Name
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Therapist
@@ -326,13 +339,7 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
                       Date & Time
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Programme Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Info
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
@@ -354,8 +361,8 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
                             <FiUser className="w-4 h-4 text-purple-600" />
                           </div>
                           <div>
-                            <div className="text-sm font-medium text-gray-900">{programme.patient}</div>
-                            <div className="text-sm text-gray-500">{programme.clinic}</div>
+                            <div className="text-sm font-medium text-gray-900">{programme.type}</div>
+                            <div className="text-sm text-gray-500">{programme.patient}</div>
                           </div>
                         </div>
                       </td>
@@ -372,20 +379,9 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{programme.type}</div>
-                        <div className="text-sm text-gray-500">{programme.duration}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(programme.status)}`}>
                           {programme.status}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <div className="space-y-1">
-                          <div>Desc: {programme.problems}</div>
-                          <div>Obj: {programme.observations}</div>
-                          <div>Age: {programme.notes}</div>
-                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-2">
