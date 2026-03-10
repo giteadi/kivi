@@ -2,15 +2,27 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { FiPlus, FiTrash2, FiEdit3 } from 'react-icons/fi';
 
-const BodyChart = ({ sessionData }) => {
-  const [annotations, setAnnotations] = useState(
-    sessionData?.materials_needed 
+const BodyChart = ({ sessionData, onAnnotationsChange, initialAnnotations = [] }) => {
+  console.log('🔍 BodyChart: Component initialized with initialAnnotations:', initialAnnotations);
+
+  const [annotations, setAnnotations] = useState(initialAnnotations.length > 0 ? initialAnnotations : (
+    sessionData?.materials_needed
       ? [{ id: 1, x: 50, y: 50, note: sessionData.materials_needed, type: 'observation' }]
       : []
-  );
+  ));
+
+  console.log('🔍 BodyChart: Final annotations state:', annotations);
   const [selectedAnnotation, setSelectedAnnotation] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newNote, setNewNote] = useState('');
+
+  // Notify parent component when annotations change
+  const updateAnnotations = (newAnnotations) => {
+    setAnnotations(newAnnotations);
+    if (onAnnotationsChange) {
+      onAnnotationsChange(newAnnotations);
+    }
+  };
 
   const handleBodyClick = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -25,14 +37,15 @@ const BodyChart = ({ sessionData }) => {
         note: newNote || 'New annotation',
         type: 'observation'
       };
-      setAnnotations([...annotations, newAnnotation]);
+      updateAnnotations([...annotations, newAnnotation]);
       setShowAddForm(false);
       setNewNote('');
     }
   };
 
   const deleteAnnotation = (id) => {
-    setAnnotations(annotations.filter(ann => ann.id !== id));
+    const newAnnotations = annotations.filter(ann => ann.id !== id);
+    updateAnnotations(newAnnotations);
     setSelectedAnnotation(null);
   };
 
@@ -125,11 +138,11 @@ const BodyChart = ({ sessionData }) => {
                     />
                     <text
                       x={annotation.x * 2}
-                      y={annotation.y * 2.8 + 2}
+                      y={annotation.y * 2.8 - 8}
                       textAnchor="middle"
                       className="text-xs fill-white font-medium pointer-events-none"
                     >
-                      {annotation.id}
+                      {annotations.indexOf(annotation) + 1}
                     </text>
                   </g>
                 ))}

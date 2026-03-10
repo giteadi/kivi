@@ -50,35 +50,113 @@ class EncounterController {
     }
   }
 
+  // Utility function to convert various date formats to MySQL DATE format
+  convertToMySQLDate(dateInput) {
+    if (!dateInput) return null;
+
+    try {
+      // If it's already a valid date string in YYYY-MM-DD format, return as is
+      if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+        return dateInput;
+      }
+
+      // Convert to Date object
+      const date = new Date(dateInput);
+
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        throw new Error('Invalid date format');
+      }
+
+      // Format as YYYY-MM-DD
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+
+      return `${year}-${month}-${day}`;
+    } catch (error) {
+      console.error('Date conversion error:', error, 'Input:', dateInput);
+      throw new Error(`Invalid date format: ${dateInput}`);
+    }
+  }
+
   // Create encounter
   async createEncounter(req, res) {
     try {
-      // Generate unique encounter ID
-      const generateEncounterId = () => {
-        const date = new Date();
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-        return `ENC${year}${month}${day}${random}`;
-      };
+      // Check if an encounter already exists for this session
+      const existingEncounters = await this.encounterModel.getEncounters({
+        sessionId: req.body.session_id
+      });
 
-      const encounterData = {
-        encounter_id: generateEncounterId(),
-        ...req.body,
-        created_at: new Date(),
-        updated_at: new Date()
-      };
+      let encounterId;
+      let isUpdate = false;
 
-      const encounterId = await this.encounterModel.create(encounterData);
+      if (existingEncounters && existingEncounters.length > 0) {
+        // Update existing encounter instead of creating new one
+        const existingEncounter = existingEncounters[0]; // Get the most recent one
+        encounterId = existingEncounter.id;
 
-      res.status(201).json({
+        const updateData = {
+          ...req.body,
+          encounter_id: existingEncounter.encounter_id, // Keep the same encounter_id
+          updated_at: new Date()
+        };
+
+        // Remove fields that shouldn't be updated
+        delete updateData.created_at;
+        delete updateData.session_id; // Don't change session association
+
+        await this.encounterModel.update(encounterId, updateData);
+        isUpdate = true;
+
+        console.log('Updated existing encounter:', encounterId);
+      } else {
+        // Generate unique encounter ID for new encounter
+        const generateEncounterId = () => {
+          const date = new Date();
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+          return `ENC${year}${month}${day}${random}`;
+        };
+
+        // Process the request body and convert date
+        const processedData = { ...req.body };
+
+        // Convert encounter_date to MySQL DATE format
+        if (processedData.encounter_date) {
+          processedData.encounter_date = this.convertToMySQLDate(processedData.encounter_date);
+        }
+
+        const encounterData = {
+          encounter_id: generateEncounterId(),
+          ...processedData,
+          created_at: new Date(),
+          updated_at: new Date()
+        };
+
+        console.log('Creating new encounter with data:', encounterData);
+
+        encounterId = await this.encounterModel.create(encounterData);
+      }
+
+      res.status(isUpdate ? 200 : 201).json({
         success: true,
         data: { id: encounterId },
-        message: 'Encounter created successfully'
+        message: isUpdate ? 'Encounter updated successfully' : 'Encounter created successfully'
       });
     } catch (error) {
       console.error('Create encounter error:', error);
+
+      // Check if it's a date conversion error
+      if (error.message.includes('Invalid date format')) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid encounter date format. Please provide a valid date.'
+        });
+      }
+
       res.status(500).json({
         success: false,
         message: 'Internal server error'

@@ -16,12 +16,15 @@ const EncounterDetail = ({ encounterId, onBack }) => {
   const [problems, setProblems] = useState([]);
   const [observations, setObservations] = useState([]);
   const [recommendedNotes, setRecommendedNotes] = useState([]);
+  const [problemsText, setProblemsText] = useState('');
+  const [observationsText, setObservationsText] = useState('');
+  const [bodyChartAnnotations, setBodyChartAnnotations] = useState([]);
 
   // Fetch session data when component mounts
   useEffect(() => {
     console.log('🔍 EncounterDetail: useEffect triggered, encounterId:', encounterId);
 
-    const fetchSessionData = async () => {
+    const fetchData = async () => {
       if (!encounterId) {
         console.log('🔍 EncounterDetail: No encounterId provided, setting loading to false');
         setLoading(false);
@@ -40,21 +43,107 @@ const EncounterDetail = ({ encounterId, onBack }) => {
 
           // Set initial data from session
           const initialNotes = session.notes || '';
-          const initialProblems = session.session_goals ? [{ id: 1, text: session.session_goals }] : [];
-          const initialObservations = session.materials_needed ? [{ id: 1, text: session.materials_needed }] : [];
+          const initialProblemsText = session.session_goals || '';
+          const initialObservationsText = session.materials_needed || '';
           const initialRecommendedNotes = session.preparation_notes ? [session.preparation_notes] : [];
 
           console.log('🔍 EncounterDetail: Setting initial data:', {
             notes: initialNotes,
-            problems: initialProblems,
-            observations: initialObservations,
+            problemsText: initialProblemsText,
+            observationsText: initialObservationsText,
             recommendedNotes: initialRecommendedNotes
           });
 
           setNotes(initialNotes);
-          setProblems(initialProblems);
-          setObservations(initialObservations);
+          setProblemsText(initialProblemsText);
+          setObservationsText(initialObservationsText);
+          setProblems(initialProblemsText ? [{ id: Date.now(), text: initialProblemsText }] : []);
+          setObservations(initialObservationsText ? [{ id: Date.now(), text: initialObservationsText }] : []);
           setRecommendedNotes(initialRecommendedNotes);
+
+          // Now check if there's an existing encounter for this session
+          console.log('🔍 EncounterDetail: Checking for existing encounter data...');
+          console.log('🔍 EncounterDetail: Current session ID:', encounterId);
+          try {
+            const encountersResponse = await api.request('/encounters', {
+              method: 'GET'
+            });
+            console.log('🔍 EncounterDetail: Encounters API response:', encountersResponse);
+            console.log('🔍 EncounterDetail: Number of encounters found:', encountersResponse.data?.length || 0);
+
+            if (encountersResponse.success && encountersResponse.data) {
+              console.log('🔍 EncounterDetail: All encounters:', encountersResponse.data.map(enc => ({ id: enc.id, session_id: enc.session_id, has_body_annotations: !!enc.body_chart_annotations })));
+              
+              // Find encounters for this session
+              const sessionEncounters = encountersResponse.data.filter(enc => enc.session_id == encounterId);
+              console.log('🔍 EncounterDetail: Encounters for this session:', sessionEncounters.length);
+              
+              // Find the most recent encounter that has body chart annotations, or the most recent one if none have annotations
+              let existingEncounter = null;
+              
+              // First try to find the most recent encounter with body chart annotations
+              const encountersWithAnnotations = sessionEncounters.filter(enc => enc.body_chart_annotations);
+              if (encountersWithAnnotations.length > 0) {
+                // Sort by ID descending (most recent first)
+                encountersWithAnnotations.sort((a, b) => b.id - a.id);
+                existingEncounter = encountersWithAnnotations[0];
+                console.log('🔍 EncounterDetail: Found most recent encounter with annotations:', existingEncounter.id);
+              } else {
+                // If no encounters have annotations, use the most recent encounter
+                sessionEncounters.sort((a, b) => b.id - a.id);
+                existingEncounter = sessionEncounters[0];
+                console.log('🔍 EncounterDetail: Found most recent encounter (no annotations):', existingEncounter.id);
+              }
+              
+              console.log('🔍 EncounterDetail: Using encounter:', existingEncounter);
+
+              if (existingEncounter) {
+                console.log('🔍 EncounterDetail: Found existing encounter:', existingEncounter);
+                console.log('🔍 EncounterDetail: Encounter ID:', existingEncounter.id);
+                console.log('🔍 EncounterDetail: Session ID in encounter:', existingEncounter.session_id);
+                console.log('🔍 EncounterDetail: Checking body_chart_annotations:', existingEncounter.body_chart_annotations);
+                console.log('🔍 EncounterDetail: body_chart_annotations type:', typeof existingEncounter.body_chart_annotations);
+                console.log('🔍 EncounterDetail: All encounter keys:', Object.keys(existingEncounter));
+                
+                // Load the saved encounter data
+                setProblemsText(existingEncounter.session_goals || '');
+                setObservationsText(existingEncounter.behavioral_observations || '');
+                setNotes(existingEncounter.progress_notes || '');
+                setRecommendedNotes(existingEncounter.recommendations ? [existingEncounter.recommendations] : []);
+                
+                // Load body chart annotations if available
+                if (existingEncounter.body_chart_annotations) {
+                  try {
+                    console.log('🔍 EncounterDetail: Raw body_chart_annotations from DB:', existingEncounter.body_chart_annotations);
+                    const annotations = JSON.parse(existingEncounter.body_chart_annotations);
+                    console.log('🔍 EncounterDetail: Parsed body chart annotations:', annotations);
+                    console.log('🔍 EncounterDetail: Annotations array length:', annotations.length);
+                    setBodyChartAnnotations(annotations);
+                    console.log('🔍 EncounterDetail: Set bodyChartAnnotations state successfully');
+                  } catch (parseError) {
+                    console.error('🔍 EncounterDetail: Error parsing body chart annotations:', parseError);
+                    console.error('🔍 EncounterDetail: Raw data that failed to parse:', existingEncounter.body_chart_annotations);
+                    setBodyChartAnnotations([]);
+                  }
+                } else {
+                  console.log('🔍 EncounterDetail: No body_chart_annotations field found in encounter data');
+                  console.log('🔍 EncounterDetail: Available fields in encounter:', Object.keys(existingEncounter));
+                  setBodyChartAnnotations([]);
+                }
+                
+                // Update the arrays for saving
+                setProblems(existingEncounter.session_goals ? [{ id: existingEncounter.id, text: existingEncounter.session_goals }] : []);
+                setObservations(existingEncounter.behavioral_observations ? [{ id: existingEncounter.id, text: existingEncounter.behavioral_observations }] : []);
+                
+                console.log('🔍 EncounterDetail: Loaded saved encounter data');
+              } else {
+                console.log('🔍 EncounterDetail: No existing encounter found for this session');
+              }
+            }
+          } catch (encounterError) {
+            console.error('🔍 EncounterDetail: Error checking for existing encounters:', encounterError);
+            // Continue with session data only - don't fail the whole component
+          }
         } else {
           console.error('🔍 EncounterDetail: API returned error:', response);
         }
@@ -66,7 +155,7 @@ const EncounterDetail = ({ encounterId, onBack }) => {
       }
     };
 
-    fetchSessionData();
+    fetchData();
   }, [encounterId]);
 
   console.log('🔍 EncounterDetail: Current state:', {
@@ -76,7 +165,9 @@ const EncounterDetail = ({ encounterId, onBack }) => {
     notes,
     problemsCount: problems.length,
     observationsCount: observations.length,
-    recommendedNotesCount: recommendedNotes.length
+    recommendedNotesCount: recommendedNotes.length,
+    problemsText: problemsText.substring(0, 50) + (problemsText.length > 50 ? '...' : ''),
+    observationsText: observationsText.substring(0, 50) + (observationsText.length > 50 ? '...' : '')
   });
 
   // Show loading state while fetching data
@@ -147,12 +238,13 @@ const EncounterDetail = ({ encounterId, onBack }) => {
         student_id: sessionData.student_id,
         therapist_id: sessionData.therapist_id,
         centre_id: sessionData.centre_id,
-        encounter_date: sessionData.session_date,
+        encounter_date: sessionData.session_date ? new Date(sessionData.session_date).toISOString().split('T')[0] : null,
         encounter_time: sessionData.session_time,
         session_goals: problems.map(p => p.text).join('\n'),
         behavioral_observations: observations.map(o => o.text).join('\n'),
         progress_notes: notes,
         recommendations: recommendedNotes.join('\n'),
+        body_chart_annotations: JSON.stringify(bodyChartAnnotations),
         status: 'completed'
       };
 
@@ -180,11 +272,47 @@ const EncounterDetail = ({ encounterId, onBack }) => {
     }
   };
 
-  const handleCloseEncounter = () => {
-    console.log('🔍 EncounterDetail: handleCloseEncounter called');
-    // In a real app, this would close the encounter and navigate back
-    alert('Encounter closed successfully');
-    onBack();
+  const handleSaveProgress = async () => {
+    console.log('🔍 EncounterDetail: handleSaveProgress called');
+
+    try {
+      // Prepare progress data for saving (draft status)
+      const progressData = {
+        session_id: encounterId,
+        student_id: sessionData.student_id,
+        therapist_id: sessionData.therapist_id,
+        centre_id: sessionData.centre_id,
+        encounter_date: sessionData.session_date ? new Date(sessionData.session_date).toISOString().split('T')[0] : null,
+        encounter_time: sessionData.session_time,
+        session_goals: problemsText,
+        behavioral_observations: observationsText,
+        progress_notes: notes,
+        recommendations: recommendedNotes.join('\n'),
+        body_chart_annotations: JSON.stringify(bodyChartAnnotations),
+        status: 'draft' // Save as draft, not completed
+      };
+
+      console.log('🔍 EncounterDetail: Prepared progress data for saving:', progressData);
+
+      // Save progress data
+      const response = await api.request('/encounters', {
+        method: 'POST',
+        body: JSON.stringify(progressData)
+      });
+
+      console.log('🔍 EncounterDetail: Save progress API response:', response);
+
+      if (response.success) {
+        console.log('🔍 EncounterDetail: Progress saved successfully');
+        alert('Progress saved successfully! You can continue working or close the encounter later.');
+      } else {
+        console.error('🔍 EncounterDetail: Failed to save progress:', response);
+        alert('Failed to save progress. Please try again.');
+      }
+    } catch (error) {
+      console.error('🔍 EncounterDetail: Error saving progress:', error);
+      alert('Error saving progress. Please try again.');
+    }
   };
 
   const renderTabContent = () => {
@@ -266,29 +394,24 @@ const EncounterDetail = ({ encounterId, onBack }) => {
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Problems</h3>
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
                       <p className="text-red-600 text-sm">
-                        <strong>Note:</strong> Type and press enter to create new problem
+                        <strong>Note:</strong> Write the patient's problems or concerns below
                       </p>
                     </div>
-                    
-                    <div className="mb-4">
-                      <h4 className="font-medium text-gray-700 mb-2">Select Problems</h4>
-                      <select className="w-full p-2 border rounded-lg text-gray-600">
-                        <option>Select or type to add problem</option>
-                      </select>
-                    </div>
 
-                    <div className="space-y-3">
-                      {problems.map((problem, index) => (
-                        <div key={problem.id} className="flex items-start space-x-2">
-                          <span className="text-sm text-gray-500 mt-1">{index + 1}.</span>
-                          <div className="flex-1 flex items-start justify-between">
-                            <p className="text-sm text-gray-700">{problem.text}</p>
-                            <button className="text-red-500 hover:text-red-700 ml-2">
-                              <FiTrash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                    <div className="mb-4">
+                      <h4 className="font-medium text-gray-700 mb-2">Problems/Concerns</h4>
+                      <textarea
+                        placeholder="Describe the patient's problems, concerns, or issues..."
+                        className="w-full p-3 border rounded-lg resize-none h-32"
+                        rows="4"
+                        value={problemsText}
+                        onChange={(e) => {
+                          const text = e.target.value;
+                          setProblemsText(text);
+                          // Also update the problems array for saving
+                          setProblems(text ? [{ id: problems[0]?.id || Date.now(), text: text }] : []);
+                        }}
+                      />
                     </div>
                   </div>
 
@@ -297,36 +420,31 @@ const EncounterDetail = ({ encounterId, onBack }) => {
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Observations</h3>
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
                       <p className="text-red-600 text-sm">
-                        <strong>Note:</strong> Type and press enter to create new observation
+                        <strong>Note:</strong> Write your behavioral observations and findings below
                       </p>
                     </div>
-                    
-                    <div className="mb-4">
-                      <h4 className="font-medium text-gray-700 mb-2">Select Observations</h4>
-                      <select className="w-full p-2 border rounded-lg text-gray-600">
-                        <option>Select or type to add observation</option>
-                      </select>
-                    </div>
 
-                    <div className="space-y-3">
-                      {observations.map((observation, index) => (
-                        <div key={observation.id} className="flex items-start space-x-2">
-                          <span className="text-sm text-gray-500 mt-1">{index + 1}.</span>
-                          <div className="flex-1 flex items-start justify-between">
-                            <p className="text-sm text-gray-700">{observation.text}</p>
-                            <button className="text-red-500 hover:text-red-700 ml-2">
-                              <FiTrash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                    <div className="mb-4">
+                      <h4 className="font-medium text-gray-700 mb-2">Behavioral Observations</h4>
+                      <textarea
+                        placeholder="Describe your behavioral observations, patient responses, or clinical findings..."
+                        className="w-full p-3 border rounded-lg resize-none h-32"
+                        rows="4"
+                        value={observationsText}
+                        onChange={(e) => {
+                          const text = e.target.value;
+                          setObservationsText(text);
+                          // Also update the observations array for saving
+                          setObservations(text ? [{ id: observations[0]?.id || Date.now(), text: text }] : []);
+                        }}
+                      />
                     </div>
                   </div>
 
                   {/* Notes */}
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Notes</h3>
-                    
+
                     <div className="mb-4">
                       <textarea
                         value={notes}
@@ -335,13 +453,23 @@ const EncounterDetail = ({ encounterId, onBack }) => {
                         className="w-full p-3 border rounded-lg resize-none h-24"
                         rows="3"
                       />
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
-                      >
-                        Add
-                      </motion.button>
+                      <div className="flex justify-between items-center mt-2">
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={handleSaveProgress}
+                          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm transition-colors"
+                        >
+                          Save Progress
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
+                        >
+                          Add
+                        </motion.button>
+                      </div>
                     </div>
 
                     <div className="space-y-3">
@@ -362,7 +490,11 @@ const EncounterDetail = ({ encounterId, onBack }) => {
       case 'body-chart':
         return (
           <div className="p-6">
-            <BodyChart sessionData={sessionData} />
+            <BodyChart 
+              sessionData={sessionData}
+              onAnnotationsChange={setBodyChartAnnotations}
+              initialAnnotations={bodyChartAnnotations}
+            />
           </div>
         );
 
