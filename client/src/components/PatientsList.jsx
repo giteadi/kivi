@@ -19,7 +19,7 @@ const PatientsList = ({ onViewPatient, onEditPatient, onDeletePatient, onCreateN
   // Load patients on component mount
   useEffect(() => {
     dispatch(fetchPatients());
-  }, [dispatch]);
+  }, []);
 
   const clinics = ['all', 'MindSaid Learning Main', 'MindSaid Learning North', 'MindSaid Learning South', 'MindSaid Learning East'];
 

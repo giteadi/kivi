@@ -28,7 +28,7 @@ import AppointmentsList from './components/AppointmentsList';
 import AppointmentDetail from './components/AppointmentDetail';
 import PatientsList from './components/PatientsList';
 import PatientProfile from './components/PatientProfile';
-import PatientEditForm from './components/PatientEditForm';
+import StudentEditForm from './components/StudentEditForm';
 import DoctorsList from './components/DoctorsList';
 import DoctorProfile from './components/DoctorProfile';
 import DoctorEditForm from './components/DoctorEditForm';
@@ -448,7 +448,14 @@ function App() {
   const handleSavePatient = (updatedData) => {
     // In a real app, this would save to backend
     console.log('Saving student:', updatedData);
-    toast.success(`Student ${updatedData.name} updated successfully!`);
+    if (updatedData) {
+      const studentName = updatedData.firstName && updatedData.lastName 
+        ? `${updatedData.firstName} ${updatedData.lastName}`
+        : updatedData.name || 'Student';
+      toast.success(`Student ${studentName} updated successfully!`);
+    } else {
+      toast.success('Student updated successfully!');
+    }
     setSelectedPatientId(null);
     setCurrentView('patients-list');
     setActiveItem('patients');
@@ -878,11 +885,11 @@ ${service.target_age_group || 'Not specified'}
       );
     }
 
-    // Handle patient edit form
+    // Handle student edit form
     if (currentView === 'patient-edit') {
       return (
-        <PatientEditForm
-          patientId={selectedPatientId}
+        <StudentEditForm
+          studentId={selectedPatientId}
           onSave={handleSavePatient}
           onCancel={handleCancelPatientEdit}
         />
@@ -1027,21 +1034,12 @@ ${service.target_age_group || 'Not specified'}
         return <Dashboard onAppointmentClick={handleAppointmentClick} onCreateNewEncounter={handleCreateNewEncounter} onViewAllAppointments={handleViewAllAppointments} onViewAllTherapists={handleViewAllTherapists} />;
       
       case 'patients':
-        if (currentView === 'patients-list' || currentView === 'dashboard') {
-          return <PatientsList onViewPatient={handleViewPatient} onEditPatient={handleEditPatient} onDeletePatient={handleDeletePatient} onCreateNewPatient={handleCreateNewPatient} />;
-        }
         return <PatientsList onViewPatient={handleViewPatient} onEditPatient={handleEditPatient} onDeletePatient={handleDeletePatient} onCreateNewPatient={handleCreateNewPatient} />;
       
       case 'doctors':
-        if (currentView === 'doctors-list' || currentView === 'dashboard') {
-          return <DoctorsList onViewDoctor={handleViewDoctor} onEditDoctor={handleEditDoctor} onDeleteDoctor={handleDeleteDoctor} onCreateNewDoctor={handleCreateNewDoctor} />;
-        }
         return <DoctorsList onViewDoctor={handleViewDoctor} onEditDoctor={handleEditDoctor} onDeleteDoctor={handleDeleteDoctor} onCreateNewDoctor={handleCreateNewDoctor} />;
       
       case 'receptionists':
-        if (currentView === 'receptionists-list' || currentView === 'dashboard') {
-          return <ReceptionistsList onViewReceptionist={handleViewReceptionist} onEditReceptionist={handleEditReceptionist} onDeleteReceptionist={handleDeleteReceptionist} onCreateNewReceptionist={handleCreateNewReceptionist} />;
-        }
         return <ReceptionistsList onViewReceptionist={handleViewReceptionist} onEditReceptionist={handleEditReceptionist} onDeleteReceptionist={handleDeleteReceptionist} onCreateNewReceptionist={handleCreateNewReceptionist} />;
       
       case 'services':

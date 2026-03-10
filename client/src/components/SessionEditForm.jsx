@@ -147,9 +147,7 @@ const SessionEditForm = ({ isOpen, onClose, onSave, sessionId }) => {
       therapist_id: parseInt(formData.therapist_id),
       centre_id: parseInt(formData.centre_id),
       programme_id: parseInt(formData.programme_id),
-      duration: parseInt(formData.duration),
-      total_amount: totalAmount,
-      tax_amount: taxAmount
+      duration: parseInt(formData.duration)
     };
 
     onSave(sessionData);

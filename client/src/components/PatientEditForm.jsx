@@ -1,44 +1,73 @@
 import { motion } from 'framer-motion';
-import { FiArrowLeft, FiSave, FiX, FiUser, FiMail, FiPhone, FiMapPin, FiHeart } from 'react-icons/fi';
-import { useState } from 'react';
+import { FiArrowLeft, FiSave, FiX, FiUser, FiMail, FiPhone, FiMapPin, FiHeart, FiBook, FiCalendar } from 'react-icons/fi';
+import { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchPatient, updatePatient } from '../store/slices/patientSlice';
 import { useToast } from './Toast';
+import api from '../services/api';
 
-const PatientEditForm = ({ patientId, onSave, onCancel }) => {
+const StudentEditForm = ({ studentId, onSave, onCancel }) => {
   const toast = useToast();
-  // Mock data - in real app this would come from API based on patientId
+  const dispatch = useDispatch();
+  const { currentPatient, isLoading } = useSelector((state) => state.patients);
+  
+  // Initial empty form data
   const initialData = {
-    id: '#14958',
-    name: 'Thomas Thompson',
-    email: 'kjaggi+patient8@mindsalelearning.com',
-    phone: '+1 5557741269',
-    clinic: 'Clinic Kjaggi',
-    status: 'Active',
-    registrationDate: '2026-02-15',
-    dateOfBirth: '1988-01-15',
-    gender: 'Male',
-    bloodGroup: 'O+',
-    address: '123 Main Street, New York, NY 10001',
-    emergencyContactName: 'Sarah Thompson',
-    emergencyContactRelation: 'Spouse',
-    emergencyContactPhone: '+1 5557741270',
-    allergies: 'Penicillin, Shellfish',
-    chronicConditions: 'Hypertension, Diabetes Type 2',
-    currentMedications: 'Metformin 500mg, Lisinopril 10mg',
-    insuranceProvider: 'Blue Cross Blue Shield',
-    insuranceNumber: 'BC123456789',
-    occupation: 'Software Engineer',
-    maritalStatus: 'Married'
+    id: '',
+    student_id: '',
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    date_of_birth: '',
+    gender: '',
+    address: '',
+    city: '',
+    state: '',
+    zip_code: '',
+    emergency_contact_name: '',
+    emergency_contact_phone: '',
+    emergency_contact_relation: '',
+    learning_needs: '',
+    support_requirements: '',
+    learning_goals: '',
+    assessment_notes: '',
+    medical_conditions: '',
+    allergies: '',
+    medications: '',
+    dietary_restrictions: '',
+    parent_guardian_name: '',
+    parent_guardian_phone: '',
+    parent_guardian_email: '',
+    parent_guardian_relation: '',
+    centre_id: '',
+    status: 'active'
   };
 
   const [formData, setFormData] = useState(initialData);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const clinics = ['Clinic Kjaggi', 'Green Valley Clinic', 'Sunrise Health Center', 'Downtown Family Clinic'];
-  const statuses = ['Active', 'Inactive', 'Suspended'];
-  const genders = ['Male', 'Female', 'Other'];
-  const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-  const maritalStatuses = ['Single', 'Married', 'Divorced', 'Widowed'];
+  // Fetch student data when component mounts
+  useEffect(() => {
+    if (studentId) {
+      dispatch(fetchPatient(studentId));
+    }
+  }, [dispatch, studentId]);
+
+  // Update form data when student data is loaded
+  useEffect(() => {
+    if (currentPatient) {
+      setFormData({
+        ...initialData,
+        ...currentPatient
+      });
+    }
+  }, [currentPatient]);
+
+  const statuses = ['active', 'inactive', 'on_leave', 'graduated', 'transferred'];
+  const genders = ['male', 'female', 'other'];
+  const relations = ['Father', 'Mother', 'Guardian', 'Grandparent', 'Sibling', 'Other'];
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -58,13 +87,14 @@ const PatientEditForm = ({ patientId, onSave, onCancel }) => {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    if (!formData.first_name.trim()) newErrors.first_name = 'First name is required';
+    if (!formData.last_name.trim()) newErrors.last_name = 'Last name is required';
     if (!formData.email.trim()) newErrors.email = 'Email is required';
     if (!formData.phone.trim()) newErrors.phone = 'Phone is required';
     if (!formData.address.trim()) newErrors.address = 'Address is required';
-    if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
-    if (!formData.emergencyContactName.trim()) newErrors.emergencyContactName = 'Emergency contact name is required';
-    if (!formData.emergencyContactPhone.trim()) newErrors.emergencyContactPhone = 'Emergency contact phone is required';
+    if (!formData.date_of_birth) newErrors.date_of_birth = 'Date of birth is required';
+    if (!formData.emergency_contact_name.trim()) newErrors.emergency_contact_name = 'Emergency contact name is required';
+    if (!formData.emergency_contact_phone.trim()) newErrors.emergency_contact_phone = 'Emergency contact phone is required';
     
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -92,18 +122,48 @@ const PatientEditForm = ({ patientId, onSave, onCancel }) => {
     setIsSubmitting(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const updatedData = {
-        ...formData,
-        lastModified: new Date().toISOString()
+      // Prepare data for API
+      const studentData = {
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        email: formData.email,
+        phone: formData.phone,
+        date_of_birth: formData.date_of_birth,
+        gender: formData.gender,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zip_code: formData.zip_code,
+        emergency_contact_name: formData.emergency_contact_name,
+        emergency_contact_phone: formData.emergency_contact_phone,
+        emergency_contact_relation: formData.emergency_contact_relation,
+        learning_needs: formData.learning_needs,
+        support_requirements: formData.support_requirements,
+        learning_goals: formData.learning_goals,
+        assessment_notes: formData.assessment_notes,
+        medical_conditions: formData.medical_conditions,
+        allergies: formData.allergies,
+        medications: formData.medications,
+        dietary_restrictions: formData.dietary_restrictions,
+        parent_guardian_name: formData.parent_guardian_name,
+        parent_guardian_phone: formData.parent_guardian_phone,
+        parent_guardian_email: formData.parent_guardian_email,
+        parent_guardian_relation: formData.parent_guardian_relation,
+        centre_id: formData.centre_id || 1,
+        status: formData.status
       };
       
-      onSave(updatedData);
+      await dispatch(updatePatient({ id: studentId, patientData: studentData })).unwrap();
+      
+      onSave({
+        ...formData,
+        name: `${formData.first_name} ${formData.last_name}`
+      });
+      
+      toast.success('Student updated successfully!');
     } catch (error) {
-      console.error('Error updating patient:', error);
-      toast.error('Error updating patient. Please try again.');
+      console.error('Error updating student:', error);
+      toast.error('Error updating student. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -123,8 +183,8 @@ const PatientEditForm = ({ patientId, onSave, onCancel }) => {
               <FiArrowLeft className="w-5 h-5 text-gray-600" />
             </motion.button>
             <div>
-              <h1 className="text-2xl font-semibold text-gray-800">Edit Patient</h1>
-              <p className="text-gray-600">Update patient information and medical details</p>
+              <h1 className="text-2xl font-semibold text-gray-800">Edit Student</h1>
+              <p className="text-gray-600">Update student information and learning details</p>
             </div>
           </div>
           
@@ -168,9 +228,9 @@ const PatientEditForm = ({ patientId, onSave, onCancel }) => {
         <div className="flex items-center text-sm text-gray-500 mb-6">
           <span>Home</span>
           <span className="mx-2">›</span>
-          <span>Patients</span>
+          <span>Students</span>
           <span className="mx-2">›</span>
-          <span className="text-gray-800">Edit Patient</span>
+          <span className="text-gray-800">Edit Student</span>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -188,18 +248,48 @@ const PatientEditForm = ({ patientId, onSave, onCancel }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name <span className="text-red-500">*</span>
+                  Student ID
                 </label>
                 <input
                   type="text"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.name ? 'border-red-500 bg-red-50' : 'border-gray-300'
-                  }`}
-                  placeholder="Enter full name"
+                  value={formData.student_id || ''}
+                  onChange={(e) => handleInputChange('student_id', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Auto-generated"
+                  disabled
                 />
-                {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  First Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.first_name}
+                  onChange={(e) => handleInputChange('first_name', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.first_name ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                  }`}
+                  placeholder="Enter first name"
+                />
+                {errors.first_name && <p className="mt-1 text-sm text-red-600">{errors.first_name}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Last Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.last_name}
+                  onChange={(e) => handleInputChange('last_name', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.last_name ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                  }`}
+                  placeholder="Enter last name"
+                />
+                {errors.last_name && <p className="mt-1 text-sm text-red-600">{errors.last_name}</p>}
               </div>
 
               <div>
@@ -208,13 +298,13 @@ const PatientEditForm = ({ patientId, onSave, onCancel }) => {
                 </label>
                 <input
                   type="date"
-                  value={formData.dateOfBirth}
-                  onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                  value={formData.date_of_birth}
+                  onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.dateOfBirth ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                    errors.date_of_birth ? 'border-red-500 bg-red-50' : 'border-gray-300'
                   }`}
                 />
-                {errors.dateOfBirth && <p className="mt-1 text-sm text-red-600">{errors.dateOfBirth}</p>}
+                {errors.date_of_birth && <p className="mt-1 text-sm text-red-600">{errors.date_of_birth}</p>}
               </div>
 
               <div>
@@ -226,53 +316,26 @@ const PatientEditForm = ({ patientId, onSave, onCancel }) => {
                   onChange={(e) => handleInputChange('gender', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
+                  <option value="">Select Gender</option>
                   {genders.map(gender => (
-                    <option key={gender} value={gender}>{gender}</option>
+                    <option key={gender} value={gender}>{gender.charAt(0).toUpperCase() + gender.slice(1)}</option>
                   ))}
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Blood Group
+                  Status
                 </label>
                 <select
-                  value={formData.bloodGroup}
-                  onChange={(e) => handleInputChange('bloodGroup', e.target.value)}
+                  value={formData.status}
+                  onChange={(e) => handleInputChange('status', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  {bloodGroups.map(group => (
-                    <option key={group} value={group}>{group}</option>
+                  {statuses.map(status => (
+                    <option key={status} value={status}>{status.replace('_', ' ').charAt(0).toUpperCase() + status.replace('_', ' ').slice(1)}</option>
                   ))}
                 </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Marital Status
-                </label>
-                <select
-                  value={formData.maritalStatus}
-                  onChange={(e) => handleInputChange('maritalStatus', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {maritalStatuses.map(status => (
-                    <option key={status} value={status}>{status}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Occupation
-                </label>
-                <input
-                  type="text"
-                  value={formData.occupation}
-                  onChange={(e) => handleInputChange('occupation', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter occupation"
-                />
               </div>
 
               <div className="md:col-span-2 lg:col-span-3">
@@ -289,6 +352,45 @@ const PatientEditForm = ({ patientId, onSave, onCancel }) => {
                   placeholder="Enter full address"
                 />
                 {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  City
+                </label>
+                <input
+                  type="text"
+                  value={formData.city}
+                  onChange={(e) => handleInputChange('city', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter city"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  State
+                </label>
+                <input
+                  type="text"
+                  value={formData.state}
+                  onChange={(e) => handleInputChange('state', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter state"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Zip Code
+                </label>
+                <input
+                  type="text"
+                  value={formData.zip_code}
+                  onChange={(e) => handleInputChange('zip_code', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter zip code"
+                />
               </div>
             </div>
           </motion.div>
@@ -347,11 +449,91 @@ const PatientEditForm = ({ patientId, onSave, onCancel }) => {
             className="bg-white rounded-xl p-6 shadow-sm border"
           >
             <div className="flex items-center space-x-2 mb-6">
-              <FiHeart className="w-5 h-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-800">Medical Information</h3>
+              <FiBook className="w-5 h-5 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-800">Learning Information</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Learning Needs
+                </label>
+                <textarea
+                  value={formData.learning_needs}
+                  onChange={(e) => handleInputChange('learning_needs', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  rows="3"
+                  placeholder="Describe learning needs and challenges"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Support Requirements
+                </label>
+                <textarea
+                  value={formData.support_requirements}
+                  onChange={(e) => handleInputChange('support_requirements', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  rows="3"
+                  placeholder="Describe support requirements"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Learning Goals
+                </label>
+                <textarea
+                  value={formData.learning_goals}
+                  onChange={(e) => handleInputChange('learning_goals', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  rows="3"
+                  placeholder="Describe learning goals and objectives"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Assessment Notes
+                </label>
+                <textarea
+                  value={formData.assessment_notes}
+                  onChange={(e) => handleInputChange('assessment_notes', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  rows="3"
+                  placeholder="Assessment observations and notes"
+                />
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Health Information */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-white rounded-xl p-6 shadow-sm border"
+          >
+            <div className="flex items-center space-x-2 mb-6">
+              <FiHeart className="w-5 h-5 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-800">Health Information</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Medical Conditions
+                </label>
+                <textarea
+                  value={formData.medical_conditions}
+                  onChange={(e) => handleInputChange('medical_conditions', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  rows="3"
+                  placeholder="List medical conditions (comma separated)"
+                />
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Allergies
@@ -361,116 +543,103 @@ const PatientEditForm = ({ patientId, onSave, onCancel }) => {
                   onChange={(e) => handleInputChange('allergies', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   rows="3"
-                  placeholder="List any allergies (comma separated)"
+                  placeholder="List allergies (comma separated)"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Chronic Conditions
+                  Medications
                 </label>
                 <textarea
-                  value={formData.chronicConditions}
-                  onChange={(e) => handleInputChange('chronicConditions', e.target.value)}
+                  value={formData.medications}
+                  onChange={(e) => handleInputChange('medications', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   rows="3"
-                  placeholder="List chronic conditions (comma separated)"
+                  placeholder="List medications with dosage (comma separated)"
                 />
               </div>
 
-              <div className="md:col-span-2">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Current Medications
+                  Dietary Restrictions
                 </label>
                 <textarea
-                  value={formData.currentMedications}
-                  onChange={(e) => handleInputChange('currentMedications', e.target.value)}
+                  value={formData.dietary_restrictions}
+                  onChange={(e) => handleInputChange('dietary_restrictions', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   rows="3"
-                  placeholder="List current medications with dosage (comma separated)"
+                  placeholder="List dietary restrictions"
                 />
               </div>
             </div>
           </motion.div>
 
-          {/* Insurance Information */}
+          {/* Parent/Guardian Information */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+            transition={{ delay: 0.4 }}
             className="bg-white rounded-xl p-6 shadow-sm border"
           >
             <div className="flex items-center space-x-2 mb-6">
-              <FiMail className="w-5 h-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-800">Insurance & Registration</h3>
+              <FiUser className="w-5 h-5 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-800">Parent/Guardian Information</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Primary Clinic
+                  Parent/Guardian Name
+                </label>
+                <input
+                  type="text"
+                  value={formData.parent_guardian_name}
+                  onChange={(e) => handleInputChange('parent_guardian_name', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Parent or guardian name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Relationship
                 </label>
                 <select
-                  value={formData.clinic}
-                  onChange={(e) => handleInputChange('clinic', e.target.value)}
+                  value={formData.parent_guardian_relation}
+                  onChange={(e) => handleInputChange('parent_guardian_relation', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  {clinics.map(clinic => (
-                    <option key={clinic} value={clinic}>{clinic}</option>
+                  <option value="">Select Relationship</option>
+                  {relations.map(relation => (
+                    <option key={relation} value={relation}>{relation}</option>
                   ))}
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Registration Date
+                  Parent Phone
                 </label>
                 <input
-                  type="date"
-                  value={formData.registrationDate}
-                  onChange={(e) => handleInputChange('registrationDate', e.target.value)}
+                  type="tel"
+                  value={formData.parent_guardian_phone}
+                  onChange={(e) => handleInputChange('parent_guardian_phone', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Parent phone number"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Status
-                </label>
-                <select
-                  value={formData.status}
-                  onChange={(e) => handleInputChange('status', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {statuses.map(status => (
-                    <option key={status} value={status}>{status}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Insurance Provider
+                  Parent Email
                 </label>
                 <input
-                  type="text"
-                  value={formData.insuranceProvider}
-                  onChange={(e) => handleInputChange('insuranceProvider', e.target.value)}
+                  type="email"
+                  value={formData.parent_guardian_email}
+                  onChange={(e) => handleInputChange('parent_guardian_email', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Insurance provider name"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Insurance Number
-                </label>
-                <input
-                  type="text"
-                  value={formData.insuranceNumber}
-                  onChange={(e) => handleInputChange('insuranceNumber', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Insurance policy number"
+                  placeholder="Parent email address"
                 />
               </div>
             </div>
@@ -480,11 +649,11 @@ const PatientEditForm = ({ patientId, onSave, onCancel }) => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: 0.5 }}
             className="bg-white rounded-xl p-6 shadow-sm border"
           >
             <div className="flex items-center space-x-2 mb-6">
-              <FiMapPin className="w-5 h-5 text-blue-600" />
+              <FiPhone className="w-5 h-5 text-blue-600" />
               <h3 className="text-lg font-semibold text-gray-800">Emergency Contact</h3>
             </div>
             
@@ -495,14 +664,14 @@ const PatientEditForm = ({ patientId, onSave, onCancel }) => {
                 </label>
                 <input
                   type="text"
-                  value={formData.emergencyContactName}
-                  onChange={(e) => handleInputChange('emergencyContactName', e.target.value)}
+                  value={formData.emergency_contact_name}
+                  onChange={(e) => handleInputChange('emergency_contact_name', e.target.value)}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.emergencyContactName ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                    errors.emergency_contact_name ? 'border-red-500 bg-red-50' : 'border-gray-300'
                   }`}
                   placeholder="Emergency contact name"
                 />
-                {errors.emergencyContactName && <p className="mt-1 text-sm text-red-600">{errors.emergencyContactName}</p>}
+                {errors.emergency_contact_name && <p className="mt-1 text-sm text-red-600">{errors.emergency_contact_name}</p>}
               </div>
 
               <div>
@@ -511,10 +680,10 @@ const PatientEditForm = ({ patientId, onSave, onCancel }) => {
                 </label>
                 <input
                   type="text"
-                  value={formData.emergencyContactRelation}
-                  onChange={(e) => handleInputChange('emergencyContactRelation', e.target.value)}
+                  value={formData.emergency_contact_relation}
+                  onChange={(e) => handleInputChange('emergency_contact_relation', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Relation to patient"
+                  placeholder="Relation to student"
                 />
               </div>
 
@@ -524,14 +693,14 @@ const PatientEditForm = ({ patientId, onSave, onCancel }) => {
                 </label>
                 <input
                   type="tel"
-                  value={formData.emergencyContactPhone}
-                  onChange={(e) => handleInputChange('emergencyContactPhone', e.target.value)}
+                  value={formData.emergency_contact_phone}
+                  onChange={(e) => handleInputChange('emergency_contact_phone', e.target.value)}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.emergencyContactPhone ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                    errors.emergency_contact_phone ? 'border-red-500 bg-red-50' : 'border-gray-300'
                   }`}
                   placeholder="Emergency contact phone"
                 />
-                {errors.emergencyContactPhone && <p className="mt-1 text-sm text-red-600">{errors.emergencyContactPhone}</p>}
+                {errors.emergency_contact_phone && <p className="mt-1 text-sm text-red-600">{errors.emergency_contact_phone}</p>}
               </div>
             </div>
           </motion.div>
@@ -541,4 +710,4 @@ const PatientEditForm = ({ patientId, onSave, onCancel }) => {
   );
 };
 
-export default PatientEditForm;
+export default StudentEditForm;

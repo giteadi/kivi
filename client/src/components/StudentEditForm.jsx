@@ -1,10 +1,12 @@
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiSave, FiX, FiUser, FiMail, FiPhone, FiMapPin } from 'react-icons/fi';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useToast } from './Toast';
 
 const StudentEditForm = ({ studentId, onSave, onCancel }) => {
   const toast = useToast();
+  const hasFetched = useRef(false);
+  const hasSaved = useRef(false);
   const [formData, setFormData] = useState({
     id: '',
     firstName: '',
@@ -37,31 +39,39 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
 
   useEffect(() => {
     const fetchStudent = async () => {
+      if (hasFetched.current) return;
+      hasFetched.current = true;
+      
       try {
-        const response = await fetch(`http://localhost:3005/api/students/${studentId}`);
+        // Remove # prefix from studentId if present
+        const cleanStudentId = studentId.toString().replace('#', '');
+        console.log('Fetching student with ID:', cleanStudentId);
+        const response = await fetch(`http://localhost:3005/api/students/${cleanStudentId}`);
         const result = await response.json();
+        console.log('API Response:', result);
         
         if (result.success) {
           const student = result.data;
+          console.log('Student data:', student);
           setFormData({
             id: student.id,
-            firstName: student.first_name,
-            lastName: student.last_name,
-            email: student.email,
-            phone: student.phone,
-            dateOfBirth: student.date_of_birth,
-            gender: student.gender,
-            address: student.address,
-            city: student.city,
-            state: student.state,
-            zipCode: student.zip_code,
-            centreId: student.centre_id,
-            emergencyContactName: student.emergency_contact_name,
-            emergencyContactPhone: student.emergency_contact_phone,
-            emergencyContactRelation: student.emergency_contact_relation,
-            learningNeeds: student.learning_needs,
-            supportRequirements: student.support_requirements,
-            status: student.status
+            firstName: student.first_name || '',
+            lastName: student.last_name || '',
+            email: student.email || '',
+            phone: student.phone || '',
+            dateOfBirth: student.date_of_birth ? student.date_of_birth.split('T')[0] : '',
+            gender: student.gender || '',
+            address: student.address || '',
+            city: student.city || '',
+            state: student.state || '',
+            zipCode: student.zip_code || '',
+            centreId: student.centre_id || '',
+            emergencyContactName: student.emergency_contact_name || '',
+            emergencyContactPhone: student.emergency_contact_phone || '',
+            emergencyContactRelation: student.emergency_contact_relation || '',
+            learningNeeds: student.learning_needs || '',
+            supportRequirements: student.support_requirements || '',
+            status: student.status || 'Active'
           });
         } else {
           toast.error('Failed to fetch student data');
@@ -74,10 +84,15 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
       }
     };
 
-    if (studentId) {
+    if (studentId && !hasFetched.current) {
       fetchStudent();
     }
-  }, [studentId, toast]);
+    
+    // Reset fetch flag when studentId changes
+    return () => {
+      hasFetched.current = false;
+    };
+  }, [studentId]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -133,14 +148,19 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    if (hasSaved.current) return;
+    
     if (!validateForm()) {
       return;
     }
 
     setIsSubmitting(true);
+    hasSaved.current = true;
     
     try {
-      const response = await fetch(`http://localhost:3005/api/students/${studentId}`, {
+      // Remove # prefix from studentId if present
+      const cleanStudentId = studentId.toString().replace('#', '');
+      const response = await fetch(`http://localhost:3005/api/students/${cleanStudentId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -161,6 +181,7 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
       toast.error('Error updating student');
     } finally {
       setIsSubmitting(false);
+      hasSaved.current = false;
     }
   };
 
