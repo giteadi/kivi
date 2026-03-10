@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -16,7 +16,9 @@ import {
   FiEye,
   FiCheckCircle,
   FiXCircle,
-  FiAlertCircle
+  FiAlertCircle,
+  FiRefreshCw,
+  FiBell
 } from 'react-icons/fi';
 import { fetchSessions, deleteSession } from '../store/slices/sessionSlice';
 import SessionCreateForm from './SessionCreateForm';
@@ -44,10 +46,36 @@ const SessionList = ({ onViewEncounter }) => {
     date_to: ''
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [newSessions, setNewSessions] = useState(new Set());
+  const [showNotification, setShowNotification] = useState(false);
+  const previousSessionsCount = useRef(0);
+  const pollingInterval = useRef(null);
 
   useEffect(() => {
     dispatch(fetchSessions());
+    
+    // Set up polling for real-time updates
+    pollingInterval.current = setInterval(() => {
+      dispatch(fetchSessions());
+    }, 10000); // Poll every 10 seconds
+    
+    return () => {
+      if (pollingInterval.current) {
+        clearInterval(pollingInterval.current);
+      }
+    };
   }, [dispatch]);
+
+  // Detect new sessions
+  useEffect(() => {
+    if (sessions.length > previousSessionsCount.current && previousSessionsCount.current > 0) {
+      const latestSession = sessions[0]; // Assuming newest session is first
+      setNewSessions(prev => new Set(prev).add(latestSession.id));
+      setShowNotification(true);
+      setTimeout(() => setShowNotification(false), 5000);
+    }
+    previousSessionsCount.current = sessions.length;
+  }, [sessions]);
 
   // Filter and search sessions
   const filteredSessions = sessions.filter(session => {
@@ -82,9 +110,25 @@ const SessionList = ({ onViewEncounter }) => {
       });
       dispatch(fetchSessions());
       setIsCreateFormOpen(false);
+      
+      // Show notification for new session
+      setShowNotification(true);
+      setTimeout(() => setShowNotification(false), 5000);
     } catch (error) {
       console.error('Error creating session:', error);
     }
+  };
+
+  const handleRefreshSessions = () => {
+    dispatch(fetchSessions());
+  };
+
+  const clearNewSessionStatus = (sessionId) => {
+    setNewSessions(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(sessionId);
+      return newSet;
+    });
   };
 
   const handleEditSession = async (sessionData) => {
@@ -164,11 +208,35 @@ const SessionList = ({ onViewEncounter }) => {
       <div className={`p-4 lg:p-6 ${sidebarCollapsed ? '' : 'lg:ml-64 xl:ml-64'}`}>
       {/* Header */}
       <div className="mb-8">
+        {/* Notification */}
+        <AnimatePresence>
+          {showNotification && (
+            <motion.div
+              initial={{ opacity: 0, y: -50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -50 }}
+              className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center"
+            >
+              <FiBell className="w-5 h-5 text-green-600 mr-3" />
+              <span className="text-green-800">New session booked successfully!</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-semibold text-gray-800">Sessions</h1>
             <p className="text-gray-600">Manage therapy sessions and appointments</p>
           </div>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={handleRefreshSessions}
+              className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+              title="Refresh sessions"
+            >
+              <FiRefreshCw className="w-4 h-4" />
+              <span>Refresh</span>
+            </button>
             <button
               onClick={() => setIsCreateFormOpen(true)}
               className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
@@ -176,6 +244,7 @@ const SessionList = ({ onViewEncounter }) => {
               <FiPlus className="w-4 h-4" />
               <span>New Session</span>
             </button>
+          </div>
         </div>
 
         {/* Search and Filters */}
@@ -320,9 +389,21 @@ const SessionList = ({ onViewEncounter }) => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
+                  onClick={() => clearNewSessionStatus(session.id)}
+                  className={`bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer ${
+                    newSessions.has(session.id) ? 'border-green-400 bg-green-50' : 'border-gray-200'
+                  }`}
                 >
                         <div className="p-4">
+                          {/* New Session Badge */}
+                          {newSessions.has(session.id) && (
+                            <div className="mb-2">
+                              <span className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">
+                                <FiBell className="w-3 h-3 mr-1" />
+                                New Booking
+                              </span>
+                            </div>
+                          )}
                           {/* Header */}
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex-1 min-w-0">
@@ -409,13 +490,25 @@ const SessionList = ({ onViewEncounter }) => {
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {currentSessions.map((session) => (
-                      <tr key={session.id} className="hover:bg-gray-50">
+                      <tr 
+                        key={session.id} 
+                        onClick={() => clearNewSessionStatus(session.id)}
+                        className={`hover:bg-gray-50 cursor-pointer ${
+                          newSessions.has(session.id) ? 'bg-green-50 border-l-4 border-l-green-400' : ''
+                        }`}
+                      >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
                             <div className="text-sm font-medium text-gray-900">
                               {session.student_first_name} {session.student_last_name}
                             </div>
                             <div className="text-sm text-gray-500">{session.programme_name}</div>
+                            {newSessions.has(session.id) && (
+                              <span className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium mt-1">
+                                <FiBell className="w-3 h-3 mr-1" />
+                                New
+                              </span>
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">

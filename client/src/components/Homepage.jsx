@@ -19,42 +19,133 @@ const Homepage = ({ onSelectPlan, onShowLogin }) => {
     dispatch(fetchServices());
   }, [dispatch]);
 
-  // Transform services data to plan format
-  const sessionPlans = servicesData
-    .filter(service => service.category && (
-      service.category.includes('Therapy') || 
-      service.category.includes('Learning') || 
-      service.category.includes('Counselling')
-    ))
-    .map(service => ({
-      id: service.programme_id,
-      title: service.name,
-      duration: '1 Hour',
-      price: parseInt(service.fee) * 100, // Convert to paisa
-      description: service.description,
-      features: [
-        'Professional therapy session',
-        'Customized learning approach',
-        'Progress tracking',
-        'Parent consultation'
-      ]
-    }));
+  // Transform services data to plan format with fallback to static data
+  const sessionPlans = servicesData.length > 0 
+    ? servicesData
+        .filter(service => service.category && (
+          service.category.includes('Session Plan') ||
+          service.category.includes('Therapy') || 
+          service.category.includes('Learning') || 
+          service.category.includes('Counselling')
+        ))
+        .map(service => ({
+          id: service.programme_id,
+          title: service.name,
+          duration: `${service.duration || 60} minutes`,
+          price: parseFloat(service.fee), // Use fee directly without multiplying
+          description: service.description || 'Professional therapy session',
+          features: [
+            'Professional therapy session',
+            'Customized learning approach',
+            'Progress tracking',
+            'Parent consultation'
+          ]
+        }))
+    : [
+      // Fallback static data when API is empty
+      {
+        id: 'SP001',
+        title: 'Individual Therapy Session',
+        duration: '1 Hour',
+        price: 50.00, // $50.00
+        description: 'One-on-one therapy session with personalized approach',
+        features: [
+          'Professional therapy session',
+          'Customized learning approach',
+          'Progress tracking',
+          'Parent consultation'
+        ]
+      },
+      {
+        id: 'SP002',
+        title: 'Group Therapy Session',
+        duration: '1.5 Hours',
+        price: 30.00, // $30.00
+        description: 'Small group therapy for social skill development',
+        features: [
+          'Group interaction activities',
+          'Social skill building',
+          'Peer learning',
+          'Progress reports'
+        ]
+      },
+      {
+        id: 'SP003',
+        title: 'Specialized Learning Session',
+        duration: '1 Hour',
+        price: 60.00, // $60.00
+        description: 'Specialized session for specific learning needs',
+        features: [
+          'Specialized curriculum',
+          'One-on-one attention',
+          'Customized materials',
+          'Expert therapist'
+        ]
+      }
+    ];
 
-  const assessmentPlans = servicesData
-    .filter(service => service.category && service.category.includes('Assessment'))
-    .map(service => ({
-      id: service.programme_id,
-      title: `Package ${service.programme_id}`,
-      subtitle: service.category,
-      price: parseInt(service.fee) * 100, // Convert to paisa
-      description: service.description,
-      features: [
-        'Comprehensive assessment',
-        'Detailed report',
-        'Parent consultation',
-        'School recommendations'
-      ]
-    }));
+  const assessmentPlans = servicesData.length > 0
+    ? servicesData
+        .filter(service => service.category && (
+          service.category.includes('Assessment') ||
+          service.category.includes('Evaluation') ||
+          service.category.includes('Testing')
+        ))
+        .map(service => ({
+          id: service.programme_id,
+          title: service.name,
+          subtitle: service.category,
+          price: parseFloat(service.fee), // Use fee directly without multiplying
+          description: service.description || 'Comprehensive assessment service',
+          features: [
+            'Comprehensive assessment',
+            'Detailed report',
+            'Parent consultation',
+            'School recommendations'
+          ]
+        }))
+    : [
+      // Fallback static data when API is empty
+      {
+        id: 'AP001',
+        title: 'Comprehensive Assessment',
+        subtitle: 'Full Evaluation',
+        price: 80.00, // $80.00
+        description: 'Complete psychological and learning assessment',
+        features: [
+          'Comprehensive assessment',
+          'Detailed report',
+          'Parent consultation',
+          'School recommendations'
+        ]
+      },
+      {
+        id: 'AP002',
+        title: 'Learning Disability Assessment',
+        subtitle: 'Specialized Evaluation',
+        price: 100.00, // $100.00
+        description: 'Focused assessment for learning disabilities',
+        features: [
+          'Specialized testing',
+          'Detailed diagnosis',
+          'Learning plan',
+          'Expert recommendations'
+        ]
+      },
+      {
+        id: 'AP003',
+        title: 'Behavioral Assessment',
+        subtitle: 'Behavior Analysis',
+        price: 70.00, // $70.00
+        description: 'Assessment for behavioral challenges and interventions',
+        features: [
+          'Behavior analysis',
+          'Intervention strategies',
+          'Parent guidance',
+          'Progress monitoring'
+        ]
+      }
+    ];
 
   // Debug services data
   useEffect(() => {
