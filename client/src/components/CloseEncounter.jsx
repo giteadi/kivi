@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { FiAlertTriangle, FiCheck, FiX, FiSave, FiLock } from 'react-icons/fi';
 
-const CloseEncounter = ({ onClose, onSave }) => {
+const CloseEncounter = ({ onClose, onSave, sessionData }) => {
   const [closeReason, setCloseReason] = useState('');
   const [finalNotes, setFinalNotes] = useState('');
   const [followUpRequired, setFollowUpRequired] = useState(false);
@@ -11,13 +11,21 @@ const CloseEncounter = ({ onClose, onSave }) => {
   const [saveBeforeClose, setSaveBeforeClose] = useState(true);
 
   const encounterSummary = {
-    patient: 'Patient Kjaggi',
-    date: 'February 20, 2026',
-    duration: '45 minutes',
-    problems: 2,
-    observations: 2,
-    notes: 2,
-    status: 'Active'
+    patient: sessionData?.student_first_name && sessionData?.student_last_name 
+      ? `${sessionData.student_first_name} ${sessionData.student_last_name}` 
+      : 'Unknown Student',
+    date: sessionData?.session_date 
+      ? new Date(sessionData.session_date).toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        })
+      : 'Unknown Date',
+    duration: sessionData?.duration ? `${sessionData.duration} minutes` : 'Unknown duration',
+    problems: sessionData?.session_goals ? 1 : 0,
+    observations: sessionData?.materials_needed ? 1 : 0,
+    notes: sessionData?.notes ? 1 : 0,
+    status: sessionData?.status || 'Active'
   };
 
   const closeReasons = [

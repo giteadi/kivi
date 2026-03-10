@@ -1,52 +1,106 @@
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiMail, FiMapPin, FiUser, FiTrash2 } from 'react-icons/fi';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '../services/api';
 import BodyChart from './BodyChart';
 import PrintEncounter from './PrintEncounter';
 import CloseEncounter from './CloseEncounter';
 
-const EncounterDetail = ({ onBack }) => {
+const EncounterDetail = ({ encounterId, onBack }) => {
   const [activeTab, setActiveTab] = useState('clinical-details');
+  const [sessionData, setSessionData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState('');
+  const [problems, setProblems] = useState([]);
+  const [observations, setObservations] = useState([]);
+  const [recommendedNotes, setRecommendedNotes] = useState([]);
 
+  // Fetch session data when component mounts
+  useEffect(() => {
+    const fetchSessionData = async () => {
+      if (!encounterId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        console.log('Fetching session data for ID:', encounterId);
+        const response = await api.request(`/sessions/${encounterId}`);
+        console.log('API response:', response);
+        
+        if (response.success) {
+          const session = response.data;
+          console.log('Session data:', session);
+          setSessionData(session);
+          
+          // Set initial data from session
+          setNotes(session.notes || '');
+          setProblems(session.session_goals ? [{ id: 1, text: session.session_goals }] : []);
+          setObservations(session.materials_needed ? [{ id: 1, text: session.materials_needed }] : []);
+          setRecommendedNotes(session.preparation_notes ? [session.preparation_notes] : []);
+        } else {
+          console.error('API returned error:', response);
+        }
+      } catch (error) {
+        console.error('Error fetching session data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSessionData();
+  }, [encounterId]);
+
+  // Show loading state while fetching data
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <span className="ml-2">Loading session data...</span>
+      </div>
+    );
+  }
+
+  // Show error state if no session data
+  if (!sessionData) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Session not found</h3>
+          <p className="text-gray-600 mb-4">The session you're looking for doesn't exist.</p>
+          <button
+            onClick={onBack}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Use real session data
   const patientData = {
-    name: 'Patient Kjaggi',
-    email: 'patient_kjaggi@kivicare.com',
-    encounterDate: 'February 20, 2026',
-    address: '1957 Forest Blvd'
+    name: sessionData.student_first_name && sessionData.student_last_name 
+      ? `${sessionData.student_first_name} ${sessionData.student_last_name}` 
+      : 'Unknown Student',
+    email: sessionData.student_email || 'No email available',
+    encounterDate: sessionData.session_date 
+      ? new Date(sessionData.session_date).toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        })
+      : 'Unknown Date',
+    address: sessionData.centre_name || 'No address available'
   };
 
   const clinicData = {
-    name: 'Clinic Kjaggi',
-    doctor: 'Dr. Kjaggi'
+    name: sessionData.centre_name || 'Unknown Centre',
+    doctor: sessionData.therapist_first_name && sessionData.therapist_last_name
+      ? `${sessionData.therapist_first_name} ${sessionData.therapist_last_name}`
+      : 'Unknown Therapist'
   };
-
-  const problems = [
-    {
-      id: 1,
-      text: 'Family history of hypertension (father) and breast cancer (mother)'
-    },
-    {
-      id: 2,
-      text: 'Penicillin allergy - causes rash and difficulty'
-    }
-  ];
-
-  const observations = [
-    {
-      id: 1,
-      text: 'Mild heart murmur detected during physical exam'
-    },
-    {
-      id: 2,
-      text: 'Mild heart murmur detected during physical exam'
-    }
-  ];
-
-  const recommendedNotes = [
-    'Recommended daily exercise and improved dietary habits',
-    'Appendectomy performed in 2015 - no complications'
-  ];
 
   const tabs = [
     { id: 'clinical-details', label: 'Clinical Details', color: 'blue' },
@@ -55,10 +109,39 @@ const EncounterDetail = ({ onBack }) => {
     { id: 'close-encounter', label: 'Close Encounter', color: 'red' }
   ];
 
-  const handleSave = () => {
-    // In a real app, this would save all encounter data
-    console.log('Saving encounter data...');
-    alert('Encounter data saved successfully');
+  const handleSave = async () => {
+    try {
+      // Prepare encounter data for saving
+      const encounterData = {
+        session_id: encounterId,
+        student_id: sessionData.student_id,
+        therapist_id: sessionData.therapist_id,
+        centre_id: sessionData.centre_id,
+        encounter_date: sessionData.session_date,
+        encounter_time: sessionData.session_time,
+        session_goals: problems.map(p => p.text).join('\n'),
+        behavioral_observations: observations.map(o => o.text).join('\n'),
+        progress_notes: notes,
+        recommendations: recommendedNotes.join('\n'),
+        status: 'completed'
+      };
+
+      // Save encounter data
+      const response = await api.request('/encounters', {
+        method: 'POST',
+        body: JSON.stringify(encounterData)
+      });
+
+      if (response.success) {
+        alert('Encounter data saved successfully');
+        onBack();
+      } else {
+        alert('Failed to save encounter data');
+      }
+    } catch (error) {
+      console.error('Error saving encounter data:', error);
+      alert('Error saving encounter data');
+    }
   };
 
   const handleCloseEncounter = () => {
@@ -126,8 +209,13 @@ const EncounterDetail = ({ onBack }) => {
 
                 {/* Description */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">Description</h3>
-                  <p className="text-gray-600 text-sm">Initial consultation and</p>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">Session Details</h3>
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <div><strong>Programme:</strong> {sessionData.programme_name || 'Not specified'}</div>
+                    <div><strong>Time:</strong> {sessionData.session_time || 'Not set'} ({sessionData.duration || 0} minutes)</div>
+                    <div><strong>Type:</strong> {sessionData.session_type || 'Not specified'}</div>
+                    <div><strong>Status:</strong> {sessionData.status || 'Unknown'}</div>
+                  </div>
                 </div>
               </div>
 
@@ -235,21 +323,26 @@ const EncounterDetail = ({ onBack }) => {
       case 'body-chart':
         return (
           <div className="p-6">
-            <BodyChart />
+            <BodyChart sessionData={sessionData} />
           </div>
         );
 
       case 'print-encounter':
         return (
           <div className="p-6">
-            <PrintEncounter />
+            <PrintEncounter 
+              sessionData={sessionData} 
+              problems={problems}
+              observations={observations}
+              notes={notes}
+            />
           </div>
         );
 
       case 'close-encounter':
         return (
           <div className="p-6">
-            <CloseEncounter onClose={onBack} onSave={handleSave} />
+            <CloseEncounter onClose={onBack} onSave={handleSave} sessionData={sessionData} />
           </div>
         );
 

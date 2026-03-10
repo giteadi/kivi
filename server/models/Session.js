@@ -62,6 +62,28 @@ class Session extends BaseModel {
     return await this.query(sql, params);
   }
 
+  // Get single session with related data
+  async findById(id) {
+    const sql = `
+      SELECT s.*, 
+             st.first_name as student_first_name, st.last_name as student_last_name, st.email as student_email,
+             tu.first_name as therapist_first_name, tu.last_name as therapist_last_name,
+             t.specialty as therapist_specialty,
+             c.name as centre_name,
+             p.name as programme_name, p.fee as programme_fee
+      FROM kivi_sessions s
+      LEFT JOIN kivi_students st ON s.student_id = st.id
+      LEFT JOIN kivi_therapists t ON s.therapist_id = t.id
+      LEFT JOIN kivi_users tu ON t.user_id = tu.id
+      LEFT JOIN kivi_centres c ON s.centre_id = c.id
+      LEFT JOIN kivi_programmes p ON s.programme_id = p.id
+      WHERE s.id = ?
+    `;
+    
+    const result = await this.query(sql, [id]);
+    return result.length > 0 ? result[0] : null;
+  }
+
   // Get available time slots for a therapist on a specific date
   async getAvailableTimeSlots(therapistId, date, duration = 30) {
     console.log(`=== DEBUG getAvailableTimeSlots ===`);

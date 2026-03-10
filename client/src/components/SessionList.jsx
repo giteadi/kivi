@@ -23,7 +23,7 @@ import SessionCreateForm from './SessionCreateForm';
 import SessionEditForm from './SessionEditForm';
 import api from '../services/api';
 
-const SessionList = () => {
+const SessionList = ({ onViewEncounter }) => {
   const dispatch = useDispatch();
   const { sessions, loading, error } = useSelector((state) => state.sessions);
   
@@ -337,6 +337,12 @@ const SessionList = () => {
                       </div>
                       <div className="flex space-x-1">
                         <button
+                          onClick={() => onViewEncounter && onViewEncounter(session.id)}
+                          className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        >
+                          <FiEye className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => openEditForm(session)}
                           className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         >
@@ -432,6 +438,12 @@ const SessionList = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <div className="flex space-x-2">
+                            <button
+                              onClick={() => onViewEncounter && onViewEncounter(session.id)}
+                              className="text-green-600 hover:text-green-800"
+                            >
+                              <FiEye className="w-4 h-4" />
+                            </button>
                             <button
                               onClick={() => openEditForm(session)}
                               className="text-blue-600 hover:text-blue-800"

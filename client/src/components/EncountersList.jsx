@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchServices } from '../store/slices/serviceSlice';
 
-const EncountersList = ({ onViewEncounter, onEditEncounter, onDeleteEncounter, onCreateNewEncounter }) => {
+const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgramme }) => {
   const dispatch = useDispatch();
-  const { services: encounters, isLoading, error } = useSelector((state) => state.services);
+  const { services: programmes, isLoading, error } = useSelector((state) => state.services);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -17,34 +17,34 @@ const EncountersList = ({ onViewEncounter, onEditEncounter, onDeleteEncounter, o
   }, [dispatch]);
 
   // Transform API data to match frontend format
-  const transformedEncounters = encounters.map(encounter => ({
-    id: encounter.id,
-    patient: `Student ${encounter.id}`,
-    doctor: encounter.therapist_first_name ? 
-      `${encounter.therapist_first_name} ${encounter.therapist_last_name}` : 
+  const transformedProgrammes = programmes.map(programme => ({
+    id: programme.id,
+    patient: `Student ${programme.id}`,
+    doctor: programme.therapist_first_name ? 
+      `${programme.therapist_first_name} ${programme.therapist_last_name}` : 
       'Not Assigned',
-    clinic: `Centre ${encounter.centre_id}`,
-    date: new Date(encounter.created_at).toLocaleDateString('en-US', { 
+    clinic: `Centre ${programme.centre_id}`,
+    date: new Date(programme.created_at).toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 
     }),
     time: '10:00 AM', // Default time since not in API
-    type: encounter.name || 'General Session',
-    status: encounter.status === 'active' ? 'Active' : 
-            encounter.status === 'inactive' ? 'Completed' : 'Closed',
-    duration: `${encounter.duration} min`,
-    problems: encounter.description ? 1 : 0,
-    observations: encounter.objectives ? 1 : 0,
-    notes: encounter.target_age_group ? 1 : 0
+    type: programme.name || 'General Programme',
+    status: programme.status === 'active' ? 'Active' : 
+            programme.status === 'inactive' ? 'Inactive' : 'Archived',
+    duration: `${programme.duration} min`,
+    problems: programme.description ? 1 : 0,
+    observations: programme.objectives ? 1 : 0,
+    notes: programme.target_age_group ? 1 : 0
   }));
 
-  const filteredEncounters = transformedEncounters.filter(encounter => {
-    const matchesSearch = encounter.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         encounter.doctor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         encounter.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         encounter.clinic.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || encounter.status.toLowerCase() === filterStatus;
+  const filteredProgrammes = transformedProgrammes.filter(programme => {
+    const matchesSearch = programme.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         programme.doctor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         programme.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         programme.clinic.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filterStatus === 'all' || programme.status.toLowerCase() === filterStatus;
     return matchesSearch && matchesFilter;
   });
 
@@ -52,10 +52,10 @@ const EncountersList = ({ onViewEncounter, onEditEncounter, onDeleteEncounter, o
     switch (status.toLowerCase()) {
       case 'active':
         return 'bg-green-100 text-green-800';
-      case 'completed':
-        return 'bg-blue-100 text-blue-800';
-      case 'closed':
+      case 'inactive':
         return 'bg-gray-100 text-gray-800';
+      case 'archived':
+        return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -74,7 +74,7 @@ const EncountersList = ({ onViewEncounter, onEditEncounter, onDeleteEncounter, o
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => onCreateNewEncounter && onCreateNewEncounter()}
+            onClick={() => onCreateNewProgramme && onCreateNewProgramme()}
             className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
           >
             <FiPlus className="w-4 h-4" />
@@ -118,8 +118,8 @@ const EncountersList = ({ onViewEncounter, onEditEncounter, onDeleteEncounter, o
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
-                <option value="completed">Completed</option>
-                <option value="closed">Closed</option>
+                <option value="inactive">Inactive</option>
+                <option value="archived">Archived</option>
               </select>
             </div>
           </div>
@@ -136,13 +136,13 @@ const EncountersList = ({ onViewEncounter, onEditEncounter, onDeleteEncounter, o
             <div className="text-center py-12">
               <div className="text-gray-500">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-lg font-medium">Loading programs...</p>
+                <p className="text-lg font-medium">Loading programmes...</p>
               </div>
             </div>
           ) : error ? (
             <div className="text-center py-12">
               <div className="text-red-500">
-                <p className="text-lg font-medium">Error loading programs</p>
+                <p className="text-lg font-medium">Error loading programmes</p>
                 <p className="text-sm">{error}</p>
               </div>
             </div>
@@ -161,13 +161,13 @@ const EncountersList = ({ onViewEncounter, onEditEncounter, onDeleteEncounter, o
                       Date & Time
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Type
+                      Programme Type
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Data
+                      Info
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
@@ -175,9 +175,9 @@ const EncountersList = ({ onViewEncounter, onEditEncounter, onDeleteEncounter, o
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredEncounters.map((encounter) => (
+                  {filteredProgrammes.map((programme) => (
                     <motion.tr
-                      key={encounter.id}
+                      key={programme.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       whileHover={{ backgroundColor: '#f9fafb' }}
@@ -189,37 +189,37 @@ const EncountersList = ({ onViewEncounter, onEditEncounter, onDeleteEncounter, o
                             <FiUser className="w-4 h-4 text-purple-600" />
                           </div>
                           <div>
-                            <div className="text-sm font-medium text-gray-900">{encounter.patient}</div>
-                            <div className="text-sm text-gray-500">{encounter.clinic}</div>
+                            <div className="text-sm font-medium text-gray-900">{programme.patient}</div>
+                            <div className="text-sm text-gray-500">{programme.clinic}</div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{encounter.doctor}</div>
+                        <div className="text-sm font-medium text-gray-900">{programme.doctor}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center text-sm text-gray-900">
                           <FiCalendar className="w-4 h-4 mr-2 text-gray-400" />
                           <div>
-                            <div>{encounter.date}</div>
-                            <div className="text-gray-500">{encounter.time}</div>
+                            <div>{programme.date}</div>
+                            <div className="text-gray-500">{programme.time}</div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{encounter.type}</div>
-                        <div className="text-sm text-gray-500">{encounter.duration}</div>
+                        <div className="text-sm text-gray-900">{programme.type}</div>
+                        <div className="text-sm text-gray-500">{programme.duration}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(encounter.status)}`}>
-                          {encounter.status}
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(programme.status)}`}>
+                          {programme.status}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <div className="space-y-1">
-                          <div>Problems: {encounter.problems}</div>
-                          <div>Observations: {encounter.observations}</div>
-                          <div>Notes: {encounter.notes}</div>
+                          <div>Desc: {programme.problems}</div>
+                          <div>Obj: {programme.observations}</div>
+                          <div>Age: {programme.notes}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -227,21 +227,12 @@ const EncountersList = ({ onViewEncounter, onEditEncounter, onDeleteEncounter, o
                           <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => onViewEncounter(encounter.id)}
-                            className="text-blue-600 hover:text-blue-900 p-1 rounded"
-                            title="View Details"
-                          >
-                            <FiEye className="w-4 h-4" />
-                          </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
                             onClick={(e) => {
                               e.stopPropagation();
-                              onEditEncounter && onEditEncounter(encounter.id);
+                              onEditProgramme && onEditProgramme(programme.id);
                             }}
                             className="text-green-600 hover:text-green-900 p-1 rounded"
-                            title="Edit"
+                            title="Edit Programme"
                           >
                             <FiEdit3 className="w-4 h-4" />
                           </motion.button>
@@ -250,10 +241,10 @@ const EncountersList = ({ onViewEncounter, onEditEncounter, onDeleteEncounter, o
                             whileTap={{ scale: 0.95 }}
                             onClick={(e) => {
                               e.stopPropagation();
-                              onDeleteEncounter && onDeleteEncounter(encounter.id);
+                              onDeleteProgramme && onDeleteProgramme(programme.id);
                             }}
                             className="text-red-600 hover:text-red-900 p-1 rounded"
-                            title="Delete"
+                            title="Delete Programme"
                           >
                             <FiTrash2 className="w-4 h-4" />
                           </motion.button>
@@ -266,11 +257,11 @@ const EncountersList = ({ onViewEncounter, onEditEncounter, onDeleteEncounter, o
             </div>
           )}
 
-          {!isLoading && !error && filteredEncounters.length === 0 && (
+          {!isLoading && !error && filteredProgrammes.length === 0 && (
             <div className="text-center py-12">
               <div className="text-gray-500">
                 <FiCalendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium">No sessions found</p>
+                <p className="text-lg font-medium">No programmes found</p>
                 <p className="text-sm">Try adjusting your search or filter criteria</p>
               </div>
             </div>
@@ -285,26 +276,26 @@ const EncountersList = ({ onViewEncounter, onEditEncounter, onDeleteEncounter, o
           className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4"
         >
           <div className="bg-white rounded-lg p-4 shadow-sm border">
-            <div className="text-2xl font-bold text-blue-600">{transformedEncounters.length}</div>
-            <div className="text-sm text-gray-600">Total Sessions</div>
+            <div className="text-2xl font-bold text-blue-600">{transformedProgrammes.length}</div>
+            <div className="text-sm text-gray-600">Total Programmes</div>
           </div>
           <div className="bg-white rounded-lg p-4 shadow-sm border">
             <div className="text-2xl font-bold text-green-600">
-              {transformedEncounters.filter(e => e.status === 'Active').length}
+              {transformedProgrammes.filter(p => p.status === 'Active').length}
             </div>
             <div className="text-sm text-gray-600">Active</div>
           </div>
           <div className="bg-white rounded-lg p-4 shadow-sm border">
             <div className="text-2xl font-bold text-blue-600">
-              {transformedEncounters.filter(e => e.status === 'Completed').length}
+              {transformedProgrammes.filter(p => p.status === 'Inactive').length}
             </div>
-            <div className="text-sm text-gray-600">Completed</div>
+            <div className="text-sm text-gray-600">Inactive</div>
           </div>
           <div className="bg-white rounded-lg p-4 shadow-sm border">
             <div className="text-2xl font-bold text-gray-600">
-              {transformedEncounters.filter(e => e.status === 'Closed').length}
+              {transformedProgrammes.filter(p => p.status === 'Archived').length}
             </div>
-            <div className="text-sm text-gray-600">Closed</div>
+            <div className="text-sm text-gray-600">Archived</div>
           </div>
         </motion.div>
       </div>

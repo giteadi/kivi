@@ -3,6 +3,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import { setCredentials } from './store/slices/authSlice';
 import { fetchDoctors } from './store/slices/doctorSlice';
+import { fetchServices } from './store/slices/serviceSlice';
+import api from './services/api';
 import ErrorBoundary from './components/ErrorBoundary';
 import ErrorToast from './components/ErrorToast';
 import useErrorHandler from './hooks/useErrorHandler';
@@ -77,7 +79,7 @@ function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSessionCreateModalOpen, setIsSessionCreateModalOpen] = useState(false);
   const [isSessionEditModalOpen, setIsSessionEditModalOpen] = useState(false);
-  const [selectedSessionId, setSelectedSessionId] = useState(null);
+  const [selectedEncounterId, setSelectedEncounterId] = useState(null);
   const [navigationHistory, setNavigationHistory] = useState(['dashboard']);
 
   // Check authentication on app load
@@ -265,7 +267,8 @@ function App() {
   };
 
   const handleViewEncounter = (encounterId = null) => {
-    // Always navigate to encounters section when viewing encounter details
+    // Set the selected encounter ID and navigate to encounter details
+    setSelectedEncounterId(encounterId);
     setActiveItem('encounters-list');
     setCurrentView('encounter-detail');
   };
@@ -568,9 +571,25 @@ function App() {
     }
   };
 
-  const handleDeleteEncounter = (encounterId) => {
-    if (window.confirm('Are you sure you want to delete this session?')) {
-      alert(`Session ${encounterId} deleted successfully!`);
+  const handleDeleteEncounter = async (encounterId) => {
+    if (window.confirm('Are you sure you want to delete this programme?')) {
+      try {
+        // Call the delete API endpoint
+        const response = await api.request(`/services/${encounterId}`, {
+          method: 'DELETE'
+        });
+        
+        if (response.success) {
+          alert('Programme deleted successfully!');
+          // Refresh the list by dispatching fetchServices again
+          dispatch(fetchServices());
+        } else {
+          alert('Failed to delete programme');
+        }
+      } catch (error) {
+        console.error('Error deleting programme:', error);
+        alert('Error deleting programme');
+      }
     }
   };
 
@@ -975,7 +994,10 @@ ${service.target_age_group || 'Not specified'}
     // Handle encounter detail view
     if (currentView === 'encounter-detail') {
       return (
-        <EncounterDetail onBack={handleBackToEncountersList} />
+        <EncounterDetail 
+          encounterId={selectedEncounterId}
+          onBack={handleBackToEncountersList} 
+        />
       );
     }
 
@@ -1031,7 +1053,7 @@ ${service.target_age_group || 'Not specified'}
         if (currentView === 'appointments-list') {
           return <AppointmentsList onViewAppointment={handleAppointmentClick} onEditAppointment={handleEditAppointment} onDeleteAppointment={handleDeleteAppointment} onCreateNewAppointment={handleCreateNewAppointment} />;
         }
-        return <EncountersList onViewEncounter={handleViewEncounter} onEditEncounter={handleEditEncounter} onDeleteEncounter={handleDeleteEncounter} onCreateNewEncounter={handleCreateNewEncounter} />;
+        return <EncountersList onEditProgramme={handleEditEncounter} onDeleteProgramme={handleDeleteEncounter} onCreateNewProgramme={handleCreateNewEncounter} />;
       
       case 'encounter-templates':
         return (
@@ -1045,7 +1067,7 @@ ${service.target_age_group || 'Not specified'}
         );
       
       case 'sessions':
-        return <SessionList />;
+        return <SessionList onViewEncounter={handleViewEncounter} />;
       
       case 'clinic-revenue':
         return <ClinicRevenue />;

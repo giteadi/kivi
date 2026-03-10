@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { FiPrinter, FiDownload, FiMail, FiEye } from 'react-icons/fi';
 import { useState } from 'react';
 
-const PrintEncounter = () => {
+const PrintEncounter = ({ sessionData, problems, observations, notes }) => {
   const [selectedSections, setSelectedSections] = useState({
     studentInfo: true,
     centerInfo: true,
@@ -21,24 +21,34 @@ const PrintEncounter = () => {
 
   const encounterData = {
     student: {
-      name: 'Student Kjaggi',
-      id: 'S001',
-      age: '45',
-      gender: 'Male',
-      phone: '6315 039',
-      email: 'student_kjaggi@mindsaidlearning.com'
+      name: sessionData?.student_first_name && sessionData?.student_last_name 
+        ? `${sessionData.student_first_name} ${sessionData.student_last_name}` 
+        : 'Unknown Student',
+      id: sessionData?.student_id || 'N/A',
+      age: 'N/A',
+      gender: 'N/A',
+      phone: 'N/A',
+      email: sessionData?.student_email || 'No email'
     },
     center: {
-      name: 'MindSaid Learning Center',
-      therapist: 'Therapist Kjaggi',
-      address: '1957 Forest Blvd',
-      phone: '5000 000'
+      name: sessionData?.centre_name || 'Unknown Centre',
+      therapist: sessionData?.therapist_first_name && sessionData?.therapist_last_name
+        ? `${sessionData.therapist_first_name} ${sessionData.therapist_last_name}`
+        : 'Unknown Therapist',
+      address: 'N/A',
+      phone: 'N/A'
     },
     session: {
-      date: 'February 20, 2026',
-      time: '9:00 AM',
-      type: 'Follow Up Session',
-      status: 'Completed'
+      date: sessionData?.session_date 
+        ? new Date(sessionData.session_date).toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          })
+        : 'Unknown Date',
+      time: sessionData?.session_time || 'Unknown Time',
+      type: sessionData?.programme_name || 'Unknown Programme',
+      status: sessionData?.status || 'Unknown'
     }
   };
 
@@ -277,8 +287,13 @@ const PrintEncounter = () => {
                 <div className="mb-6">
                   <h4 className="font-semibold text-gray-800 mb-2">Problems</h4>
                   <ul className="text-sm list-disc list-inside space-y-1">
-                    <li>Family history of hypertension (father) and breast cancer (mother)</li>
-                    <li>Penicillin allergy - causes rash and difficulty</li>
+                    {problems && problems.length > 0 ? (
+                      problems.map((problem, index) => (
+                        <li key={problem.id || index}>{problem.text}</li>
+                      ))
+                    ) : (
+                      <li className="text-gray-500">No problems recorded</li>
+                    )}
                   </ul>
                 </div>
               )}
@@ -288,8 +303,13 @@ const PrintEncounter = () => {
                 <div className="mb-6">
                   <h4 className="font-semibold text-gray-800 mb-2">Observations</h4>
                   <ul className="text-sm list-disc list-inside space-y-1">
-                    <li>Mild heart murmur detected during physical exam</li>
-                    <li>Blood pressure within normal range</li>
+                    {observations && observations.length > 0 ? (
+                      observations.map((observation, index) => (
+                        <li key={observation.id || index}>{observation.text}</li>
+                      ))
+                    ) : (
+                      <li className="text-gray-500">No observations recorded</li>
+                    )}
                   </ul>
                 </div>
               )}
@@ -298,10 +318,11 @@ const PrintEncounter = () => {
               {selectedSections.notes && (
                 <div className="mb-6">
                   <h4 className="font-semibold text-gray-800 mb-2">Notes</h4>
-                  <ul className="text-sm list-disc list-inside space-y-1">
-                    <li>Recommended daily exercise and improved dietary habits</li>
-                    <li>Appendectomy performed in 2015 - no complications</li>
-                  </ul>
+                  {notes && notes.trim() ? (
+                    <p className="text-sm text-gray-700">{notes}</p>
+                  ) : (
+                    <p className="text-sm text-gray-500">No notes recorded</p>
+                  )}
                 </div>
               )}
 

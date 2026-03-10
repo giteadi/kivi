@@ -2,11 +2,12 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { FiPlus, FiTrash2, FiEdit3 } from 'react-icons/fi';
 
-const BodyChart = () => {
-  const [annotations, setAnnotations] = useState([
-    { id: 1, x: 30, y: 20, note: 'Mild pain in shoulder area', type: 'pain' },
-    { id: 2, x: 50, y: 60, note: 'Heart murmur detected', type: 'observation' }
-  ]);
+const BodyChart = ({ sessionData }) => {
+  const [annotations, setAnnotations] = useState(
+    sessionData?.materials_needed 
+      ? [{ id: 1, x: 50, y: 50, note: sessionData.materials_needed, type: 'observation' }]
+      : []
+  );
   const [selectedAnnotation, setSelectedAnnotation] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newNote, setNewNote] = useState('');
