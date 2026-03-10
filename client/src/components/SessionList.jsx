@@ -22,10 +22,12 @@ import { fetchSessions, deleteSession } from '../store/slices/sessionSlice';
 import SessionCreateForm from './SessionCreateForm';
 import SessionEditForm from './SessionEditForm';
 import api from '../services/api';
+import { useSidebar } from '../App';
 
 const SessionList = ({ onViewEncounter }) => {
   const dispatch = useDispatch();
   const { sessions, loading, error } = useSelector((state) => state.sessions);
+  const { sidebarCollapsed } = useSidebar();
   
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
@@ -158,27 +160,28 @@ const SessionList = ({ onViewEncounter }) => {
   }
 
   return (
-    <div className="p-6">
+    <div className="min-h-screen bg-white">
+      <div className={`p-4 lg:p-6 ${sidebarCollapsed ? '' : 'lg:ml-64 xl:ml-64'}`}>
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Sessions</h1>
-            <p className="text-gray-600 mt-1">Manage therapy sessions and appointments</p>
+            <h1 className="text-2xl font-semibold text-gray-800">Sessions</h1>
+            <p className="text-gray-600">Manage therapy sessions and appointments</p>
           </div>
-          <button
-            onClick={() => setIsCreateFormOpen(true)}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <FiPlus className="w-5 h-5 mr-2" />
-            New Session
-          </button>
+            <button
+              onClick={() => setIsCreateFormOpen(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            >
+              <FiPlus className="w-4 h-4" />
+              <span>New Session</span>
+            </button>
         </div>
 
         {/* Search and Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mb-6">
           <div className="flex-1 relative">
-            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
               placeholder="Search sessions..."
@@ -187,11 +190,10 @@ const SessionList = ({ onViewEncounter }) => {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
-          
-          <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
@@ -205,16 +207,16 @@ const SessionList = ({ onViewEncounter }) => {
             <div className="flex bg-gray-100 rounded-lg p-1">
               <button
                 onClick={() => setViewMode('card')}
-                className={`px-3 py-1 rounded transition-colors ${
-                  viewMode === 'card' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600'
+                className={`px-3 py-1.5 rounded transition-colors flex items-center ${
+                  viewMode === 'card' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'
                 }`}
               >
                 <FiEye className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('table')}
-                className={`px-3 py-1 rounded transition-colors ${
-                  viewMode === 'table' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600'
+                className={`px-3 py-1.5 rounded transition-colors flex items-center ${
+                  viewMode === 'table' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'
                 }`}
               >
                 <FiFilter className="w-4 h-4" />
@@ -311,82 +313,85 @@ const SessionList = ({ onViewEncounter }) => {
       ) : (
         <>
           {viewMode === 'card' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
               {currentSessions.map((session) => (
                 <motion.div
                   key={session.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                  className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
                 >
-                  <div className="p-6">
-                    {/* Header */}
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center mb-2">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(session.status)}`}>
-                            {getStatusIcon(session.status)}
-                            <span className="ml-1 capitalize">{session.status.replace('_', ' ')}</span>
-                          </span>
+                        <div className="p-4">
+                          {/* Header */}
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center mb-2">
+                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(session.status)}`}>
+                                  {getStatusIcon(session.status)}
+                                  <span className="ml-1 capitalize">{session.status.replace('_', ' ')}</span>
+                                </span>
+                              </div>
+                              <h3 className="font-semibold text-gray-900 text-sm mb-1">
+                                {session.student_first_name} {session.student_last_name}
+                              </h3>
+                              <p className="text-xs text-gray-600">{session.programme_name}</p>
+                            </div>
+                            <div className="flex flex-col space-y-1">
+                              <button
+                                onClick={() => onViewEncounter && onViewEncounter(session.id)}
+                                className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
+                                title="View"
+                              >
+                                <FiEye className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => openEditForm(session)}
+                                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                title="Edit"
+                              >
+                                <FiEdit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteSession(session.id)}
+                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                title="Delete"
+                              >
+                                <FiTrash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Session Details */}
+                          <div className="space-y-2">
+                            <div className="flex items-center text-xs text-gray-600">
+                              <FiCalendar className="w-3.5 h-3.5 mr-2 text-gray-400" />
+                              <span>{new Date(session.session_date).toLocaleDateString()}</span>
+                            </div>
+                            <div className="flex items-center text-xs text-gray-600">
+                              <FiClock className="w-3.5 h-3.5 mr-2 text-gray-400" />
+                              <span>{session.session_time} ({session.duration} min)</span>
+                            </div>
+                            <div className="flex items-center text-xs text-gray-600">
+                              <FiUser className="w-3.5 h-3.5 mr-2 text-gray-400" />
+                              <span>{session.therapist_first_name} {session.therapist_last_name}</span>
+                            </div>
+                            <div className="flex items-center text-xs text-gray-600">
+                              <FiMapPin className="w-3.5 h-3.5 mr-2 text-gray-400" />
+                              <span>{session.centre_name}</span>
+                            </div>
+                          </div>
+
+                          {/* Session Type */}
+                          <div className="mt-3 pt-3 border-t border-gray-100">
+                            <span className="inline-block px-2.5 py-1 bg-gray-100 text-gray-700 text-xs rounded-md">
+                              {session.session_type}
+                            </span>
+                          </div>
                         </div>
-                        <h3 className="font-semibold text-gray-900">
-                          {session.student_first_name} {session.student_last_name}
-                        </h3>
-                        <p className="text-sm text-gray-600">{session.programme_name}</p>
-                      </div>
-                      <div className="flex space-x-1">
-                        <button
-                          onClick={() => onViewEncounter && onViewEncounter(session.id)}
-                          className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                        >
-                          <FiEye className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => openEditForm(session)}
-                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        >
-                          <FiEdit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteSession(session.id)}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                          <FiTrash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Session Details */}
-                    <div className="space-y-3">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <FiCalendar className="w-4 h-4 mr-2" />
-                        {new Date(session.session_date).toLocaleDateString()}
-                      </div>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <FiClock className="w-4 h-4 mr-2" />
-                        {session.session_time} ({session.duration} min)
-                      </div>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <FiUser className="w-4 h-4 mr-2" />
-                        {session.therapist_first_name} {session.therapist_last_name}
-                      </div>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <FiMapPin className="w-4 h-4 mr-2" />
-                        {session.centre_name}
-                      </div>
-                    </div>
-
-                    {/* Session Type */}
-                    <div className="mt-4 pt-4 border-t">
-                      <span className="inline-block px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
-                        {session.session_type}
-                      </span>
-                    </div>
+                      </motion.div>
+                    ))}
                   </div>
-                </motion.div>
-              ))}
-            </div>
           ) : (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
               <div className="overflow-x-auto">
@@ -510,6 +515,7 @@ const SessionList = ({ onViewEncounter }) => {
         onSave={handleEditSession}
         sessionId={selectedSession?.id}
       />
+      </div>
     </div>
   );
 };

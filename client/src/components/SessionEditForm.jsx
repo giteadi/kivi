@@ -187,14 +187,14 @@ const SessionEditForm = ({ isOpen, onClose, onSave, sessionId }) => {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-xl shadow-xl w-full max-w-5xl max-h-[90vh] overflow-y-auto mx-4"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-800">Edit Session</h2>
+        <div className="flex flex-col md:flex-row md:items-center justify-between p-4 sm:p-6 border-b gap-4">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Edit Session</h2>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors self-end md:self-auto"
           >
             <FiX className="w-5 h-5" />
           </button>
@@ -206,8 +206,8 @@ const SessionEditForm = ({ isOpen, onClose, onSave, sessionId }) => {
             <span className="ml-2">Loading session data...</span>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="p-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <form onSubmit={handleSubmit} className="p-4 sm:p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {/* Left Column */}
               <div className="space-y-6">
                 {/* Select Student */}
@@ -331,7 +331,7 @@ const SessionEditForm = ({ isOpen, onClose, onSave, sessionId }) => {
                 </div>
 
                 {/* Session Date & Time */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Session Date *
@@ -396,7 +396,7 @@ const SessionEditForm = ({ isOpen, onClose, onSave, sessionId }) => {
               {/* Right Column */}
               <div className="space-y-6">
                 {/* Session Type & Duration */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Session Type
@@ -516,17 +516,17 @@ const SessionEditForm = ({ isOpen, onClose, onSave, sessionId }) => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-end space-x-3 mt-8 pt-6 border-t">
+            <div className="flex flex-col md:flex-row md:justify-end gap-3 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t">
               <button
                 type="button"
                 onClick={handleClose}
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors w-full md:w-auto order-2 md:order-1"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors w-full md:w-auto order-1 md:order-2"
               >
                 Update Session
               </button>

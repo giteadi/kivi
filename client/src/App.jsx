@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, createContext, useContext } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import { setCredentials } from './store/slices/authSlice';
@@ -10,6 +10,12 @@ import ErrorToast from './components/ErrorToast';
 import useErrorHandler from './hooks/useErrorHandler';
 import { Toaster } from 'react-hot-toast';
 import toast from 'react-hot-toast';
+
+// Create Sidebar Context
+const SidebarContext = createContext();
+
+export const useSidebar = () => useContext(SidebarContext);
+
 import Login from './components/Login';
 import Register from './components/Register';
 import Homepage from './components/Homepage';
@@ -81,6 +87,7 @@ function App() {
   const [isSessionEditModalOpen, setIsSessionEditModalOpen] = useState(false);
   const [selectedEncounterId, setSelectedEncounterId] = useState(null);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [navigationHistory, setNavigationHistory] = useState(['dashboard']);
 
   // Check authentication on app load
@@ -1105,12 +1112,15 @@ ${service.target_age_group || 'Not specified'}
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-gray-50">
-        <Sidebar 
-          activeItem={activeItem} 
-          setActiveItem={handleSetActiveItem} 
-          shouldExpandEncounters={activeItem === 'encounters-list' || activeItem === 'encounter-templates'}
-        />
+      <SidebarContext.Provider value={{ sidebarCollapsed, setSidebarCollapsed }}>
+        <div className="min-h-screen bg-gray-50">
+          <Sidebar 
+            activeItem={activeItem} 
+            setActiveItem={handleSetActiveItem} 
+            shouldExpandEncounters={activeItem === 'encounters-list' || activeItem === 'encounter-templates'}
+            sidebarCollapsed={sidebarCollapsed}
+            setSidebarCollapsed={setSidebarCollapsed}
+          />
         <MobileMenu 
           isOpen={isMobileMenuOpen} 
           setIsOpen={setIsMobileMenuOpen}
@@ -1193,7 +1203,8 @@ ${service.target_age_group || 'Not specified'}
           }}
         />
       </div>
-    </ErrorBoundary>
+    </SidebarContext.Provider>
+  </ErrorBoundary>
   );
 }
 

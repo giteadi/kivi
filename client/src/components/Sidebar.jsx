@@ -14,11 +14,13 @@ import {
   FiPercent,
   FiCreditCard,
   FiTrendingUp,
-  FiActivity
+  FiActivity,
+  FiMenu,
+  FiX
 } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 
-const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters }) => {
+const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCollapsed, setSidebarCollapsed }) => {
   const [expandedSections, setExpandedSections] = useState({});
 
   // Auto-expand encounters section when needed
@@ -97,19 +99,30 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters }) => {
     <motion.div 
       initial={{ x: -250 }}
       animate={{ x: 0 }}
-      className="hidden lg:block w-64 bg-white shadow-lg h-screen fixed left-0 top-0 z-10 overflow-y-auto"
+      className={`hidden lg:block bg-white shadow-lg h-screen fixed left-0 top-0 z-10 overflow-y-auto transition-all duration-300 ${
+        sidebarCollapsed ? 'w-16' : 'w-64'
+      }`}
     >
       {/* Logo */}
       <div className="p-6 border-b">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
-            <img 
-              src="https://res.cloudinary.com/bazeercloud/image/upload/v1765087953/Gemini_Generated_Image_o8ciwko8ciwko8ci-removebg-preview_l4nnui.png" 
-              alt="MindSaid Learning Logo" 
-              className="w-full h-full object-contain"
-            />
+        <div className="flex items-center justify-between">
+          <div className={`flex items-center space-x-3 ${sidebarCollapsed ? 'hidden' : ''}`}>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
+              <img 
+                src="https://res.cloudinary.com/bazeercloud/image/upload/v1765087953/Gemini_Generated_Image_o8ciwko8ciwko8ci-removebg-preview_l4nnui.png" 
+                alt="MindSaid Learning Logo" 
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <span className="text-xl font-semibold text-gray-800">MindSaid Learning</span>
           </div>
-          <span className="text-xl font-semibold text-gray-800">MindSaid Learning</span>
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          >
+            {sidebarCollapsed ? <FiMenu className="w-5 h-5" /> : <FiX className="w-5 h-5" />}
+          </button>
         </div>
       </div>
 
@@ -117,8 +130,10 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters }) => {
       <div className="py-4">
         {sections.map((section) => (
           <div key={section} className="mb-4">
-            <div className="px-6 mb-2">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            <div className={`${sidebarCollapsed ? 'px-2' : 'px-6'} mb-2`}>
+              <span className={`text-xs font-semibold text-gray-400 uppercase tracking-wider ${
+                sidebarCollapsed ? 'hidden' : ''
+              }`}>
                 {section}
               </span>
             </div>
@@ -130,7 +145,9 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters }) => {
                   <motion.button
                     whileHover={{ x: 4 }}
                     onClick={() => handleItemClick(item.id, item.hasSubmenu)}
-                    className={`w-full flex items-center justify-between px-6 py-2.5 text-left transition-colors ${
+                    className={`w-full flex items-center justify-between ${
+                      sidebarCollapsed ? 'px-2' : 'px-6'
+                    } py-2.5 text-left transition-colors ${
                       isActiveItem(item.id)
                         ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600'
                         : 'text-gray-600 hover:bg-gray-50'
@@ -138,9 +155,9 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters }) => {
                   >
                     <div className="flex items-center">
                       <item.icon className="w-5 h-5 mr-3" />
-                      <span className="font-medium">{item.label}</span>
+                      <span className={`font-medium ${sidebarCollapsed ? 'hidden' : ''}`}>{item.label}</span>
                     </div>
-                    {item.hasSubmenu && (
+                    {item.hasSubmenu && !sidebarCollapsed && (
                       <motion.div
                         animate={{ rotate: expandedSections[item.id] ? 90 : 0 }}
                         transition={{ duration: 0.2 }}
@@ -152,7 +169,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters }) => {
 
                   {/* Submenu */}
                   <AnimatePresence>
-                    {item.hasSubmenu && expandedSections[item.id] && (
+                    {item.hasSubmenu && expandedSections[item.id] && !sidebarCollapsed && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}

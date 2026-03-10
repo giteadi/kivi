@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchServices } from '../store/slices/serviceSlice';
 import api from '../services/api';
+import { useSidebar } from '../App';
 
 const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgramme }) => {
   const dispatch = useDispatch();
   const { services: programmes, isLoading, error } = useSelector((state) => state.services);
+  const { sidebarCollapsed } = useSidebar();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -224,8 +226,8 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
   };
 
   return (
-    <div className="lg:ml-64 min-h-screen bg-gray-50">
-      <div className="p-4 lg:p-6">
+    <div className="min-h-screen bg-gray-50">
+      <div className={`p-4 lg:p-6 transition-all duration-300 ${sidebarCollapsed ? '' : 'lg:ml-64 xl:ml-64'}`}>
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 space-y-4 lg:space-y-0">
           <div>
@@ -325,25 +327,23 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
               </div>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
+              <div className="inline-block min-w-full align-middle">
+                <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                  <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50 border-b">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-2 sm:px-3 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Plan Name
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-2 sm:px-3 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
                       Therapist
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-2 sm:px-3 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Date & Time
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
+                    <th className="px-2 sm:px-3 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-2 sm:px-3 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -355,36 +355,40 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
                       whileHover={{ backgroundColor: '#f9fafb' }}
                       className="hover:bg-gray-50 transition-colors"
                     >
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-2 sm:px-3 md:px-6 py-2 sm:py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
-                            <FiUser className="w-4 h-4 text-purple-600" />
+                          <div className="w-6 h-6 sm:w-8 sm:h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-2 sm:mr-3">
+                            <FiUser className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600" />
                           </div>
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">{programme.type}</div>
-                            <div className="text-sm text-gray-500">{programme.patient}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{programme.doctor}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center text-sm text-gray-900">
-                          <FiCalendar className="w-4 h-4 mr-2 text-gray-400" />
-                          <div>
-                            <div>{programme.date}</div>
-                            <div className="text-gray-500">{programme.time}</div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[100px] sm:max-w-none">
+                              {programme.type}
+                            </div>
+                            <div className="text-xs text-gray-500 truncate max-w-[100px] sm:max-w-none">{programme.patient}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(programme.status)}`}>
+                      <td className="px-2 sm:px-3 md:px-6 py-2 sm:py-4 whitespace-nowrap hidden sm:table-cell">
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[120px]">
+                          {programme.doctor}
+                        </div>
+                      </td>
+                      <td className="px-2 sm:px-3 md:px-6 py-2 sm:py-4 whitespace-nowrap">
+                        <div className="flex items-center text-xs sm:text-sm text-gray-900">
+                          <FiCalendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 text-gray-400" />
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate">{programme.date}</div>
+                            <div className="text-gray-500 text-xs sm:text-sm">{programme.time}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-2 sm:px-3 md:px-6 py-2 sm:py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-semibold rounded-full ${getStatusColor(programme.status)}`}>
                           {programme.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex items-center space-x-2">
+                      <td className="px-2 sm:px-3 md:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium">
+                        <div className="flex items-center space-x-1 sm:space-x-2">
                           <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
@@ -392,10 +396,10 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
                               e.stopPropagation();
                               handleEditProgramme(programme);
                             }}
-                            className="text-green-600 hover:text-green-900 p-1 rounded"
+                            className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50 transition-colors"
                             title="Edit Programme"
                           >
-                            <FiEdit3 className="w-4 h-4" />
+                            <FiEdit3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           </motion.button>
                           <motion.button
                             whileHover={{ scale: 1.05 }}
@@ -404,17 +408,19 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
                               e.stopPropagation();
                               onDeleteProgramme && onDeleteProgramme(programme.id);
                             }}
-                            className="text-red-600 hover:text-red-900 p-1 rounded"
+                            className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors"
                             title="Delete Programme"
                           >
-                            <FiTrash2 className="w-4 h-4" />
+                            <FiTrash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           </motion.button>
                         </div>
                       </td>
                     </motion.tr>
                   ))}
                 </tbody>
-              </table>
+                  </table>
+                </div>
+              </div>
             </div>
           )}
 
