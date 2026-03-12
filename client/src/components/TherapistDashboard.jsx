@@ -855,7 +855,7 @@ const TherapistDashboard = () => {
             </motion.div>
           )}
         </div>
-      </div>)}
+      </div>
 
       {/* Session Details Modal */}
       {showSessionDetails && selectedSession && (
