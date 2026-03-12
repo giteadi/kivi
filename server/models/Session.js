@@ -20,7 +20,7 @@ class Session extends BaseModel {
   async getSessions(filters = {}) {
     let conditions = `
       LEFT JOIN kivi_students st ON s.student_id = st.id
-      LEFT JOIN kivi_users u ON st.user_id = u.id
+      LEFT JOIN kivi_users u ON s.created_by = u.id
       LEFT JOIN kivi_therapists t ON s.therapist_id = t.id
       LEFT JOIN kivi_users tu ON t.user_id = tu.id
       LEFT JOIN kivi_centres c ON s.centre_id = c.id
@@ -63,6 +63,37 @@ class Session extends BaseModel {
 
     const sql = `
       SELECT s.*, 
+             -- Client details with proper fallback logic
+             CASE 
+               WHEN st.id IS NOT NULL THEN 
+                 COALESCE(st.first_name, u.first_name)
+               ELSE 
+                 COALESCE(u.first_name, 'Unknown')
+             END as client_first_name,
+             CASE 
+               WHEN st.id IS NOT NULL THEN 
+                 COALESCE(st.last_name, u.last_name)
+               ELSE 
+                 COALESCE(u.last_name, 'Client')
+             END as client_last_name,
+             CASE 
+               WHEN st.id IS NOT NULL THEN 
+                 COALESCE(st.email, u.email)
+               ELSE 
+                 COALESCE(u.email, 'No email')
+             END as client_email,
+             CASE 
+               WHEN st.id IS NOT NULL THEN 
+                 COALESCE(st.phone, u.phone)
+               ELSE 
+                 COALESCE(u.phone, 'No phone')
+             END as client_phone,
+             CASE 
+               WHEN st.id IS NOT NULL THEN 'student'
+               WHEN u.id IS NOT NULL THEN COALESCE(u.role, 'user')
+               ELSE 'unknown'
+             END as client_type,
+             -- Original fields for backward compatibility
              st.first_name as student_first_name, st.last_name as student_last_name,
              u.first_name as user_first_name, u.last_name as user_last_name,
              u.email as user_email, u.phone as user_phone, u.role as user_role,
@@ -80,16 +111,56 @@ class Session extends BaseModel {
   async findById(id) {
     const sql = `
       SELECT s.*, 
-             st.first_name as student_first_name, st.last_name as student_last_name, st.email as student_email,
-             u.first_name as user_first_name, u.last_name as user_last_name,
-             u.email as user_email, u.phone as user_phone, u.role as user_role,
-             tu.first_name as therapist_first_name, tu.last_name as therapist_last_name,
+             -- Client details with proper fallback logic
+             CASE 
+               WHEN st.id IS NOT NULL THEN 
+                 COALESCE(st.first_name, u.first_name)
+               ELSE 
+                 COALESCE(u.first_name, 'Unknown')
+             END as client_first_name,
+             CASE 
+               WHEN st.id IS NOT NULL THEN 
+                 COALESCE(st.last_name, u.last_name)
+               ELSE 
+                 COALESCE(u.last_name, 'Client')
+             END as client_last_name,
+             CASE 
+               WHEN st.id IS NOT NULL THEN 
+                 COALESCE(st.email, u.email)
+               ELSE 
+                 COALESCE(u.email, 'No email')
+             END as client_email,
+             CASE 
+               WHEN st.id IS NOT NULL THEN 
+                 COALESCE(st.phone, u.phone)
+               ELSE 
+                 COALESCE(u.phone, 'No phone')
+             END as client_phone,
+             CASE 
+               WHEN st.id IS NOT NULL THEN 'student'
+               WHEN u.id IS NOT NULL THEN COALESCE(u.role, 'user')
+               ELSE 'unknown'
+             END as client_type,
+             -- Original fields for compatibility
+             st.first_name as student_first_name, 
+             st.last_name as student_last_name, 
+             st.email as student_email,
+             u.first_name as user_first_name, 
+             u.last_name as user_last_name,
+             u.email as user_email, 
+             u.phone as user_phone, 
+             u.role as user_role,
+             -- Therapist details
+             tu.first_name as therapist_first_name, 
+             tu.last_name as therapist_last_name,
              t.specialty as therapist_specialty,
+             -- Centre and Programme details
              c.name as centre_name,
-             p.name as programme_name, p.fee as programme_fee
+             p.name as programme_name, 
+             p.fee as programme_fee
       FROM kivi_sessions s
       LEFT JOIN kivi_students st ON s.student_id = st.id
-      LEFT JOIN kivi_users u ON st.user_id = u.id
+      LEFT JOIN kivi_users u ON s.created_by = u.id
       LEFT JOIN kivi_therapists t ON s.therapist_id = t.id
       LEFT JOIN kivi_users tu ON t.user_id = tu.id
       LEFT JOIN kivi_centres c ON s.centre_id = c.id

@@ -87,9 +87,53 @@ const SessionList = ({ onViewEncounter }) => {
     previousSessionsCount.current = sessions.length;
   }, [sessions]);
 
+  // Helper function to get client name
+  const getClientName = (session) => {
+    // Priority 1: If user who booked is different from student, show booking user
+    if (session.user_first_name && session.user_email && 
+        session.user_email !== session.student_email) {
+      return `${session.user_first_name} ${session.user_last_name}`;
+    }
+    // Priority 2: Student data
+    if (session.student_first_name && session.student_last_name) {
+      return `${session.student_first_name} ${session.student_last_name}`;
+    }
+    // Priority 3: Client fields (fallback)
+    if (session.client_first_name && session.client_last_name) {
+      return `${session.client_first_name} ${session.client_last_name}`;
+    }
+    return 'Unknown Client';
+  };
+
+  // Helper function to get client email
+  const getClientEmail = (session) => {
+    // Priority 1: Booking user email if different
+    if (session.user_email && session.user_email !== session.student_email) {
+      return session.user_email;
+    }
+    // Priority 2: Student email
+    if (session.student_email) {
+      return session.student_email;
+    }
+    // Priority 3: Client email (fallback)
+    return session.client_email || 'No email';
+  };
+
+  // Helper function to get client type
+  const getClientType = (session) => {
+    // If booking user is different from student, it's likely a parent
+    if (session.user_first_name && session.user_email && 
+        session.user_email !== session.student_email) {
+      return session.user_role || 'parent';
+    }
+    return session.client_type || 'student';
+  };
+
   // Filter and search sessions
   const filteredSessions = sessions.filter(session => {
     const matchesSearch = searchTerm === '' || 
+      session.client_first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      session.client_last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       session.student_first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       session.student_last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       session.therapist_first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -455,9 +499,14 @@ const SessionList = ({ onViewEncounter }) => {
                                 </span>
                               </div>
                               <h3 className="font-semibold text-gray-900 text-sm mb-1">
-                                {session.student_first_name} {session.student_last_name}
+                                {getClientName(session)}
                               </h3>
                               <p className="text-xs text-gray-600">{session.programme_name}</p>
+                              {getClientType(session) && (
+                                <p className="text-xs text-gray-500 capitalize">
+                                  {getClientType(session)}
+                                </p>
+                              )}
                             </div>
                             <div className="flex flex-col space-y-1">
                               <button
@@ -541,9 +590,14 @@ const SessionList = ({ onViewEncounter }) => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
                             <div className="text-sm font-medium text-gray-900">
-                              {session.student_first_name} {session.student_last_name}
+                              {getClientName(session)}
                             </div>
                             <div className="text-sm text-gray-500">{session.programme_name}</div>
+                            {getClientType(session) && (
+                              <div className="text-xs text-gray-400 capitalize">
+                                {getClientType(session)}
+                              </div>
+                            )}
                             {newSessions.has(session.id) && (
                               <span className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium mt-1">
                                 <FiBell className="w-3 h-3 mr-1" />
