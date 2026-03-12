@@ -93,33 +93,47 @@ class BookingController extends Therapist {
   // Book a session
   async bookSession(req, res) {
     try {
+      console.log('🚀 === SESSION BOOKING START ===');
+      console.log('📥 Request body:', req.body);
+      console.log('👤 User info:', { id: req.user.id, role: req.user.role, email: req.user.email });
+      
       const { therapistId, date, time, planId, notes } = req.body;
       const userId = req.user.id;
 
       // Validate required fields
       if (!therapistId || !date || !time) {
+        console.log('❌ Validation failed - missing fields:', { therapistId, date, time });
         return res.status(400).json({
           success: false,
           message: 'Therapist ID, date, and time are required'
         });
       }
 
-      // Check if the time slot is still available
+      console.log('✅ Validation passed - proceeding with booking');
+
+      // Check if time slot is still available
+      console.log('🔍 Checking slot availability...');
       const timeSlots = await super.getAvailableTimeSlots(therapistId, date);
+      console.log('📅 Available slots:', timeSlots.map(s => ({ time: s.time, available: s.available })));
+      
       const isSlotAvailable = timeSlots.some(slot => slot.time === time && slot.available);
+      console.log('🎯 Slot availability check:', { requestedTime: time, isAvailable: isSlotAvailable });
 
       if (!isSlotAvailable) {
+        console.log('❌ Slot not available anymore');
         return res.status(400).json({
           success: false,
           message: 'Selected time slot is no longer available'
         });
       }
 
-      // Get user details to determine role
+      // Get user details
+      console.log('👤 Fetching user details...');
       const userQuery = 'SELECT first_name, last_name, email, phone, role FROM kivi_users WHERE id = ?';
       const userResult = await this.query(userQuery, [userId]);
       
       if (userResult.length === 0) {
+        console.log('❌ User not found in database');
         return res.status(404).json({
           success: false,
           message: 'User not found'
@@ -127,75 +141,35 @@ class BookingController extends Therapist {
       }
       
       const user = userResult[0];
-      let studentId;
+      console.log('✅ User found:', { 
+        id: userId, 
+        name: `${user.first_name} ${user.last_name}`, 
+        email: user.email, 
+        role: user.role 
+      });
 
-      if (user.role === 'parent') {
-        // For parents, find their children (students)
-        console.log('🔍 Parent user booking session, looking for children...');
-        
-        // First check if there are any students linked to this parent
-        // Note: This depends on your database schema - you might need a parent_id field
-        // For now, let's check if there are students without user_id (or create one)
-        const studentQuery = 'SELECT id FROM kivi_students WHERE user_id IS NULL LIMIT 1';
-        const studentResult = await this.query(studentQuery);
-        
-        if (studentResult.length === 0) {
-          // Create a student record for this parent's child
-          const studentInsertQuery = `
-            INSERT INTO kivi_students (first_name, last_name, email, phone, registration_date, status, created_at, updated_at)
-            VALUES (?, ?, ?, ?, CURDATE(), 'active', NOW(), NOW())
-          `;
-          const studentInsertResult = await this.query(studentInsertQuery, [
-            'Child of ' + user.first_name,
-            user.last_name,
-            user.email,
-            user.phone
-          ]);
-          studentId = studentInsertResult.insertId;
-          console.log('✅ Created student record for parent:', { userId, studentId });
-        } else {
-          studentId = studentResult[0].id;
-          console.log('✅ Found existing student record for parent:', { userId, studentId });
-        }
-      } else {
-        // For student users, find or create their student record
-        console.log('🔍 Student user booking session...');
-        const studentQuery = 'SELECT id FROM kivi_students WHERE user_id = ?';
-        const studentResult = await this.query(studentQuery, [userId]);
-        
-        if (studentResult.length === 0) {
-          // Create student record if it doesn't exist
-          const studentInsertQuery = `
-            INSERT INTO kivi_students (user_id, first_name, last_name, email, phone, registration_date, status, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, CURDATE(), 'active', NOW(), NOW())
-          `;
-          const studentInsertResult = await this.query(studentInsertQuery, [
-            userId,
-            user.first_name,
-            user.last_name,
-            user.email,
-            user.phone
-          ]);
-          studentId = studentInsertResult.insertId;
-          console.log('✅ Created student record for user:', { userId, studentId });
-        } else {
-          studentId = studentResult[0].id;
-          console.log('✅ Found existing student record for user:', { userId, studentId });
-        }
-      }
+      // Use parent's user_id as student_id for direct booking
+      console.log('🔍 Using parent direct booking approach...');
+      const studentId = userId; // Use parent's ID as student reference
+      
+      console.log('✅ Parent direct booking:', { userId, studentId: userId });
 
       // Get therapist's centre_id
+      console.log('🏥 Fetching therapist centre info...');
       const therapistSql = 'SELECT centre_id FROM kivi_therapists WHERE id = ?';
       const therapistResult = await this.query(therapistSql, [therapistId]);
+      console.log('👨‍⚕️ Therapist query result:', therapistResult);
       
       if (therapistResult.length === 0) {
+        console.log('❌ Therapist not found');
         return res.status(404).json({
           success: false,
           message: 'Therapist not found'
         });
       }
 
-      // Create the session
+      // Create session with user details directly
+      console.log('📅 Creating session record...');
       const sessionId = `SES${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
       const sessionData = {
         session_id: sessionId,
@@ -206,14 +180,29 @@ class BookingController extends Therapist {
         session_time: time,
         status: 'scheduled',
         notes: notes || '',
-        programme_id: planId || null,
+        programme_id: planId ? parseInt(planId.replace('P', '')) : null,
         created_by: userId,
-        created_at: new Date(),
-        updated_at: new Date()
+        created_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
+        updated_at: new Date().toISOString().slice(0, 19).replace('T', ' ')
       };
+      
+      console.log('📋 Session data to be inserted:', sessionData);
 
       const sql = `
-        INSERT INTO kivi_sessions (session_id, therapist_id, student_id, centre_id, session_date, session_time, status, notes, programme_id, created_by, created_at, updated_at)
+        INSERT INTO kivi_sessions (
+          session_id,
+          therapist_id,
+          student_id,
+          centre_id,
+          session_date,
+          session_time,
+          status,
+          notes,
+          programme_id,
+          created_by,
+          created_at,
+          updated_at
+        )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
@@ -232,9 +221,17 @@ class BookingController extends Therapist {
         sessionData.updated_at
       ];
 
+      console.log('🔧 SQL Parameters:', params);
       const result = await this.query(sql, params);
-      console.log('✅ Session created successfully:', { sessionId, studentId, therapistId, userRole: user.role });
+      console.log('✅ Session created successfully:', { 
+        sessionId, 
+        studentId, 
+        therapistId, 
+        userRole: user.role,
+        insertId: result.insertId 
+      });
 
+      console.log('🎉 === SESSION BOOKING COMPLETED ===');
       res.status(201).json({
         success: true,
         data: { sessionId, studentId },

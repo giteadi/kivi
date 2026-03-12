@@ -11,11 +11,11 @@ class UserController extends BaseModel {
     try {
       const userId = req.user.id;
 
-      // For parent users, get sessions they've paid for OR sessions for unassigned students
+      // For parent users, get sessions they've booked for their children
       if (req.user.role === 'parent') {
         console.log('🔍 Getting sessions for parent user:', userId);
         
-        // Simple logic: Get only upcoming sessions for unassigned students
+        // Get sessions for students linked to this parent
         const sessions = await this.query(`
           SELECT DISTINCT
             s.id,
@@ -40,12 +40,10 @@ class UserController extends BaseModel {
           LEFT JOIN kivi_centres c ON s.centre_id = c.id
           LEFT JOIN kivi_programmes p ON s.programme_id = p.id
           LEFT JOIN kivi_students st ON s.student_id = st.id
-          WHERE st.user_id IS NULL 
-            AND s.session_date >= CURDATE()
-            AND s.status IN ('scheduled', 'confirmed')
-          ORDER BY s.session_date ASC, s.session_time ASC
-          LIMIT 5
-        `);
+          WHERE st.user_id = ?
+          ORDER BY s.session_date DESC, s.session_time DESC
+          LIMIT 10
+        `, [userId]);
 
         console.log('✅ Found sessions for parent:', sessions.length);
         return res.json({
@@ -288,27 +286,58 @@ class UserController extends BaseModel {
       let studentIds = [];
 
       if (req.user.role === 'parent') {
-        // For parent users, get stats for unassigned students (upcoming only)
+        // For parent users, get stats for their linked students
         console.log('🔍 Getting stats for parent user:', userId);
         
-        // Simple logic: Get only upcoming sessions for unassigned students
-        const sessionsQuery = await this.query(`
-          SELECT DISTINCT s.id, s.status, s.session_date 
-          FROM kivi_sessions s
-          LEFT JOIN kivi_students st ON s.student_id = st.id
-          WHERE st.user_id IS NULL 
-            AND s.session_date >= CURDATE()
-            AND s.status IN ('scheduled', 'confirmed')
-        `);
+        // Get student IDs linked to this parent
+        const studentQuery = await this.query(
+          'SELECT id FROM kivi_students WHERE user_id = ?',
+          [userId]
+        );
         
-        console.log('✅ Found sessions for parent stats:', sessionsQuery.length);
+        if (studentQuery.length === 0) {
+          console.log('❌ No student record found for parent:', userId);
+          return res.json({
+            success: true,
+            data: {
+              totalSessions: 0,
+              completedSessions: 0,
+              upcomingSessions: 0,
+              progress: 0
+            }
+          });
+        }
+        
+        const studentIds = studentQuery.map(s => s.id);
+        console.log('✅ Found student IDs for parent:', studentIds);
+        
+        // Build WHERE clause for multiple student IDs
+        const studentIdsPlaceholder = studentIds.map(() => '?').join(',');
+        
+        // Total sessions
+        const totalSessionsQuery = await this.query(
+          `SELECT COUNT(*) as count FROM kivi_sessions WHERE student_id IN (${studentIdsPlaceholder})`,
+          studentIds
+        );
 
-        const total = sessionsQuery.length;
-        const completed = 0; // No completed sessions in upcoming list
-        const upcoming = sessionsQuery.length; // All are upcoming
+        // Completed sessions
+        const completedSessionsQuery = await this.query(
+          `SELECT COUNT(*) as count FROM kivi_sessions WHERE student_id IN (${studentIdsPlaceholder}) AND status = "completed"`,
+          studentIds
+        );
+
+        // Upcoming sessions
+        const upcomingSessionsQuery = await this.query(
+          `SELECT COUNT(*) as count FROM kivi_sessions WHERE student_id IN (${studentIdsPlaceholder}) AND session_date >= CURDATE() AND status IN ("scheduled", "confirmed")`,
+          studentIds
+        );
+
+        const total = totalSessionsQuery[0].count;
+        const completed = completedSessionsQuery[0].count;
+        const upcoming = upcomingSessionsQuery[0].count;
 
         // Calculate progress (completed / total * 100)
-        const progress = 0; // No completed sessions yet
+        const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
 
         console.log('📊 Parent stats calculated:', { total, completed, upcoming, progress });
 

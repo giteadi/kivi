@@ -1008,7 +1008,7 @@ const TherapistDashboard = () => {
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Student Information */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Student Information</h3>
@@ -1058,6 +1058,56 @@ const TherapistDashboard = () => {
                     <div className="text-gray-500">
                       <FiUser className="w-8 h-8 mb-2" />
                       <p>Student information not available</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Parent/Guardian Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Parent/Guardian Information</h3>
+                  
+                  {selectedSession.user_first_name || selectedSession.user_last_name ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <FiUser className="w-4 h-4 text-purple-500" />
+                        <span className="font-medium">
+                          {selectedSession.user_first_name} {selectedSession.user_last_name}
+                        </span>
+                        {selectedSession.user_role && (
+                          <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                            {selectedSession.user_role}
+                          </span>
+                        )}
+                      </div>
+                      
+                      {selectedSession.user_email && (
+                        <div className="flex items-center space-x-2">
+                          <FiMail className="w-4 h-4 text-blue-500" />
+                          <button 
+                            onClick={() => window.open(`mailto:${selectedSession.user_email}`)}
+                            className="text-blue-600 hover:text-blue-800 underline"
+                          >
+                            {selectedSession.user_email}
+                          </button>
+                        </div>
+                      )}
+                      
+                      {selectedSession.user_phone && (
+                        <div className="flex items-center space-x-2">
+                          <FiPhone className="w-4 h-4 text-green-500" />
+                          <button 
+                            onClick={() => window.open(`tel:${selectedSession.user_phone}`)}
+                            className="text-green-600 hover:text-green-800 underline"
+                          >
+                            {selectedSession.user_phone}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-gray-500">
+                      <FiUser className="w-8 h-8 mb-2" />
+                      <p>Parent/Guardian information not available</p>
                     </div>
                   )}
                 </div>

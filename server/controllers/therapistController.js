@@ -377,7 +377,7 @@ class TherapistController {
 
       const therapistId = therapistQuery[0].id;
 
-      // Get sessions for this therapist with student and programme details
+      // Get sessions for this therapist with student, user and programme details
       const sessions = await this.therapistModel.query(`
         SELECT
           s.id,
@@ -397,6 +397,13 @@ class TherapistController {
           st.phone as student_phone,
           st.age,
           st.gender,
+          -- User (Parent/Student) details who booked the session
+          u.id as user_id,
+          u.first_name as user_first_name,
+          u.last_name as user_last_name,
+          u.email as user_email,
+          u.phone as user_phone,
+          u.role as user_role,
           -- Programme details
           p.name as programme_name,
           p.fee as programme_fee,
@@ -408,6 +415,7 @@ class TherapistController {
           br.created_at as payment_date
         FROM kivi_sessions s
         LEFT JOIN kivi_students st ON s.student_id = st.id
+        LEFT JOIN kivi_users u ON s.student_id = u.id
         LEFT JOIN kivi_programmes p ON s.programme_id = p.id
         LEFT JOIN kivi_centres c ON s.centre_id = c.id
         LEFT JOIN kivi_billing_records br ON s.id = br.session_id
