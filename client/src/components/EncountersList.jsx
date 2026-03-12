@@ -258,7 +258,7 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
             className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
           >
             <FiPlus className="w-4 h-4" />
-            <span>Create New Session</span>
+            <span>New Plan</span>
           </motion.button>
         </div>
 
@@ -476,7 +476,7 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
             >
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-semibold text-gray-800">
-                  {isEditMode ? 'Edit Session' : 'Create New Session'}
+                  {isEditMode ? 'Edit Session' : 'New Plan'}
                 </h2>
                 <button
                   onClick={() => {
@@ -581,7 +581,7 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
                   onClick={handleCreateSession}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
-                  {isEditMode ? 'Update Session' : 'Create Session'}
+                  {isEditMode ? 'Update Session' : 'Create Plan'}
                 </button>
               </div>
             </motion.div>

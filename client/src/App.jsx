@@ -269,8 +269,8 @@ function App() {
   };
 
   const handleViewAllAppointments = () => {
-    setActiveItem('encounters-list');
-    setCurrentView('appointments-list');
+    setActiveItem('sessions');
+    setCurrentView('sessions');
   };
 
   const handleViewAllTherapists = () => {
