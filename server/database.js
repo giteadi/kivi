@@ -15,9 +15,9 @@ const initializeDatabase = async () => {
     const initPromise = (async () => {
       // First connect without database to check if it exists
       const connection = mysql.createConnection({
-        host: process.env.HOST || 'localhost',
-        user: process.env.DB_USER || 'root',
-        password: process.env.PASSWORD || '',
+        user: 'root',
+        password: 'Tiger@123',
+        socketPath: '/var/run/mysqld/mysqld.sock',
         multipleStatements: true
       });
 
@@ -25,7 +25,7 @@ const initializeDatabase = async () => {
 
       // Check if database exists
       const dbExists = await new Promise((resolve, reject) => {
-        connection.query('SHOW DATABASES LIKE ?', [process.env.DATABASE || 'kivi'], (err, results) => {
+        connection.query('SHOW DATABASES LIKE ?', ['kivi'], (err, results) => {
           if (err) reject(err);
           else resolve(results.length > 0);
         });
@@ -58,10 +58,10 @@ const initializeDatabase = async () => {
 
       // Now connect to the specific database
       dbInstance = mysql.createConnection({
-        host: process.env.HOST || 'localhost',
-        user: process.env.DB_USER || 'root',
-        password: process.env.PASSWORD || '',
-        database: process.env.DATABASE || 'kivi',
+        user: 'root',
+        password: 'Tiger@123',
+        database: 'kivi',
+        socketPath: '/var/run/mysqld/mysqld.sock',
         multipleStatements: true
       });
 

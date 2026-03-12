@@ -46,7 +46,7 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
         // Remove # prefix from studentId if present
         const cleanStudentId = studentId.toString().replace('#', '');
         console.log('Fetching student with ID:', cleanStudentId);
-        const response = await fetch(`http://localhost:3005/api/students/${cleanStudentId}`);
+        const response = await fetch(`/api/students/${cleanStudentId}`);
         const result = await response.json();
         console.log('API Response:', result);
         
@@ -160,7 +160,7 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
     try {
       // Remove # prefix from studentId if present
       const cleanStudentId = studentId.toString().replace('#', '');
-      const response = await fetch(`http://localhost:3005/api/students/${cleanStudentId}`, {
+      const response = await fetch(`/api/students/${cleanStudentId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

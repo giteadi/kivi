@@ -500,7 +500,7 @@ function App() {
         status: 'active'
       };
 
-      const response = await fetch('http://localhost:3005/api/therapists', {
+      const response = await api.request('/therapists', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -717,7 +717,7 @@ ${service.target_age_group || 'Not specified'}
   const handleDeleteService = async (serviceId) => {
     if (window.confirm('Are you sure you want to delete this programme?')) {
       try {
-        const response = await fetch(`http://localhost:3005/api/programmes/${serviceId}`, {
+        const response = await api.request(`/programmes/${serviceId}`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
@@ -729,7 +729,7 @@ ${service.target_age_group || 'Not specified'}
         if (result.success) {
           toast.success(`Programme deleted successfully!`);
           // Refresh the services data
-          const servicesResponse = await fetch('http://localhost:3005/api/programmes');
+          const servicesResponse = await api.request('/programmes');
           const servicesResult = await servicesResponse.json();
 
           if (servicesResult.success) {
@@ -767,12 +767,12 @@ ${service.target_age_group || 'Not specified'}
       };
 
       const url = isUpdate 
-        ? `http://localhost:3005/api/programmes/${serviceData.id}`
-        : 'http://localhost:3005/api/programmes';
+        ? `/programmes/${serviceData.id}`
+        : '/programmes';
 
       const method = isUpdate ? 'PUT' : 'POST';
 
-      const response = await fetch(url, {
+      const response = await api.request(url, {
         method: method,
         headers: {
           'Content-Type': 'application/json',
@@ -788,7 +788,7 @@ ${service.target_age_group || 'Not specified'}
         alert(`Programme "${serviceData.name}" ${action} successfully!`);
 
         // Refresh services data
-        const servicesResponse = await fetch('http://localhost:3005/api/programmes');
+        const servicesResponse = await api.request('/programmes');
         const servicesResult = await servicesResponse.json();
 
         if (servicesResult.success) {

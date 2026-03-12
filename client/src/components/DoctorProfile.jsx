@@ -21,7 +21,7 @@ const DoctorProfile = ({ doctorId, onBack, onEditProfile }) => {
       }
 
       try {
-        const response = await fetch(`http://localhost:3005/api/therapists/${numericId}`);
+        const response = await fetch(`/api/therapists/${numericId}`);
         const result = await response.json();
 
         if (result.success) {

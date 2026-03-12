@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { FiArrowLeft, FiEdit3, FiPhone, FiMail, FiMapPin, FiCalendar, FiUser, FiFileText, FiActivity, FiClock, FiDollarSign } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import { useToast } from './Toast';
+import api from '../services/api';
 
 const PatientProfile = ({ patientId, onBack }) => {
   const toast = useToast();
@@ -24,7 +25,7 @@ const PatientProfile = ({ patientId, onBack }) => {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`http://localhost:3005/api/patients/${patientId}`);
+        const response = await api.request(`/patients/${patientId}`);
         const result = await response.json();
 
         if (result.success) {

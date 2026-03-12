@@ -51,7 +51,7 @@ const ServiceCreateForm = ({ onSave, onCancel }) => {
   const fetchTherapists = async () => {
     try {
       setLoadingTherapists(true);
-      const response = await fetch(`http://localhost:3005/api/programmes/therapists/${formData.centreId}`);
+      const response = await fetch(`/api/programmes/therapists/${formData.centreId}`);
       const result = await response.json();
       
       if (result.success) {

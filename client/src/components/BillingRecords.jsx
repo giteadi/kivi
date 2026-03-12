@@ -22,7 +22,7 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://localhost:3005/api/financial/billing-records');
+      const response = await fetch('/api/financial/billing-records');
       const result = await response.json();
 
       if (result.success) {

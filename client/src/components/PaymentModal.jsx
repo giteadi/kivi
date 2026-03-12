@@ -27,7 +27,7 @@ const PaymentModal = ({ isOpen, onClose, selectedPlan, onPaymentSuccess }) => {
 
     try {
       // Create order on backend (you'll need to implement this API)
-      const orderResponse = await fetch('http://localhost:3005/api/payment/create-order', {
+      const orderResponse = await fetch('/api/payment/create-order', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -86,7 +86,7 @@ const PaymentModal = ({ isOpen, onClose, selectedPlan, onPaymentSuccess }) => {
   const handlePaymentSuccess = async (paymentResponse) => {
     try {
       // Verify payment on backend
-      const verifyResponse = await fetch('http://localhost:3005/api/payment/verify', {
+      const verifyResponse = await fetch('/api/payment/verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

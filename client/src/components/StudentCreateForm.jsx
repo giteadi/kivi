@@ -87,7 +87,7 @@ const StudentCreateForm = ({ onSave, onCancel }) => {
     
     if (validateForm()) {
       try {
-        const response = await fetch('http://localhost:3005/api/students', {
+        const response = await fetch('/api/students', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

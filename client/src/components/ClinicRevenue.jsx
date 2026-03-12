@@ -20,7 +20,7 @@ const ClinicRevenue = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://localhost:3005/api/financial/clinic-revenue');
+      const response = await fetch('/api/financial/clinic-revenue');
       const result = await response.json();
 
       if (result.success) {

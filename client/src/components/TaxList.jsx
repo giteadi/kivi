@@ -21,7 +21,7 @@ const TaxList = ({ onViewTax, onEditTax, onDeleteTax, onCreateNewTax }) => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://localhost:3005/api/financial/taxes');
+      const response = await fetch('/api/financial/taxes');
       const result = await response.json();
 
       if (result.success) {

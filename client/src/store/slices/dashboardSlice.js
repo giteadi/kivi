@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { fetchUpcomingSessions } from './sessionSlice';
 
-const API_BASE_URL = 'http://localhost:3005/api';
+const API_BASE_URL = '/api';
 
 // Async thunks
 export const fetchDashboardData = createAsyncThunk(
