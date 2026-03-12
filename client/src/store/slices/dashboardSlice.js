@@ -35,8 +35,8 @@ export const fetchDashboardData = createAsyncThunk(
       let upcomingSessions = [];
 
       if (user?.role === 'admin') {
-        // For admin, use the same upcoming sessions API as dashboard
-        const sessionsResponse = await fetch(`${API_BASE_URL}/dashboard/upcoming-sessions?limit=5`, {
+        // For admin, use the main sessions API with upcoming filter
+        const sessionsResponse = await fetch(`${API_BASE_URL}/sessions`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
@@ -44,8 +44,14 @@ export const fetchDashboardData = createAsyncThunk(
         });
         const sessionsData = await sessionsResponse.json();
         if (sessionsData.success) {
-          // Use the data directly as it's already filtered for upcoming sessions
-          upcomingSessions = sessionsData.data.slice(0, 5);
+          // Filter for upcoming sessions only and limit to 5
+          upcomingSessions = sessionsData.data
+            .filter(session => {
+              const sessionDateTime = new Date(session.session_date);
+              const now = new Date();
+              return sessionDateTime > now;
+            })
+            .slice(0, 5);
         }
       } else if (user?.role === 'therapist') {
         // For therapists, fetch their own sessions

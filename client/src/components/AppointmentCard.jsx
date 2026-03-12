@@ -11,7 +11,12 @@ const AppointmentCard = ({ patient, date, time, clinic, doctor, initials, bgColo
       className="flex items-center space-x-4 p-4 hover:bg-gray-50 rounded-lg transition-all cursor-pointer border border-transparent hover:border-blue-200"
     >
       <div className={`w-10 h-10 ${bgColor} rounded-lg flex items-center justify-center`}>
-        <span className="text-sm font-semibold text-purple-700">{initials}</span>
+        <span className={`text-sm font-semibold ${
+          bgColor === 'bg-green-100' ? 'text-green-700' : 
+          bgColor === 'bg-purple-100' ? 'text-purple-700' : 
+          bgColor === 'bg-red-100' ? 'text-red-700' : 
+          'text-blue-700'
+        }`}>{initials}</span>
       </div>
       
       <div className="flex-1">

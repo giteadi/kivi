@@ -100,30 +100,63 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
   ];
 
   const formatAppointmentData = (appointments) => {
-    return appointments.map(apt => ({
-      id: apt.id,
-      patient: apt.student_first_name && apt.student_last_name 
-        ? `${apt.student_first_name} ${apt.student_last_name}`
-        : apt.student_name || 'Unknown Student',
-      date: new Date(apt.session_date).toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      }),
-      time: new Date(`2000-01-01T${apt.session_time}`).toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      }),
-      clinic: apt.centre_name,
-      doctor: apt.therapist_first_name && apt.therapist_last_name
-        ? `${apt.therapist_first_name} ${apt.therapist_last_name}`
-        : apt.therapist_name || 'Unknown Therapist',
-      initials: apt.student_first_name && apt.student_last_name
-        ? `${apt.student_first_name[0]}${apt.student_last_name[0]}`
-        : apt.student_name ? apt.student_name.split(' ').map(n => n[0]).join('') : 'PK',
-      bgColor: 'bg-purple-100'
-    }));
+    return appointments.map(apt => {
+      // Helper function to get client name
+      const getClientName = (session) => {
+        // Priority 1: If user who booked is different from student, show booking user
+        if (session.user_first_name && session.user_email && 
+            session.user_email !== session.student_email) {
+          return `${session.user_first_name} ${session.user_last_name}`;
+        }
+        // Priority 2: Student data
+        if (session.student_first_name && session.student_last_name) {
+          return `${session.student_first_name} ${session.student_last_name}`;
+        }
+        // Priority 3: Fallback
+        return session.student_name || 'Unknown Student';
+      };
+
+      const clientName = getClientName(apt);
+      
+      return {
+        id: apt.id,
+        patient: clientName,
+        date: new Date(apt.session_date).toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }),
+        time: new Date(`2000-01-01T${apt.session_time}`).toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        }),
+        clinic: apt.centre_name,
+        doctor: apt.therapist_first_name && apt.therapist_last_name
+          ? `${apt.therapist_first_name} ${apt.therapist_last_name}`
+          : apt.therapist_name || 'Unknown Therapist',
+        initials: (() => {
+          // Dynamic initials based on who actually booked
+          if (apt.user_first_name && apt.user_email && 
+              apt.user_email !== apt.student_email) {
+            // Parent booked - use parent initials
+            return `${apt.user_first_name[0]}${apt.user_last_name[0]}`;
+          }
+          // Student booked - use student initials
+          return apt.student_first_name && apt.student_last_name
+            ? `${apt.student_first_name[0]}${apt.student_last_name[0]}`
+            : apt.student_name ? apt.student_name.split(' ').map(n => n[0]).join('') : 'PK';
+        })(),
+        bgColor: (() => {
+          // Dynamic color based on who booked
+          if (apt.user_first_name && apt.user_email && 
+              apt.user_email !== apt.student_email) {
+            return 'bg-green-100'; // Parent - Green
+          }
+          return 'bg-purple-100'; // Student - Purple
+        })()
+      };
+    });
   };
 
   const formatDoctorData = (doctors) => {
