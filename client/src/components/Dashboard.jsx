@@ -154,7 +154,12 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
             return 'bg-green-100'; // Parent - Green
           }
           return 'bg-purple-100'; // Student - Purple
-        })()
+        })(),
+        // Add contact details for AppointmentDetail
+        userPhone: apt.user_phone,
+        studentPhone: apt.student_phone,
+        therapistPhone: apt.therapist_phone,
+        centrePhone: apt.centre_phone
       };
     });
   };

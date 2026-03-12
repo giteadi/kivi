@@ -51,19 +51,19 @@ const AppointmentDetail = ({ appointmentData, onBack, onViewEncounter, onCreateN
     data.paymentStatus = 'paid';
     data.grandTotal = '₹350.00/-';
     
-    // Student details
+    // Student details - use actual contact data if available
     data.student = {
       name: appointmentData.patient,
       id: `+${appointmentData.id}`,
-      phone: 'N/A',
+      phone: appointmentData.userPhone || appointmentData.studentPhone || 'N/A',
       initials: appointmentData.initials
     };
 
-    // Center details
+    // Center details - use actual centre data if available
     data.center = {
-      name: appointmentData.clinic,
+      name: appointmentData.clinic || 'Unknown Centre',
       id: `+${appointmentData.id}`,
-      phone: 'N/A',
+      phone: appointmentData.centrePhone || 'N/A',
       initials: appointmentData.clinic ? appointmentData.clinic.split(' ').map(word => word[0]).join('').toUpperCase() : 'CC'
     };
 
@@ -71,7 +71,7 @@ const AppointmentDetail = ({ appointmentData, onBack, onViewEncounter, onCreateN
     data.therapist = {
       name: appointmentData.doctor,
       id: `+${appointmentData.id}`,
-      phone: 'N/A',
+      phone: appointmentData.therapistPhone || 'N/A',
       initials: appointmentData.doctor ? appointmentData.doctor.split(' ').map(word => word[0]).join('').toUpperCase() : 'TD'
     };
 
