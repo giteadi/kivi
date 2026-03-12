@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3005/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3005/api';
 
 class ApiService {
   constructor() {
@@ -20,8 +20,29 @@ class ApiService {
       ...options,
     };
 
+    const method = config.method || 'GET';
+    const timeoutMs = options.timeoutMs ?? 15000;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    config.signal = controller.signal;
+
+    console.log('🌐 API Request:', {
+      method,
+      url,
+      timeoutMs,
+      hasAuth: !!token
+    });
+
     try {
       const response = await fetch(url, config);
+      clearTimeout(timeoutId);
+
+      console.log('🌐 API Response (raw):', {
+        method,
+        url,
+        status: response.status,
+        ok: response.ok
+      });
       
       // Handle different response types
       let data;
@@ -68,17 +89,33 @@ class ApiService {
       
       return data;
     } catch (error) {
+      clearTimeout(timeoutId);
       // Network or other errors
       if (!error.response) {
+        if (error.name === 'AbortError') {
+          const timeoutError = new Error(`Request timed out after ${timeoutMs}ms`);
+          timeoutError.type = 'timeout_error';
+          timeoutError.url = url;
+          timeoutError.method = method;
+
+          console.error('Timeout Error:', {
+            url,
+            method,
+            timeoutMs
+          });
+
+          throw timeoutError;
+        }
+
         const networkError = new Error('Network request failed - please check your connection');
         networkError.type = 'network_error';
         networkError.originalError = error;
         networkError.url = url;
-        networkError.method = config.method || 'GET';
+        networkError.method = method;
         
         console.error('Network Error:', {
           url,
-          method: config.method || 'GET',
+          method,
           error: error.message,
           type: 'network_error'
         });

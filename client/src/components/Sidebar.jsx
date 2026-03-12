@@ -19,9 +19,11 @@ import {
   FiX
 } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 
 const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCollapsed, setSidebarCollapsed }) => {
   const [expandedSections, setExpandedSections] = useState({});
+  const { user } = useSelector((state) => state.auth);
 
   // Auto-expand encounters section when needed
   useEffect(() => {
@@ -33,7 +35,33 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
     }
   }, [shouldExpandEncounters]);
 
-  const menuItems = [
+  // Define menu items based on user role
+  const getMenuItems = () => {
+    const adminMenuItems = [
+      { id: 'dashboard', label: 'Dashboard', icon: FiHome, section: 'MAIN' },
+      { 
+        id: 'encounters', 
+        label: 'Sessions', 
+        icon: FiUsers, 
+        section: 'MAIN',
+        hasSubmenu: true,
+        submenu: [
+          { id: 'sessions', label: 'Sessions Management', icon: FiList },
+          { id: 'encounters-list', label: 'Sessions List', icon: FiList },
+          { id: 'encounter-templates', label: 'Session Templates', icon: FiFileText }
+        ]
+      },
+      { id: 'patients', label: 'Students', icon: FiUser, section: 'USERS' },
+    { id: 'doctors', label: 'Therapists', icon: FiUserCheck, section: 'USERS' },
+    { id: 'receptionists', label: 'Staff', icon: FiUser, section: 'USERS' },
+    { id: 'clinics', label: 'Centres', icon: FiMapPin, section: 'CENTRE' },
+    { id: 'clinic-revenue', label: 'Centre Revenue', icon: FiTrendingUp, section: 'FINANCIAL' },
+    { id: 'doctor-revenue', label: 'Therapist Revenue', icon: FiDollarSign, section: 'FINANCIAL' },
+    { id: 'taxes', label: 'Taxes', icon: FiPercent, section: 'FINANCIAL' },
+    { id: 'billing-records', label: 'Billing Records', icon: FiCreditCard, section: 'FINANCIAL' },
+  ];
+
+  const therapistMenuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: FiHome, section: 'MAIN' },
     { 
       id: 'encounters', 
@@ -48,15 +76,23 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
       ]
     },
     { id: 'patients', label: 'Students', icon: FiUser, section: 'USERS' },
-    { id: 'doctors', label: 'Therapists', icon: FiUserCheck, section: 'USERS' },
-    { id: 'receptionists', label: 'Staff', icon: FiUser, section: 'USERS' },
-    { id: 'clinics', label: 'Centres', icon: FiMapPin, section: 'CENTRE' },
-    { id: 'clinic-revenue', label: 'Centre Revenue', icon: FiTrendingUp, section: 'FINANCIAL' },
-    { id: 'doctor-revenue', label: 'Therapist Revenue', icon: FiDollarSign, section: 'FINANCIAL' },
-    { id: 'taxes', label: 'Taxes', icon: FiPercent, section: 'FINANCIAL' },
-    { id: 'billing-records', label: 'Billing Records', icon: FiCreditCard, section: 'FINANCIAL' },
   ];
 
+  // Return menu items based on user role
+  switch (user?.role) {
+    case 'admin':
+      return adminMenuItems;
+    case 'therapist':
+      return therapistMenuItems;
+    default:
+      // For parents and other users, return minimal menu
+      return [
+        { id: 'dashboard', label: 'Dashboard', icon: FiHome, section: 'MAIN' },
+      ];
+  }
+};
+
+  const menuItems = getMenuItems();
   const sections = ['MAIN', 'USERS', 'CENTRE', 'FINANCIAL'];
 
   const toggleSection = (itemId) => {

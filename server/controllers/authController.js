@@ -8,9 +8,11 @@ class AuthController {
   // Login
   async login(req, res) {
     try {
+      console.log('🔐 Login attempt:', { body: req.body, headers: req.headers });
       const { email, password } = req.body;
 
       if (!email || !password) {
+        console.log('❌ Missing credentials:', { email: !!email, password: !!password });
         return res.status(400).json({
           success: false,
           message: 'Email and password are required'
@@ -18,9 +20,12 @@ class AuthController {
       }
 
       // Find user by email
+      console.log('🔍 Finding user by email:', email);
       const user = await this.userModel.findByEmail(email);
+      console.log('👤 User found:', { found: !!user, userId: user?.id, role: user?.role });
       
       if (!user) {
+        console.log('❌ User not found for email:', email);
         return res.status(401).json({
           success: false,
           message: 'Invalid credentials'
@@ -28,7 +33,9 @@ class AuthController {
       }
 
       // Direct password comparison (no hashing as requested)
+      console.log('🔑 Comparing passwords');
       if (user.password !== password) {
+        console.log('❌ Password mismatch for email:', email);
         return res.status(401).json({
           success: false,
           message: 'Invalid credentials'
@@ -38,12 +45,15 @@ class AuthController {
       // Remove password from response
       const { password: _, ...userWithoutPassword } = user;
 
+      const token = `token_${user.id}_${Date.now()}`;
+      console.log('✅ Login successful for user:', { id: user.id, email: user.email, role: user.role });
+
       res.json({
         success: true,
         message: 'Login successful',
         data: {
           user: userWithoutPassword,
-          token: `token_${user.id}_${Date.now()}` // Simple token for demo
+          token: token
         }
       });
 

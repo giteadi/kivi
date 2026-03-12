@@ -7,14 +7,26 @@ class BaseModel {
   }
 
   // Execute query with promise
-  query(sql, params = []) {
+  async query(sql, params = []) {
+    console.log('🔍 BaseModel.query:', { sql, params });
     return new Promise((resolve, reject) => {
+      if (!this.db) {
+        console.error('❌ Database connection not initialized');
+        return reject(new Error('Database connection not initialized'));
+      }
+      
+      console.log('📡 Executing DB query...');
+      const startTime = Date.now();
+      
       this.db.query(sql, params, (err, results) => {
+        const duration = Date.now() - startTime;
+        console.log('⏱️ DB query completed:', { duration: `${duration}ms`, error: !!err, resultsCount: results?.length || 0 });
+        
         if (err) {
-          reject(err);
-        } else {
-          resolve(results);
+          console.error('❌ Database query error:', { sql, params, error: err });
+          return reject(err);
         }
+        resolve(results);
       });
     });
   }

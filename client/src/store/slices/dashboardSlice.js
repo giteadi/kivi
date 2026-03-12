@@ -6,7 +6,7 @@ const API_BASE_URL = 'http://localhost:3005/api';
 // Async thunks
 export const fetchDashboardData = createAsyncThunk(
   'dashboard/fetchDashboardData',
-  async (filters = {}, { rejectWithValue, dispatch }) => {
+  async (filters = {}, { rejectWithValue, dispatch, getState }) => {
     try {
       const queryParams = new URLSearchParams();
       if (filters.startDate) queryParams.append('startDate', filters.startDate);
@@ -22,12 +22,46 @@ export const fetchDashboardData = createAsyncThunk(
         return rejectWithValue(data.message || 'Failed to fetch dashboard data');
       }
 
-      // Fetch upcoming sessions from session API
-      const upcomingSessionsResult = await dispatch(fetchUpcomingSessions({ limit: 5 }));
+      // Get user role and fetch appropriate sessions
+      const state = getState();
+      const { user } = state.auth;
+      let upcomingSessions = [];
+
+      if (user?.role === 'therapist') {
+        // For therapists, fetch their own sessions
+        const sessionsResponse = await fetch(`${API_BASE_URL}/therapists/my/sessions`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        const sessionsData = await sessionsResponse.json();
+        if (sessionsData.success) {
+          // Filter for upcoming sessions only
+          upcomingSessions = sessionsData.data
+            .filter(session => new Date(`${session.session_date} ${session.session_time}`) > new Date())
+            .slice(0, 5);
+        }
+      } else if (user?.role === 'user' || user?.role === 'parent') {
+        // For users/parents, fetch their sessions
+        const sessionsResponse = await fetch(`${API_BASE_URL}/user/sessions`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        const sessionsData = await sessionsResponse.json();
+        if (sessionsData.success) {
+          // Filter for upcoming sessions only
+          upcomingSessions = sessionsData.data
+            .filter(session => new Date(`${session.session_date} ${session.session_time}`) > new Date())
+            .slice(0, 5);
+        }
+      }
       
       return {
         ...data.data,
-        upcomingSessions: upcomingSessionsResult.payload || []
+        upcomingSessions
       };
     } catch (error) {
       return rejectWithValue(

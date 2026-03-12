@@ -7,78 +7,79 @@ let dbInstance = null;
 
 const initializeDatabase = async () => {
   try {
-    // First connect without database to check if it exists
-    const connection = mysql.createConnection({
-      host: process.env.HOST || 'localhost',
-      user: process.env.DB_USER || 'root',
-      password: process.env.PASSWORD || '',
-      multipleStatements: true
+    // Add timeout to prevent hanging
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Database initialization timeout after 10 seconds')), 10000);
     });
 
-    console.log('🔄 Checking database...');
-
-    // Check if database exists
-    const dbExists = await new Promise((resolve, reject) => {
-      connection.query('SHOW DATABASES LIKE ?', [process.env.DATABASE || 'kivi'], (err, results) => {
-        if (err) reject(err);
-        else resolve(results.length > 0);
+    const initPromise = (async () => {
+      // First connect without database to check if it exists
+      const connection = mysql.createConnection({
+        host: process.env.HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.PASSWORD || '',
+        multipleStatements: true
       });
-    });
 
-    if (!dbExists) {
-      console.log('🔄 Database not found, creating new database...');
+      console.log('🔄 Checking database...');
 
-      // Read and execute SQL file only if database doesn't exist
-      const sqlFile = path.join(__dirname, 'config', 'new_database.sql');
-      const sqlContent = fs.readFileSync(sqlFile, 'utf8');
-
-      // Execute SQL commands
-      await new Promise((resolve, reject) => {
-        connection.query(sqlContent, (err, results) => {
-          if (err) {
-            console.error('❌ Database initialization failed:', err);
-            reject(err);
-          } else {
-            console.log('✅ Database and tables created successfully');
-            resolve(results);
-          }
+      // Check if database exists
+      const dbExists = await new Promise((resolve, reject) => {
+        connection.query('SHOW DATABASES LIKE ?', [process.env.DATABASE || 'kivi'], (err, results) => {
+          if (err) reject(err);
+          else resolve(results.length > 0);
         });
       });
-    } else {
-      console.log('✅ Database exists, checking tables...');
-    }
 
-    connection.end();
+      if (!dbExists) {
+        console.log('🔄 Database not found, creating new database...');
 
-    // Now connect to the specific database
-    dbInstance = mysql.createConnection({
-      host: process.env.HOST || 'localhost',
-      user: process.env.DB_USER || 'root',
-      password: process.env.PASSWORD || '',
-      database: process.env.DATABASE || 'kivi'
-    });
+        // Read and execute SQL file only if database doesn't exist
+        const sqlFile = path.join(__dirname, 'config', 'new_database.sql');
+        const sqlContent = fs.readFileSync(sqlFile, 'utf8');
 
-    await new Promise((resolve, reject) => {
-      dbInstance.connect((err) => {
-        if (err) {
-          console.error('❌ Database connection failed:', err);
-          reject(err);
-        } else {
-          console.log('✅ Connected to MySQL database');
-          resolve();
-        }
+        // Execute SQL commands
+        await new Promise((resolve, reject) => {
+          connection.query(sqlContent, (err, results) => {
+            if (err) {
+              console.error('❌ Database initialization failed:', err);
+              reject(err);
+            } else {
+              console.log('✅ Database and tables created successfully');
+              resolve(results);
+            }
+          });
+        });
+      } else {
+        console.log('✅ Database exists, checking tables...');
+      }
+
+      connection.end();
+
+      // Now connect to the specific database
+      dbInstance = mysql.createConnection({
+        host: process.env.HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.PASSWORD || '',
+        database: process.env.DATABASE || 'kivi',
+        multipleStatements: true
       });
-    });
 
-    // Check if tables exist and create them if missing
-    const tablesExist = await checkTablesExist(dbInstance);
-    if (!tablesExist) {
-      console.log('🔄 Tables missing, creating tables...');
-      await createTables(dbInstance);
-    } else {
-      console.log('✅ Tables exist');
-    }
+      console.log('✅ Connected to MySQL database');
 
+      const tablesExist = await checkTablesExist(dbInstance);
+      if (!tablesExist) {
+        console.log('🔄 Tables missing, creating tables...');
+        await createTables(dbInstance);
+      } else {
+        console.log('✅ Tables exist');
+      }
+
+      return dbInstance;
+    })();
+
+    // Race between initialization and timeout
+    await Promise.race([initPromise, timeoutPromise]);
     return dbInstance;
   } catch (error) {
     console.error('❌ Database initialization error:', error);

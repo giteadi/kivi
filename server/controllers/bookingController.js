@@ -200,20 +200,21 @@ class BookingController extends Therapist {
       const sessionData = {
         session_id: sessionId,
         therapist_id: therapistId,
-        student_id: studentId, // Use proper student_id now
+        student_id: studentId,
         centre_id: therapistResult[0].centre_id,
         session_date: date,
         session_time: time,
         status: 'scheduled',
         notes: notes || '',
         programme_id: planId || null,
+        created_by: userId,
         created_at: new Date(),
         updated_at: new Date()
       };
 
       const sql = `
-        INSERT INTO kivi_sessions (session_id, therapist_id, student_id, centre_id, session_date, session_time, status, notes, programme_id, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO kivi_sessions (session_id, therapist_id, student_id, centre_id, session_date, session_time, status, notes, programme_id, created_by, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
       const params = [
@@ -226,6 +227,7 @@ class BookingController extends Therapist {
         sessionData.status,
         sessionData.notes,
         sessionData.programme_id,
+        sessionData.created_by,
         sessionData.created_at,
         sessionData.updated_at
       ];

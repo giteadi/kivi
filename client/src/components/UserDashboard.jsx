@@ -50,6 +50,8 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
     upcomingSessions: 0,
     progress: 0
   });
+  const [selectedSession, setSelectedSession] = useState(null);
+  const [showSessionDetails, setShowSessionDetails] = useState(false);
   const [requestCount, setRequestCount] = useState(0);
   const abortControllerRef = useRef(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -269,6 +271,10 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
       dispatch(fetchServices());
 
       if (sessionsRes.success) {
+        console.log('Sessions API Response:', sessionsRes.data);
+        if (sessionsRes.data.length > 0) {
+          console.log('First session booking user:', sessionsRes.data[0]);
+        }
         setUserSessions(sessionsRes.data);
       }
 
@@ -491,6 +497,24 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
     console.log('isEditingProfile set to true');
   };
 
+  const handleSessionClick = (session) => {
+    console.log('Session clicked:', session);
+    console.log('Booking user details:', {
+      firstName: session.booking_user_first_name,
+      lastName: session.booking_user_last_name,
+      email: session.booking_user_email,
+      phone: session.booking_user_phone,
+      role: session.booking_user_role
+    });
+    setSelectedSession(session);
+    setShowSessionDetails(true);
+  };
+
+  const handleCloseSessionDetails = () => {
+    setShowSessionDetails(false);
+    setSelectedSession(null);
+  };
+
   const handleSaveProfile = async () => {
     try {
       const response = await api.updateUserProfile(editFormData);
@@ -663,7 +687,11 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
                 ) : userSessions.length > 0 ? (
                   <div className="space-y-3 lg:space-y-4">
                     {userSessions.map((session) => (
-                      <div key={session.id} className="flex items-center justify-between p-3 lg:p-4 bg-gray-50 rounded-lg">
+                      <div 
+                        key={session.id} 
+                        className="flex items-center justify-between p-3 lg:p-4 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                        onClick={() => handleSessionClick(session)}
+                      >
                         <div className="flex items-center space-x-3 lg:space-x-4">
                           <div className="p-2 bg-blue-100 rounded-lg">
                             <FiActivity className="w-4 h-4 lg:w-5 lg:h-5 text-blue-600" />
@@ -1388,6 +1416,204 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
         selectedPlan={selectedPlanForBooking}
         onSuccess={handleBookingSuccess}
       />
+      
+      {/* Session Details Modal */}
+      {showSessionDetails && selectedSession && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Session Details</h2>
+                  <p className="text-gray-600 mt-1">Complete information about your therapy session</p>
+                </div>
+                <button
+                  onClick={handleCloseSessionDetails}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              {/* Session Basic Info */}
+              <div className="bg-blue-50 rounded-lg p-4">
+                <h3 className="font-semibold text-blue-900 mb-3">Session Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-blue-700">Session Type</p>
+                    <p className="font-medium text-blue-900">{selectedSession.programme_name || 'Therapy Session'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-blue-700">Status</p>
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedSession.status)}`}>
+                      {selectedSession.status}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-sm text-blue-700">Date</p>
+                    <p className="font-medium text-blue-900">{new Date(selectedSession.session_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-blue-700">Time</p>
+                    <p className="font-medium text-blue-900">{selectedSession.session_time}</p>
+                  </div>
+                </div>
+                {selectedSession.notes && (
+                  <div className="mt-4">
+                    <p className="text-sm text-blue-700">Notes</p>
+                    <p className="font-medium text-blue-900 mt-1">{selectedSession.notes}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Therapist Info */}
+              <div className="bg-green-50 rounded-lg p-4">
+                <h3 className="font-semibold text-green-900 mb-3">Therapist Information</h3>
+                <div className="flex items-center space-x-4 mb-4">
+                  <div className="w-16 h-16 bg-green-200 rounded-full flex items-center justify-center">
+                    <FiUser className="w-8 h-8 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-green-900 text-lg">{selectedSession.therapist_name}</p>
+                    <p className="text-green-700">Licensed Therapist</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-green-700">Email</p>
+                    <p className="font-medium text-green-900">{selectedSession.therapist_email || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-green-700">Phone</p>
+                    <p className="font-medium text-green-900">{selectedSession.therapist_phone || 'Not provided'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Student Info */}
+              <div className="bg-purple-50 rounded-lg p-4">
+                <h3 className="font-semibold text-purple-900 mb-3">Student Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-purple-700">Student Name</p>
+                    <p className="font-medium text-purple-900">{selectedSession.student_name} {selectedSession.student_last_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-purple-700">Programme</p>
+                    <p className="font-medium text-purple-900">{selectedSession.programme_name || 'General Therapy'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-purple-700">Email</p>
+                    <p className="font-medium text-purple-900">{selectedSession.student_email || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-purple-700">Phone</p>
+                    <p className="font-medium text-purple-900">{selectedSession.student_phone || 'Not provided'}</p>
+                  </div>
+                  {selectedSession.student_age && (
+                    <div>
+                      <p className="text-sm text-purple-700">Age</p>
+                      <p className="font-medium text-purple-900">{selectedSession.student_age}</p>
+                    </div>
+                  )}
+                  {selectedSession.student_gender && (
+                    <div>
+                      <p className="text-sm text-purple-700">Gender</p>
+                      <p className="font-medium text-purple-900 capitalize">{selectedSession.student_gender}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Location Info */}
+              {selectedSession.centre_name && (
+                <div className="bg-orange-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-orange-900 mb-3">Location Information</h3>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-orange-200 rounded-lg flex items-center justify-center">
+                      <FiCalendar className="w-6 h-6 text-orange-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-orange-900">{selectedSession.centre_name}</p>
+                      <p className="text-orange-700 text-sm">Therapy Centre</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* User Info */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-900 mb-3">Your Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-700">Your Name</p>
+                    <p className="font-medium text-gray-900">{user?.first_name} {user?.last_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-700">Your Email</p>
+                    <p className="font-medium text-gray-900">{user?.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-700">Your Role</p>
+                    <p className="font-medium text-gray-900 capitalize">{user?.role}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-700">Your Phone</p>
+                    <p className="font-medium text-gray-900">{user?.phone || 'Not provided'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Booking User Info (User who booked the session) */}
+              {selectedSession.booking_user_first_name && (
+                <div className="bg-yellow-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-yellow-900 mb-3">Booked By</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-yellow-700">Name</p>
+                      <p className="font-medium text-yellow-900">
+                        {selectedSession.booking_user_first_name} {selectedSession.booking_user_last_name}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-yellow-700">Role</p>
+                      <p className="font-medium text-yellow-900 capitalize">{selectedSession.booking_user_role}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-yellow-700">Email</p>
+                      <p className="font-medium text-yellow-900">{selectedSession.booking_user_email}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-yellow-700">Phone</p>
+                      <p className="font-medium text-yellow-900">{selectedSession.booking_user_phone || 'Not provided'}</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 p-3 bg-yellow-100 rounded-lg">
+                    <p className="text-xs text-yellow-800">
+                      <strong>Contact Information:</strong> This user booked the session. Therapist/Parent can contact them for any session-related queries.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="p-6 border-t bg-gray-50">
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={handleCloseSessionDetails}
+                  className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -6,13 +6,27 @@ const { initializeDatabase, getDb } = require('./database');
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173', 'http://127.0.0.1:3000'],
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`📥 ${req.method} ${req.path}`, {
+    body: req.body,
+    query: req.query,
+    headers: { 'content-type': req.headers['content-type'], authorization: req.headers.authorization ? '***' : undefined }
+  });
+  next();
+});
 
 // Initialize database and start server
 const startServer = async () => {
   try {
+    // Wait for database initialization
     await initializeDatabase();
     
     // Routes (after database initialization)
