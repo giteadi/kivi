@@ -205,6 +205,54 @@ class Dashboard extends BaseModel {
 
     return statusData;
   }
+
+  async getAllSessions() {
+    const sessions = await this.query(`
+      SELECT 
+        s.id,
+        s.session_date,
+        s.session_time,
+        s.status,
+        s.notes,
+        -- Student details
+        st.first_name as student_first_name,
+        st.last_name as student_last_name,
+        st.email as student_email,
+        st.phone as student_phone,
+        st.age,
+        st.gender,
+        -- User (Parent/Student) details who booked session
+        u.id as user_id,
+        u.first_name as user_first_name,
+        u.last_name as user_last_name,
+        u.email as user_email,
+        u.phone as user_phone,
+        u.role as user_role,
+        -- Therapist details
+        CONCAT(tu.first_name, ' ', tu.last_name) as therapist_first_name,
+        CONCAT(tu.first_name, ' ', tu.last_name) as therapist_last_name,
+        -- Programme details
+        p.name as programme_name,
+        p.fee as programme_fee,
+        -- Centre details
+        c.name as centre_name,
+        -- Payment details
+        COALESCE(br.payment_status, 'pending') as payment_status,
+        COALESCE(br.total_amount, 0) as total_amount,
+        br.created_at as payment_date
+      FROM kivi_sessions s
+      LEFT JOIN kivi_students st ON s.student_id = st.id
+      LEFT JOIN kivi_users u ON st.user_id = u.id
+      LEFT JOIN kivi_therapists t ON s.therapist_id = t.id
+      LEFT JOIN kivi_users tu ON t.user_id = tu.id
+      LEFT JOIN kivi_programmes p ON s.programme_id = p.id
+      LEFT JOIN kivi_centres c ON s.centre_id = c.id
+      LEFT JOIN kivi_billing_records br ON s.id = br.session_id
+      ORDER BY s.session_date DESC, s.session_time DESC
+    `);
+
+    return sessions;
+  }
 }
 
 module.exports = Dashboard;

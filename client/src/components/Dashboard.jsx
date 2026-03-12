@@ -10,7 +10,7 @@ import AppointmentCard from './AppointmentCard';
 import DoctorCard from './DoctorCard';
 import BookingChart from './BookingChart';
 
-const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointments, onViewAllTherapists }) => {
+const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointments, onViewAllTherapists, setActiveItem }) => {
   const dispatch = useDispatch();
   const { 
     stats, 
@@ -323,6 +323,16 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
                   No upcoming sessions
                 </div>
               )}
+            </div>
+            
+            {/* Admin Sessions Link */}
+            <div className="mt-4 pt-4 border-t">
+              <button 
+                onClick={() => setActiveItem('admin-sessions')}
+                className="w-full text-center text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 px-4 transition-colors"
+              >
+                View All Sessions (Admin)
+              </button>
             </div>
           </motion.div>
 

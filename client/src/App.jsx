@@ -59,6 +59,7 @@ import TherapistCreateForm from './components/TherapistCreateForm';
 import SessionCreateForm from './components/SessionCreateForm';
 import SessionEditForm from './components/SessionEditForm';
 import SessionList from './components/SessionList';
+import AdminSessionsList from './components/AdminSessionsList';
 
 function App() {
   const dispatch = useDispatch();
@@ -1037,7 +1038,13 @@ ${service.target_age_group || 'Not specified'}
     // Handle main navigation items
     switch (activeItem) {
       case 'dashboard':
-        return <Dashboard onAppointmentClick={handleAppointmentClick} onCreateNewEncounter={handleCreateNewEncounter} onViewAllAppointments={handleViewAllAppointments} onViewAllTherapists={handleViewAllTherapists} />;
+        return <Dashboard 
+          onAppointmentClick={handleAppointmentClick} 
+          onCreateNewEncounter={handleCreateNewEncounter} 
+          onViewAllAppointments={handleViewAllAppointments} 
+          onViewAllTherapists={handleViewAllTherapists}
+          setActiveItem={handleSetActiveItem}
+        />;
       
       case 'patients':
         return <PatientsList onViewPatient={handleViewPatient} onEditPatient={handleEditPatient} onDeletePatient={handleDeletePatient} onCreateNewPatient={handleCreateNewPatient} />;
@@ -1092,6 +1099,9 @@ ${service.target_age_group || 'Not specified'}
       
       case 'billing-records':
         return <BillingRecords onViewBilling={(id) => alert(`View billing ${id}`)} onEditBilling={(id) => alert(`Edit billing ${id}`)} onDeleteBilling={(id) => alert(`Delete billing ${id}`)} onCreateNewBilling={() => alert('Create new billing functionality')} />;
+      
+      case 'admin-sessions':
+        return <AdminSessionsList />;
       
       default:
         // Other menu items

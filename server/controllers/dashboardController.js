@@ -116,6 +116,25 @@ class DashboardController {
     }
   }
 
+  // Get all sessions for admin
+  async getAllSessions(req, res) {
+    try {
+      const sessions = await this.dashboardModel.getAllSessions();
+
+      res.json({
+        success: true,
+        data: sessions
+      });
+
+    } catch (error) {
+      console.error('Get all sessions error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
   // Get complete dashboard data
   async getDashboardData(req, res) {
     try {

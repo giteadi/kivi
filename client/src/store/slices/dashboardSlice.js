@@ -14,8 +14,15 @@ export const fetchDashboardData = createAsyncThunk(
       if (filters.clinicId) queryParams.append('clinicId', filters.clinicId);
       if (filters.doctorId) queryParams.append('doctorId', filters.doctorId);
 
+      // Get token for authentication
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` })
+      };
+
       // Fetch dashboard stats and other data from dashboard API
-      const response = await fetch(`${API_BASE_URL}/dashboard/data?${queryParams}`);
+      const response = await fetch(`${API_BASE_URL}/dashboard/data?${queryParams}`, { headers });
       const data = await response.json();
       
       if (!data.success) {
@@ -27,7 +34,20 @@ export const fetchDashboardData = createAsyncThunk(
       const { user } = state.auth;
       let upcomingSessions = [];
 
-      if (user?.role === 'therapist') {
+      if (user?.role === 'admin') {
+        // For admin, use the same upcoming sessions API as dashboard
+        const sessionsResponse = await fetch(`${API_BASE_URL}/dashboard/upcoming-sessions?limit=5`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        const sessionsData = await sessionsResponse.json();
+        if (sessionsData.success) {
+          // Use the data directly as it's already filtered for upcoming sessions
+          upcomingSessions = sessionsData.data.slice(0, 5);
+        }
+      } else if (user?.role === 'therapist') {
         // For therapists, fetch their own sessions
         const sessionsResponse = await fetch(`${API_BASE_URL}/therapists/my/sessions`, {
           headers: {
