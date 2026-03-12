@@ -98,8 +98,9 @@ class Session extends BaseModel {
              u.first_name as user_first_name, u.last_name as user_last_name,
              u.email as user_email, u.phone as user_phone, u.role as user_role,
              tu.first_name as therapist_first_name, tu.last_name as therapist_last_name,
+             tu.email as therapist_email, tu.phone as therapist_phone,
              t.specialty as therapist_specialty,
-             c.name as centre_name,
+             c.name as centre_name, c.phone as centre_phone, c.address as centre_address,
              p.name as programme_name, p.fee as programme_fee
       FROM kivi_sessions s ${conditions}
     `;
@@ -153,9 +154,13 @@ class Session extends BaseModel {
              -- Therapist details
              tu.first_name as therapist_first_name, 
              tu.last_name as therapist_last_name,
+             tu.email as therapist_email, 
+             tu.phone as therapist_phone,
              t.specialty as therapist_specialty,
              -- Centre and Programme details
              c.name as centre_name,
+             c.phone as centre_phone, 
+             c.address as centre_address,
              p.name as programme_name, 
              p.fee as programme_fee
       FROM kivi_sessions s
