@@ -9,7 +9,8 @@ import { useSidebar } from '../App';
 
 const EncounterDetail = ({ encounterId, onBack }) => {
   console.log('🔍 EncounterDetail: Component initialized with encounterId:', encounterId);
-  const { sidebarCollapsed } = useSidebar();
+  const sidebarContext = useSidebar() || {};
+  const { sidebarCollapsed = false } = sidebarContext;
 
   const [activeTab, setActiveTab] = useState('clinical-details');
   const [sessionData, setSessionData] = useState(null);

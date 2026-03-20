@@ -31,7 +31,8 @@ const SessionList = ({ onViewEncounter }) => {
 
   const dispatch = useDispatch();
   const { sessions, loading, error } = useSelector((state) => state.sessions);
-  const { sidebarCollapsed } = useSidebar();
+  const sidebarContext = useSidebar() || {};
+  const { sidebarCollapsed = false } = sidebarContext;
 
   console.log('🔍 SessionList: Redux state - sessions:', sessions?.length || 0, 'loading:', loading, 'error:', error);
   

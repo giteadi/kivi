@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { fetchUpcomingSessions } from './sessionSlice';
-
-const API_BASE_URL = '/api';
+import api from '../../services/api';
 
 // Async thunks
 export const fetchDashboardData = createAsyncThunk(
@@ -14,16 +13,8 @@ export const fetchDashboardData = createAsyncThunk(
       if (filters.clinicId) queryParams.append('clinicId', filters.clinicId);
       if (filters.doctorId) queryParams.append('doctorId', filters.doctorId);
 
-      // Get token for authentication
-      const token = localStorage.getItem('token');
-      const headers = {
-        'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` })
-      };
-
       // Fetch dashboard stats and other data from dashboard API
-      const response = await fetch(`${API_BASE_URL}/dashboard/data?${queryParams}`, { headers });
-      const data = await response.json();
+      const data = await api.getDashboardData(filters);
       
       if (!data.success) {
         return rejectWithValue(data.message || 'Failed to fetch dashboard data');
@@ -36,13 +27,7 @@ export const fetchDashboardData = createAsyncThunk(
 
       if (user?.role === 'admin') {
         // For admin, use the main sessions API with upcoming filter
-        const sessionsResponse = await fetch(`${API_BASE_URL}/sessions`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        const sessionsData = await sessionsResponse.json();
+        const sessionsData = await api.getAppointments();
         if (sessionsData.success) {
           // Filter for upcoming sessions only and limit to 5
           upcomingSessions = sessionsData.data
@@ -55,13 +40,7 @@ export const fetchDashboardData = createAsyncThunk(
         }
       } else if (user?.role === 'therapist') {
         // For therapists, fetch their own sessions
-        const sessionsResponse = await fetch(`${API_BASE_URL}/therapists/my/sessions`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        const sessionsData = await sessionsResponse.json();
+        const sessionsData = await api.getUserSessions();
         if (sessionsData.success) {
           // Filter for upcoming sessions only
           upcomingSessions = sessionsData.data
@@ -70,13 +49,7 @@ export const fetchDashboardData = createAsyncThunk(
         }
       } else if (user?.role === 'user' || user?.role === 'parent') {
         // For users/parents, fetch their sessions
-        const sessionsResponse = await fetch(`${API_BASE_URL}/user/sessions`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        const sessionsData = await sessionsResponse.json();
+        const sessionsData = await api.getUserSessions();
         if (sessionsData.success) {
           // Filter for upcoming sessions only
           upcomingSessions = sessionsData.data
@@ -101,12 +74,10 @@ export const fetchDashboardStats = createAsyncThunk(
   'dashboard/fetchDashboardStats',
   async (filters = {}, { rejectWithValue }) => {
     try {
-      const queryParams = new URLSearchParams(filters);
-      const response = await axios.get(`${API_BASE_URL}/dashboard/stats?${queryParams}`);
-      return response.data.data;
+      return await api.getDashboardStats(filters);
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || 'Failed to fetch dashboard stats'
+        error.message || 'Failed to fetch dashboard stats'
       );
     }
   }
@@ -116,12 +87,10 @@ export const fetchUpcomingAppointments = createAsyncThunk(
   'dashboard/fetchUpcomingAppointments',
   async ({ limit = 5, filters = {} }, { rejectWithValue }) => {
     try {
-      const queryParams = new URLSearchParams({ limit, ...filters });
-      const response = await axios.get(`${API_BASE_URL}/dashboard/upcoming-appointments?${queryParams}`);
-      return response.data.data;
+      return await api.getUpcomingAppointments(limit, filters);
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || 'Failed to fetch upcoming appointments'
+        error.message || 'Failed to fetch upcoming appointments'
       );
     }
   }
@@ -131,12 +100,10 @@ export const fetchTopDoctors = createAsyncThunk(
   'dashboard/fetchTopDoctors',
   async ({ limit = 5, filters = {} }, { rejectWithValue }) => {
     try {
-      const queryParams = new URLSearchParams({ limit, ...filters });
-      const response = await axios.get(`${API_BASE_URL}/dashboard/top-doctors?${queryParams}`);
-      return response.data.data;
+      return await api.getTopDoctors(limit, filters);
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || 'Failed to fetch top doctors'
+        error.message || 'Failed to fetch top doctors'
       );
     }
   }
@@ -146,12 +113,10 @@ export const fetchBookingChart = createAsyncThunk(
   'dashboard/fetchBookingChart',
   async (filters = {}, { rejectWithValue }) => {
     try {
-      const queryParams = new URLSearchParams(filters);
-      const response = await axios.get(`${API_BASE_URL}/dashboard/booking-chart?${queryParams}`);
-      return response.data.data;
+      return await api.getBookingChart(filters);
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || 'Failed to fetch booking chart data'
+        error.message || 'Failed to fetch booking chart data'
       );
     }
   }
@@ -209,10 +174,11 @@ const dashboardSlice = createSlice({
       })
       .addCase(fetchDashboardData.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.stats = action.payload.stats || state.stats;
-        state.upcomingAppointments = action.payload.upcomingSessions || [];
-        state.topDoctors = action.payload.topTherapists || [];
-        state.bookingChart = action.payload.sessionChart || [];
+        const dashData = action.payload?.data || action.payload || {};
+        state.stats = dashData.stats || state.stats;
+        state.upcomingAppointments = dashData.upcomingSessions || [];
+        state.topDoctors = dashData.topTherapists || [];
+        state.bookingChart = dashData.sessionChart || [];
       })
       .addCase(fetchDashboardData.rejected, (state, action) => {
         state.isLoading = false;
@@ -224,7 +190,8 @@ const dashboardSlice = createSlice({
       })
       .addCase(fetchDashboardStats.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.stats = action.payload;
+        const statsData = action.payload?.data || action.payload || {};
+        state.stats = statsData;
       })
       .addCase(fetchDashboardStats.rejected, (state, action) => {
         state.isLoading = false;
@@ -232,15 +199,18 @@ const dashboardSlice = createSlice({
       })
       // Fetch Upcoming Appointments
       .addCase(fetchUpcomingAppointments.fulfilled, (state, action) => {
-        state.upcomingAppointments = action.payload;
+        const appointmentsData = action.payload?.data || action.payload || [];
+        state.upcomingAppointments = Array.isArray(appointmentsData) ? appointmentsData : [];
       })
       // Fetch Top Doctors
       .addCase(fetchTopDoctors.fulfilled, (state, action) => {
-        state.topDoctors = action.payload;
+        const doctorsData = action.payload?.data || action.payload || [];
+        state.topDoctors = Array.isArray(doctorsData) ? doctorsData : [];
       })
       // Fetch Booking Chart
       .addCase(fetchBookingChart.fulfilled, (state, action) => {
-        state.bookingChart = action.payload;
+        const chartData = action.payload?.data || action.payload || [];
+        state.bookingChart = Array.isArray(chartData) ? chartData : [];
       });
   },
 });

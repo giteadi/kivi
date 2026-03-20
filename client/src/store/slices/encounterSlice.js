@@ -1,15 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
-
-const API_BASE_URL = '/api';
+import api from '../../services/api';
 
 export const fetchEncounters = createAsyncThunk(
   'encounters/fetchEncounters',
   async (filters = {}, { rejectWithValue }) => {
     try {
       const queryParams = new URLSearchParams(filters);
-      const response = await axios.get(`${API_BASE_URL}/encounters?${queryParams}`);
-      return response.data.data;
+      return await api.request(`/encounters?${queryParams}`);
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch encounters');
     }
@@ -21,8 +18,7 @@ export const fetchTemplates = createAsyncThunk(
   async (filters = {}, { rejectWithValue }) => {
     try {
       const queryParams = new URLSearchParams(filters);
-      const response = await axios.get(`${API_BASE_URL}/templates?${queryParams}`);
-      return response.data.data;
+      return await api.request(`/templates?${queryParams}`);
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch templates');
     }
@@ -62,15 +58,17 @@ const encounterSlice = createSlice({
       })
       .addCase(fetchEncounters.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.encounters = action.payload;
-        state.totalCount = action.payload.length;
+        const encountersData = action.payload?.data || action.payload || [];
+        state.encounters = Array.isArray(encountersData) ? encountersData : [];
+        state.totalCount = state.encounters.length;
       })
       .addCase(fetchEncounters.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
       })
       .addCase(fetchTemplates.fulfilled, (state, action) => {
-        state.templates = action.payload;
+        const templatesData = action.payload?.data || action.payload || [];
+        state.templates = Array.isArray(templatesData) ? templatesData : [];
       });
   },
 });

@@ -1,16 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
-
-const API_BASE_URL = '/api';
+import api from '../../services/api';
 
 // Async thunks
 export const fetchAppointments = createAsyncThunk(
   'appointments/fetchAppointments',
   async (filters = {}, { rejectWithValue }) => {
     try {
-      const queryParams = new URLSearchParams(filters);
-      const response = await axios.get(`${API_BASE_URL}/sessions?${queryParams}`);
-      return response.data.data;
+      return await api.getAppointments(filters);
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || 'Failed to fetch appointments'
@@ -23,8 +19,7 @@ export const fetchAppointment = createAsyncThunk(
   'appointments/fetchAppointment',
   async (id, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/sessions/${id}`);
-      return response.data.data;
+      return await api.getAppointment(id);
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || 'Failed to fetch appointment'
@@ -37,8 +32,7 @@ export const createAppointment = createAsyncThunk(
   'appointments/createAppointment',
   async (appointmentData, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/sessions`, appointmentData);
-      return response.data.data;
+      return await api.createAppointment(appointmentData);
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || 'Failed to create appointment'
@@ -51,8 +45,7 @@ export const updateAppointment = createAsyncThunk(
   'appointments/updateAppointment',
   async ({ id, appointmentData }, { rejectWithValue }) => {
     try {
-      const response = await axios.put(`${API_BASE_URL}/sessions/${id}`, appointmentData);
-      return response.data.data;
+      return await api.updateAppointment(id, appointmentData);
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || 'Failed to update appointment'
@@ -65,7 +58,7 @@ export const deleteAppointment = createAsyncThunk(
   'appointments/deleteAppointment',
   async (id, { rejectWithValue }) => {
     try {
-      await axios.delete(`${API_BASE_URL}/sessions/${id}`);
+      await api.deleteAppointment(id);
       return id;
     } catch (error) {
       return rejectWithValue(
@@ -127,8 +120,9 @@ const appointmentSlice = createSlice({
       })
       .addCase(fetchAppointments.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.appointments = action.payload;
-        state.totalCount = action.payload.length;
+        const appointmentsData = action.payload?.data || action.payload || [];
+        state.appointments = Array.isArray(appointmentsData) ? appointmentsData : [];
+        state.totalCount = state.appointments.length;
       })
       .addCase(fetchAppointments.rejected, (state, action) => {
         state.isLoading = false;

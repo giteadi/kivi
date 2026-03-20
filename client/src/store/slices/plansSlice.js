@@ -82,7 +82,8 @@ const plansSlice = createSlice({
       })
       .addCase(fetchPlans.fulfilled, (state, action) => {
         state.loading = false;
-        state.plans = action.payload;
+        const plansData = action.payload?.data || action.payload || [];
+        state.plans = Array.isArray(plansData) ? plansData : [];
         state.error = null;
       })
       .addCase(fetchPlans.rejected, (state, action) => {
@@ -110,7 +111,8 @@ const plansSlice = createSlice({
       })
       .addCase(fetchPlansWithAvailability.fulfilled, (state, action) => {
         state.loading = false;
-        state.plans = action.payload;
+        const plansData = action.payload?.data || action.payload || [];
+        state.plans = Array.isArray(plansData) ? plansData : [];
         state.error = null;
       })
       .addCase(fetchPlansWithAvailability.rejected, (state, action) => {

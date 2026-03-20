@@ -1,16 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
-
-const API_BASE_URL = '/api';
+import api from '../../services/api';
 
 // Async thunks
 export const fetchPatients = createAsyncThunk(
   'patients/fetchPatients',
   async (filters = {}, { rejectWithValue }) => {
     try {
-      const queryParams = new URLSearchParams(filters);
-      const response = await axios.get(`${API_BASE_URL}/students?${queryParams}`);
-      return response.data.data;
+      return await api.getPatients(filters);
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || 'Failed to fetch patients'
@@ -23,8 +19,7 @@ export const fetchPatient = createAsyncThunk(
   'patients/fetchPatient',
   async (id, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/students/${id}`);
-      return response.data.data;
+      return await api.getPatient(id);
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || 'Failed to fetch patient'
@@ -37,8 +32,7 @@ export const createPatient = createAsyncThunk(
   'patients/createPatient',
   async (patientData, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/students`, patientData);
-      return response.data.data;
+      return await api.createPatient(patientData);
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || 'Failed to create patient'
@@ -51,8 +45,7 @@ export const updatePatient = createAsyncThunk(
   'patients/updatePatient',
   async ({ id, patientData }, { rejectWithValue }) => {
     try {
-      const response = await axios.put(`${API_BASE_URL}/students/${id}`, patientData);
-      return response.data.data;
+      return await api.updatePatient(id, patientData);
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || 'Failed to update patient'
@@ -65,7 +58,7 @@ export const deletePatient = createAsyncThunk(
   'patients/deletePatient',
   async (id, { rejectWithValue }) => {
     try {
-      await axios.delete(`${API_BASE_URL}/students/${id}`);
+      await api.deletePatient(id);
       return id;
     } catch (error) {
       return rejectWithValue(
@@ -125,8 +118,9 @@ const patientSlice = createSlice({
       })
       .addCase(fetchPatients.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.patients = action.payload || [];
-        state.totalCount = (action.payload || []).length;
+        const patientsData = action.payload?.data || action.payload || [];
+        state.patients = Array.isArray(patientsData) ? patientsData : [];
+        state.totalCount = state.patients.length;
       })
       .addCase(fetchPatients.rejected, (state, action) => {
         state.isLoading = false;

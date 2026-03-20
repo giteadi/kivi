@@ -9,7 +9,8 @@ import { useSidebar } from '../App';
 const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgramme }) => {
   const dispatch = useDispatch();
   const { services: programmes, isLoading, error } = useSelector((state) => state.services);
-  const { sidebarCollapsed } = useSidebar();
+  const sidebarContext = useSidebar() || {};
+  const { sidebarCollapsed = false } = sidebarContext;
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');

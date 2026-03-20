@@ -14,7 +14,11 @@ import toast from 'react-hot-toast';
 // Create Sidebar Context
 const SidebarContext = createContext();
 
-export const useSidebar = () => useContext(SidebarContext);
+export const useSidebar = () => {
+  const context = useContext(SidebarContext);
+  // Return context or a default value to prevent errors
+  return context || { sidebarCollapsed: false, setSidebarCollapsed: () => {} };
+};
 
 import Login from './components/Login';
 import Register from './components/Register';

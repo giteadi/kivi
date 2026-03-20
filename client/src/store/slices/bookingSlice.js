@@ -259,7 +259,8 @@ const bookingSlice = createSlice({
       })
       .addCase(fetchAvailableTherapists.fulfilled, (state, action) => {
         state.loading.therapists = false;
-        state.availableTherapists = action.payload;
+        const therapistsData = action.payload?.data || action.payload || [];
+        state.availableTherapists = Array.isArray(therapistsData) ? therapistsData : [];
         state.errors.therapists = null;
       })
       .addCase(fetchAvailableTherapists.rejected, (state, action) => {
@@ -274,7 +275,8 @@ const bookingSlice = createSlice({
       })
       .addCase(fetchTherapistAvailability.fulfilled, (state, action) => {
         state.loading.availability = false;
-        state.therapistAvailability = action.payload;
+        const availabilityData = action.payload?.data || action.payload || {};
+        state.therapistAvailability = availabilityData;
         state.errors.availability = null;
       })
       .addCase(fetchTherapistAvailability.rejected, (state, action) => {
@@ -289,10 +291,11 @@ const bookingSlice = createSlice({
       })
       .addCase(fetchAvailableTimeSlots.fulfilled, (state, action) => {
         state.loading.timeSlots = false;
-        state.availableTimeSlots = action.payload;
+        const slotsData = action.payload?.data || action.payload || [];
+        state.availableTimeSlots = Array.isArray(slotsData) ? slotsData : [];
         state.errors.timeSlots = null;
-        console.log('✅ Redux: Time slots stored in state:', action.payload);
-        console.log('📊 Redux: Available time slots count:', action.payload?.length || 0);
+        console.log('✅ Redux: Time slots stored in state:', state.availableTimeSlots);
+        console.log('📊 Redux: Available time slots count:', state.availableTimeSlots.length);
       })
       .addCase(fetchAvailableTimeSlots.rejected, (state, action) => {
         state.loading.timeSlots = false;

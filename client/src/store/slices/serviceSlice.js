@@ -1,15 +1,13 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
-
-const API_BASE_URL = '/api';
+import * as apiService from '@/services/api';
 
 export const fetchServices = createAsyncThunk(
   'services/fetchServices',
   async (filters = {}, { rejectWithValue }) => {
     try {
       const queryParams = new URLSearchParams(filters);
-      const response = await axios.get(`${API_BASE_URL}/services?${queryParams}`);
-      return response.data.data;
+      const response = await apiService.get(`/services?${queryParams}`);
+      return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch services');
     }
@@ -47,8 +45,9 @@ const serviceSlice = createSlice({
       })
       .addCase(fetchServices.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.services = action.payload || [];
-        state.totalCount = (action.payload || []).length;
+        const servicesData = action.payload?.data || action.payload || [];
+        state.services = Array.isArray(servicesData) ? servicesData : [];
+        state.totalCount = state.services.length;
       })
       .addCase(fetchServices.rejected, (state, action) => {
         state.isLoading = false;
