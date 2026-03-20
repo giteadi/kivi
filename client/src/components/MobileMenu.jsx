@@ -45,11 +45,11 @@ const MobileMenu = ({ isOpen, setIsOpen, activeItem, setActiveItem }) => {
       ]
     },
     { id: 'patients', label: 'Students', icon: FiUser, section: 'USERS' },
-    { id: 'doctors', label: 'Therapists', icon: FiUserCheck, section: 'USERS' },
+    // { id: 'doctors', label: 'Therapists', icon: FiUserCheck, section: 'USERS' }, // Temporarily disabled
     { id: 'receptionists', label: 'Staff', icon: FiUser, section: 'USERS' },
     { id: 'clinics', label: 'Centres', icon: FiMapPin, section: 'CENTRE' },
     { id: 'clinic-revenue', label: 'Centre Revenue', icon: FiTrendingUp, section: 'FINANCIAL' },
-    { id: 'doctor-revenue', label: 'Therapist Revenue', icon: FiDollarSign, section: 'FINANCIAL' },
+    // { id: 'doctor-revenue', label: 'Therapist Revenue', icon: FiDollarSign, section: 'FINANCIAL' }, // Temporarily disabled
     { id: 'taxes', label: 'Taxes', icon: FiPercent, section: 'FINANCIAL' },
     { id: 'billing-records', label: 'Billing Records', icon: FiCreditCard, section: 'FINANCIAL' },
   ];
