@@ -4,6 +4,54 @@ const path = require('path');
 require('dotenv').config();
 
 let dbInstance = null;
+let reconnectAttempts = 0;
+const maxReconnectAttempts = 5;
+const reconnectDelay = 2000; // 2 seconds
+
+// Auto-reconnect function
+const handleConnectionError = (connection) => {
+  connection.on('error', (err) => {
+    console.error('❌ Database connection error:', err.message);
+    
+    if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNRESET' || err.code === 'ENOTFOUND') {
+      console.log('🔄 Attempting to reconnect to database...');
+      reconnectDatabase();
+    } else {
+      console.error('💥 Fatal database error:', err);
+    }
+  });
+};
+
+const reconnectDatabase = async () => {
+  if (reconnectAttempts >= maxReconnectAttempts) {
+    console.error('💥 Max reconnection attempts reached. Please check database connection.');
+    return;
+  }
+
+  reconnectAttempts++;
+  console.log(`🔄 Reconnection attempt ${reconnectAttempts}/${maxReconnectAttempts}...`);
+  
+  try {
+    await new Promise(resolve => setTimeout(resolve, reconnectDelay));
+    
+    // Close existing connection if any
+    if (dbInstance) {
+      dbInstance.end();
+      dbInstance = null;
+    }
+    
+    await initializeDatabase();
+    reconnectAttempts = 0; // Reset counter on successful reconnection
+    console.log('✅ Database reconnected successfully!');
+  } catch (error) {
+    console.error(`❌ Reconnection attempt ${reconnectAttempts} failed:`, error.message);
+    
+    // Continue trying to reconnect
+    if (reconnectAttempts < maxReconnectAttempts) {
+      reconnectDatabase();
+    }
+  }
+};
 
 const initializeDatabase = async () => {
   try {
@@ -62,8 +110,18 @@ const initializeDatabase = async () => {
         password: 'Tiger@123',
         database: 'kivi',
         socketPath: '/var/run/mysqld/mysqld.sock',
-        multipleStatements: true
+        multipleStatements: true,
+        // Add connection timeout and keepalive settings
+        acquireTimeout: 60000,
+        timeout: 60000,
+        reconnect: true,
+        // Enable keepalive
+        keepAliveInitialDelay: 0,
+        enableKeepAlive: true
       });
+
+      // Set up error handler for auto-reconnect
+      handleConnectionError(dbInstance);
 
       console.log('✅ Connected to MySQL database');
 
@@ -158,6 +216,14 @@ const getDb = () => {
   if (!dbInstance) {
     throw new Error('Database not initialized');
   }
+  
+  // Check if connection is still alive
+  if (dbInstance.state === 'disconnected') {
+    console.log('🔄 Database connection lost, attempting to reconnect...');
+    reconnectDatabase();
+    throw new Error('Database connection lost, attempting to reconnect...');
+  }
+  
   return dbInstance;
 };
 
