@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiSave, FiX, FiActivity, FiClock, FiDollarSign, FiUser } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
+import api from '../services/api';
 
 const ServiceCreateForm = ({ onSave, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -51,8 +52,7 @@ const ServiceCreateForm = ({ onSave, onCancel }) => {
   const fetchTherapists = async () => {
     try {
       setLoadingTherapists(true);
-      const response = await fetch(`/api/programmes/therapists/${formData.centreId}`);
-      const result = await response.json();
+      const result = await api.getTherapistsByCentre(formData.centreId);
       
       if (result.success) {
         setTherapists(result.data);

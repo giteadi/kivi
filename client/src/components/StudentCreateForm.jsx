@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiSave, FiX, FiUser, FiMail, FiPhone, FiMapPin } from 'react-icons/fi';
 import { useState } from 'react';
+import api from '../services/api';
 
 const StudentCreateForm = ({ onSave, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -87,15 +88,7 @@ const StudentCreateForm = ({ onSave, onCancel }) => {
     
     if (validateForm()) {
       try {
-        const response = await fetch('/api/students', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData)
-        });
-
-        const result = await response.json();
+        const result = await api.createPatient(formData);
         
         if (result.success) {
           onSave(result.data);

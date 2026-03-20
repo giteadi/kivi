@@ -26,8 +26,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
   const fetchCentres = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/centres');
-      const data = await response.json();
+      const data = await api.getClinics();
       
       if (data.success) {
         setCentres(data.data);
@@ -45,12 +44,9 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
   const handleDeleteCentre = async (id) => {
     if (window.confirm('Are you sure you want to delete this centre?')) {
       try {
-        const response = await fetch(`/api/centres/${id}`, {
-          method: 'DELETE'
-        });
-        const data = await response.json();
+        const result = await api.deleteClinic(id);
         
-        if (data.success) {
+        if (result.success) {
           // Refresh the centres list
           fetchCentres();
           toast.success('Centre deleted successfully!', { duration: 3000 });
@@ -59,7 +55,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
             onDeleteClinic(id);
           }
         } else {
-          toast.error('Failed to delete centre: ' + data.message, { duration: 4000 });
+          toast.error('Failed to delete centre: ' + result.message, { duration: 4000 });
         }
       } catch (err) {
         toast.error('Error deleting centre', { duration: 4000 });

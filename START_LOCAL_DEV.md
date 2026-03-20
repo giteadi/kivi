@@ -1,0 +1,32 @@
+#!/bin/zsh
+
+# Kivi Development - Quick Start
+# Open 2 terminals and run these commands
+
+echo "🚀 KIVI LOCAL DEVELOPMENT SETUP"
+echo ""
+echo "TERMINAL 1 - Start Backend:"
+echo "================================"
+echo "cd /Users/adityasharma/Desktop/kivi/server"
+echo "npm run dev"
+echo ""
+echo "Expected output:"
+echo "  ✅ Connected to MySQL database"
+echo "  ✅ Tables exist"
+echo "  🚀 Server running on port 3005"
+echo ""
+echo "================================"
+echo ""
+echo "TERMINAL 2 - Start Frontend:"
+echo "================================"
+echo "cd /Users/adityasharma/Desktop/kivi/client"
+echo "npm run dev"
+echo ""
+echo "Expected output:"
+echo "  VITE v7.3.1 ready in XXX ms"
+echo "  ➜  Local:   http://localhost:5173/"
+echo ""
+echo "================================"
+echo ""
+echo "Then open browser: http://localhost:5173"
+echo ""

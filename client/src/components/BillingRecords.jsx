@@ -22,8 +22,7 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/financial/billing-records');
-      const result = await response.json();
+      const result = await api.getBillingRecords();
 
       if (result.success) {
         // Transform the data for the component

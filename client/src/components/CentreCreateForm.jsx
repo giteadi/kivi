@@ -40,15 +40,7 @@ const CentreCreateForm = ({ onClose, onSuccess }) => {
         specialties: JSON.stringify(specialtiesArray)
       };
 
-      const response = await fetch('/api/centres', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(centreData)
-      });
-
-      const data = await response.json();
+      const data = await api.createClinic(centreData);
 
       if (data.success) {
         toast.success('Centre created successfully!', { duration: 3000 });

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiCreditCard, FiShield, FiCheck } from 'react-icons/fi';
+import api from '../services/api';
 
 const PaymentModal = ({ isOpen, onClose, selectedPlan, onPaymentSuccess }) => {
   const { user } = useSelector((state) => state.auth);
@@ -26,34 +27,25 @@ const PaymentModal = ({ isOpen, onClose, selectedPlan, onPaymentSuccess }) => {
     setIsProcessing(true);
 
     try {
-      // Create order on backend (you'll need to implement this API)
-      const orderResponse = await fetch('/api/payment/create-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          planId: selectedPlan.id,
-          amount: selectedPlan.price, // Price is already in correct format (not paisa)
-          currency: 'INR'
-        })
+      // Create order on backend
+      const orderResponse = await api.createPaymentOrder({
+        planId: selectedPlan.id,
+        amount: selectedPlan.price,
+        currency: 'INR'
       });
 
-      const orderData = await orderResponse.json();
-
-      if (!orderData.success) {
-        throw new Error(orderData.message || 'Failed to create order');
+      if (!orderResponse.success) {
+        throw new Error(orderResponse.message || 'Failed to create order');
       }
 
       // Razorpay options
       const options = {
-        key: orderData.data.key, // Using key from backend
-        amount: selectedPlan.price, // Price is already in correct format
+        key: orderResponse.data.key,
+        amount: selectedPlan.price,
         currency: 'INR',
         name: 'MindSaid Learning',
         description: `Payment for ${selectedPlan.title}`,
-        order_id: orderData.data.orderId,
+        order_id: orderResponse.data.orderId,
         handler: function (response) {
           // Payment successful
           handlePaymentSuccess(response);
@@ -86,23 +78,14 @@ const PaymentModal = ({ isOpen, onClose, selectedPlan, onPaymentSuccess }) => {
   const handlePaymentSuccess = async (paymentResponse) => {
     try {
       // Verify payment on backend
-      const verifyResponse = await fetch('/api/payment/verify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          razorpay_order_id: paymentResponse.razorpay_order_id,
-          razorpay_payment_id: paymentResponse.razorpay_payment_id,
-          razorpay_signature: paymentResponse.razorpay_signature,
-          planId: selectedPlan.id
-        })
+      const verifyResponse = await api.verifyPayment({
+        razorpay_order_id: paymentResponse.razorpay_order_id,
+        razorpay_payment_id: paymentResponse.razorpay_payment_id,
+        razorpay_signature: paymentResponse.razorpay_signature,
+        planId: selectedPlan.id
       });
 
-      const verifyData = await verifyResponse.json();
-
-      if (verifyData.success) {
+      if (verifyResponse.success) {
         onPaymentSuccess(selectedPlan, paymentResponse);
         onClose();
       } else {

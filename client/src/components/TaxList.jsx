@@ -21,8 +21,7 @@ const TaxList = ({ onViewTax, onEditTax, onDeleteTax, onCreateNewTax }) => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/financial/taxes');
-      const result = await response.json();
+      const result = await api.getTaxes();
 
       if (result.success) {
         // Transform the data for the component

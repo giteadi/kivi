@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { FiArrowLeft, FiSave, FiX, FiUser, FiMail, FiPhone, FiLock, FiMapPin, FiAward, FiDollarSign, FiEye, FiEyeOff } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import api from '../services/api';
 
 // Utility function to format date for HTML input
 const formatDateForInput = (dateString) => {
@@ -71,8 +72,7 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
         // Extract numeric ID from doctorId (remove # prefix)
         const numericId = doctorId?.replace('#', '');
         
-        const response = await fetch(`/api/therapists/${numericId}`);
-        const result = await response.json();
+        const result = await api.getDoctor(numericId);
 
         if (result.success) {
           const therapist = result.data;
@@ -197,15 +197,7 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
         therapistData.password = formData.password;
       }
 
-      const response = await fetch(`/api/therapists/${formData.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(therapistData),
-      });
-
-      const result = await response.json();
+      const result = await api.updateDoctor(formData.id, therapistData);
 
       if (result.success) {
         setUpdateSuccess(true);

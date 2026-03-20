@@ -1,16 +1,31 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
+// Auto-detect API URL and configure proxy accordingly
+const API_URL = process.env.VITE_API_URL || 'http://localhost:3005/api'
+const isLocalhost = API_URL.includes('localhost')
+
 export default defineConfig({
   plugins: [react()],
-  // Removed proxy to use direct API calls
-  // server: {
-  //   proxy: {
-  //     '/api': {
-  //       target: 'http://localhost:3005',
-  //       changeOrigin: true
-  //     }
-  //   }
-  // }
+  
+  // Only enable proxy if using localhost
+  ...(isLocalhost && {
+    server: {
+      proxy: {
+        '/api': {
+          target: 'http://localhost:3005',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api/, '/api'),
+          ws: true,
+          // Only activate proxy for localhost development
+          bypass: function(req, res, proxyOptions) {
+            if (API_URL.includes('localhost')) {
+              return false // Use proxy
+            }
+            return null // Use direct request
+          }
+        }
+      }
+    }
+  })
 })

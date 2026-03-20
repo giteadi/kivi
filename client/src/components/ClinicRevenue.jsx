@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { FiTrendingUp, FiDollarSign, FiCalendar, FiDownload, FiRefreshCw } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import { useToast } from './Toast';
+import api from '../services/api';
 
 const ClinicRevenue = () => {
   const toast = useToast();
@@ -20,8 +21,7 @@ const ClinicRevenue = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/financial/clinic-revenue');
-      const result = await response.json();
+      const result = await api.getClinicRevenue();
 
       if (result.success) {
         // Transform the data for the component

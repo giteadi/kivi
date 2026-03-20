@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3005/api';
+const API_BASE_URL = 'https://dashboard.iplanbymsl.in/api';
 
 class ApiService {
   constructor() {
@@ -411,6 +411,62 @@ async getPlans() {
   async getBookingCalendar(therapistId, filters = {}) {
     const queryParams = new URLSearchParams(filters);
     return this.request(`/booking/therapists/${therapistId}/calendar?${queryParams}`);
+  }
+
+  // Financial endpoints
+  async getClinicRevenue(filters = {}) {
+    const queryParams = new URLSearchParams(filters);
+    return this.request(`/financial/clinic-revenue?${queryParams}`);
+  }
+
+  async getDoctorRevenue(filters = {}) {
+    const queryParams = new URLSearchParams(filters);
+    return this.request(`/financial/doctor-revenue?${queryParams}`);
+  }
+
+  async getBillingRecords(filters = {}) {
+    const queryParams = new URLSearchParams(filters);
+    return this.request(`/financial/billing-records?${queryParams}`);
+  }
+
+  async getTaxes(filters = {}) {
+    const queryParams = new URLSearchParams(filters);
+    return this.request(`/financial/taxes?${queryParams}`);
+  }
+
+  // Programmes endpoints (with filters)
+  async getProgrammes(filters = {}) {
+    const queryParams = new URLSearchParams(filters);
+    return this.request(`/programmes?${queryParams}`);
+  }
+
+  async getProgramme(id) {
+    return this.request(`/programmes/${id}`);
+  }
+
+  async createProgramme(programmeData) {
+    return this.request('/programmes', {
+      method: 'POST',
+      body: JSON.stringify(programmeData),
+    });
+  }
+
+  async updateProgramme(id, programmeData) {
+    return this.request(`/programmes/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(programmeData),
+    });
+  }
+
+  async deleteProgramme(id) {
+    return this.request(`/programmes/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Get therapists by centre
+  async getTherapistsByCentre(centreId) {
+    return this.request(`/programmes/therapists/${centreId}`);
   }
 }
 

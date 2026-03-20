@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { FiArrowLeft, FiSave, FiX, FiUser, FiMail, FiPhone, FiMapPin } from 'react-icons/fi';
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from './Toast';
+import api from '../services/api';
 
 const StudentEditForm = ({ studentId, onSave, onCancel }) => {
   const toast = useToast();
@@ -46,8 +47,7 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
         // Remove # prefix from studentId if present
         const cleanStudentId = studentId.toString().replace('#', '');
         console.log('Fetching student with ID:', cleanStudentId);
-        const response = await fetch(`/api/students/${cleanStudentId}`);
-        const result = await response.json();
+        const result = await api.getPatient(cleanStudentId);
         console.log('API Response:', result);
         
         if (result.success) {
@@ -160,15 +160,7 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
     try {
       // Remove # prefix from studentId if present
       const cleanStudentId = studentId.toString().replace('#', '');
-      const response = await fetch(`/api/students/${cleanStudentId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const result = await response.json();
+      const result = await api.updatePatient(cleanStudentId, formData);
       
       if (result.success) {
         toast.success('Student updated successfully');

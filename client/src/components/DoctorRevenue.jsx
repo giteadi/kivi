@@ -19,8 +19,7 @@ const DoctorRevenue = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/financial/doctor-revenue');
-      const result = await response.json();
+      const result = await api.getDoctorRevenue();
 
       if (result.success) {
         // Transform the data for the component
