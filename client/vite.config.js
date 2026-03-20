@@ -1,29 +1,27 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// Auto-detect API URL and configure proxy accordingly
-const API_URL = process.env.VITE_API_URL || 'http://localhost:3005/api'
-const isLocalhost = API_URL.includes('localhost')
+// Load environment variables
+const env = loadEnv('', process.cwd(), '')
 
 export default defineConfig({
   plugins: [react()],
   
+  // Environment variables
+  define: {
+    __APP_ENV__: JSON.stringify(env.MODE || 'development'),
+    __API_URL__: JSON.stringify(env.VITE_API_URL || 'https://dashboard.iplanbymsl.in/api')
+  },
+  
   // Only enable proxy if using localhost
-  ...(isLocalhost && {
+  ...(env.VITE_API_URL?.includes('localhost') && {
     server: {
       proxy: {
         '/api': {
           target: 'http://localhost:3005',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, '/api'),
-          ws: true,
-          // Only activate proxy for localhost development
-          bypass: function(req, res, proxyOptions) {
-            if (API_URL.includes('localhost')) {
-              return false // Use proxy
-            }
-            return null // Use direct request
-          }
+          ws: true
         }
       }
     }
