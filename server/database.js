@@ -110,14 +110,8 @@ const initializeDatabase = async () => {
         password: 'Tiger@123',
         database: 'kivi',
         socketPath: '/var/run/mysqld/mysqld.sock',
-        multipleStatements: true,
-        // Add connection timeout and keepalive settings
-        acquireTimeout: 60000,
-        timeout: 60000,
-        reconnect: true,
-        // Enable keepalive
-        keepAliveInitialDelay: 0,
-        enableKeepAlive: true
+        multipleStatements: true
+        // Removed invalid options: acquireTimeout, timeout, reconnect, enableKeepAlive, keepAliveInitialDelay
       });
 
       // Set up error handler for auto-reconnect
