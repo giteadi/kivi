@@ -20,7 +20,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Homepage from './components/Homepage';
 import UserDashboard from './components/UserDashboard';
-import TherapistDashboard from './components/TherapistDashboard';
+// import TherapistDashboard from './components/TherapistDashboard'; // Temporarily disabled
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
@@ -55,7 +55,7 @@ import ServiceCards from './components/ServiceCards';
 import ServiceCreateForm from './components/ServiceCreateForm';
 import ServiceEditForm from './components/ServiceEditForm';
 import StudentCreateForm from './components/StudentCreateForm';
-import TherapistCreateForm from './components/TherapistCreateForm';
+// import TherapistCreateForm from './components/TherapistCreateForm'; // Temporarily disabled
 import SessionCreateForm from './components/SessionCreateForm';
 import SessionEditForm from './components/SessionEditForm';
 import SessionList from './components/SessionList';
@@ -253,9 +253,10 @@ function App() {
   // Role-based dashboard rendering
   if (isAuthenticated && user) {
     // Show role-specific dashboard for non-admin users
-    if (user.role === 'therapist') {
-      return <TherapistDashboard />;
-    } else if (user.role !== 'admin') {
+    // if (user.role === 'therapist') {
+    //   return <TherapistDashboard />;
+    // } else 
+    if (user.role !== 'admin') {
       return <UserDashboard selectedPlan={selectedPlan} />;
     }
     
@@ -274,10 +275,10 @@ function App() {
     setCurrentView('sessions');
   };
 
-  const handleViewAllTherapists = () => {
-    setActiveItem('doctors');
-    setCurrentView('doctors-list');
-  };
+  // const handleViewAllTherapists = () => {
+//   setActiveItem('doctors');
+//   setCurrentView('doctors-list');
+// };
 
   const handleViewEncounter = (encounterId = null) => {
     // Set the selected encounter ID and navigate to encounter details
@@ -473,62 +474,50 @@ function App() {
     setActiveItem('patients');
   };
 
-  const handleSaveDoctor = async (updatedData) => {
-    try {
-      // Remove client-side id and prepare data for API
-      const therapistData = {
-        first_name: updatedData.firstName,
-        last_name: updatedData.lastName,
-        email: updatedData.email,
-        phone: updatedData.phone,
-        specialty: updatedData.specialty,
-        qualification: updatedData.qualification,
-        experience_years: parseInt(updatedData.experience) || 0,
-        session_fee: parseFloat(updatedData.sessionFee) || 0,
-        bio: updatedData.bio,
-        date_of_birth: updatedData.dateOfBirth,
-        gender: updatedData.gender,
-        address: updatedData.address,
-        city: updatedData.city,
-        state: updatedData.state,
-        zip_code: updatedData.zipCode,
-        emergency_contact_name: updatedData.emergencyContactName,
-        emergency_contact_phone: updatedData.emergencyContactPhone,
-        joining_date: updatedData.joiningDate,
-        license_number: updatedData.licenseNumber,
-        centre_id: 1, // Default centre, should be configurable
-        status: 'active'
-      };
+  // const handleSaveDoctor = async (updatedData) => {
+  //   try {
+  //     // Remove client-side id and prepare data for API
+  //     const therapistData = {
+  //       first_name: updatedData.firstName,
+  //       last_name: updatedData.lastName,
+  //       email: updatedData.email,
+  //       phone: updatedData.phone,
+  //       specialty: updatedData.specialty,
+  //       license_number: updatedData.licenseNumber,
+  //       joining_date: updatedData.joiningDate,
+  //       centre_id: 1, // Default centre, should be configurable
+  //       status: 'active'
+  //     };
 
-      const response = await api.request('/therapists', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(therapistData),
-      });
+  //     const response = await api.request('/therapists', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify(therapistData),
+  //     });
 
-      const result = await response.json();
+  //     const result = await response.json();
 
-      if (result.success) {
-        toast.success(`Therapist ${updatedData.firstName} ${updatedData.lastName} created successfully!`);
-        setCurrentView('doctors-list');
-        setActiveItem('doctors');
-        // Refresh the doctors list
-        dispatch(fetchDoctors());
-      } else {
-        toast.error(`Failed to create therapist: ${result.message}`);
-      }
-    } catch (error) {
-      console.error('Error saving therapist:', error);
-      toast.error('Failed to save therapist. Please try again.');
-    }
-  };
+  //     if (result.success) {
+  //       toast.success(`Therapist ${updatedData.firstName} ${updatedData.lastName} created successfully!`);
+  //       setCurrentView('doctors-list');
+  //       setActiveItem('doctors');
+  //       // Refresh the doctors list
+  //       dispatch(fetchDoctors());
+  //     } else {
+  //       toast.error(`Failed to create therapist: ${result.message}`);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error saving therapist:', error);
+  //     toast.error('Failed to save therapist. Please try again.');
+  //   }
+  // };
 
-  const handleCancelDoctorEdit = () => {
-    setCurrentView('doctors-list');
-    setActiveItem('doctors');
-  };
+const handleCancelDoctorEdit = () => {
+setCurrentView('doctors-list');
+setActiveItem('doctors');
+};
 
   // Handle doctor edit (separate from create)
   const handleSaveDoctorEdit = async (updatedData) => {
@@ -700,9 +689,6 @@ ${service.objectives || 'No objectives specified'}
 👥 TARGET AGE GROUP:
 ${service.target_age_group || 'Not specified'}
 
-👨‍⚕️ THERAPIST: ${service.therapist_first_name ? 
-  `${service.therapist_first_name} ${service.therapist_last_name}` : 
-  'Not Assigned'}
       `;
       alert(details);
     }
@@ -763,7 +749,7 @@ ${service.target_age_group || 'Not specified'}
         duration: parseInt(serviceData.duration),
         description: serviceData.description,
         status: serviceData.status,
-        therapist_id: serviceData.therapist_id || null
+        // therapist_id: serviceData.therapist_id || null
       };
 
       const url = isUpdate 
@@ -872,14 +858,14 @@ ${service.target_age_group || 'Not specified'}
     }
 
     // Handle therapist create form
-    if (currentView === 'doctor-create') {
-      return (
-        <TherapistCreateForm
-          onSave={handleSaveDoctor}
-          onCancel={handleCancelDoctorEdit}
-        />
-      );
-    }
+    // if (currentView === 'doctor-create') {
+    //   return (
+    //     <TherapistCreateForm
+    //       onSave={handleSaveDoctor}
+    //       onCancel={handleCancelDoctorEdit}
+    //     />
+    //   );
+    // }
 
     // Handle doctor edit form
     if (currentView === 'doctor-edit') {
@@ -1042,7 +1028,7 @@ ${service.target_age_group || 'Not specified'}
           onAppointmentClick={handleAppointmentClick} 
           onCreateNewEncounter={handleCreateNewEncounter} 
           onViewAllAppointments={handleViewAllAppointments} 
-          onViewAllTherapists={handleViewAllTherapists}
+          // onViewAllTherapists={handleViewAllTherapists}
           setActiveItem={handleSetActiveItem}
         />;
       

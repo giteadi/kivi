@@ -52,11 +52,11 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
         ]
       },
       { id: 'patients', label: 'Students', icon: FiUser, section: 'USERS' },
-    { id: 'doctors', label: 'Therapists', icon: FiUserCheck, section: 'USERS' },
+    // { id: 'doctors', label: 'Therapists', icon: FiUserCheck, section: 'USERS' }, // Temporarily disabled
     { id: 'receptionists', label: 'Staff', icon: FiUser, section: 'USERS' },
     { id: 'clinics', label: 'Centres', icon: FiMapPin, section: 'CENTRE' },
     { id: 'clinic-revenue', label: 'Centre Revenue', icon: FiTrendingUp, section: 'FINANCIAL' },
-    { id: 'doctor-revenue', label: 'Therapist Revenue', icon: FiDollarSign, section: 'FINANCIAL' },
+    { id: 'doctor-revenue', label: 'Therapist Revenue', icon: FiDollarSign, section: 'FINANCIAL' }, 
     { id: 'taxes', label: 'Taxes', icon: FiPercent, section: 'FINANCIAL' },
     { id: 'billing-records', label: 'Billing Records', icon: FiCreditCard, section: 'FINANCIAL' },
   ];
@@ -76,14 +76,15 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
       ]
     },
     { id: 'patients', label: 'Students', icon: FiUser, section: 'USERS' },
+    { id: 'profile', label: 'My Profile', icon: FiUser, section: 'USERS' },
   ];
 
   // Return menu items based on user role
   switch (user?.role) {
     case 'admin':
       return adminMenuItems;
-    case 'therapist':
-      return therapistMenuItems;
+    // case 'therapist':
+    //   return therapistMenuItems;
     default:
       // For parents and other users, return minimal menu
       return [
