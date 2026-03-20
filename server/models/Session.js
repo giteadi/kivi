@@ -24,7 +24,10 @@ class Session extends BaseModel {
       LEFT JOIN kivi_therapists t ON s.therapist_id = t.id
       LEFT JOIN kivi_users tu ON t.user_id = tu.id
       LEFT JOIN kivi_centres c ON s.centre_id = c.id
-      LEFT JOIN kivi_programmes p ON s.programme_id = p.id
+      LEFT JOIN kivi_programmes p ON (CASE 
+        WHEN s.programme_id LIKE 'P%' THEN s.programme_id 
+        ELSE CONCAT('P', s.programme_id) 
+      END) = p.programme_id
       WHERE 1=1
     `;
     const params = [];
@@ -169,7 +172,10 @@ class Session extends BaseModel {
       LEFT JOIN kivi_therapists t ON s.therapist_id = t.id
       LEFT JOIN kivi_users tu ON t.user_id = tu.id
       LEFT JOIN kivi_centres c ON s.centre_id = c.id
-      LEFT JOIN kivi_programmes p ON s.programme_id = p.id
+      LEFT JOIN kivi_programmes p ON (CASE 
+        WHEN s.programme_id LIKE 'P%' THEN s.programme_id 
+        ELSE CONCAT('P', s.programme_id) 
+      END) = p.programme_id
       WHERE s.id = ?
     `;
     
