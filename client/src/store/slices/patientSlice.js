@@ -125,8 +125,8 @@ const patientSlice = createSlice({
       })
       .addCase(fetchPatients.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.patients = action.payload;
-        state.totalCount = action.payload.length;
+        state.patients = action.payload || [];
+        state.totalCount = (action.payload || []).length;
       })
       .addCase(fetchPatients.rejected, (state, action) => {
         state.isLoading = false;
