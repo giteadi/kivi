@@ -47,8 +47,8 @@ const serviceSlice = createSlice({
       })
       .addCase(fetchServices.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.services = action.payload;
-        state.totalCount = action.payload.length;
+        state.services = action.payload || [];
+        state.totalCount = (action.payload || []).length;
       })
       .addCase(fetchServices.rejected, (state, action) => {
         state.isLoading = false;

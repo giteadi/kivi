@@ -28,12 +28,12 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
     price: '',
     notes: ''
   });
-  const [therapists, setTherapists] = useState([]);
+  // const [therapists, setTherapists] = useState([]);
 
-  // Load services and therapists on component mount
+  // Load services on component mount
   useEffect(() => {
     dispatch(fetchServices());
-    fetchTherapists();
+    // fetchTherapists(); // Temporarily disabled
   }, [dispatch]);
 
   // Update form when edit mode changes
@@ -66,17 +66,17 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
     }
   }, [isEditMode, editingProgramme]);
 
-  // Fetch therapists from API
-  const fetchTherapists = async () => {
-    try {
-      const response = await api.request('/therapists');
-      if (response.success && response.data) {
-        setTherapists(response.data);
-      }
-    } catch (error) {
-      console.error('Error fetching therapists:', error);
-    }
-  };
+  // Fetch therapists from API - Temporarily disabled
+  // const fetchTherapists = async () => {
+  //   try {
+  //     const response = await api.request('/therapists');
+  //     if (response.success && response.data) {
+  //       setTherapists(response.data);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching therapists:', error);
+  //   }
+  // };
 
   // Handle editing a programme
   const handleEditProgramme = (transformedProgramme) => {
@@ -104,18 +104,18 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
   const handleCreateSession = async () => {
     try {
       // Validate required fields
-      if (!newSessionData.title || !newSessionData.therapist_id) {
-        alert('Please fill in all required fields (Title and Therapist)');
+      if (!newSessionData.title) {
+        alert('Please fill in all required fields (Title)');
         return;
       }
 
-      // Get centre_id from selected therapist
-      const selectedTherapist = therapists.find(t => t.id === parseInt(newSessionData.therapist_id));
-      
-      if (!selectedTherapist) {
-        alert('Selected therapist not found. Please try again.');
-        return;
-      }
+      // Get centre_id - use default for now
+      // const selectedTherapist = therapists.find(t => t.id === parseInt(newSessionData.therapist_id));
+      // 
+      // if (!selectedTherapist) {
+      //   alert('Selected therapist not found. Please try again.');
+      //   return;
+      // }
       
       // Map frontend fields to database fields for programmes
       const programmeData = {
@@ -124,14 +124,14 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
         category: 'Session Plan', // Default category for session plans
         description: newSessionData.description || '', // description -> description
         duration: parseInt(newSessionData.duration) || 30,
-        therapist_id: parseInt(newSessionData.therapist_id),
-        centre_id: selectedTherapist.centre_id ? parseInt(selectedTherapist.centre_id) : null,
+        therapist_id: null, // Temporarily disabled
+        centre_id: 1, // Default centre
         fee: newSessionData.price ? parseFloat(newSessionData.price) : 0.00, // price -> fee
         // session_date not needed for programmes
       };
 
       console.log(`${isEditMode ? 'Updating' : 'Creating'} programme data:`, programmeData);
-      console.log('Selected therapist:', selectedTherapist);
+      // console.log('Selected therapist:', selectedTherapist); // Temporarily disabled
 
       const response = await api.request(`/programmes${isEditMode ? `/${editingProgramme.id}` : ''}`, {
         method: isEditMode ? 'PUT' : 'POST',
@@ -184,9 +184,7 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
   const transformedProgrammes = programmes.map(programme => ({
     id: programme.id,
     patient: programme.student_name || `Student ${programme.id}`, // Dynamic student name
-    doctor: programme.therapist_first_name ? 
-      `${programme.therapist_first_name} ${programme.therapist_last_name}` : 
-      'Not Assigned',
+    doctor: 'Not Assigned', // Temporarily disabled therapist display
     clinic: programme.centre_name || `Centre ${programme.centre_id}`, // Dynamic centre name
     date: new Date(programme.created_at).toLocaleDateString('en-US', { 
       year: 'numeric', 
@@ -336,9 +334,9 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
                     <th className="px-2 sm:px-3 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Plan Name
                     </th>
-                    <th className="px-2 sm:px-3 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                      Therapist
-                    </th>
+                    // <th className="px-2 sm:px-3 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+//   Therapist
+</th>
                     <th className="px-2 sm:px-3 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Date & Time
                     </th>
@@ -368,11 +366,11 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
                           </div>
                         </div>
                       </td>
-                      <td className="px-2 sm:px-3 md:px-6 py-2 sm:py-4 whitespace-nowrap hidden sm:table-cell">
+                      {/* <td className="px-2 sm:px-3 md:px-6 py-2 sm:py-4 whitespace-nowrap">
                         <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[120px]">
                           {programme.doctor}
                         </div>
-                      </td>
+                      </td> */}
                       <td className="px-2 sm:px-3 md:px-6 py-2 sm:py-4 whitespace-nowrap">
                         <div className="flex items-center text-xs sm:text-sm text-gray-900">
                           <FiCalendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 text-gray-400" />
@@ -502,7 +500,7 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
                   />
                 </div>
 
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Therapist</label>
                   <select
                     value={newSessionData.therapist_id}
@@ -518,7 +516,7 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
                       </option>
                     ))}
                   </select>
-                </div>
+                </div> */}
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
