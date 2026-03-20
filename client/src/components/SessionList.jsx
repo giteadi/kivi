@@ -20,28 +20,29 @@ import {
   FiRefreshCw,
   FiBell
 } from 'react-icons/fi';
-import { fetchSessions, deleteSession } from '../store/slices/sessionSlice';
+import { fetchPlans } from '../store/slices/plansSlice';
 import SessionCreateForm from './SessionCreateForm';
 import SessionEditForm from './SessionEditForm';
 import api from '../services/api';
 import { useSidebar } from '../App';
+import toast from 'react-hot-toast';
 
 const SessionList = ({ onViewEncounter }) => {
   console.log('🔍 SessionList: Component initialized');
 
   const dispatch = useDispatch();
-  const { sessions, loading, error } = useSelector((state) => state.sessions);
+  const { plans, loading, error } = useSelector((state) => state.plans);
   const sidebarContext = useSidebar() || {};
   const { sidebarCollapsed = false } = sidebarContext;
 
-  console.log('🔍 SessionList: Redux state - sessions:', sessions?.length || 0, 'loading:', loading, 'error:', error);
+  console.log('🔍 SessionList: Redux state - plans:', plans?.length || 0, 'loading:', loading, 'error:', error);
   
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
-  const [selectedSession, setSelectedSession] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState(null);
   const [viewMode, setViewMode] = useState('card'); // card or table
   const [currentPage, setCurrentPage] = useState(1);
-  const [sessionsPerPage] = useState(12);
+  const [plansPerPage] = useState(12);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     status: '',
@@ -57,13 +58,13 @@ const SessionList = ({ onViewEncounter }) => {
   const pollingInterval = useRef(null);
 
   useEffect(() => {
-    console.log('🔍 SessionList: useEffect triggered - fetching sessions');
-    dispatch(fetchSessions());
+    console.log('🔍 SessionList: useEffect triggered - fetching plans');
+    dispatch(fetchPlans());
     
     // Set up polling for real-time updates
     pollingInterval.current = setInterval(() => {
-      console.log('🔍 SessionList: Polling - fetching updated sessions');
-      dispatch(fetchSessions());
+      console.log('🔍 SessionList: Polling - fetching updated plans');
+      dispatch(fetchPlans());
     }, 10000); // Poll every 10 seconds
     
     return () => {
@@ -74,19 +75,19 @@ const SessionList = ({ onViewEncounter }) => {
     };
   }, [dispatch]);
 
-  // Detect new sessions
+  // Detect new plans
   useEffect(() => {
-    console.log('🔍 SessionList: Sessions updated, checking for new sessions. Previous count:', previousSessionsCount.current, 'Current count:', sessions.length);
+    console.log('🔍 SessionList: Plans updated, checking for new plans. Previous count:', previousSessionsCount.current, 'Current count:', plans.length);
 
-    if (sessions.length > previousSessionsCount.current && previousSessionsCount.current > 0) {
-      const latestSession = sessions[0]; // Assuming newest session is first
-      console.log('🔍 SessionList: New session detected:', latestSession);
-      setNewSessions(prev => new Set(prev).add(latestSession.id));
+    if (plans.length > previousSessionsCount.current && previousSessionsCount.current > 0) {
+      const latestPlan = plans[0]; // Assuming newest plan is first
+      console.log('🔍 SessionList: New plan detected:', latestPlan);
+      setNewSessions(prev => new Set(prev).add(latestPlan.id));
       setShowNotification(true);
       setTimeout(() => setShowNotification(false), 5000);
     }
-    previousSessionsCount.current = sessions.length;
-  }, [sessions]);
+    previousSessionsCount.current = plans.length;
+  }, [plans]);
 
   // Helper function to get client name
   const getClientName = (session) => {

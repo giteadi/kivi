@@ -63,6 +63,7 @@ import StudentCreateForm from './components/StudentCreateForm';
 import SessionCreateForm from './components/SessionCreateForm';
 import SessionEditForm from './components/SessionEditForm';
 import SessionList from './components/SessionList';
+import PlansList from './components/PlansList';
 import AdminSessionsList from './components/AdminSessionsList';
 
 function App() {
@@ -1062,7 +1063,8 @@ ${service.target_age_group || 'Not specified'}
         if (currentView === 'appointments-list') {
           return <AppointmentsList onViewAppointment={handleAppointmentClick} onEditAppointment={handleEditAppointment} onDeleteAppointment={handleDeleteAppointment} onCreateNewAppointment={handleCreateNewAppointment} />;
         }
-        return <EncountersList onEditProgramme={handleEditEncounter} onDeleteProgramme={handleDeleteEncounter} onCreateNewProgramme={handleCreateNewEncounter} />;
+        // Show PlansList for Sessions List
+        return <PlansList />;
       
       case 'encounter-templates':
         return (
@@ -1076,7 +1078,7 @@ ${service.target_age_group || 'Not specified'}
         );
       
       case 'sessions':
-        return <SessionList onViewEncounter={handleViewEncounter} />;
+        return <PlansList />;
       
       case 'clinic-revenue':
         return <ClinicRevenue />;
