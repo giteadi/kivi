@@ -78,12 +78,12 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
       value: stats.totalClinics?.toString() || '0',
       color: 'blue'
     },
-    {
-      icon: FiUserCheck,
-      title: 'Total Therapists',
-      value: stats.totalDoctors?.toString() || '0',
-      color: 'blue'
-    }
+    // {
+    //   icon: FiUserCheck,
+    //   title: 'Total Therapists',
+    //   value: stats.totalDoctors?.toString() || '0',
+    //   color: 'blue'
+    // }
   ];
 
   const revenueStats = [
@@ -132,9 +132,9 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
           hour12: true
         }),
         clinic: apt.centre_name,
-        doctor: apt.therapist_first_name && apt.therapist_last_name
-          ? `${apt.therapist_first_name} ${apt.therapist_last_name}`
-          : apt.therapist_name || 'Unknown Therapist',
+        // doctor: apt.therapist_first_name && apt.therapist_last_name
+        //   ? `${apt.therapist_first_name} ${apt.therapist_last_name}`
+        //   : apt.therapist_name || 'Unknown Therapist',
         initials: (() => {
           // Dynamic initials based on who actually booked
           if (apt.user_first_name && apt.user_email && 
@@ -158,7 +158,7 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
         // Add contact details for AppointmentDetail
         userPhone: apt.user_phone,
         studentPhone: apt.student_phone,
-        therapistPhone: apt.therapist_phone,
+        // therapistPhone: apt.therapist_phone,
         centrePhone: apt.centre_phone
       };
     });
@@ -379,28 +379,29 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 }}
-            className="bg-white rounded-xl p-6 shadow-sm border"
           >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-800">Top Therapists</h3>
-              <button 
-                onClick={() => onViewAllTherapists && onViewAllTherapists()}
-                className="text-sm text-blue-600 hover:text-blue-700"
-              >
-                View All
-              </button>
-            </div>
-            
-            <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
-              {formatDoctorData(topDoctors || []).map((doctor, index) => (
-                <DoctorCard key={index} {...doctor} />
-              ))}
-              {(!topDoctors || topDoctors.length === 0) && (
-                <div className="text-center py-4 text-gray-500">
-                  No therapist data available
-                </div>
-              )}
-            </div>
+            {/* Top Therapists Section - Temporarily Disabled */}
+            {/* <div className="bg-white rounded-xl p-6 shadow-sm border">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-800">Top Therapists</h3>
+                <button 
+                  onClick={() => onViewAllTherapists && onViewAllTherapists()}
+                  className="text-sm text-blue-600 hover:text-blue-700"
+                >
+                  View All
+                </button>
+              </div>
+              <div className="space-y-4">
+                {topDoctors && topDoctors.length > 0 && formatDoctorData(topDoctors).map((doctor, index) => (
+                  <DoctorCard key={index} doctor={doctor} />
+                ))}
+                {(!topDoctors || topDoctors.length === 0) && (
+                  <div className="text-center py-4 text-gray-500">
+                    No therapist data available
+                  </div>
+                )}
+              </div>
+            </div> */}
           </motion.div>
 
           {/* Booking Status Chart */}
