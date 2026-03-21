@@ -3,55 +3,7 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
-let dbInstance = null;
-let reconnectAttempts = 0;
-const maxReconnectAttempts = 5;
-const reconnectDelay = 2000; // 2 seconds
-
-// Auto-reconnect function
-const handleConnectionError = (connection) => {
-  connection.on('error', (err) => {
-    console.error('❌ Database connection error:', err.message);
-    
-    if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNRESET' || err.code === 'ENOTFOUND') {
-      console.log('🔄 Attempting to reconnect to database...');
-      reconnectDatabase();
-    } else {
-      console.error('💥 Fatal database error:', err);
-    }
-  });
-};
-
-const reconnectDatabase = async () => {
-  if (reconnectAttempts >= maxReconnectAttempts) {
-    console.error('💥 Max reconnection attempts reached. Please check database connection.');
-    return;
-  }
-
-  reconnectAttempts++;
-  console.log(`🔄 Reconnection attempt ${reconnectAttempts}/${maxReconnectAttempts}...`);
-  
-  try {
-    await new Promise(resolve => setTimeout(resolve, reconnectDelay));
-    
-    // Close existing connection if any
-    if (dbInstance) {
-      dbInstance.end();
-      dbInstance = null;
-    }
-    
-    await initializeDatabase();
-    reconnectAttempts = 0; // Reset counter on successful reconnection
-    console.log('✅ Database reconnected successfully!');
-  } catch (error) {
-    console.error(`❌ Reconnection attempt ${reconnectAttempts} failed:`, error.message);
-    
-    // Continue trying to reconnect
-    if (reconnectAttempts < maxReconnectAttempts) {
-      reconnectDatabase();
-    }
-  }
-};
+let dbPool = null;
 
 const initializeDatabase = async () => {
   try {
@@ -62,18 +14,19 @@ const initializeDatabase = async () => {
 
     const initPromise = (async () => {
       // First connect without database to check if it exists
-      const connection = mysql.createConnection({
+      const tempPool = mysql.createPool({
         user: 'root',
         password: 'Tiger@123',
         socketPath: '/var/run/mysqld/mysqld.sock',
-        multipleStatements: true
+        multipleStatements: true,
+        connectionLimit: 1
       });
 
       console.log('🔄 Checking database...');
 
       // Check if database exists
       const dbExists = await new Promise((resolve, reject) => {
-        connection.query('SHOW DATABASES LIKE ?', ['kivi'], (err, results) => {
+        tempPool.query('SHOW DATABASES LIKE ?', ['kivi'], (err, results) => {
           if (err) reject(err);
           else resolve(results.length > 0);
         });
@@ -88,7 +41,7 @@ const initializeDatabase = async () => {
 
         // Execute SQL commands
         await new Promise((resolve, reject) => {
-          connection.query(sqlContent, (err, results) => {
+          tempPool.query(sqlContent, (err, results) => {
             if (err) {
               console.error('❌ Database initialization failed:', err);
               reject(err);
@@ -102,50 +55,49 @@ const initializeDatabase = async () => {
         console.log('✅ Database exists, checking tables...');
       }
 
-      connection.end();
+      tempPool.end();
 
-      // Now connect to the specific database
-      dbInstance = mysql.createConnection({
+      // Now create pool for the specific database
+      dbPool = mysql.createPool({
         user: 'root',
         password: 'Tiger@123',
         database: 'kivi',
         socketPath: '/var/run/mysqld/mysqld.sock',
-        multipleStatements: true
-        // Removed invalid options: acquireTimeout, timeout, reconnect, enableKeepAlive, keepAliveInitialDelay
+        multipleStatements: true,
+        connectionLimit: 10,
+        acquireTimeout: 60000,
+        timeout: 60000
       });
 
-      // Set up error handler for auto-reconnect
-      handleConnectionError(dbInstance);
+      console.log('✅ Connected to MySQL database with connection pool');
 
-      console.log('✅ Connected to MySQL database');
-
-      const tablesExist = await checkTablesExist(dbInstance);
+      const tablesExist = await checkTablesExist();
       if (!tablesExist) {
         console.log('🔄 Tables missing, creating tables...');
-        await createTables(dbInstance);
+        await createTables();
       } else {
         console.log('✅ Tables exist');
       }
 
-      return dbInstance;
+      return dbPool;
     })();
 
     // Race between initialization and timeout
     await Promise.race([initPromise, timeoutPromise]);
-    return dbInstance;
+    return dbPool;
   } catch (error) {
     console.error('❌ Database initialization error:', error);
     process.exit(1);
   }
 };
 
-const checkTablesExist = async (db) => {
+const checkTablesExist = async () => {
   try {
     const requiredTables = ['kivi_users', 'kivi_centres', 'kivi_therapists', 'kivi_students', 'kivi_sessions', 'kivi_encounters', 'kivi_plans'];
     
     for (const table of requiredTables) {
       const result = await new Promise((resolve, reject) => {
-        db.query('SHOW TABLES LIKE ?', [table], (err, results) => {
+        dbPool.query('SHOW TABLES LIKE ?', [table], (err, results) => {
           if (err) reject(err);
           else resolve(results.length > 0);
         });
@@ -164,7 +116,7 @@ const checkTablesExist = async (db) => {
   }
 };
 
-const createTables = async (db) => {
+const createTables = async () => {
   try {
     const sqlFile = path.join(__dirname, 'config', 'new_database.sql');
     const sqlContent = fs.readFileSync(sqlFile, 'utf8');
@@ -182,7 +134,7 @@ const createTables = async (db) => {
       
       if (statement.trim()) {
         await new Promise((resolve, reject) => {
-          db.query(statement + ';', (err, results) => {
+          dbPool.query(statement + ';', (err, results) => {
             if (err) {
               // Ignore table already exists errors
               if (err.code === 'ER_TABLE_EXISTS_ERROR') {
@@ -207,18 +159,11 @@ const createTables = async (db) => {
 };
 
 const getDb = () => {
-  if (!dbInstance) {
-    throw new Error('Database not initialized');
+  if (!dbPool) {
+    throw new Error('Database pool not initialized');
   }
   
-  // Check if connection is still alive
-  if (dbInstance.state === 'disconnected') {
-    console.log('🔄 Database connection lost, attempting to reconnect...');
-    reconnectDatabase();
-    throw new Error('Database connection lost, attempting to reconnect...');
-  }
-  
-  return dbInstance;
+  return dbPool;
 };
 
 module.exports = { initializeDatabase, getDb };
