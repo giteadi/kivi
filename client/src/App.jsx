@@ -36,6 +36,7 @@ import ExamineeEditForm from './components/ExamineeEditForm';
 import DoctorsList from './components/DoctorsList';
 import DoctorProfile from './components/DoctorProfile';
 import DoctorEditForm from './components/DoctorEditForm';
+import TherapistCreateForm from './components/TherapistCreateForm';
 import ReceptionistsList from './components/ReceptionistsList';
 import ReceptionistProfile from './components/ReceptionistProfile';
 import ReceptionistEditForm from './components/ReceptionistEditForm';
@@ -479,45 +480,50 @@ function App() {
     setActiveItem('patients');
   };
 
-  // const handleSaveDoctor = async (updatedData) => {
-  //   try {
-  //     // Remove client-side id and prepare data for API
-  //     const therapistData = {
-  //       first_name: updatedData.firstName,
-  //       last_name: updatedData.lastName,
-  //       email: updatedData.email,
-  //       phone: updatedData.phone,
-  //       specialty: updatedData.specialty,
-  //       license_number: updatedData.licenseNumber,
-  //       joining_date: updatedData.joiningDate,
-  //       centre_id: 1, // Default centre, should be configurable
-  //       status: 'active'
-  //     };
+  const handleSaveDoctor = async (updatedData) => {
+    try {
+      console.log(' Creating therapist:', updatedData);
+      
+      // Remove client-side id and prepare data for API
+      const therapistData = {
+        first_name: updatedData.firstName,
+        last_name: updatedData.lastName,
+        email: updatedData.email,
+        phone: updatedData.phone,
+        specialty: updatedData.specialty,
+        license_number: updatedData.licenseNumber,
+        joining_date: updatedData.joiningDate,
+        centre_id: 1, // Default centre, should be configurable
+        status: 'active'
+      };
 
-  //     const response = await api.request('/therapists', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify(therapistData),
-  //     });
+      console.log(' Sending therapist data:', therapistData);
 
-  //     const result = await response.json();
+      const response = await api.request('/therapists', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(therapistData),
+      });
 
-  //     if (result.success) {
-  //       toast.success(`Therapist ${updatedData.firstName} ${updatedData.lastName} created successfully!`);
-  //       setCurrentView('doctors-list');
-  //       setActiveItem('doctors');
-  //       // Refresh the doctors list
-  //       dispatch(fetchDoctors());
-  //     } else {
-  //       toast.error(`Failed to create therapist: ${result.message}`);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error saving therapist:', error);
-  //     toast.error('Failed to save therapist. Please try again.');
-  //   }
-  // };
+      const result = await response.json();
+      console.log(' Therapist creation response:', result);
+
+      if (result.success) {
+        toast.success(`Therapist ${updatedData.firstName} ${updatedData.lastName} created successfully!`);
+        setCurrentView('doctors-list');
+        setActiveItem('doctors');
+        // Refresh the doctors list
+        dispatch(fetchDoctors());
+      } else {
+        toast.error(`Failed to create therapist: ${result.message}`);
+      }
+    } catch (error) {
+      console.error(' Error saving therapist:', error);
+      toast.error('Failed to save therapist. Please try again.');
+    }
+  };
 
 const handleCancelDoctorEdit = () => {
 setCurrentView('doctors-list');
@@ -863,14 +869,14 @@ ${service.target_age_group || 'Not specified'}
     }
 
     // Handle therapist create form
-    // if (currentView === 'doctor-create') {
-    //   return (
-    //     <TherapistCreateForm
-    //       onSave={handleSaveDoctor}
-    //       onCancel={handleCancelDoctorEdit}
-    //     />
-    //   );
-    // }
+    if (currentView === 'doctor-create') {
+      return (
+        <TherapistCreateForm
+          onSave={handleSaveDoctor}
+          onCancel={handleCancelDoctorEdit}
+        />
+      );
+    }
 
     // Handle doctor edit form
     if (currentView === 'doctor-edit') {

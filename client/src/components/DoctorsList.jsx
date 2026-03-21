@@ -20,16 +20,19 @@ const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDo
 
   // Load doctors on component mount
   useEffect(() => {
+    console.log('🚀 DoctorsList component mounted, fetching doctors...');
     dispatch(fetchDoctors());
   }, [dispatch]);
 
   // Refresh data function
   const handleRefresh = async () => {
+    console.log('🔄 Refreshing doctors data...');
     setIsRefreshing(true);
     try {
       await dispatch(fetchDoctors()).unwrap();
+      console.log('✅ Doctors data refreshed successfully!');
     } catch (error) {
-      console.error('Failed to refresh data:', error);
+      console.error('❌ Failed to refresh data:', error);
     } finally {
       setIsRefreshing(false);
     }
@@ -42,6 +45,7 @@ const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDo
     if (filterClinic !== 'all') filters.clinic = filterClinic;
     if (filterSpecialty !== 'all') filters.specialty = filterSpecialty;
     
+    console.log('🔍 Applying filters:', filters);
     dispatch(fetchDoctors(filters));
   }, [searchTerm, filterClinic, filterSpecialty, dispatch]);
 
@@ -50,29 +54,47 @@ const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDo
   const availableSpecialties = ['all', ...new Set(doctors.map(d => d.specialty).filter(Boolean))];
 
   // Transform API data to match frontend format
-  const transformedDoctors = doctors.map(doctor => ({
-    id: `#${doctor.id}`,
-    name: `${doctor.first_name} ${doctor.last_name}`,
-    initials: `${doctor.first_name?.[0] || ''}${doctor.last_name?.[0] || ''}`,
-    email: doctor.email,
-    phone: doctor.phone,
-    clinic: doctor.centre_name || 'Unknown Clinic',
-    clinicColor: 'bg-blue-100 text-blue-800', // Default color
-    specialty: doctor.specialty || 'General Medicine',
-    specialtyColor: 'bg-green-100 text-green-800', // Default color
-    experience: `${doctor.experience_years || 0} years`,
-    qualification: doctor.qualification || 'MBBS',
-    status: doctor.status === 'active' ? 'Active' : 'Inactive',
-    joinDate: new Date(doctor.created_at).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    }),
-    totalPatients: doctor.total_patients || 0,
-    todayAppointments: doctor.today_appointments || 0,
-    rating: doctor.rating || 4.5,
-    availability: doctor.is_available ? 'Available' : 'Unavailable'
-  }));
+  const transformedDoctors = doctors.map(doctor => {
+    console.log('🔄 Transforming doctor data:', doctor);
+    return {
+      id: `#${doctor.id}`,
+      name: `${doctor.first_name} ${doctor.last_name}`,
+      email: doctor.email,
+      phone: doctor.phone,
+      specialty: doctor.specialty,
+      experience: doctor.experience_years ? `${doctor.experience_years} years` : 'N/A',
+      status: doctor.status === 'active' ? 'Active' : 'Inactive',
+      availability: doctor.availability_status || 'Available',
+      clinic: doctor.centre_name || 'N/A',
+      patients: doctor.total_patients || 0,
+      appointments: doctor.total_appointments || 0,
+      todayAppointments: 0, // Will be calculated from sessions
+      profileImage: doctor.profile_image,
+      employeeId: doctor.employee_id,
+      qualification: doctor.qualification,
+      licenseNumber: doctor.license_number,
+      sessionFee: doctor.session_fee,
+      bio: doctor.bio,
+      dateOfBirth: doctor.date_of_birth_text,
+      gender: doctor.gender,
+      joiningDate: doctor.joining_date,
+      address: doctor.address,
+      city: doctor.city,
+      state: doctor.state,
+      zipCode: doctor.zip_code,
+      emergencyContact: {
+        name: doctor.emergency_contact_name,
+        phone: doctor.emergency_contact_phone,
+        relation: doctor.relation
+      },
+      certifications: doctor.certifications || [],
+      languages: doctor.languages || [],
+      sessionDuration: doctor.session_duration,
+      loginTime: doctor.login_time,
+      logoutTime: doctor.logout_time,
+      isAvailable: doctor.is_available
+    };
+  });
 
   const filteredDoctors = transformedDoctors.filter(doctor => {
     const matchesSearch = doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

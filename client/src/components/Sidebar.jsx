@@ -51,8 +51,8 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
         ]
       },
       { id: 'patients', label: 'Examinees', icon: FiUser, section: 'USERS' },
-    // { id: 'doctors', label: 'Therapists', icon: FiUserCheck, section: 'USERS' }, // Temporarily disabled
-    { id: 'receptionists', label: 'Staff', icon: FiUser, section: 'USERS' },
+    { id: 'doctors', label: 'Therapists', icon: FiUserCheck, section: 'USERS' },
+    // { id: 'receptionists', label: 'Staff', icon: FiUser, section: 'USERS' }, // Temporarily disabled for future use
     { id: 'clinics', label: 'Centres', icon: FiMapPin, section: 'CENTRE' },
     { id: 'clinic-revenue', label: 'Centre Revenue', icon: FiTrendingUp, section: 'FINANCIAL' },
     // { id: 'doctor-revenue', label: 'Therapist Revenue', icon: FiDollarSign, section: 'FINANCIAL' }, // Temporarily disabled 
@@ -81,8 +81,8 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
   switch (user?.role) {
     case 'admin':
       return adminMenuItems;
-    // case 'therapist':
-    //   return therapistMenuItems;
+    case 'therapist':
+      return therapistMenuItems;
     default:
       // For parents and other users, return minimal menu
       return [

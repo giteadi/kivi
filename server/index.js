@@ -46,7 +46,7 @@ const startServer = async () => {
     // New routes with updated naming
     app.use('/api/sessions', require('./routes/sessionRoutes'));
     app.use('/api/students', require('./routes/studentRoutes'));
-    // app.use('/api/therapists', require('./routes/therapistRoutes')); // Temporarily disabled
+    app.use('/api/therapists', require('./routes/therapistRoutes')); // Re-enabled
     app.use('/api/centres', require('./routes/centreRoutes'));
     app.use('/api/programmes', require('./routes/programmeRoutes'));
     

@@ -287,6 +287,7 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
       </div>
     </>
   );
+  // Temporarily disabled for future use
   const renderReceptionistFilters = () => (
     <>
       <div className="space-y-4">
@@ -607,8 +608,8 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
         return renderPatientFilters();
       case 'doctors':
         return renderDoctorFilters();
-      case 'receptionists':
-        return renderReceptionistFilters();
+      // case 'receptionists':
+      //   return renderReceptionistFilters(); // Temporarily disabled for future use
       case 'appointments':
         return renderAppointmentFilters();
       case 'clinics':

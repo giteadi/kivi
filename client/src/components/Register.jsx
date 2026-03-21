@@ -185,7 +185,7 @@ const Register = ({ onBackToLogin, onRegisterSuccess }) => {
             >
               <option value="admin">Administrator</option>
               <option value="therapist">Therapist</option>
-              <option value="staff">Staff Member</option>
+              {/* <option value="staff">Staff Member</option> Temporarily disabled for future use */}
             </select>
           </div>
 

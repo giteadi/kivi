@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiEdit3, FiPhone, FiMail, FiMapPin, FiCalendar, FiUser, FiFileText, FiActivity, FiClock, FiStar, FiUsers } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
+import api from '../services/api';
 
 const DoctorProfile = ({ doctorId, onBack, onEditProfile }) => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -14,17 +15,24 @@ const DoctorProfile = ({ doctorId, onBack, onEditProfile }) => {
   // Fetch doctor data from API
   useEffect(() => {
     const fetchDoctorData = async () => {
+      console.log('🔍 Fetching doctor profile for ID:', doctorId);
+      console.log('🔢 Numeric ID:', numericId);
+      
       if (!numericId) {
+        console.error('❌ No doctor ID provided');
         setError('No doctor ID provided');
         setIsLoading(false);
         return;
       }
 
       try {
+        console.log('🌐 Calling API getDoctor with ID:', numericId);
         const result = await api.getDoctor(numericId);
+        console.log('📥 API Response:', result);
 
         if (result.success) {
           const therapist = result.data;
+          console.log('👤 Therapist data:', therapist);
           
           // Transform API data to match component format
           const transformedData = {
@@ -81,12 +89,15 @@ const DoctorProfile = ({ doctorId, onBack, onEditProfile }) => {
 
           setDoctorData(transformedData);
         } else {
+          console.error('❌ API returned error:', result.message);
           setError(result.message || 'Failed to load doctor data');
         }
       } catch (error) {
-        console.error('Error fetching doctor data:', error);
+        console.error('❌ Error fetching doctor data:', error);
+        console.error('❌ Error details:', error.message);
         setError('Error loading doctor data');
       } finally {
+        console.log('✅ Fetch completed, setting loading to false');
         setIsLoading(false);
       }
     };
