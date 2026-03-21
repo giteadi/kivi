@@ -69,6 +69,25 @@ class Patient extends BaseModel {
     }
   }
 
+  // Create new record with student_id duplicate handling
+  async create(data) {
+    try {
+      // Check if student_id already exists
+      if (data.student_id) {
+        const existingRecord = await this.query('SELECT id FROM kivi_students WHERE student_id = ?', [data.student_id]);
+        if (existingRecord.length > 0) {
+          throw new Error(`Student ID "${data.student_id}" already exists. Please use a different ID.`);
+        }
+      }
+      
+      // Use parent create method
+      return await super.create(data);
+    } catch (error) {
+      console.error('Patient create error:', error);
+      throw error;
+    }
+  }
+
   // Get patient with appointments (mapped to student with sessions)
   async getPatientWithAppointments(id) {
     const sql = `

@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiSave, FiX, FiUser, FiMail, FiPhone, FiMapPin } from 'react-icons/fi';
 import { useState } from 'react';
+import { useSelector } from 'react-redux';
 import api from '../services/api';
 
 const ExamineeCreateForm = ({ onSave, onCancel }) => {
+  const { user } = useSelector((state) => state.auth);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -11,17 +13,17 @@ const ExamineeCreateForm = ({ onSave, onCancel }) => {
     phone: '',
     dateOfBirth: '',
     gender: '',
-    address: '',
-    city: '',
-    state: '',
-    zipCode: '',
     centreId: '',
-    emergencyContactName: '',
-    emergencyContactPhone: '',
-    emergencyContactRelation: '',
-    learningNeeds: '',
-    supportRequirements: '',
-    status: 'active'
+    status: 'active',
+    student_id: '', // User can enter their own student ID
+    account: '',
+    account_name: user?.name || '',
+    account_email: user?.email || '',
+    account_phone: user?.phone || '',
+    customField1: '',
+    customField2: '',
+    customField3: '',
+    customField4: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -88,17 +90,42 @@ const ExamineeCreateForm = ({ onSave, onCancel }) => {
     
     if (validateForm()) {
       try {
-        const result = await api.createPatient(formData);
+        // Map frontend field names to database column names
+        const dbData = {
+          student_id: formData.student_id || `STU${Date.now()}`, // Use user ID or auto-generate
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          date_of_birth: formData.dateOfBirth,
+          gender: formData.gender,
+          centre_id: formData.centreId,
+          status: formData.status,
+          account: formData.account,
+          account_name: formData.account_name,
+          account_email: formData.account_email,
+          account_phone: formData.account_phone,
+          customField1: formData.customField1,
+          customField2: formData.customField2,
+          customField3: formData.customField3,
+          customField4: formData.customField4
+        };
+        
+        const result = await api.createPatient(dbData);
         
         if (result.success) {
           onSave(result.data);
         } else {
           console.error('Error creating examinee:', result.message);
-          // You might want to show an error message to the user here
+          // Show user-friendly error message
+          if (result.message && result.message.includes('already exists')) {
+            alert('This Student ID is already taken. Please use a different Student ID or leave it empty for auto-generation.');
+          } else {
+            alert('Error creating examinee: ' + result.message);
+          }
         }
       } catch (error) {
         console.error('Error creating examinee:', error);
-        // You might want to show an error message to the user here
       }
     }
   };
@@ -169,7 +196,7 @@ const ExamineeCreateForm = ({ onSave, onCancel }) => {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-8">
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
             {/* Personal Information */}
             <div>
               <h3 className="text-lg font-medium text-gray-800 mb-4">Personal Information</h3>
@@ -295,54 +322,144 @@ const ExamineeCreateForm = ({ onSave, onCancel }) => {
                     <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
                   )}
                 </div>
+              </div>
+            </div>
 
-                <div className="lg:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Address
-                  </label>
-                  <div className="relative">
-                    <FiMapPin className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
-                    <textarea
-                      value={formData.address}
-                      onChange={(e) => handleInputChange('address', e.target.value)}
-                      rows={3}
-                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Enter full address"
-                    />
-                  </div>
-                </div>
-
+            {/* Account Information */}
+            <div>
+              <h3 className="text-lg font-medium text-gray-800 mb-4">Account Information</h3>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    City
+                    Examinee ID
                   </label>
                   <input
                     type="text"
-                    value={formData.city}
-                    onChange={(e) => handleInputChange('city', e.target.value)}
+                    value={formData.student_id}
+                    onChange={(e) => handleInputChange('student_id', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter city"
+                    placeholder="Enter examinee ID (leave empty for auto-generate)"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    State
+                    Account
                   </label>
                   <input
                     type="text"
-                    value={formData.state}
-                    onChange={(e) => handleInputChange('state', e.target.value)}
+                    value={formData.account}
+                    onChange={(e) => handleInputChange('account', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter state"
+                    placeholder="Enter account number or ID"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Account Name
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.account_name}
+                    onChange={(e) => handleInputChange('account_name', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Account holder name (auto-filled)"
+                    readOnly
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Account Email
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.account_email}
+                    onChange={(e) => handleInputChange('account_email', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Account holder email (auto-filled)"
+                    readOnly
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Account Phone
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.account_phone}
+                    onChange={(e) => handleInputChange('account_phone', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Account holder phone (auto-filled)"
+                    readOnly
                   />
                 </div>
               </div>
             </div>
 
-            {/* Centre & Emergency Contact */}
+            {/* Custom Fields */}
             <div>
-              <h3 className="text-lg font-medium text-gray-800 mb-4">Centre & Emergency Contact</h3>
+              <h3 className="text-lg font-medium text-gray-800 mb-4">Custom Fields</h3>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Custom Field 1
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.customField1}
+                    onChange={(e) => handleInputChange('customField1', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter custom field 1"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Custom Field 2
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.customField2}
+                    onChange={(e) => handleInputChange('customField2', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter custom field 2"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Custom Field 3
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.customField3}
+                    onChange={(e) => handleInputChange('customField3', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter custom field 3"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Custom Field 4
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.customField4}
+                    onChange={(e) => handleInputChange('customField4', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter custom field 4"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Centre & Status */}
+            <div>
+              <h3 className="text-lg font-medium text-gray-800 mb-4">Centre & Status</h3>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -382,82 +499,6 @@ const ExamineeCreateForm = ({ onSave, onCancel }) => {
                     <option value="graduated">Graduated</option>
                     <option value="transferred">Transferred</option>
                   </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Emergency Contact Name
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.emergencyContactName}
-                    onChange={(e) => handleInputChange('emergencyContactName', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter emergency contact name"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Emergency Contact Phone
-                  </label>
-                  <input
-                    type="tel"
-                    value={formData.emergencyContactPhone}
-                    onChange={(e) => handleInputChange('emergencyContactPhone', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter emergency contact phone"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Emergency Contact Relation
-                  </label>
-                  <select
-                    value={formData.emergencyContactRelation}
-                    onChange={(e) => handleInputChange('emergencyContactRelation', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">Select relation</option>
-                    <option value="Parent">Parent</option>
-                    <option value="Guardian">Guardian</option>
-                    <option value="Sibling">Sibling</option>
-                    <option value="Grandparent">Grandparent</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Learning Information */}
-            <div>
-              <h3 className="text-lg font-medium text-gray-800 mb-4">Learning Information</h3>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Learning Needs
-                  </label>
-                  <textarea
-                    value={formData.learningNeeds}
-                    onChange={(e) => handleInputChange('learningNeeds', e.target.value)}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Describe specific learning needs..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Support Requirements
-                  </label>
-                  <textarea
-                    value={formData.supportRequirements}
-                    onChange={(e) => handleInputChange('supportRequirements', e.target.value)}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Describe support requirements..."
-                  />
                 </div>
               </div>
             </div>
