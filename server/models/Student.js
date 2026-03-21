@@ -56,7 +56,7 @@ class Student extends BaseModel {
         // Add default centre_name for compatibility
         return students.map(student => ({
           ...student,
-          centre_name: 'Unknown Centre',
+          centre_name: 'MindSaid Learning Centre',
           last_session: null
         }));
       }
