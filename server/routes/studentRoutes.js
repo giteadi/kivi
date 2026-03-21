@@ -24,4 +24,9 @@ router.delete('/:id', studentController.deleteStudent.bind(studentController));
 // Assessment routes for students
 router.get('/:studentId/assessments', assessmentController.getAssessments.bind(assessmentController));
 
+// Standalone assessment routes
+router.post('/assessments', assessmentController.createAssessment.bind(assessmentController));
+router.delete('/assessments/:id', assessmentController.deleteAssessment.bind(assessmentController));
+router.post('/assessments/generate-report', assessmentController.generateReport.bind(assessmentController));
+
 module.exports = router;
