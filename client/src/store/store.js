@@ -10,6 +10,7 @@ import encounterSlice from './slices/encounterSlice';
 import plansSlice from './slices/plansSlice';
 import bookingSlice from './slices/bookingSlice';
 import sessionSlice from './slices/sessionSlice';
+import assessmentSlice from './slices/assessmentSlice';
 
 export const store = configureStore({
   reducer: {
@@ -24,6 +25,7 @@ export const store = configureStore({
     plans: plansSlice,
     booking: bookingSlice,
     sessions: sessionSlice,
+    assessments: assessmentSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

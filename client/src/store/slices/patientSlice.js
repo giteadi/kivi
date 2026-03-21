@@ -132,7 +132,9 @@ const patientSlice = createSlice({
       })
       .addCase(fetchPatient.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.currentPatient = action.payload;
+        // Handle both response formats: direct data or wrapped in data property
+        const patientData = action.payload?.data || action.payload;
+        state.currentPatient = patientData;
       })
       .addCase(fetchPatient.rejected, (state, action) => {
         state.isLoading = false;

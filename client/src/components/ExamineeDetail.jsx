@@ -1,86 +1,57 @@
 import { motion } from 'framer-motion';
-import { FiArrowLeft, FiPlus, FiTrash2, FiFileText, FiUser, FiPhone, FiMail, FiCalendar, FiMapPin, FiEdit3 } from 'react-icons/fi';
+import { FiArrowLeft, FiPlus, FiTrash2, FiFileText, FiUser, FiPhone, FiMail, FiMapPin, FiCalendar, FiEdit3 } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchPatient } from '../store/slices/patientSlice';
+import { fetchAssessments, toggleAssessmentSelection, clearSelection, selectAllAssessments, createAssessment, deleteAssessment, generateAssessmentReport } from '../store/slices/assessmentSlice';
 import { useToast } from './Toast';
-import api from '../services/api';
+import AssignAssessmentModal from './AssignAssessmentModal';
 
 const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   const toast = useToast();
-  const [examineeData, setExamineeData] = useState(null);
-  const [assessments, setAssessments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [selectedAssessments, setSelectedAssessments] = useState([]);
+  const dispatch = useDispatch();
+  const { currentPatient, isLoading: patientLoading, error: patientError } = useSelector((state) => state.patients);
+  const { assessments, isLoading: assessmentLoading, error: assessmentError, selectedAssessments } = useSelector((state) => state.assessments);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
 
   useEffect(() => {
-    const fetchExamineeData = async () => {
-      if (!examineeId) {
-        setError('No examinee ID provided');
-        setLoading(false);
-        return;
-      }
+    if (examineeId) {
+      dispatch(fetchPatient(examineeId));
+      dispatch(fetchAssessments(examineeId));
+    }
+  }, [dispatch, examineeId]);
 
-      try {
-        setLoading(true);
-        setError(null);
+  const isLoading = patientLoading || assessmentLoading;
+  const error = patientError || assessmentError;
 
-        // Fetch examinee basic information
-        const examineeResponse = await api.getPatient(examineeId);
-        
-        if (examineeResponse.success) {
-          const examinee = examineeResponse.data;
-          
-          // Transform examinee data
-          const transformedExaminee = {
-            systemId: `SYS${examinee.id.toString().padStart(6, '0')}`,
-            name: `${examinee.first_name || 'Unknown'} ${examinee.last_name || 'Unknown'}`,
-            birthDate: examinee.date_of_birth ? new Date(examinee.date_of_birth).toLocaleDateString('en-GB', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric'
-            }) : 'Not provided',
-            age: examinee.date_of_birth ? calculateAge(examinee.date_of_birth) : 'Not available',
-            examineeId: examinee.student_id || `STU${examinee.id}`,
-            gender: examinee.gender || 'Not specified',
-            customField1: examinee.custom_field_1 || '',
-            customField2: examinee.custom_field_2 || '',
-            customField3: examinee.custom_field_3 || '',
-            customField4: examinee.custom_field_4 || '',
-            groups: examinee.groups || '',
-            legacyId: examinee.legacy_id || '',
-            email: examinee.email || 'Not provided',
-            phone: examinee.phone || 'Not provided',
-            centre: examinee.clinic_name || 'MindSaid Learning Centre'
-          };
-
-          setExamineeData(transformedExaminee);
-
-          // Fetch assessments for this examinee
-          // Note: This would need to be implemented in your backend API
-          const mockAssessments = [
-            {
-              id: '58415507',
-              name: 'WRAT5-India Blue Form',
-              adminDate: '18/03/2026',
-              delivery: 'Manual Entry',
-              status: 'Report Generated'
-            }
-          ];
-          
-          setAssessments(mockAssessments);
-        } else {
-          setError(examineeResponse.message || 'Failed to load examinee data');
-        }
-      } catch (error) {
-        console.error('Error fetching examinee data:', error);
-        setError('Error loading examinee data');
-      } finally {
-        setLoading(false);
-      }
+  // Transform patient data to match component expectations
+  const transformPatientData = (patient) => {
+    if (!patient) return null;
+    
+    return {
+      systemId: `SYS${patient.id.toString().padStart(6, '0')}`,
+      name: `${patient.first_name || 'Unknown'} ${patient.last_name || 'Unknown'}`,
+      birthDate: patient.date_of_birth ? new Date(patient.date_of_birth).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      }) : 'Not provided',
+      age: patient.date_of_birth ? calculateAge(patient.date_of_birth) : 'Not available',
+      examineeId: patient.student_id || `STU${patient.id}`,
+      gender: patient.gender ? patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1) : 'Not specified',
+      customField1: patient.custom_field_1 || patient.customField1 || '',
+      customField2: patient.custom_field_2 || patient.customField2 || '',
+      customField3: patient.custom_field_3 || patient.customField3 || '',
+      customField4: patient.custom_field_4 || patient.customField4 || '',
+      groups: patient.groups || '',
+      legacyId: patient.legacy_id || '',
+      email: patient.email || 'Not provided',
+      phone: patient.phone || 'Not provided',
+      centre: patient.centre_name || 'MindSaid Learning Centre'
     };
+  };
 
-    fetchExamineeData();
-  }, [examineeId]);
+  const examineeData = transformPatientData(currentPatient);
 
   const calculateAge = (dateOfBirth) => {
     try {
@@ -105,8 +76,13 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   };
 
   const handleAssignNewAssessment = () => {
-    toast.success('Assign new assessment functionality would be implemented here');
-    // This would open a modal to assign a new assessment
+    setIsAssignModalOpen(true);
+  };
+
+  const handleAssessmentAssigned = () => {
+    setIsAssignModalOpen(false);
+    // Refresh assessments after assignment
+    dispatch(fetchAssessments(examineeId));
   };
 
   const handleDeleteAssessments = () => {
@@ -115,9 +91,15 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       return;
     }
     
-    toast.success(`Deleting ${selectedAssessments.length} assessment(s)`);
-    // This would delete the selected assessments
-    setSelectedAssessments([]);
+    // Delete each selected assessment
+    Promise.all(selectedAssessments.map(id => dispatch(deleteAssessment(id)).unwrap()))
+      .then(() => {
+        toast.success(`${selectedAssessments.length} assessment(s) deleted successfully!`);
+        dispatch(clearSelection());
+      })
+      .catch((error) => {
+        toast.error('Failed to delete assessments: ' + error);
+      });
   };
 
   const handleGenerateReport = () => {
@@ -126,16 +108,27 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       return;
     }
     
-    toast.success(`Generating report for ${selectedAssessments.length} assessment(s)`);
-    // This would generate reports for selected assessments
+    dispatch(generateAssessmentReport(selectedAssessments))
+      .unwrap()
+      .then((result) => {
+        toast.success(result.message || 'Report generated successfully!');
+        dispatch(clearSelection());
+      })
+      .catch((error) => {
+        toast.error('Failed to generate report: ' + error);
+      });
   };
 
   const handleAssessmentSelection = (assessmentId) => {
-    setSelectedAssessments(prev => 
-      prev.includes(assessmentId) 
-        ? prev.filter(id => id !== assessmentId)
-        : [...prev, assessmentId]
-    );
+    dispatch(toggleAssessmentSelection(assessmentId));
+  };
+
+  const handleSelectAllAssessments = () => {
+    if (selectedAssessments.length === assessments.length) {
+      dispatch(clearSelection());
+    } else {
+      dispatch(selectAllAssessments());
+    }
   };
 
   const getStatusColor = (status) => {
@@ -144,16 +137,18 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
         return 'bg-green-100 text-green-800';
       case 'in progress':
         return 'bg-yellow-100 text-yellow-800';
-      case 'pending':
-        return 'bg-gray-100 text-gray-800';
-      case 'completed':
+      case 'scheduled':
         return 'bg-blue-100 text-blue-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="lg:ml-64 min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-gray-500">
@@ -174,6 +169,25 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             <button 
               onClick={onBack}
               className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!examineeData) {
+    return (
+      <div className="lg:ml-64 min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 max-w-md">
+          <div className="text-yellow-800 text-center">
+            <p className="text-lg font-medium mb-2">No Data Available</p>
+            <p className="text-sm">Examinee information not found.</p>
+            <button 
+              onClick={onBack}
+              className="mt-4 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
             >
               Go Back
             </button>
@@ -369,13 +383,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                       type="checkbox" 
                       className="rounded"
                       checked={selectedAssessments.length === assessments.length && assessments.length > 0}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedAssessments(assessments.map(a => a.id));
-                        } else {
-                          setSelectedAssessments([]);
-                        }
-                      }}
+                      onChange={handleSelectAllAssessments}
                     />
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Assessment ID</th>
@@ -403,17 +411,19 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                         onChange={() => handleAssessmentSelection(assessment.id)}
                       />
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {assessment.id}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{assessment.id}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {assessment.name}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{assessment.assessment_name}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {assessment.adminDate}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {assessment.scheduled_date ? new Date(assessment.scheduled_date).toLocaleDateString('en-GB') : 'Not scheduled'}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {assessment.delivery}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{assessment.delivery_method}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(assessment.status)}`}>
@@ -437,6 +447,14 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
           )}
         </motion.div>
       </div>
+      
+      {/* Assign Assessment Modal */}
+      <AssignAssessmentModal
+        isOpen={isAssignModalOpen}
+        onClose={() => setIsAssignModalOpen(false)}
+        examineeId={examineeId}
+        examineeName={examineeData?.name || 'Unknown Examinee'}
+      />
     </div>
   );
 };

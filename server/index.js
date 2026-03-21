@@ -49,6 +49,7 @@ const startServer = async () => {
     app.use('/api/therapists', require('./routes/therapistRoutes')); // Re-enabled
     app.use('/api/centres', require('./routes/centreRoutes'));
     app.use('/api/programmes', require('./routes/programmeRoutes'));
+    app.use('/api/assessments', require('./routes/assessmentRoutes'));
     
     // Legacy routes for backward compatibility (if needed)
     app.use('/api/appointments', require('./routes/appointmentRoutes'));
