@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { FiArrowLeft, FiSave, FiX, FiUser, FiMail, FiPhone, FiMapPin } from 'react-icons/fi';
+import { FiArrowLeft, FiSave, FiX, FiUser, FiMail, FiPhone, FiMapPin, FiPlus, FiTrash2 } from 'react-icons/fi';
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import api from '../services/api';
@@ -16,22 +16,47 @@ const ExamineeCreateForm = ({ onSave, onCancel }) => {
     centreId: '',
     status: 'active',
     student_id: '', // User can enter their own student ID
-    account: '',
-    account_name: user?.name || '',
     account_email: user?.email || '',
     account_phone: user?.phone || '',
-    customField1: '',
-    customField2: '',
-    customField3: '',
-    customField4: ''
+    customFields: {} // Dynamic custom fields object
   });
 
   const [errors, setErrors] = useState({});
+  const [customFieldCount, setCustomFieldCount] = useState(2); // Fixed to 2 custom fields only
 
   const centres = [
     { id: 1, name: 'MindSaid Learning Centre' },
     { id: 5, name: 'Test' }
   ];
+
+  // Handle custom field changes
+  const handleCustomFieldChange = (index, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      customFields: {
+        ...prev.customFields,
+        [`customField_${index}`]: value
+      }
+    }));
+  };
+
+  // Add new custom field
+  const addCustomField = () => {
+    setCustomFieldCount(prev => prev + 1);
+  };
+
+  // Remove custom field
+  const removeCustomField = (index) => {
+    const newCustomFields = { ...formData.customFields };
+    delete newCustomFields[`customField_${index}`];
+    
+    setFormData(prev => ({
+      ...prev,
+      customFields: newCustomFields
+    }));
+    
+    setCustomFieldCount(prev => Math.max(1, prev - 1)); // Minimum 1 field
+  };
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -101,14 +126,9 @@ const ExamineeCreateForm = ({ onSave, onCancel }) => {
           gender: formData.gender,
           centre_id: formData.centreId,
           status: formData.status,
-          account: formData.account,
-          account_name: formData.account_name,
           account_email: formData.account_email,
           account_phone: formData.account_phone,
-          customField1: formData.customField1,
-          customField2: formData.customField2,
-          customField3: formData.customField3,
-          customField4: formData.customField4
+          ...formData.customFields // Spread all dynamic custom fields
         };
         
         const result = await api.createPatient(dbData);
@@ -344,33 +364,6 @@ const ExamineeCreateForm = ({ onSave, onCancel }) => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Account
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.account}
-                    onChange={(e) => handleInputChange('account', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter account number or ID"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Account Name
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.account_name}
-                    onChange={(e) => handleInputChange('account_name', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Account holder name (auto-filled)"
-                    readOnly
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Account Email
                   </label>
                   <input
@@ -401,59 +394,47 @@ const ExamineeCreateForm = ({ onSave, onCancel }) => {
 
             {/* Custom Fields */}
             <div>
-              <h3 className="text-lg font-medium text-gray-800 mb-4">Custom Fields</h3>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Custom Field 1
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.customField1}
-                    onChange={(e) => handleInputChange('customField1', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter custom field 1"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Custom Field 2
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.customField2}
-                    onChange={(e) => handleInputChange('customField2', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter custom field 2"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Custom Field 3
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.customField3}
-                    onChange={(e) => handleInputChange('customField3', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter custom field 3"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Custom Field 4
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.customField4}
-                    onChange={(e) => handleInputChange('customField4', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter custom field 4"
-                  />
-                </div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-800">Custom Fields</h3>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={addCustomField}
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                >
+                  <FiPlus className="w-4 h-4" />
+                  <span>Add Custom Field</span>
+                </motion.button>
+              </div>
+              
+              <div className="grid grid-cols-1 gap-6">
+                {Array.from({ length: customFieldCount }, (_, index) => (
+                  <div key={index} className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Custom Field {index + 1}
+                      </label>
+                      {index >= 1 && (
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => removeCustomField(index)}
+                          className="p-2 text-red-600 hover:text-red-800 transition-colors"
+                        >
+                          <FiTrash2 className="w-4 h-4" />
+                        </motion.button>
+                      )}
+                    </div>
+                    
+                    <input
+                      type="text"
+                      value={formData.customFields[`customField_${index}`] || ''}
+                      onChange={(e) => handleCustomFieldChange(index, 'customField', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter field name"
+                    />
+                  </div>
+                ))}
               </div>
             </div>
 
