@@ -25,12 +25,12 @@ const PatientProfile = ({ patientId, onBack }) => {
         setLoading(true);
         setError(null);
 
-        const response = await api.request(`/patients/${patientId}`);
-        const result = await response.json();
+        const response = await api.getPatient(patientId);
+        console.log('📥 Patient API Response:', response); // Debug log
 
-        if (result.success) {
-          const patient = result.data;
-          console.log('Raw patient data from API:', patient); // Debug log
+        if (response.success) {
+          const patient = response.data;
+          console.log('👤 Raw patient data from API:', patient); // Debug log
 
           // Transform the data to match component expectations
           const transformedData = {
@@ -78,14 +78,15 @@ const PatientProfile = ({ patientId, onBack }) => {
           console.log('Transformed patient data:', transformedData); // Debug log
           setPatientData(transformedData);
         } else {
-          setError(result.message || 'Failed to fetch patient data');
-          toast.error(result.message || 'Failed to fetch patient data');
+          console.error('❌ API returned error:', response.message);
+          setError(response.message || 'Failed to load patient data');
         }
       } catch (error) {
-        console.error('Error fetching patient data:', error);
+        console.error('❌ Error fetching patient data:', error);
+        console.error('❌ Error details:', error.message);
         setError('Error loading patient data');
-        toast.error('Error loading patient data');
       } finally {
+        console.log('✅ Patient fetch completed, setting loading to false');
         setLoading(false);
       }
     };

@@ -60,6 +60,7 @@ import ServiceCards from './components/ServiceCards';
 import ServiceCreateForm from './components/ServiceCreateForm';
 import ServiceEditForm from './components/ServiceEditForm';
 import ExamineeCreateForm from './components/ExamineeCreateForm';
+import ExamineeDetail from './components/ExamineeDetail';
 // import TherapistCreateForm from './components/TherapistCreateForm'; // Temporarily disabled
 import SessionCreateForm from './components/SessionCreateForm';
 import SessionEditForm from './components/SessionEditForm';
@@ -85,6 +86,7 @@ function App() {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [selectedPatientId, setSelectedPatientId] = useState(null);
+  const [selectedExamineeId, setSelectedExamineeId] = useState(null);
   const [selectedDoctorId, setSelectedDoctorId] = useState(null);
   const [selectedReceptionistId, setSelectedReceptionistId] = useState(null);
   const [selectedClinicId, setSelectedClinicId] = useState(null);
@@ -398,13 +400,14 @@ function App() {
   };
 
   const handleViewPatient = (patientId) => {
-    setSelectedPatientId(patientId);
-    setCurrentView('patient-profile');
+    setSelectedExamineeId(patientId);
+    setCurrentView('examinee-detail');
     setActiveItem('patients');
   };
 
   const handleBackToPatients = () => {
     setSelectedPatientId(null);
+    setSelectedExamineeId(null);
     setCurrentView('patients-list');
     setActiveItem('patients');
   };
@@ -543,6 +546,12 @@ setActiveItem('doctors');
   // Edit handlers
   const handleEditPatient = (patientId) => {
     setSelectedPatientId(patientId);
+    setCurrentView('patient-edit');
+    setActiveItem('patients');
+  };
+
+  const handleEditExamineeFromDetail = (examineeId) => {
+    setSelectedPatientId(examineeId);
     setCurrentView('patient-edit');
     setActiveItem('patients');
   };
@@ -949,6 +958,17 @@ ${service.target_age_group || 'Not specified'}
           doctorId={selectedDoctorId}
           onBack={handleBackToDoctors}
           onEditProfile={handleEditDoctor}
+        />
+      );
+    }
+
+    // Handle examinee detail view
+    if (currentView === 'examinee-detail') {
+      return (
+        <ExamineeDetail
+          examineeId={selectedExamineeId}
+          onBack={handleBackToPatients}
+          onEditExaminee={handleEditExamineeFromDetail}
         />
       );
     }
