@@ -13,7 +13,7 @@ const CloseEncounter = ({ onClose, onSave, sessionData }) => {
   const encounterSummary = {
     patient: sessionData?.student_first_name && sessionData?.student_last_name 
       ? `${sessionData.student_first_name} ${sessionData.student_last_name}` 
-      : 'Unknown Student',
+      : 'Unknown Examinee',
     date: sessionData?.session_date 
       ? new Date(sessionData.session_date).toLocaleDateString('en-US', { 
           year: 'numeric', 

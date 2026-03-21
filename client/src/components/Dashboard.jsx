@@ -68,7 +68,7 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
     },
     {
       icon: FiUsers,
-      title: 'Total Students',
+      title: 'Total Examinees',
       value: stats.totalPatients?.toString() || '0',
       color: 'blue'
     },

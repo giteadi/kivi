@@ -487,7 +487,7 @@ const TherapistDashboard = () => {
                       <FiUser className="w-6 h-6 text-purple-600" />
                     </div>
                     <div className="ml-4">
-                      <p className="text-sm text-gray-600">Active Students</p>
+                      <p className="text-sm text-gray-600">Active Examinees</p>
                       <p className="text-2xl font-bold text-gray-900">8</p>
                     </div>
                   </div>

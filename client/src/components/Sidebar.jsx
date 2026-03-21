@@ -50,7 +50,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
           { id: 'encounter-templates', label: 'Session Templates', icon: FiFileText }
         ]
       },
-      { id: 'patients', label: 'Students', icon: FiUser, section: 'USERS' },
+      { id: 'patients', label: 'Examinees', icon: FiUser, section: 'USERS' },
     // { id: 'doctors', label: 'Therapists', icon: FiUserCheck, section: 'USERS' }, // Temporarily disabled
     { id: 'receptionists', label: 'Staff', icon: FiUser, section: 'USERS' },
     { id: 'clinics', label: 'Centres', icon: FiMapPin, section: 'CENTRE' },
@@ -73,7 +73,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
         { id: 'encounter-templates', label: 'Session Templates', icon: FiFileText }
       ]
     },
-    { id: 'patients', label: 'Students', icon: FiUser, section: 'USERS' },
+    { id: 'patients', label: 'Examinees', icon: FiUser, section: 'USERS' },
     { id: 'profile', label: 'My Profile', icon: FiUser, section: 'USERS' },
   ];
 

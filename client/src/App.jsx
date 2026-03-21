@@ -32,7 +32,7 @@ import AppointmentsList from './components/AppointmentsList';
 import AppointmentDetail from './components/AppointmentDetail';
 import PatientsList from './components/PatientsList';
 import PatientProfile from './components/PatientProfile';
-import StudentEditForm from './components/StudentEditForm';
+import ExamineeEditForm from './components/ExamineeEditForm';
 import DoctorsList from './components/DoctorsList';
 import DoctorProfile from './components/DoctorProfile';
 import DoctorEditForm from './components/DoctorEditForm';
@@ -58,7 +58,7 @@ import ServicesList from './components/ServicesList';
 import ServiceCards from './components/ServiceCards';
 import ServiceCreateForm from './components/ServiceCreateForm';
 import ServiceEditForm from './components/ServiceEditForm';
-import StudentCreateForm from './components/StudentCreateForm';
+import ExamineeCreateForm from './components/ExamineeCreateForm';
 // import TherapistCreateForm from './components/TherapistCreateForm'; // Temporarily disabled
 import SessionCreateForm from './components/SessionCreateForm';
 import SessionEditForm from './components/SessionEditForm';
@@ -460,14 +460,14 @@ function App() {
 
   const handleSavePatient = (updatedData) => {
     // In a real app, this would save to backend
-    console.log('Saving student:', updatedData);
+    console.log('Saving examinee:', updatedData);
     if (updatedData) {
       const studentName = updatedData.firstName && updatedData.lastName 
         ? `${updatedData.firstName} ${updatedData.lastName}`
-        : updatedData.name || 'Student';
-      toast.success(`Student ${studentName} updated successfully!`);
+        : updatedData.name || 'Examinee';
+      toast.success(`Examinee ${studentName} updated successfully!`);
     } else {
-      toast.success('Student updated successfully!');
+      toast.success('Examinee updated successfully!');
     }
     setSelectedPatientId(null);
     setCurrentView('patients-list');
@@ -564,8 +564,8 @@ setActiveItem('doctors');
 
   // Delete handlers
   const handleDeletePatient = (patientId) => {
-    if (window.confirm('Are you sure you want to delete this student?')) {
-      toast.success(`Student ${patientId} deleted successfully!`);
+    if (window.confirm('Are you sure you want to delete this examinee?')) {
+      toast.success(`Examinee ${patientId} deleted successfully!`);
     }
   };
 
@@ -637,7 +637,7 @@ setActiveItem('doctors');
     // Navigate to template selector for appointment-based session creation
     setSelectedPatient({
       id: 'P001',
-      name: 'Student',
+      name: 'Examinee',
       age: '12',
       gender: 'Male'
     });
@@ -852,10 +852,10 @@ ${service.target_age_group || 'Not specified'}
       );
     }
 
-    // Handle student create form
+    // Handle examinee create form
     if (currentView === 'patient-create') {
       return (
-        <StudentCreateForm
+        <ExamineeCreateForm
           onSave={handleSavePatient}
           onCancel={handleCancelPatientEdit}
         />
@@ -883,10 +883,10 @@ ${service.target_age_group || 'Not specified'}
       );
     }
 
-    // Handle student edit form
+    // Handle examinee edit form
     if (currentView === 'patient-edit') {
       return (
-        <StudentEditForm
+        <ExamineeEditForm
           studentId={selectedPatientId}
           onSave={handleSavePatient}
           onCancel={handleCancelPatientEdit}

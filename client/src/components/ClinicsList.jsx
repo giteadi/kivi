@@ -79,7 +79,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
       status: centre.status || 'inactive',
       established: centre.created_at ? new Date(centre.created_at).toISOString().split('T')[0] : 'Unknown',
       totalDoctors: centre.total_therapists || 0,
-      totalPatients: centre.total_students || 0,
+      totalPatients: centre.total_examinees || 0,
       totalAppointments: centre.total_sessions || 0,
       specialties: centre.specialties ? (Array.isArray(centre.specialties) ? centre.specialties : JSON.parse(centre.specialties || '[]')) : [],
       operatingHours: centre.operating_hours || 'Not specified',
@@ -318,7 +318,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold text-green-600">{clinic.totalPatients}</div>
-                  <div className="text-xs text-gray-500">Students</div>
+                  <div className="text-xs text-gray-500">Examinees</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold text-purple-600">{clinic.totalAppointments}</div>
@@ -447,7 +447,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
                 <div className="text-2xl font-bold text-purple-600">
                   {clinics.reduce((sum, clinic) => sum + clinic.totalPatients, 0)}
                 </div>
-                <div className="text-sm text-gray-600">Total Students</div>
+                <div className="text-sm text-gray-600">Total Examinees</div>
               </div>
             </div>
           </div>

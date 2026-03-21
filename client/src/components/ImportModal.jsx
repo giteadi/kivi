@@ -13,7 +13,7 @@ const ImportModal = ({ isOpen, onClose, importType = 'patients' }) => {
 
   const importTypes = {
     patients: {
-      title: 'Import Student Data',
+      title: 'Import Examinee Data',
       requiredFields: [
         'first_name',
         'last_name', 
@@ -23,20 +23,7 @@ const ImportModal = ({ isOpen, onClose, importType = 'patients' }) => {
         'contact',
         'gender'
       ],
-      sampleFileName: 'students_sample.csv'
-    },
-    students: {
-      title: 'Import Student Data',
-      requiredFields: [
-        'first_name',
-        'last_name', 
-        'email',
-        'country_calling_code',
-        'country_code',
-        'contact',
-        'gender'
-      ],
-      sampleFileName: 'students_sample.csv'
+      sampleFileName: 'examinees_sample.csv'
     },
     doctors: {
       title: 'Import Therapist Data',

@@ -6,7 +6,7 @@ import { fetchPatient, updatePatient } from '../store/slices/patientSlice';
 import { useToast } from './Toast';
 import api from '../services/api';
 
-const StudentEditForm = ({ studentId, onSave, onCancel }) => {
+const ExamineeEditForm = ({ studentId, onSave, onCancel }) => {
   const toast = useToast();
   const dispatch = useDispatch();
   const { currentPatient, isLoading } = useSelector((state) => state.patients);
@@ -48,14 +48,14 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch student data when component mounts
+  // Fetch examinee data when component mounts
   useEffect(() => {
     if (studentId) {
       dispatch(fetchPatient(studentId));
     }
   }, [dispatch, studentId]);
 
-  // Update form data when student data is loaded
+  // Update form data when examinee data is loaded
   useEffect(() => {
     if (currentPatient) {
       setFormData({
@@ -123,7 +123,7 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
     
     try {
       // Prepare data for API
-      const studentData = {
+      const examineeData = {
         first_name: formData.first_name,
         last_name: formData.last_name,
         email: formData.email,
@@ -153,17 +153,17 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
         status: formData.status
       };
       
-      await dispatch(updatePatient({ id: studentId, patientData: studentData })).unwrap();
+      await dispatch(updatePatient({ id: studentId, patientData: examineeData })).unwrap();
       
       onSave({
         ...formData,
         name: `${formData.first_name} ${formData.last_name}`
       });
       
-      toast.success('Student updated successfully!');
+      toast.success('Examinee updated successfully!');
     } catch (error) {
-      console.error('Error updating student:', error);
-      toast.error('Error updating student. Please try again.');
+      console.error('Error updating examinee:', error);
+      toast.error('Error updating examinee. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -183,8 +183,8 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
               <FiArrowLeft className="w-5 h-5 text-gray-600" />
             </motion.button>
             <div>
-              <h1 className="text-2xl font-semibold text-gray-800">Edit Student</h1>
-              <p className="text-gray-600">Update student information and learning details</p>
+              <h1 className="text-2xl font-semibold text-gray-800">Edit Examinee</h1>
+              <p className="text-gray-600">Update examinee information and learning details</p>
             </div>
           </div>
           
@@ -228,9 +228,9 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
         <div className="flex items-center text-sm text-gray-500 mb-6">
           <span>Home</span>
           <span className="mx-2">›</span>
-          <span>Students</span>
+          <span>Examinees</span>
           <span className="mx-2">›</span>
-          <span className="text-gray-800">Edit Student</span>
+          <span className="text-gray-800">Edit Examinee</span>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -248,7 +248,7 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Student ID
+                  Examinee ID
                 </label>
                 <input
                   type="text"
@@ -683,7 +683,7 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
                   value={formData.emergency_contact_relation}
                   onChange={(e) => handleInputChange('emergency_contact_relation', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Relation to student"
+                  placeholder="Relation to examinee"
                 />
               </div>
 
@@ -710,4 +710,4 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
   );
 };
 
-export default StudentEditForm;
+export default ExamineeEditForm;

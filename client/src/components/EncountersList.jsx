@@ -231,7 +231,7 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 space-y-4 lg:space-y-0">
           <div>
             <h1 className="text-2xl font-semibold text-gray-800">Sessions List</h1>
-            <p className="text-gray-600">Create and manage session plans for students</p>
+            <p className="text-gray-600">Create and manage session plans for examinees</p>
           </div>
           
           <motion.button

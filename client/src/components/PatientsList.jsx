@@ -92,8 +92,8 @@ const PatientsList = ({ onViewPatient, onEditPatient, onDeletePatient, onCreateN
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 space-y-4 lg:space-y-0">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-800">All Students</h1>
-            <p className="text-gray-600">Manage and view all student records</p>
+            <h1 className="text-2xl font-semibold text-gray-800">All Examinees</h1>
+            <p className="text-gray-600">Manage and view all examinee records</p>
           </div>
           
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
@@ -113,7 +113,7 @@ const PatientsList = ({ onViewPatient, onEditPatient, onDeletePatient, onCreateN
               className="flex items-center space-x-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
             >
               <FiPlus className="w-4 h-4" />
-              <span>Add Student</span>
+              <span>Add Examinee</span>
             </motion.button>
           </div>
         </div>
@@ -122,9 +122,9 @@ const PatientsList = ({ onViewPatient, onEditPatient, onDeletePatient, onCreateN
         <div className="flex items-center text-sm text-gray-500 mb-6">
           <span>Home</span>
           <span className="mx-2">›</span>
-          <span>Students</span>
+          <span>Examinees</span>
           <span className="mx-2">›</span>
-          <span className="text-gray-800">All Students</span>
+          <span className="text-gray-800">All Examinees</span>
         </div>
 
         {/* Filters */}
@@ -325,7 +325,7 @@ const PatientsList = ({ onViewPatient, onEditPatient, onDeletePatient, onCreateN
             <div className="text-center py-12">
               <div className="text-gray-500">
                 <FiUser className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium">No students found</p>
+                <p className="text-lg font-medium">No examinees found</p>
                 <p className="text-sm">Try adjusting your search or filter criteria</p>
               </div>
             </div>
@@ -341,19 +341,19 @@ const PatientsList = ({ onViewPatient, onEditPatient, onDeletePatient, onCreateN
         >
           <div className="bg-white rounded-lg p-4 shadow-sm border">
             <div className="text-2xl font-bold text-blue-600">{transformedPatients.length}</div>
-            <div className="text-sm text-gray-600">Total Students</div>
+            <div className="text-sm text-gray-600">Total Examinees</div>
           </div>
           <div className="bg-white rounded-lg p-4 shadow-sm border">
             <div className="text-2xl font-bold text-green-600">
               {transformedPatients.filter(p => p.status === 'Active').length}
             </div>
-            <div className="text-sm text-gray-600">Active Students</div>
+            <div className="text-sm text-gray-600">Active Examinees</div>
           </div>
           <div className="bg-white rounded-lg p-4 shadow-sm border">
             <div className="text-2xl font-bold text-gray-600">
               {transformedPatients.filter(p => p.status === 'Inactive').length}
             </div>
-            <div className="text-sm text-gray-600">Inactive Students</div>
+            <div className="text-sm text-gray-600">Inactive Examinees</div>
           </div>
           <div className="bg-white rounded-lg p-4 shadow-sm border">
             <div className="text-2xl font-bold text-purple-600">
@@ -369,14 +369,14 @@ const PatientsList = ({ onViewPatient, onEditPatient, onDeletePatient, onCreateN
         isOpen={isFiltersOpen}
         onClose={() => setIsFiltersOpen(false)}
         onApplyFilters={handleApplyFilters}
-        filterType="students"
+        filterType="examinees"
       />
 
       {/* Import Modal */}
       <ImportModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
-        importType="students"
+        importType="examinees"
       />
     </div>
   );

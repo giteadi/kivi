@@ -60,9 +60,9 @@ const PatientProfile = ({ patientId, onBack }) => {
               phone: patient.emergency_contact_phone || 'Not provided'
             },
             medicalInfo: {
-              allergies: [], // Students table doesn't have allergies - could be added later
-              chronicConditions: [], // Students table doesn't have chronic conditions
-              currentMedications: [], // Students table doesn't have medications
+              allergies: [], // Examinees table doesn't have allergies - could be added later
+              chronicConditions: [], // Examinees table doesn't have chronic conditions
+              currentMedications: [], // Examinees table doesn't have medications
               lastVisit: patient.last_appointment ? new Date(patient.last_appointment).toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
