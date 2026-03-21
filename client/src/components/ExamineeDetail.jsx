@@ -6,6 +6,7 @@ import { fetchPatient } from '../store/slices/patientSlice';
 import { fetchAssessments, toggleAssessmentSelection, clearSelection, selectAllAssessments, createAssessment, deleteAssessment, generateAssessmentReport } from '../store/slices/assessmentSlice';
 import { useToast } from './Toast';
 import AssignAssessmentModal from './AssignAssessmentModal';
+import GenerateReportModal from './GenerateReportModal';
 
 const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   const toast = useToast();
@@ -13,6 +14,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   const { currentPatient, isLoading: patientLoading, error: patientError } = useSelector((state) => state.patients);
   const { assessments, isLoading: assessmentLoading, error: assessmentError, selectedAssessments } = useSelector((state) => state.assessments);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   useEffect(() => {
     if (examineeId) {
@@ -108,15 +110,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       return;
     }
     
-    dispatch(generateAssessmentReport(selectedAssessments))
-      .unwrap()
-      .then((result) => {
-        toast.success(result.message || 'Report generated successfully!');
-        dispatch(clearSelection());
-      })
-      .catch((error) => {
-        toast.error('Failed to generate report: ' + error);
-      });
+    setIsReportModalOpen(true);
   };
 
   const handleAssessmentSelection = (assessmentId) => {
@@ -454,6 +448,14 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
         onClose={() => setIsAssignModalOpen(false)}
         examineeId={examineeId}
         examineeName={examineeData?.name || 'Unknown Examinee'}
+      />
+
+      {/* Generate Report Modal */}
+      <GenerateReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        selectedAssessments={selectedAssessments}
+        examineeData={examineeData}
       />
     </div>
   );

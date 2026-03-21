@@ -20,7 +20,7 @@ export const createAssessment = createAsyncThunk(
   'assessments/createAssessment',
   async (assessmentData, { rejectWithValue }) => {
     try {
-      const response = await api.request('/assessments', {
+      const response = await api.request('/students/assessments', {
         method: 'POST',
         body: JSON.stringify(assessmentData),
       });
@@ -37,7 +37,7 @@ export const deleteAssessment = createAsyncThunk(
   'assessments/deleteAssessment',
   async (assessmentId, { rejectWithValue }) => {
     try {
-      await api.request(`/assessments/${assessmentId}`, {
+      await api.request(`/students/assessments/${assessmentId}`, {
         method: 'DELETE',
       });
       return assessmentId;
@@ -51,11 +51,11 @@ export const deleteAssessment = createAsyncThunk(
 
 export const generateAssessmentReport = createAsyncThunk(
   'assessments/generateReport',
-  async (assessmentIds, { rejectWithValue }) => {
+  async (assessmentData, { rejectWithValue }) => {
     try {
-      const response = await api.request('/assessments/generate-report', {
+      const response = await api.request('/reports/generate-assessment-report', {
         method: 'POST',
-        body: JSON.stringify({ assessmentIds }),
+        body: JSON.stringify(assessmentData),
       });
       return response;
     } catch (error) {
