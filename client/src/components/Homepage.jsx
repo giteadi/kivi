@@ -1,35 +1,35 @@
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
-import { FiClock, FiUser, FiCheck, FiArrowRight } from 'react-icons/fi';
-import { fetchServices } from '../store/slices/serviceSlice';
+import { FiClock, FiUser, FiCheck, FiArrowRight, FiEye, FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { fetchPlans } from '../store/slices/plansSlice';
 import PaymentModal from './PaymentModal';
 import LogoImage from './LogoImage';
 
 const Homepage = ({ onSelectPlan, onShowLogin }) => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
-  const { services: servicesData } = useSelector((state) => state.services);
+  const { plans: plansData } = useSelector((state) => state.plans);
   const dispatch = useDispatch();
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-  // Load services on component mount
+  // Load plans on component mount
   useEffect(() => {
-    console.log('=== Homepage: Fetching services for plans ===');
-    dispatch(fetchServices());
+    console.log('=== Homepage: Fetching plans ===');
+    dispatch(fetchPlans());
   }, [dispatch]);
 
-  // Transform services data to plan format with fallback to static data
-  const sessionPlans = servicesData.length > 0 
-    ? servicesData
-        .filter(service => service.type && service.type === 'session')
-        .map(service => ({
-          id: service.id,
-          title: service.name,
-          duration: service.duration || '1 Hour',
-          price: parseFloat(service.price),
-          description: service.description || 'Professional therapy session',
-          features: service.features && Array.isArray(service.features) ? service.features : [
+  // Transform plans data to plan format with fallback to static data
+  const sessionPlans = plansData.length > 0 
+    ? plansData
+        .filter(plan => plan.type && plan.type === 'session')
+        .map(plan => ({
+          id: plan.id,
+          title: plan.name,
+          duration: plan.duration || '1 Hour',
+          price: parseFloat(plan.price),
+          description: plan.description || 'Professional therapy session',
+          features: plan.features && Array.isArray(plan.features) ? plan.features : [
             'Professional therapy session',
             'Customized learning approach',
             'Progress tracking',
@@ -79,16 +79,16 @@ const Homepage = ({ onSelectPlan, onShowLogin }) => {
       }
     ];
 
-  const assessmentPlans = servicesData.length > 0
-    ? servicesData
-        .filter(service => service.type && service.type === 'assessment')
-        .map(service => ({
-          id: service.id,
-          title: service.name,
-          subtitle: service.type,
-          price: parseFloat(service.price),
-          description: service.description || 'Comprehensive assessment service',
-          features: service.features && Array.isArray(service.features) ? service.features : [
+  const assessmentPlans = plansData.length > 0
+    ? plansData
+        .filter(plan => plan.type && plan.type === 'assessment')
+        .map(plan => ({
+          id: plan.id,
+          title: plan.name,
+          subtitle: plan.type,
+          price: parseFloat(plan.price),
+          description: plan.description || 'Comprehensive assessment service',
+          features: plan.features && Array.isArray(plan.features) ? plan.features : [
             'Comprehensive assessment',
             'Detailed report',
             'Parent consultation',
@@ -138,12 +138,12 @@ const Homepage = ({ onSelectPlan, onShowLogin }) => {
       }
     ];
 
-  // Debug services data
+  // Debug plans data
   useEffect(() => {
-    console.log('=== Homepage: Services data ===', servicesData);
+    console.log('=== Homepage: Plans data ===', plansData);
     console.log('=== Homepage: Session plans ===', sessionPlans);
     console.log('=== Homepage: Assessment plans ===', assessmentPlans);
-  }, [servicesData, sessionPlans, assessmentPlans]);
+  }, [plansData, sessionPlans, assessmentPlans]);
 
   const handlePlanSelect = (plan, type) => {
     const planWithType = { ...plan, type };
@@ -263,7 +263,79 @@ const Homepage = ({ onSelectPlan, onShowLogin }) => {
           </motion.p>
         </div>
 
-        {/* Session Plans */}
+        {/* Plans Management Table */}
+        <div className="mb-16">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Available Plans</h2>
+          
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {plansData.length > 0 ? (
+                    plansData.map((plan) => (
+                      <tr key={plan.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{plan.name}</div>
+                          <div className="text-sm text-gray-500">{plan.description?.substring(0, 50)}...</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            plan.type === 'session' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
+                          }`}>
+                            {plan.type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          ₹{parseFloat(plan.price).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {plan.duration || '1 Hour'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Active
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => handlePlanSelect(plan, plan.type)}
+                              className="text-blue-600 hover:text-blue-800"
+                              title="Select Plan"
+                            >
+                              <FiArrowRight className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="6" className="px-6 py-12 text-center">
+                        <div className="text-gray-500">
+                          <p className="mb-2">No plans available at the moment.</p>
+                          <p className="text-sm">Please check back later or contact us for more information.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* Session Plans Cards */}
         <div className="mb-16">
           <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Session Plans</h2>
           
