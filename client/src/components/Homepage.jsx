@@ -26,7 +26,9 @@ const Homepage = ({ onSelectPlan, onShowLogin }) => {
           service.category.includes('Session Plan') ||
           service.category.includes('Therapy') || 
           service.category.includes('Learning') || 
-          service.category.includes('Counselling')
+          service.category.includes('Counselling') ||
+          service.category.includes('Package') ||
+          service.category.includes('Assessment')
         ))
         .map(service => ({
           id: service.programme_id,
@@ -89,7 +91,8 @@ const Homepage = ({ onSelectPlan, onShowLogin }) => {
         .filter(service => service.category && (
           service.category.includes('Assessment') ||
           service.category.includes('Evaluation') ||
-          service.category.includes('Testing')
+          service.category.includes('Testing') ||
+          service.category.includes('Package')
         ))
         .map(service => ({
           id: service.programme_id,
