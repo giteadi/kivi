@@ -22,21 +22,14 @@ const Homepage = ({ onSelectPlan, onShowLogin }) => {
   // Transform services data to plan format with fallback to static data
   const sessionPlans = servicesData.length > 0 
     ? servicesData
-        .filter(service => service.category && (
-          service.category.includes('Session Plan') ||
-          service.category.includes('Therapy') || 
-          service.category.includes('Learning') || 
-          service.category.includes('Counselling') ||
-          service.category.includes('Package') ||
-          service.category.includes('Assessment')
-        ))
+        .filter(service => service.type && service.type === 'session')
         .map(service => ({
-          id: service.programme_id,
+          id: service.id,
           title: service.name,
-          duration: `${service.duration || 60} minutes`,
-          price: parseFloat(service.fee), // Use fee directly without multiplying
+          duration: service.duration || '1 Hour',
+          price: parseFloat(service.price),
           description: service.description || 'Professional therapy session',
-          features: [
+          features: service.features && Array.isArray(service.features) ? service.features : [
             'Professional therapy session',
             'Customized learning approach',
             'Progress tracking',
@@ -88,19 +81,14 @@ const Homepage = ({ onSelectPlan, onShowLogin }) => {
 
   const assessmentPlans = servicesData.length > 0
     ? servicesData
-        .filter(service => service.category && (
-          service.category.includes('Assessment') ||
-          service.category.includes('Evaluation') ||
-          service.category.includes('Testing') ||
-          service.category.includes('Package')
-        ))
+        .filter(service => service.type && service.type === 'assessment')
         .map(service => ({
-          id: service.programme_id,
+          id: service.id,
           title: service.name,
-          subtitle: service.category,
-          price: parseFloat(service.fee), // Use fee directly without multiplying
+          subtitle: service.type,
+          price: parseFloat(service.price),
           description: service.description || 'Comprehensive assessment service',
-          features: [
+          features: service.features && Array.isArray(service.features) ? service.features : [
             'Comprehensive assessment',
             'Detailed report',
             'Parent consultation',
