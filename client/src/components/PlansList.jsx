@@ -25,7 +25,9 @@ const PlansList = () => {
     type: '',
     price: '',
     duration: '',
-    status: 'active'
+    sessions_count: '1',
+    features: [],
+    is_active: 1
   });
 
   // Filter plans - declare BEFORE useEffect
@@ -33,7 +35,9 @@ const PlansList = () => {
   const filteredPlans = plansArray.filter(plan => {
     if (!plan) return false;
     const matchesSearch = (plan.name || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || plan.status === filterStatus;
+    const matchesStatus = filterStatus === 'all' || 
+      (filterStatus === 'active' && plan.is_active === 1) || 
+      (filterStatus === 'inactive' && plan.is_active === 0);
     return matchesSearch && matchesStatus;
   });
 
@@ -71,17 +75,11 @@ const PlansList = () => {
     try {
       if (isEditing) {
         // Update plan
-        await api.request(`/plans/${selectedPlan.id}`, {
-          method: 'PUT',
-          body: JSON.stringify(formData)
-        });
+        await api.updatePlan(selectedPlan.id, formData);
         toast.success('Plan updated successfully!');
       } else {
         // Create plan
-        await api.request('/plans', {
-          method: 'POST',
-          body: JSON.stringify(formData)
-        });
+        await api.createPlan(formData);
         toast.success('Plan created successfully!');
       }
       
@@ -92,7 +90,9 @@ const PlansList = () => {
         type: '',
         price: '',
         duration: '',
-        status: 'active'
+        sessions_count: '1',
+        features: [],
+        is_active: 1
       });
       setIsEditing(false);
       setSelectedPlan(null);
@@ -112,7 +112,9 @@ const PlansList = () => {
       type: plan.type || '',
       price: plan.price || '',
       duration: plan.duration || '',
-      status: plan.status || 'active'
+      sessions_count: plan.sessions_count?.toString() || '1',
+      features: plan.features || [],
+      is_active: plan.is_active || 1
     });
     setIsEditing(true);
     setShowModal(true);
@@ -124,9 +126,7 @@ const PlansList = () => {
     }
 
     try {
-      await api.request(`/plans/${id}`, {
-        method: 'DELETE'
-      });
+      await api.deletePlan(id);
       toast.success('Plan deleted successfully!');
       dispatch(fetchPlans());
     } catch (error) {
@@ -143,7 +143,9 @@ const PlansList = () => {
       type: '',
       price: '',
       duration: '',
-      status: 'active'
+      sessions_count: '1',
+      features: [],
+      is_active: 1
     });
     setShowModal(true);
   };
@@ -268,11 +270,11 @@ const PlansList = () => {
                         <td className="px-6 py-4 text-sm text-gray-600">{plan.duration || '-'} min</td>
                         <td className="px-6 py-4">
                           <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            plan.status === 'active' 
+                            plan.is_active === 1 
                               ? 'bg-green-100 text-green-800' 
                               : 'bg-red-100 text-red-800'
                           }`}>
-                            {plan.status || 'active'}
+                            {plan.is_active === 1 ? 'Active' : 'Inactive'}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
@@ -361,13 +363,15 @@ const PlansList = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-1">Type</label>
-                <input
-                  type="text"
+                <select
                   value={formData.type}
                   onChange={(e) => setFormData({...formData, type: e.target.value})}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., Therapy, Learning"
-                />
+                >
+                  <option value="">Select Type</option>
+                  <option value="session">Session</option>
+                  <option value="assessment">Assessment</option>
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -379,30 +383,45 @@ const PlansList = () => {
                     onChange={(e) => setFormData({...formData, price: e.target.value})}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="0"
+                    step="0.01"
+                    min="0"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">Duration (min)</label>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Duration</label>
                   <input
-                    type="number"
+                    type="text"
                     value={formData.duration}
                     onChange={(e) => setFormData({...formData, duration: e.target.value})}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="60"
+                    placeholder="e.g., 60 minutes"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1">Status</label>
-                <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({...formData, status: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Sessions Count</label>
+                  <input
+                    type="number"
+                    value={formData.sessions_count}
+                    onChange={(e) => setFormData({...formData, sessions_count: e.target.value})}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="1"
+                    min="1"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Status</label>
+                  <select
+                    value={formData.is_active}
+                    onChange={(e) => setFormData({...formData, is_active: parseInt(e.target.value)})}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value={1}>Active</option>
+                    <option value={0}>Inactive</option>
+                  </select>
+                </div>
               </div>
 
               <div className="flex gap-3 pt-4">

@@ -2,7 +2,6 @@ import { motion } from 'framer-motion';
 import { FiArrowLeft, FiMail, FiMapPin, FiUser, FiTrash2 } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import api from '../services/api';
-import BodyChart from './BodyChart';
 import PrintEncounter from './PrintEncounter';
 import CloseEncounter from './CloseEncounter';
 import { useSidebar } from '../App';
@@ -21,7 +20,6 @@ const EncounterDetail = ({ encounterId, onBack }) => {
   const [recommendedNotes, setRecommendedNotes] = useState([]);
   const [problemsText, setProblemsText] = useState('');
   const [observationsText, setObservationsText] = useState('');
-  const [bodyChartAnnotations, setBodyChartAnnotations] = useState([]);
 
   // Fetch session data when component mounts
   useEffect(() => {
@@ -113,26 +111,6 @@ const EncounterDetail = ({ encounterId, onBack }) => {
                 setObservationsText(existingEncounter.behavioral_observations || '');
                 setNotes(existingEncounter.progress_notes || '');
                 setRecommendedNotes(existingEncounter.recommendations ? [existingEncounter.recommendations] : []);
-                
-                // Load body chart annotations if available
-                if (existingEncounter.body_chart_annotations) {
-                  try {
-                    console.log('🔍 EncounterDetail: Raw body_chart_annotations from DB:', existingEncounter.body_chart_annotations);
-                    const annotations = JSON.parse(existingEncounter.body_chart_annotations);
-                    console.log('🔍 EncounterDetail: Parsed body chart annotations:', annotations);
-                    console.log('🔍 EncounterDetail: Annotations array length:', annotations.length);
-                    setBodyChartAnnotations(annotations);
-                    console.log('🔍 EncounterDetail: Set bodyChartAnnotations state successfully');
-                  } catch (parseError) {
-                    console.error('🔍 EncounterDetail: Error parsing body chart annotations:', parseError);
-                    console.error('🔍 EncounterDetail: Raw data that failed to parse:', existingEncounter.body_chart_annotations);
-                    setBodyChartAnnotations([]);
-                  }
-                } else {
-                  console.log('🔍 EncounterDetail: No body_chart_annotations field found in encounter data');
-                  console.log('🔍 EncounterDetail: Available fields in encounter:', Object.keys(existingEncounter));
-                  setBodyChartAnnotations([]);
-                }
                 
                 // Update the arrays for saving
                 setProblems(existingEncounter.session_goals ? [{ id: existingEncounter.id, text: existingEncounter.session_goals }] : []);
@@ -290,7 +268,7 @@ const EncounterDetail = ({ encounterId, onBack }) => {
         behavioral_observations: observations.map(o => o.text).join('\n'),
         progress_notes: notes,
         recommendations: recommendedNotes.join('\n'),
-        body_chart_annotations: JSON.stringify(bodyChartAnnotations),
+        body_chart_annotations: JSON.stringify([]),
         status: 'completed'
       };
 
@@ -334,7 +312,7 @@ const EncounterDetail = ({ encounterId, onBack }) => {
         behavioral_observations: observationsText,
         progress_notes: notes,
         recommendations: recommendedNotes.join('\n'),
-        body_chart_annotations: JSON.stringify(bodyChartAnnotations),
+        body_chart_annotations: JSON.stringify([]),
         status: 'draft' // Save as draft, not completed
       };
 
@@ -596,11 +574,9 @@ const EncounterDetail = ({ encounterId, onBack }) => {
       case 'body-chart':
         return (
           <div className="p-6">
-            <BodyChart 
-              sessionData={sessionData}
-              onAnnotationsChange={setBodyChartAnnotations}
-              initialAnnotations={bodyChartAnnotations}
-            />
+            <div className="text-center text-gray-500 py-8">
+              <p>Body chart functionality has been removed</p>
+            </div>
           </div>
         );
 

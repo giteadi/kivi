@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDashboardData, setFilters, clearFilters } from '../store/slices/dashboardSlice';
 import StatsCard from './StatsCard';
-import EmailAlert from './EmailAlert';
 import RevenueCard from './RevenueCard';
 import AppointmentCard from './AppointmentCard';
 import DoctorCard from './DoctorCard';
@@ -183,8 +182,6 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
   return (
     <div className="lg:ml-64 min-h-screen bg-gray-50">
       <div className="p-4 lg:p-6">
-        <EmailAlert />
-        
         {/* Breadcrumb */}
         <div className="flex items-center text-sm text-gray-500 mb-6">
           <span>Home</span>

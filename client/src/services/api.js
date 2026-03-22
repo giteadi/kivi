@@ -351,6 +351,26 @@ async getPlans() {
   return this.request('/plans');
 }
 
+async createPlan(planData) {
+  return this.request('/plans', {
+    method: 'POST',
+    body: JSON.stringify(planData),
+  });
+}
+
+async updatePlan(id, planData) {
+  return this.request(`/plans/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(planData),
+  });
+}
+
+async deletePlan(id) {
+  return this.request(`/plans/${id}`, {
+    method: 'DELETE',
+  });
+}
+
   async getPlansWithAvailability(filters = {}) {
     const queryParams = new URLSearchParams(filters);
     return this.request(`/plans/availability?${queryParams}`);

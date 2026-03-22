@@ -6,7 +6,7 @@ export const fetchServices = createAsyncThunk(
   async (filters = {}, { rejectWithValue }) => {
     try {
       const queryParams = new URLSearchParams(filters);
-      const response = await apiService.get(`/plans?${queryParams}`);
+      const response = await apiService.get(`/programmes?${queryParams}`);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch services');

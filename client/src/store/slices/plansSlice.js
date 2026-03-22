@@ -38,6 +38,42 @@ export const fetchPlansWithAvailability = createAsyncThunk(
   }
 );
 
+export const createPlan = createAsyncThunk(
+  'plans/createPlan',
+  async (planData, { rejectWithValue }) => {
+    try {
+      const response = await api.createPlan(planData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Failed to create plan');
+    }
+  }
+);
+
+export const updatePlan = createAsyncThunk(
+  'plans/updatePlan',
+  async ({ id, planData }, { rejectWithValue }) => {
+    try {
+      const response = await api.updatePlan(id, planData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Failed to update plan');
+    }
+  }
+);
+
+export const deletePlan = createAsyncThunk(
+  'plans/deletePlan',
+  async (id, { rejectWithValue }) => {
+    try {
+      await api.deletePlan(id);
+      return id;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Failed to delete plan');
+    }
+  }
+);
+
 // Initial state
 const initialState = {
   plans: [],
@@ -116,6 +152,57 @@ const plansSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchPlansWithAvailability.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Create plan
+      .addCase(createPlan.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createPlan.fulfilled, (state, action) => {
+        state.loading = false;
+        const newPlan = action.payload?.data || action.payload;
+        if (newPlan) {
+          state.plans.push(newPlan);
+        }
+        state.error = null;
+      })
+      .addCase(createPlan.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Update plan
+      .addCase(updatePlan.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updatePlan.fulfilled, (state, action) => {
+        state.loading = false;
+        const updatedPlan = action.payload?.data || action.payload;
+        if (updatedPlan) {
+          const index = state.plans.findIndex(plan => plan.id === updatedPlan.id);
+          if (index !== -1) {
+            state.plans[index] = updatedPlan;
+          }
+        }
+        state.error = null;
+      })
+      .addCase(updatePlan.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Delete plan
+      .addCase(deletePlan.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deletePlan.fulfilled, (state, action) => {
+        state.loading = false;
+        state.plans = state.plans.filter(plan => plan.id !== action.payload);
+        state.error = null;
+      })
+      .addCase(deletePlan.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

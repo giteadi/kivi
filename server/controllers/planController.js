@@ -88,16 +88,49 @@ class PlanController extends Plan {
   // Create new plan (admin only)
   async createPlan(req, res) {
     try {
+      console.log('🔍 Create plan request body:', req.body);
+      
+      // Validate required fields
+      const requiredFields = ['name', 'type', 'price'];
+      const missingFields = requiredFields.filter(field => !req.body[field]);
+      
+      if (missingFields.length > 0) {
+        console.error('❌ Missing required fields:', missingFields);
+        return res.status(400).json({
+          success: false,
+          message: `Missing required fields: ${missingFields.join(', ')}`
+        });
+      }
+
       const planData = {
         name: req.body.name,
-        description: req.body.description,
+        description: req.body.description || '',
         type: req.body.type, // 'session' or 'assessment'
         price: parseFloat(req.body.price),
-        duration: req.body.duration,
-        sessions_count: parseInt(req.body.sessions_count),
+        duration: req.body.duration || '',
+        sessions_count: parseInt(req.body.sessions_count) || 1,
         features: JSON.stringify(req.body.features || []),
         is_active: 1
       };
+
+      console.log('🔍 Processed plan data:', planData);
+
+      // Validate numeric values
+      if (isNaN(planData.price) || planData.price <= 0) {
+        console.error('❌ Invalid price:', req.body.price);
+        return res.status(400).json({
+          success: false,
+          message: 'Price must be a valid positive number'
+        });
+      }
+
+      if (isNaN(planData.sessions_count) || planData.sessions_count <= 0) {
+        console.error('❌ Invalid sessions_count:', req.body.sessions_count);
+        return res.status(400).json({
+          success: false,
+          message: 'Sessions count must be a valid positive number'
+        });
+      }
 
       const planId = await super.createPlan(planData);
 
@@ -107,10 +140,12 @@ class PlanController extends Plan {
         message: 'Plan created successfully'
       });
     } catch (error) {
-      console.error('Create plan error:', error);
+      console.error('❌ Create plan error:', error);
+      console.error('❌ Error stack:', error.stack);
       res.status(500).json({
         success: false,
-        message: 'Failed to create plan'
+        message: 'Failed to create plan',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
   }
