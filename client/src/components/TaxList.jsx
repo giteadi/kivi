@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiPercent, FiDollarSign, FiFilter, FiRefreshCw } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import { useToast } from './Toast';
+import api from '../services/api';
 
 const TaxList = ({ onViewTax, onEditTax, onDeleteTax, onCreateNewTax }) => {
   const toast = useToast();
