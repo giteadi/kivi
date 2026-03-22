@@ -26,11 +26,35 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   const isLoading = patientLoading || assessmentLoading;
   const error = patientError || assessmentError;
 
+  // Calculate age from date of birth
+  const calculateAge = (dateOfBirth) => {
+    try {
+      const birthDate = new Date(dateOfBirth);
+      const today = new Date();
+      
+      if (isNaN(birthDate.getTime())) {
+        return 'Invalid date';
+      }
+      
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+
+      return age;
+    } catch (error) {
+      return 'Not available';
+    }
+  };
+
   // Transform patient data to match component expectations
   const transformPatientData = (patient) => {
     if (!patient) return null;
     
     return {
+      id: patient.id,
       systemId: `SYS${patient.id.toString().padStart(6, '0')}`,
       name: `${patient.first_name || 'Unknown'} ${patient.last_name || 'Unknown'}`,
       birthDate: patient.date_of_birth ? new Date(patient.date_of_birth).toLocaleDateString('en-GB', {
@@ -54,28 +78,6 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   };
 
   const examineeData = transformPatientData(currentPatient);
-
-  const calculateAge = (dateOfBirth) => {
-    try {
-      const birthDate = new Date(dateOfBirth);
-      const today = new Date();
-      
-      if (isNaN(birthDate.getTime())) {
-        return 'Invalid date';
-      }
-      
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
-
-      return age;
-    } catch (error) {
-      return 'Not available';
-    }
-  };
 
   const handleAssignNewAssessment = () => {
     setIsAssignModalOpen(true);

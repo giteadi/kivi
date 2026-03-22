@@ -305,6 +305,113 @@ const getCatColor = (cat) => {
 };
 
 /* ═══════════════════════════════════════════════════════════
+   REPORT PREVIEW MODAL
+═══════════════════════════════════════════════════════════ */
+const ReportPreviewModal = ({isOpen, reportData, onClose, onDownload}) => {
+  if (!isOpen || !reportData) return null;
+
+  const subScores = [
+    {label: 'Math Computation', raw: reportData.scores.mathRaw, std: reportData.scores.mathStd, pct: reportData.scores.mathPct, cat: reportData.scores.mathCat},
+    {label: 'Spelling', raw: reportData.scores.spellingRaw, std: reportData.scores.spellingStd, pct: reportData.scores.spellingPct, cat: reportData.scores.spellingCat},
+    {label: 'Word Reading', raw: reportData.scores.wordReadingRaw, std: reportData.scores.wordReadingStd, pct: reportData.scores.wordReadingPct, cat: reportData.scores.wordReadingCat},
+    {label: 'Sentence Comp.', raw: reportData.scores.sentenceRaw, std: reportData.scores.sentenceStd, pct: reportData.scores.sentencePct, cat: reportData.scores.sentenceCat},
+  ];
+
+  return (
+    <div style={{position:'fixed',inset:0,background:'rgba(8,18,38,0.62)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10000,padding:16}}>
+      <div style={{background:'#fff',borderRadius:6,width:'100%',maxWidth:900,maxHeight:'90vh',display:'flex',flexDirection:'column',boxShadow:'0 24px 70px rgba(0,0,0,0.35)',overflow:'hidden'}}>
+        
+        {/* Header */}
+        <div style={{background:'#1e3a5f',color:'#fff',padding:'20px 24px',borderBottom:'1px solid #d0d8e4',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+          <div style={{fontSize:18,fontWeight:700}}>📄 Report Preview</div>
+          <button onClick={onClose} style={{background:'none',border:'none',color:'#fff',cursor:'pointer',fontSize:24}}>×</button>
+        </div>
+
+        {/* Content */}
+        <div style={{flex:1,overflowY:'auto',padding:'30px 40px'}}>
+          
+          {/* Title */}
+          <div style={{textAlign:'center',marginBottom:30,borderBottom:'2px solid #1e3a5f',paddingBottom:20}}>
+            <div style={{fontSize:24,fontWeight:700,color:'#1e3a5f',marginBottom:5}}>WRAT5-India Score Report</div>
+            <div style={{fontSize:13,color:'#666'}}>Wide Range Achievement Test - India Blue Form</div>
+          </div>
+
+          {/* Examinee Section */}
+          <div style={{marginBottom:25}}>
+            <div style={{fontSize:14,fontWeight:700,color:'#1e3a5f',background:'#eef2f8',padding:'10px 12px',marginBottom:12}}>EXAMINEE INFORMATION</div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px 24px',fontSize:13}}>
+              <div><span style={{fontWeight:600}}>Name:</span> {reportData.examinee.firstName} {reportData.examinee.lastName}</div>
+              <div><span style={{fontWeight:600}}>Examinee ID:</span> {reportData.examinee.examineeId}</div>
+              <div><span style={{fontWeight:600}}>Date of Birth:</span> {reportData.examinee.dob}</div>
+              <div><span style={{fontWeight:600}}>Gender:</span> {reportData.examinee.gender}</div>
+            </div>
+          </div>
+
+          {/* Assessment Section */}
+          <div style={{marginBottom:25}}>
+            <div style={{fontSize:14,fontWeight:700,color:'#1e3a5f',background:'#eef2f8',padding:'10px 12px',marginBottom:12}}>ASSESSMENT DETAILS</div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px 24px',fontSize:13}}>
+              <div><span style={{fontWeight:600}}>Test Date:</span> {reportData.assessment.testDate}</div>
+              <div><span style={{fontWeight:600}}>Examiner:</span> {reportData.assessment.examiner}</div>
+              <div><span style={{fontWeight:600}}>Method:</span> {reportData.assessment.deliveryMethod}</div>
+              <div><span style={{fontWeight:600}}>Language:</span> {reportData.assessment.language}</div>
+            </div>
+          </div>
+
+          {/* Scores Section */}
+          <div style={{marginBottom:25}}>
+            <div style={{fontSize:14,fontWeight:700,color:'#1e3a5f',background:'#eef2f8',padding:'10px 12px',marginBottom:12}}>SCORE SUMMARY</div>
+            <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
+              <thead>
+                <tr style={{background:'#1e3a5f',color:'#fff'}}>
+                  <th style={{padding:'10px',textAlign:'left',borderRight:'1px solid #2e4f7a'}}>Subtest</th>
+                  <th style={{padding:'10px',textAlign:'center',borderRight:'1px solid #2e4f7a'}}>Raw Score</th>
+                  <th style={{padding:'10px',textAlign:'center',borderRight:'1px solid #2e4f7a'}}>Std Score</th>
+                  <th style={{padding:'10px',textAlign:'center',borderRight:'1px solid #2e4f7a'}}>Percentile</th>
+                  <th style={{padding:'10px',textAlign:'left'}}>Category</th>
+                </tr>
+              </thead>
+              <tbody>
+                {subScores.map((s,i) => (
+                  <tr key={s.label} style={{background:i%2===0?'#fff':'#f9f9f9',borderBottom:'1px solid #e0e0e0'}}>
+                    <td style={{padding:'10px',borderRight:'1px solid #e0e0e0'}}>{s.label}</td>
+                    <td style={{padding:'10px',textAlign:'center',borderRight:'1px solid #e0e0e0'}}>{s.raw||'—'}</td>
+                    <td style={{padding:'10px',textAlign:'center',borderRight:'1px solid #e0e0e0',fontWeight:600}}>{s.std||'—'}</td>
+                    <td style={{padding:'10px',textAlign:'center',borderRight:'1px solid #e0e0e0'}}>{s.pct||'—'}</td>
+                    <td style={{padding:'10px',color:getCatColor(s.cat)}}>{s.cat||'—'}</td>
+                  </tr>
+                ))}
+                <tr style={{background:'#eef2f8',borderTop:'2px solid #1e3a5f',fontWeight:700}}>
+                  <td style={{padding:'10px',borderRight:'1px solid #c0ccde'}}>Reading Composite</td>
+                  <td style={{padding:'10px',textAlign:'center',borderRight:'1px solid #c0ccde'}}>{reportData.scores.compositeRaw||'—'}</td>
+                  <td style={{padding:'10px',textAlign:'center',borderRight:'1px solid #c0ccde'}}>{reportData.scores.compositeStd||'—'}</td>
+                  <td style={{padding:'10px',textAlign:'center',borderRight:'1px solid #c0ccde'}}>{reportData.scores.compositePct||'—'}</td>
+                  <td style={{padding:'10px',color:getCatColor(reportData.scores.compositeCat)}}>{reportData.scores.compositeCat||'—'}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div style={{fontSize:11,color:'#999',textAlign:'right',marginTop:30,paddingTop:20,borderTop:'1px solid #ddd'}}>
+            Generated: {reportData.timestamp}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{padding:'15px 24px',borderTop:'1px solid #d0d8e4',display:'flex',gap:10,justifyContent:'flex-end',background:'#f9f9f9',flexShrink:0}}>
+          <button onClick={onClose} style={{padding:'10px 20px',border:'1.5px solid #1e3a5f',background:'#fff',color:'#1e3a5f',borderRadius:3,cursor:'pointer',fontWeight:600,fontSize:13}}>
+            Back to Edit
+          </button>
+          <button onClick={onDownload} style={{padding:'10px 20px',background:'#2e7d32',color:'#fff',border:'none',borderRadius:3,cursor:'pointer',fontWeight:600,fontSize:13,display:'flex',alignItems:'center',gap:8}}>
+            ⬇️ Download PDF
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════
    STEP 1 — EXAMINEE (search/select OR create new)
 ═══════════════════════════════════════════════════════════ */
 const Step1 = ({examinee,setExaminee,errors,selectedExaminee,onSelectExaminee,onClearSelected}) => {
@@ -809,11 +916,14 @@ const GenerateReportModal = ({ isOpen, onClose, examineeData }) => {
   const [step, setStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGenerated, setIsGenerated] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [reportData, setReportData] = useState(null);
   const [errors, setErrors] = useState({});
 
   // Step 1 state
   const [selectedExaminee, setSelectedExaminee] = useState(null);
   const [examinee, setExaminee] = useState({
+    id: null,
     firstName:'', middleName:'', lastName:'', examineeId:'',
     gender:'Please Select...', dob:'', email:'', comment:'',
     custom1:'', custom2:'', custom3:'', custom4:'',
@@ -877,7 +987,7 @@ const GenerateReportModal = ({ isOpen, onClose, examineeData }) => {
   };
   const handleClearSelected = () => {
     setSelectedExaminee(null);
-    setExaminee({firstName:'',middleName:'',lastName:'',examineeId:'',gender:'Please Select...',dob:'',email:'',comment:'',custom1:'',custom2:'',custom3:'',custom4:''});
+    setExaminee({id: null, firstName:'',middleName:'',lastName:'',examineeId:'',gender:'Please Select...',dob:'',email:'',comment:'',custom1:'',custom2:'',custom3:'',custom4:''});
     setIsPrefilled(false); setSelectedAssessment(null); setScores(BLANK_SCORES());
   };
 
@@ -944,19 +1054,20 @@ const GenerateReportModal = ({ isOpen, onClose, examineeData }) => {
     setIsGenerating(true);
     
     try {
-      let examineeId;
+      // Get examinee ID - try multiple sources to be safe
+      let examineeId = selectedExaminee?.id || examinee?.id;
       
-      if (selectedExaminee) {
-        // Use existing examinee ID
-        examineeId = selectedExaminee.id;
-      } else {
-        // New examinee - need to create it first
-        if (!examinee.id) {
-          alert('Error: Examinee not saved. Please go back to Step 1 and select or properly create an examinee.');
-          setIsGenerating(false);
-          return;
-        }
-        examineeId = examinee.id;
+      console.log('🔍 Debug info:', {
+        selectedExaminee: selectedExaminee?.id,
+        examinee: examinee?.id,
+        resolvedId: examineeId
+      });
+
+      if (!examineeId) {
+        console.error('❌ No examinee ID found. State:', {selectedExaminee, examinee});
+        alert('Error: Examinee ID not found. Please go back and select an examinee.');
+        setIsGenerating(false);
+        return;
       }
       
       // Create assessment with scores
@@ -973,14 +1084,34 @@ const GenerateReportModal = ({ isOpen, onClose, examineeData }) => {
         scores: scores
       };
 
+      console.log('📤 Sending assessment data to API:', {
+        examineeId,
+        deliveryMethod: assess.deliveryMethod,
+        testDate: assess.testDate,
+        ...assessmentData
+      });
+
       const result = await dispatch(createAssessmentWithScores(assessmentData)).unwrap();
       
-      if (result.success) {
+      console.log('✅ Assessment created successfully:', result);
+
+      if (result.success || result.id || result.data) {
+        // Store report data for preview
+        setReportData({
+          examinee: activeEx,
+          assessment: assessmentData,
+          scores: scores,
+          options: opts,
+          timestamp: new Date().toLocaleString()
+        });
         setIsGenerated(true);
+        // Automatically open preview
+        setTimeout(() => setIsPreviewOpen(true), 300);
       }
     } catch (error) {
-      console.error('Failed to create assessment:', error);
-      alert('Failed to create assessment. Please try again.');
+      console.error('❌ Failed to create assessment:', error);
+      console.error('Error details:', error?.message || JSON.stringify(error));
+      alert('Failed to create assessment: ' + (error?.message || 'Unknown error. Check console for details.'));
     } finally {
       setIsGenerating(false);
     }
@@ -989,14 +1120,145 @@ const GenerateReportModal = ({ isOpen, onClose, examineeData }) => {
   const close = () => {
     setStep(1);
     setIsGenerated(false);
+    setIsPreviewOpen(false);
+    setReportData(null);
     setErrors({});
     setSelectedExaminee(null);
     setSelectedAssessment(null);
-    setExaminee({firstName:'',middleName:'',lastName:'',examineeId:'',gender:'Please Select...',dob:'',email:'',comment:'',custom1:'',custom2:'',custom3:'',custom4:''});
+    setExaminee({id: null, firstName:'',middleName:'',lastName:'',examineeId:'',gender:'Please Select...',dob:'',email:'',comment:'',custom1:'',custom2:'',custom3:'',custom4:''});
     setIsPrefilled(false);
     setScores(BLANK_SCORES());
     setAssess({deliveryMethod:'Manual Entry', testDate:'', examiner:'', language:'English', gradeLevel:'Please select...', reasonForReferral:'Please select...', medications:'', testingSite:''});
     onClose?.();
+  };
+
+  const downloadPDF = () => {
+    if (!reportData) return;
+    
+    // Create a simple HTML report
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>WRAT5-India Score Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
+          .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #1e3a5f; padding-bottom: 20px; }
+          .title { font-size: 28px; color: #1e3a5f; font-weight: bold; margin-bottom: 5px; }
+          .subtitle { font-size: 14px; color: #666; }
+          .section { margin: 25px 0; }
+          .section-title { font-size: 16px; font-weight: bold; color: #1e3a5f; background: #eef2f8; padding: 10px; margin-bottom: 15px; }
+          table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+          th { background: #1e3a5f; color: white; padding: 10px; text-align: left; }
+          td { padding: 10px; border-bottom: 1px solid #e0e0e0; }
+          tr:nth-child(even) { background: #f9f9f9; }
+          .label { font-weight: bold; color: #333; width: 30%; }
+          .value { color: #666; }
+          .timestamp { text-align: right; font-size: 12px; color: #999; margin-top: 40px; border-top: 1px solid #ddd; padding-top: 10px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="title">WRAT5-India Score Report</div>
+          <div class="subtitle">Wide Range Achievement Test - India Blue Form</div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Examinee Information</div>
+          <table>
+            <tr><td class="label">Name:</td><td class="value">${reportData.examinee.firstName} ${reportData.examinee.lastName}</td></tr>
+            <tr><td class="label">Examinee ID:</td><td class="value">${reportData.examinee.examineeId}</td></tr>
+            <tr><td class="label">Date of Birth:</td><td class="value">${reportData.examinee.dob}</td></tr>
+            <tr><td class="label">Gender:</td><td class="value">${reportData.examinee.gender}</td></tr>
+            <tr><td class="label">Age:</td><td class="value">${reportData.examinee.email}</td></tr>
+          </table>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Assessment Administration</div>
+          <table>
+            <tr><td class="label">Test Date:</td><td class="value">${reportData.assessment.testDate}</td></tr>
+            <tr><td class="label">Examiner:</td><td class="value">${reportData.assessment.examiner}</td></tr>
+            <tr><td class="label">Delivery Method:</td><td class="value">${reportData.assessment.deliveryMethod}</td></tr>
+            <tr><td class="label">Language:</td><td class="value">${reportData.assessment.language}</td></tr>
+            <tr><td class="label">Grade Level:</td><td class="value">${reportData.assessment.gradeLevel}</td></tr>
+            <tr><td class="label">Reason for Referral:</td><td class="value">${reportData.assessment.reasonForReferral}</td></tr>
+          </table>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Subtest Scores Summary</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Subtest</th>
+                <th>Raw Score</th>
+                <th>Standard Score</th>
+                <th>Percentile</th>
+                <th>Category</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Math Computation</td>
+                <td>${reportData.scores.mathRaw || '—'}</td>
+                <td>${reportData.scores.mathStd || '—'}</td>
+                <td>${reportData.scores.mathPct || '—'}</td>
+                <td>${reportData.scores.mathCat || '—'}</td>
+              </tr>
+              <tr>
+                <td>Spelling</td>
+                <td>${reportData.scores.spellingRaw || '—'}</td>
+                <td>${reportData.scores.spellingStd || '—'}</td>
+                <td>${reportData.scores.spellingPct || '—'}</td>
+                <td>${reportData.scores.spellingCat || '—'}</td>
+              </tr>
+              <tr>
+                <td>Word Reading</td>
+                <td>${reportData.scores.wordReadingRaw || '—'}</td>
+                <td>${reportData.scores.wordReadingStd || '—'}</td>
+                <td>${reportData.scores.wordReadingPct || '—'}</td>
+                <td>${reportData.scores.wordReadingCat || '—'}</td>
+              </tr>
+              <tr>
+                <td>Sentence Comprehension</td>
+                <td>${reportData.scores.sentenceRaw || '—'}</td>
+                <td>${reportData.scores.sentenceStd || '—'}</td>
+                <td>${reportData.scores.sentencePct || '—'}</td>
+                <td>${reportData.scores.sentenceCat || '—'}</td>
+              </tr>
+              <tr style="background: #eef2f8; font-weight: bold;">
+                <td>Reading Composite</td>
+                <td>${reportData.scores.compositeRaw || '—'}</td>
+                <td>${reportData.scores.compositeStd || '—'}</td>
+                <td>${reportData.scores.compositePct || '—'}</td>
+                <td>${reportData.scores.compositeCat || '—'}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="timestamp">
+          Generated on: ${reportData.timestamp}
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Create blob and download
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `WRAT5-Report-${reportData.examinee.examineeId}-${new Date().getTime()}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+    setIsPreviewOpen(false);
+    close();
   };
 
   // Active examinee for sidebar
@@ -1087,14 +1349,22 @@ const GenerateReportModal = ({ isOpen, onClose, examineeData }) => {
                 </button>
               )}
               {step===3 && isGenerated && (
-                <button className="grm-gr" onClick={()=>alert('Downloading PDF…')} style={{minWidth:160}}>
-                  <Dl/> Download PDF Report
+                <button className="grm-gr" onClick={() => setIsPreviewOpen(true)} style={{minWidth:160}}>
+                  <Dl/> View & Download Report
                 </button>
               )}
             </div>
           </div>
         </div>
       </div>
+      
+      {/* Report Preview Modal */}
+      <ReportPreviewModal 
+        isOpen={isPreviewOpen} 
+        reportData={reportData}
+        onClose={() => setIsPreviewOpen(false)}
+        onDownload={downloadPDF}
+      />
     </>
   );
 };
