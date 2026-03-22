@@ -231,7 +231,7 @@ const PrintEncounter = ({ sessionData, problems, observations, notes }) => {
               {/* Header */}
               {includeHeader && (
                 <div className="text-center mb-6 pb-4 border-b border-gray-300">
-                  <h1 className="text-2xl font-bold text-gray-800">Educational Session Report</h1>
+                  <h1 className="text-2xl font-bold text-gray-800">Educational Assessment Report</h1>
                   <p className="text-gray-600">{encounterData.center.name}</p>
                 </div>
               )}

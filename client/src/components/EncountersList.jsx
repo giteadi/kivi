@@ -230,8 +230,8 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 space-y-4 lg:space-y-0">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-800">Sessions List</h1>
-            <p className="text-gray-600">Create and manage session plans for examinees</p>
+            <h1 className="text-2xl font-semibold text-gray-800">Assessment List</h1>
+            <p className="text-gray-600">Create and manage assessment plans for examinees</p>
           </div>
           
           <motion.button
@@ -265,7 +265,7 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
         <div className="flex items-center text-sm text-gray-500 mb-6">
           <span>Home</span>
           <span className="mx-2">›</span>
-          <span className="text-gray-800">Sessions List</span>
+          <span className="text-gray-800">Assessment List</span>
         </div>
 
         {/* Filters */}

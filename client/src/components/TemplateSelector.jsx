@@ -6,7 +6,7 @@ const TemplateSelector = ({ onSelectTemplate, onCancel, patientData }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  // Educational session templates
+  // Educational assessment templates
   const templates = [
     {
       id: 1,

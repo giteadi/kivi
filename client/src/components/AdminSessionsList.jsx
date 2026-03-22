@@ -147,18 +147,18 @@ const AdminSessionsList = () => {
           </div>
         </div>
 
-        {/* Sessions List */}
+        {/* Assessments List */}
         <div className="bg-white rounded-xl shadow-sm border">
           <div className="p-4 border-b">
             <h2 className="text-lg font-semibold text-gray-900">
-              Sessions ({filteredSessions.length})
+              Assessments ({filteredSessions.length})
             </h2>
           </div>
 
           {filteredSessions.length === 0 ? (
             <div className="text-center py-12">
               <FiCalendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No sessions found</p>
+              <p className="text-gray-500">No assessments found</p>
             </div>
           ) : (
             <div className="overflow-x-auto">

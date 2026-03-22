@@ -24,13 +24,13 @@ const MobileMenu = ({ isOpen, setIsOpen, activeItem, setActiveItem }) => {
     { id: 'dashboard', label: 'Dashboard', icon: FiHome, section: 'MAIN' },
     { 
       id: 'encounters', 
-      label: 'Sessions', 
+      label: 'Assessments', 
       icon: FiUsers, 
       section: 'MAIN',
       hasSubmenu: true,
       submenu: [
-        { id: 'encounters-list', label: 'Sessions List', icon: FiList },
-        { id: 'encounter-templates', label: 'Session Templates', icon: FiFileText }
+        { id: 'encounters-list', label: 'Assessment List', icon: FiList },
+        { id: 'encounter-templates', label: 'Assessment Templates', icon: FiFileText }
       ]
     },
     { 

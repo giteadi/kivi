@@ -20,7 +20,7 @@ const UserSidebar = ({ activeItem, setActiveItem, onLogout, onPlanSelect, onBook
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: FiHome },
     { id: 'plans', label: 'Plans & Packages', icon: FiPackage },
-    { id: 'sessions', label: 'My Sessions', icon: FiCalendar },
+    { id: 'sessions', label: 'My Assessments', icon: FiCalendar },
     { id: 'payments', label: 'Payments', icon: FiCreditCard },
     { id: 'profile', label: 'My Profile', icon: FiUser },
     { id: 'reports', label: 'Reports', icon: FiFileText },
