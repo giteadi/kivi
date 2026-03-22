@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { FiX, FiSave, FiCalendar, FiFileText, FiUser, FiClock } from 'react-icons/fi';
+import { FiX, FiSave, FiCalendar, FiFileText, FiUser, FiClock, FiPlus } from 'react-icons/fi';
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { createAssessment } from '../store/slices/assessmentSlice';
@@ -10,21 +10,23 @@ const AssignAssessmentModal = ({ isOpen, onClose, examineeId, examineeName }) =>
   const dispatch = useDispatch();
   
   const [formData, setFormData] = useState({
-    assessmentName: '',
     assessmentType: 'WRAT5',
-    deliveryMethod: 'Manual Entry',
+    deliveryMethod: 'Online',
     scheduledDate: '',
     scheduledTime: '',
-    duration: 30,
+    duration: 1,
     notes: '',
     examiner: '',
-    room: '',
+    room: 'MindSaid Learning',
     materials: ''
   });
 
+  const [showAddAssessmentType, setShowAddAssessmentType] = useState(false);
+  const [newAssessmentType, setNewAssessmentType] = useState('');
+
   const [errors, setErrors] = useState({});
 
-  const assessmentTypes = [
+  const [assessmentTypes, setAssessmentTypes] = useState([
     { id: 'WRAT5', name: 'WRAT5 - Wide Range Achievement Test' },
     { id: 'WIAT', name: 'WIAT - Wechsler Individual Achievement Test' },
     { id: 'WISC', name: 'WISC - Wechsler Intelligence Scale for Children' },
@@ -32,15 +34,11 @@ const AssignAssessmentModal = ({ isOpen, onClose, examineeId, examineeName }) =>
     { id: 'Conners', name: 'Conners Rating Scales' },
     { id: 'Vineland', name: 'Vineland Adaptive Behavior Scales' },
     { id: 'Custom', name: 'Custom Assessment' }
-  ];
+  ]);
 
   const deliveryMethods = [
-    'Manual Entry',
-    'Digital',
-    'Paper-Based',
-    'Oral',
-    'Observation',
-    'Interview'
+    'Online',
+    'Offline'
   ];
 
   const handleInputChange = (field, value) => {
@@ -58,12 +56,22 @@ const AssignAssessmentModal = ({ isOpen, onClose, examineeId, examineeName }) =>
     }
   };
 
+  const handleAddAssessmentType = () => {
+    if (newAssessmentType.trim()) {
+      const newType = {
+        id: newAssessmentType.trim().replace(/\s+/g, '_').toUpperCase(),
+        name: newAssessmentType.trim()
+      };
+      setAssessmentTypes(prev => [...prev, newType]);
+      setFormData(prev => ({ ...prev, assessmentType: newType.id }));
+      setNewAssessmentType('');
+      setShowAddAssessmentType(false);
+      toast.success('Assessment type added successfully!');
+    }
+  };
+
   const validateForm = () => {
     const newErrors = {};
-    
-    if (!formData.assessmentName.trim()) {
-      newErrors.assessmentName = 'Assessment name is required';
-    }
     
     if (!formData.scheduledDate) {
       newErrors.scheduledDate = 'Scheduled date is required';
@@ -110,18 +118,19 @@ const AssignAssessmentModal = ({ isOpen, onClose, examineeId, examineeName }) =>
 
   const handleClose = () => {
     setFormData({
-      assessmentName: '',
       assessmentType: 'WRAT5',
-      deliveryMethod: 'Manual Entry',
+      deliveryMethod: 'Online',
       scheduledDate: '',
       scheduledTime: '',
-      duration: 30,
+      duration: 1,
       notes: '',
       examiner: '',
-      room: '',
+      room: 'MindSaid Learning',
       materials: ''
     });
     setErrors({});
+    setShowAddAssessmentType(false);
+    setNewAssessmentType('');
     onClose();
   };
 
@@ -162,37 +171,60 @@ const AssignAssessmentModal = ({ isOpen, onClose, examineeId, examineeName }) =>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Assessment Name *
-                </label>
-                <input
-                  type="text"
-                  value={formData.assessmentName}
-                  onChange={(e) => handleInputChange('assessmentName', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.assessmentName ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Enter assessment name"
-                />
-                {errors.assessmentName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.assessmentName}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Assessment Type
                 </label>
-                <select
-                  value={formData.assessmentType}
-                  onChange={(e) => handleInputChange('assessmentType', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {assessmentTypes.map(type => (
-                    <option key={type.id} value={type.id}>
-                      {type.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex space-x-2">
+                  <select
+                    value={formData.assessmentType}
+                    onChange={(e) => handleInputChange('assessmentType', e.target.value)}
+                    className="w-48 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {assessmentTypes.map(type => (
+                      <option key={type.id} value={type.id}>
+                        {type.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddAssessmentType(!showAddAssessmentType)}
+                    className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                    title="Add new assessment type"
+                  >
+                    <FiPlus className="w-4 h-4" />
+                  </button>
+                </div>
+                {showAddAssessmentType && (
+                  <div className="mt-2 space-y-2">
+                    <input
+                      type="text"
+                      value={newAssessmentType}
+                      onChange={(e) => setNewAssessmentType(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      placeholder="Enter new assessment type"
+                      onKeyPress={(e) => e.key === 'Enter' && handleAddAssessmentType()}
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={handleAddAssessmentType}
+                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm"
+                      >
+                        Add
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAddAssessmentType(false);
+                          setNewAssessmentType('');
+                        }}
+                        className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors text-sm"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -214,15 +246,15 @@ const AssignAssessmentModal = ({ isOpen, onClose, examineeId, examineeName }) =>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Duration (minutes)
+                  Duration (days)
                 </label>
                 <input
                   type="number"
                   value={formData.duration}
                   onChange={(e) => handleInputChange('duration', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  min="15"
-                  max="240"
+                  min="1"
+                  max="30"
                 />
               </div>
             </div>
@@ -268,14 +300,14 @@ const AssignAssessmentModal = ({ isOpen, onClose, examineeId, examineeName }) =>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Room
+                  Location
                 </label>
                 <input
                   type="text"
                   value={formData.room}
-                  onChange={(e) => handleInputChange('room', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Room number"
+                  disabled
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
+                  placeholder="MindSaid Learning"
                 />
               </div>
             </div>

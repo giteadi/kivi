@@ -33,7 +33,6 @@ class AssessmentController {
       // Map camelCase to snake_case for database
       const assessmentData = {
         student_id: req.body.examineeId,
-        assessment_name: req.body.assessmentName,
         assessment_type: req.body.assessmentType,
         delivery_method: req.body.deliveryMethod,
         scheduled_date: req.body.scheduledDate,
@@ -46,6 +45,11 @@ class AssessmentController {
         status: 'Scheduled',
         created_at: new Date()
       };
+
+      // Only include assessment_name if provided
+      if (req.body.assessmentName && req.body.assessmentName.trim()) {
+        assessmentData.assessment_name = req.body.assessmentName.trim();
+      }
 
       console.log('Processed assessment data:', assessmentData);
       
