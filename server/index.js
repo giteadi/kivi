@@ -50,6 +50,7 @@ const startServer = async () => {
     app.use('/api/centres', require('./routes/centreRoutes'));
     app.use('/api/programmes', require('./routes/programmeRoutes'));
     app.use('/api/reports', require('./routes/reportRoutes'));
+    app.use('/api/examinees', require('./routes/examineeRoutes'));
     
     // Legacy routes for backward compatibility (if needed)
     app.use('/api/appointments', require('./routes/appointmentRoutes'));

@@ -1,4 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchExaminees, createAssessmentWithScores, setSelectedExaminee, clearSelectedExaminee } from '../store/slices/examineeSlice';
 
 /* ═══════════════════════════════════════════════════════════
    MOCK DATA  (replace with real API calls in production)
@@ -309,15 +311,23 @@ const Step1 = ({examinee,setExaminee,errors,selectedExaminee,onSelectExaminee,on
   const [mode, setMode] = useState(selectedExaminee ? 'select' : 'select'); // 'select' | 'new'
   const [query, setQuery] = useState('');
   const [activeTab, setActiveTab] = useState('Demographics');
+  
+  const dispatch = useDispatch();
+  const { examinees, isLoading } = useSelector((state) => state.examinees);
+
+  // Fetch examinees from Redux
+  useEffect(() => {
+    dispatch(fetchExaminees());
+  }, [dispatch]);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
-    if (!q) return MOCK_EXAMINEES;
-    return MOCK_EXAMINEES.filter(e =>
+    if (!q) return examinees;
+    return examinees.filter(e =>
       `${e.firstName} ${e.lastName}`.toLowerCase().includes(q) ||
       e.examineeId.toLowerCase().includes(q)
     );
-  }, [query]);
+  }, [query, examinees]);
 
   const switchToNew = () => {
     onClearSelected();
@@ -366,10 +376,16 @@ const Step1 = ({examinee,setExaminee,errors,selectedExaminee,onSelectExaminee,on
           )}
 
           <div style={{maxHeight:320,overflowY:'auto',paddingRight:2}}>
-            {filtered.length===0 && (
+            {isLoading && (
+              <div style={{textAlign:'center',padding:'30px 0',color:'#bbb',fontSize:13}}>
+                <div style={{display:'inline-block',width:20,height:20,border:'2px solid #ddd',borderTop:'2px solid #0066cc',borderRadius:'50%',animation:'grm-spin 1s linear infinite',marginBottom:10}}></div>
+                <div>Loading examinees...</div>
+              </div>
+            )}
+            {!isLoading && filtered.length===0 && (
               <div style={{textAlign:'center',padding:'30px 0',color:'#bbb',fontSize:13}}>No examinees found</div>
             )}
-            {filtered.map(ex => {
+            {!isLoading && filtered.map(ex => {
               const isSel = selectedExaminee?.id===ex.id;
               return (
                 <div key={ex.id} className={`grm-ex-card${isSel?' sel':''}`} onClick={()=>onSelectExaminee(ex)}>
@@ -787,6 +803,9 @@ const Step3 = ({opts,setOpts,isGenerated}) => {
    MAIN EXPORT
 ═══════════════════════════════════════════════════════════ */
 const GenerateReportModal = ({ isOpen, onClose }) => {
+  const dispatch = useDispatch();
+  const { isCreatingAssessment } = useSelector((state) => state.examinees);
+  
   const [step, setStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGenerated, setIsGenerated] = useState(false);
@@ -799,7 +818,6 @@ const GenerateReportModal = ({ isOpen, onClose }) => {
     gender:'Please Select...', dob:'', email:'', comment:'',
     custom1:'', custom2:'', custom3:'', custom4:'',
   });
-  const [mode, setMode] = useState('select');  // tracked by child but we also need parent to know
 
   // Step 2 state
   const [selectedAssessment, setSelectedAssessment] = useState(null);
@@ -857,8 +875,33 @@ const GenerateReportModal = ({ isOpen, onClose }) => {
 
   const generate = async () => {
     setIsGenerating(true);
-    await new Promise(r=>setTimeout(r,2000));
-    setIsGenerating(false); setIsGenerated(true);
+    
+    try {
+      // Create assessment with scores
+      const assessmentData = {
+        examineeId: selectedExaminee?.id || examinee.id,
+        deliveryMethod: assess.deliveryMethod,
+        testDate: assess.testDate,
+        examiner: assess.examiner,
+        language: assess.language,
+        gradeLevel: assess.gradeLevel,
+        reasonForReferral: assess.reasonForReferral,
+        medications: assess.medications,
+        testingSite: assess.testingSite,
+        scores: scores
+      };
+
+      const result = await dispatch(createAssessmentWithScores(assessmentData)).unwrap();
+      
+      if (result.success) {
+        setIsGenerated(true);
+      }
+    } catch (error) {
+      console.error('Failed to create assessment:', error);
+      alert('Failed to create assessment. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const close = () => {
@@ -951,8 +994,8 @@ const GenerateReportModal = ({ isOpen, onClose }) => {
               <button className="grm-bl" onClick={close}>Cancel</button>
               {step<3 && <button className="grm-or" onClick={next}>{step===1?'Next: Assessment →':'Proceed to Report →'}</button>}
               {step===3 && !isGenerated && (
-                <button className="grm-or" onClick={generate} disabled={isGenerating} style={{minWidth:148}}>
-                  {isGenerating?<><Sp/> Generating…</>:<><Dl/> Create Report</>}
+                <button className="grm-or" onClick={generate} disabled={isGenerating || isCreatingAssessment} style={{minWidth:148}}>
+                  {isGenerating || isCreatingAssessment ?<><Sp/> Generating…</>:<><Dl/> Create Report</>}
                 </button>
               )}
               {step===3 && isGenerated && (
