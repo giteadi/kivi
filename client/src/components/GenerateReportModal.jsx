@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchExaminees, createAssessmentWithScores, setSelectedExaminee, clearSelectedExaminee } from '../store/slices/examineeSlice';
+import { fetchExaminees, createExaminee, createAssessmentWithScores, setSelectedExaminee, clearSelectedExaminee } from '../store/slices/examineeSlice';
 
 /* ═══════════════════════════════════════════════════════════
    MOCK DATA  (replace with real API calls in production)
@@ -802,9 +802,9 @@ const Step3 = ({opts,setOpts,isGenerated}) => {
 /* ═══════════════════════════════════════════════════════════
    MAIN EXPORT
 ═══════════════════════════════════════════════════════════ */
-const GenerateReportModal = ({ isOpen, onClose }) => {
+const GenerateReportModal = ({ isOpen, onClose, examineeData }) => {
   const dispatch = useDispatch();
-  const { isCreatingAssessment } = useSelector((state) => state.examinees);
+  const { isCreatingAssessment, examinees } = useSelector((state) => state.examinees);
   
   const [step, setStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -818,6 +818,35 @@ const GenerateReportModal = ({ isOpen, onClose }) => {
     gender:'Please Select...', dob:'', email:'', comment:'',
     custom1:'', custom2:'', custom3:'', custom4:'',
   });
+
+  // Auto-populate when modal opens with examineeData
+  useEffect(() => {
+    if (isOpen && examineeData) {
+      // Find the examinee in the list to get full data with assessments
+      const fullExamineeData = examinees.find(ex => ex.id === examineeData.id) || examineeData;
+      
+      if (fullExamineeData) {
+        setSelectedExaminee(fullExamineeData);
+        setExaminee({
+          id: fullExamineeData.id,
+          firstName: fullExamineeData.firstName || '',
+          middleName: fullExamineeData.middleName || '',
+          lastName: fullExamineeData.lastName || '',
+          examineeId: fullExamineeData.examineeId || '',
+          gender: fullExamineeData.gender || 'Please Select...',
+          dob: fullExamineeData.dob || '',
+          email: fullExamineeData.email || '',
+          comment: fullExamineeData.comment || '',
+          custom1: fullExamineeData.custom1 || '',
+          custom2: fullExamineeData.custom2 || '',
+          custom3: fullExamineeData.custom3 || '',
+          custom4: fullExamineeData.custom4 || '',
+        });
+        // Automatically move to Step 2
+        setStep(2);
+      }
+    }
+  }, [isOpen, examineeData, examinees]);
 
   // Step 2 state
   const [selectedAssessment, setSelectedAssessment] = useState(null);
@@ -860,6 +889,7 @@ const GenerateReportModal = ({ isOpen, onClose }) => {
     else if (!/^\d{2}\/\d{2}\/\d{4}$/.test(examinee.dob)) e.dob='Format: DD/MM/YYYY';
     setErrors(e); return !Object.keys(e).length;
   };
+  
   const validate2 = () => {
     const e={};
     if (!assess.testDate.trim()) e.testDate='Test Date is required';
@@ -867,19 +897,71 @@ const GenerateReportModal = ({ isOpen, onClose }) => {
     setErrors(e); return !Object.keys(e).length;
   };
 
-  const next = () => {
+  const next = async () => {
     if (step===1 && !validate1()) return;
     if (step===2 && !validate2()) return;
-    setErrors({}); setStep(s=>s+1);
+    
+    setErrors({});
+    
+    // If on step 1 and user created a new examinee, save it first
+    if (step===1 && !selectedExaminee) {
+      try {
+        const newExamineeData = {
+          firstName: examinee.firstName,
+          lastName: examinee.lastName,
+          middleName: examinee.middleName,
+          examineeId: examinee.examineeId,
+          gender: examinee.gender,
+          dob: examinee.dob,
+          email: examinee.email,
+          comment: examinee.comment,
+          custom1: examinee.custom1,
+          custom2: examinee.custom2,
+          custom3: examinee.custom3,
+          custom4: examinee.custom4,
+        };
+        
+        const result = await dispatch(createExaminee(newExamineeData)).unwrap();
+        
+        if (result && result.id) {
+          // Update local examinee with returned ID
+          setExaminee(prev => ({...prev, id: result.id}));
+          setStep(s=>s+1);
+        } else {
+          alert('Failed to create examinee. Please check the form and try again.');
+        }
+      } catch (error) {
+        console.error('Error creating examinee:', error);
+        alert('Failed to save examinee. Please try again.');
+      }
+    } else {
+      // Existing examinee or moving forward from other steps
+      setStep(s=>s+1);
+    }
   };
 
   const generate = async () => {
     setIsGenerating(true);
     
     try {
+      let examineeId;
+      
+      if (selectedExaminee) {
+        // Use existing examinee ID
+        examineeId = selectedExaminee.id;
+      } else {
+        // New examinee - need to create it first
+        if (!examinee.id) {
+          alert('Error: Examinee not saved. Please go back to Step 1 and select or properly create an examinee.');
+          setIsGenerating(false);
+          return;
+        }
+        examineeId = examinee.id;
+      }
+      
       // Create assessment with scores
       const assessmentData = {
-        examineeId: selectedExaminee?.id || examinee.id,
+        examineeId: examineeId,
         deliveryMethod: assess.deliveryMethod,
         testDate: assess.testDate,
         examiner: assess.examiner,
@@ -905,9 +987,15 @@ const GenerateReportModal = ({ isOpen, onClose }) => {
   };
 
   const close = () => {
-    setStep(1); setIsGenerated(false); setErrors({});
-    setSelectedExaminee(null); setSelectedAssessment(null);
-    setIsPrefilled(false); setScores(BLANK_SCORES());
+    setStep(1);
+    setIsGenerated(false);
+    setErrors({});
+    setSelectedExaminee(null);
+    setSelectedAssessment(null);
+    setExaminee({firstName:'',middleName:'',lastName:'',examineeId:'',gender:'Please Select...',dob:'',email:'',comment:'',custom1:'',custom2:'',custom3:'',custom4:''});
+    setIsPrefilled(false);
+    setScores(BLANK_SCORES());
+    setAssess({deliveryMethod:'Manual Entry', testDate:'', examiner:'', language:'English', gradeLevel:'Please select...', reasonForReferral:'Please select...', medications:'', testingSite:''});
     onClose?.();
   };
 
