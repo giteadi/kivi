@@ -152,16 +152,29 @@ class ExamineeController {
   // Create assessment with scores
   async createAssessmentWithScores(req, res) {
     try {
+      console.log('🔍 Request body received:', req.body);
+      
       const {
         examineeId, deliveryMethod, testDate, examiner, language, gradeLevel,
         reasonForReferral, medications, testingSite, scores
       } = req.body;
+
+      console.log('🔍 Extracted fields:', { examineeId, deliveryMethod, testDate, examiner });
+
+      if (!examineeId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Examinee ID is required'
+        });
+      }
 
       const assessmentData = {
         student_id: examineeId,
         assessment_name: 'WRAT5-India Blue Form',
         assessment_type: 'WRAT5',
         delivery_method: deliveryMethod,
+        scheduled_date: testDate ? new Date(testDate.split('/').reverse().join('-')) : new Date(),
+        scheduled_time: '09:00:00',
         test_date: testDate ? new Date(testDate.split('/').reverse().join('-')) : null,
         examiner_name: examiner,
         language: language,
@@ -171,60 +184,64 @@ class ExamineeController {
         testing_site: testingSite,
         status: 'Completed',
         // Score fields
-        math_raw: scores.mathRaw,
-        math_std: scores.mathStd,
-        math_ci: scores.mathCI,
-        math_pct: scores.mathPct,
-        math_cat: scores.mathCat,
-        math_age: scores.mathAge,
-        math_gsv: scores.mathGSV,
-        spelling_raw: scores.spellingRaw,
-        spelling_std: scores.spellingStd,
-        spelling_ci: scores.spellingCI,
-        spelling_pct: scores.spellingPct,
-        spelling_cat: scores.spellingCat,
-        spelling_age: scores.spellingAge,
-        spelling_gsv: scores.spellingGSV,
-        word_reading_raw: scores.wordReadingRaw,
-        word_reading_std: scores.wordReadingStd,
-        word_reading_ci: scores.wordReadingCI,
-        word_reading_pct: scores.wordReadingPct,
-        word_reading_cat: scores.wordReadingCat,
-        word_reading_age: scores.wordReadingAge,
-        word_reading_gsv: scores.wordReadingGSV,
-        sentence_raw: scores.sentenceRaw,
-        sentence_std: scores.sentenceStd,
-        sentence_ci: scores.sentenceCI,
-        sentence_pct: scores.sentencePct,
-        sentence_cat: scores.sentenceCat,
-        sentence_age: scores.sentenceAge,
-        sentence_gsv: scores.sentenceGSV,
-        composite_raw: scores.compositeRaw,
-        composite_std: scores.compositeStd,
-        composite_ci: scores.compositeCI,
-        composite_pct: scores.compositePct,
-        composite_cat: scores.compositeCat,
-        diff_wr_sp: scores.diff_wr_sp,
-        sig_wr_sp: scores.sig_wr_sp,
-        base_wr_sp: scores.base_wr_sp,
-        diff_wr_mc: scores.diff_wr_mc,
-        sig_wr_mc: scores.sig_wr_mc,
-        base_wr_mc: scores.base_wr_mc,
-        diff_wr_sc: scores.diff_wr_sc,
-        sig_wr_sc: scores.sig_wr_sc,
-        base_wr_sc: scores.base_wr_sc,
-        diff_sp_mc: scores.diff_sp_mc,
-        sig_sp_mc: scores.sig_sp_mc,
-        base_sp_mc: scores.base_sp_mc,
-        diff_sp_sc: scores.diff_sp_sc,
-        sig_sp_sc: scores.sig_sp_sc,
-        base_sp_sc: scores.base_sp_sc,
-        diff_mc_sc: scores.diff_mc_sc,
-        sig_mc_sc: scores.sig_mc_sc,
-        base_mc_sc: scores.base_mc_sc,
+        math_raw: scores?.mathRaw || '',
+        math_std: scores?.mathStd || '',
+        math_ci: scores?.mathCI || '',
+        math_pct: scores?.mathPct || '',
+        math_cat: scores?.mathCat || '',
+        math_age: scores?.mathAge || '',
+        math_gsv: scores?.mathGSV || '',
+        spelling_raw: scores?.spellingRaw || '',
+        spelling_std: scores?.spellingStd || '',
+        spelling_ci: scores?.spellingCI || '',
+        spelling_pct: scores?.spellingPct || '',
+        spelling_cat: scores?.spellingCat || '',
+        spelling_age: scores?.spellingAge || '',
+        spelling_gsv: scores?.spellingGSV || '',
+        word_reading_raw: scores?.wordReadingRaw || '',
+        word_reading_std: scores?.wordReadingStd || '',
+        word_reading_ci: scores?.wordReadingCI || '',
+        word_reading_pct: scores?.wordReadingPct || '',
+        word_reading_cat: scores?.wordReadingCat || '',
+        word_reading_age: scores?.wordReadingAge || '',
+        word_reading_gsv: scores?.wordReadingGSV || '',
+        sentence_raw: scores?.sentenceRaw || '',
+        sentence_std: scores?.sentenceStd || '',
+        sentence_ci: scores?.sentenceCI || '',
+        sentence_pct: scores?.sentencePct || '',
+        sentence_cat: scores?.sentenceCat || '',
+        sentence_age: scores?.sentenceAge || '',
+        sentence_gsv: scores?.sentenceGSV || '',
+        composite_raw: scores?.compositeRaw || '',
+        composite_std: scores?.compositeStd || '',
+        composite_ci: scores?.compositeCI || '',
+        composite_pct: scores?.compositePct || '',
+        composite_cat: scores?.compositeCat || '',
+        diff_wr_sp: scores?.diff_wr_sp || '',
+        sig_wr_sp: scores?.sig_wr_sp || '',
+        base_wr_sp: scores?.base_wr_sp || '',
+        diff_wr_mc: scores?.diff_wr_mc || '',
+        sig_wr_mc: scores?.sig_wr_mc || '',
+        base_wr_mc: scores?.base_wr_mc || '',
+        diff_wr_sc: scores?.diff_wr_sc || '',
+        sig_wr_sc: scores?.sig_wr_sc || '',
+        base_wr_sc: scores?.base_wr_sc || '',
+        diff_sp_mc: scores?.diff_sp_mc || '',
+        sig_sp_mc: scores?.sig_sp_mc || '',
+        base_sp_mc: scores?.base_sp_mc || '',
+        diff_sp_sc: scores?.diff_sp_sc || '',
+        sig_sp_sc: scores?.sig_sp_sc || '',
+        base_sp_sc: scores?.base_sp_sc || '',
+        diff_mc_sc: scores?.diff_mc_sc || '',
+        sig_mc_sc: scores?.sig_mc_sc || '',
+        base_mc_sc: scores?.base_mc_sc || '',
       };
 
+      console.log('🔍 Assessment data prepared:', assessmentData);
+
       const assessmentId = await this.assessmentModel.create(assessmentData);
+      
+      console.log('✅ Assessment created with ID:', assessmentId);
 
       res.status(201).json({
         success: true,
