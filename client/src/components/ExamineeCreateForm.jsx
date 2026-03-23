@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { FiArrowLeft, FiSave, FiX, FiUser, FiMail, FiPhone, FiMapPin, FiPlus, FiTrash2 } from 'react-icons/fi';
+import { FiArrowLeft, FiSave, FiX, FiUser, FiMail, FiPhone, FiMapPin, FiPlus, FiTrash2, FiUpload, FiFile, FiImage } from 'react-icons/fi';
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import api from '../services/api';
@@ -18,7 +18,8 @@ const ExamineeCreateForm = ({ onSave, onCancel }) => {
     student_id: '', // User can enter their own student ID
     account_email: user?.email || '',
     account_phone: user?.phone || '',
-    customFields: {} // Dynamic custom fields object
+    customFields: {}, // Dynamic custom fields object
+    documents: [] // Array to store uploaded documents
   });
 
   const [errors, setErrors] = useState({});
@@ -56,6 +57,64 @@ const ExamineeCreateForm = ({ onSave, onCancel }) => {
     }));
     
     setCustomFieldCount(prev => Math.max(1, prev - 1)); // Minimum 1 field
+  };
+
+  // Handle file upload
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files);
+    
+    files.forEach(file => {
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        alert(`File ${file.name} is too large. Maximum size is 10MB.`);
+        return;
+      }
+    });
+
+    const filePromises = files.map(file => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          resolve({
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            data: e.target.result, // Base64 string
+            uploadDate: new Date().toISOString()
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+
+    Promise.all(filePromises).then(newDocuments => {
+      setFormData(prev => ({
+        ...prev,
+        documents: [...prev.documents, ...newDocuments]
+      }));
+    });
+  };
+
+  // Remove uploaded document
+  const removeDocument = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      documents: prev.documents.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Get file icon based on type
+  const getFileIcon = (type) => {
+    if (type.startsWith('image/')) return <FiImage className="w-4 h-4" />;
+    return <FiFile className="w-4 h-4" />;
+  };
+
+  // Format file size
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const handleInputChange = (field, value) => {
@@ -128,7 +187,8 @@ const ExamineeCreateForm = ({ onSave, onCancel }) => {
           status: formData.status,
           account_email: formData.account_email,
           account_phone: formData.account_phone,
-          ...formData.customFields // Spread all dynamic custom fields
+          ...formData.customFields, // Spread all dynamic custom fields
+          documents: formData.documents // Include uploaded documents
         };
         
         const result = await api.createPatient(dbData);
@@ -435,6 +495,74 @@ const ExamineeCreateForm = ({ onSave, onCancel }) => {
                     />
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Document Upload */}
+            <div>
+              <h3 className="text-lg font-medium text-gray-800 mb-4">Documents Upload</h3>
+              <div className="space-y-4">
+                {/* Upload Button */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Upload Documents (DOCX, Excel, Images, PDF, etc.)
+                  </label>
+                  <div className="flex items-center space-x-4">
+                    <label className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer transition-colors">
+                      <FiUpload className="w-4 h-4" />
+                      <span>Choose Files</span>
+                      <input
+                        type="file"
+                        multiple
+                        accept=".docx,.xlsx,.xls,.doc,.pdf,.jpg,.jpeg,.png,.gif,.bmp,.tiff"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    <span className="text-sm text-gray-500">
+                      Maximum file size: 10MB per file
+                    </span>
+                  </div>
+                </div>
+
+                {/* Uploaded Documents List */}
+                {formData.documents.length > 0 && (
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">
+                      Uploaded Documents ({formData.documents.length})
+                    </h4>
+                    <div className="space-y-2">
+                      {formData.documents.map((doc, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="text-blue-600">
+                              {getFileIcon(doc.type)}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-800">
+                                {doc.name}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {formatFileSize(doc.size)} • {doc.type || 'Unknown type'}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeDocument(index)}
+                            className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Remove document"
+                          >
+                            <FiTrash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

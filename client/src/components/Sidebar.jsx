@@ -41,13 +41,13 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
       { id: 'dashboard', label: 'Dashboard', icon: FiHome, section: 'MAIN' },
       { 
         id: 'encounters', 
-        label: 'Assessments', 
+        label: 'Sessions', 
         icon: FiUsers, 
         section: 'MAIN',
         hasSubmenu: true,
         submenu: [
-          { id: 'encounters-list', label: 'Assessment List', icon: FiList },
-          { id: 'encounter-templates', label: 'Assessment Templates', icon: FiFileText }
+          { id: 'encounters-list', label: 'Sessions List', icon: FiList },
+          { id: 'encounter-templates', label: 'Session Templates', icon: FiFileText }
         ]
       },
       { id: 'patients', label: 'Examinees', icon: FiUser, section: 'USERS' },
@@ -64,13 +64,13 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
     { id: 'dashboard', label: 'Dashboard', icon: FiHome, section: 'MAIN' },
     { 
       id: 'encounters', 
-      label: 'Assessments', 
+      label: 'Sessions', 
       icon: FiUsers, 
       section: 'MAIN',
       hasSubmenu: true,
       submenu: [
-        { id: 'encounters-list', label: 'Assessment List', icon: FiList },
-        { id: 'encounter-templates', label: 'Assessment Templates', icon: FiFileText }
+        { id: 'encounters-list', label: 'Sessions List', icon: FiList },
+        { id: 'encounter-templates', label: 'Session Templates', icon: FiFileText }
       ]
     },
     { id: 'patients', label: 'Examinees', icon: FiUser, section: 'USERS' },

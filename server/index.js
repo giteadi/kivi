@@ -16,8 +16,9 @@ app.use(cors({
   ],
   credentials: true
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Increase JSON payload limit to 50MB to support document uploads
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -74,6 +75,68 @@ const startServer = async () => {
         message: 'Server is running',
         timestamp: new Date().toISOString()
       });
+    });
+
+    // Cache monitoring endpoint
+    app.get('/api/cache/stats', (req, res) => {
+      try {
+        const cache = require('./utils/cache');
+        const stats = cache.getStats();
+        
+        res.json({ 
+          success: true, 
+          message: 'Cache statistics',
+          ...stats,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        res.status(500).json({ 
+          success: false, 
+          message: 'Failed to get cache stats',
+          error: error.message
+        });
+      }
+    });
+
+    // Cache cleanup endpoint
+    app.post('/api/cache/cleanup', (req, res) => {
+      try {
+        const cache = require('./utils/cache');
+        const cleaned = cache.cleanup();
+        
+        res.json({ 
+          success: true, 
+          message: `Cache cleanup completed`,
+          cleanedEntries: cleaned,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        res.status(500).json({ 
+          success: false, 
+          message: 'Failed to cleanup cache',
+          error: error.message
+        });
+      }
+    });
+
+    // Cache clear endpoint
+    app.post('/api/cache/clear', (req, res) => {
+      try {
+        const cache = require('./utils/cache');
+        cache.clear();
+        
+        res.json({ 
+          success: true, 
+          message: 'Cache cleared successfully',
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        res.status(500).json({ 
+          success: false, 
+          message: 'Failed to clear cache',
+          error: error.message
+        });
+      }
     });
 
     // Database test endpoint

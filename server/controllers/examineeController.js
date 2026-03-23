@@ -30,6 +30,7 @@ class ExamineeController {
           custom2: student.customField2 || '',
           custom3: student.customField3 || '',
           custom4: student.customField4 || '',
+          documents: student.documents ? JSON.parse(student.documents) : [],
           assessments: assessments.map(assessment => ({
             id: assessment.id,
             name: assessment.assessment_name,
@@ -116,7 +117,7 @@ class ExamineeController {
     try {
       const {
         firstName, middleName, lastName, examineeId, gender, dob, email,
-        custom1, custom2, custom3, custom4, comment
+        custom1, custom2, custom3, custom4, comment, documents
       } = req.body;
 
       const studentData = {
@@ -132,6 +133,11 @@ class ExamineeController {
         customField4: custom4,
         learning_needs: comment
       };
+
+      // Handle documents if provided
+      if (documents && Array.isArray(documents) && documents.length > 0) {
+        studentData.documents = JSON.stringify(documents);
+      }
 
       const studentId = await this.studentModel.create(studentData);
 

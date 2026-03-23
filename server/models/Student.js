@@ -45,7 +45,22 @@ class Student extends BaseModel {
           LEFT JOIN kivi_centres c ON s.centre_id = c.id
           ${whereConditions}
         `;
-        return await this.query(complexSql, params);
+        const students = await this.query(complexSql, params);
+        // Ensure documents are properly parsed
+        return students.map(student => {
+          if (student.documents) {
+            if (typeof student.documents === 'string') {
+              try {
+                student.documents = JSON.parse(student.documents);
+              } catch (e) {
+                student.documents = [];
+              }
+            }
+          } else {
+            student.documents = [];
+          }
+          return student;
+        });
       } catch (joinError) {
         console.log('JOIN query failed, falling back to simple query:', joinError.message);
         
@@ -53,12 +68,25 @@ class Student extends BaseModel {
         const simpleSql = `SELECT * FROM kivi_students ${whereConditions}`;
         const students = await this.query(simpleSql, params);
         
-        // Add default centre_name for compatibility
-        return students.map(student => ({
-          ...student,
-          centre_name: 'MindSaid Learning Centre',
-          last_session: null
-        }));
+        // Add default centre_name for compatibility and parse documents
+        return students.map(student => {
+          if (student.documents) {
+            if (typeof student.documents === 'string') {
+              try {
+                student.documents = JSON.parse(student.documents);
+              } catch (e) {
+                student.documents = [];
+              }
+            }
+          } else {
+            student.documents = [];
+          }
+          return {
+            ...student,
+            centre_name: 'MindSaid Learning Centre',
+            last_session: null
+          };
+        });
       }
     } catch (error) {
       console.error('Error in getStudents:', error);
@@ -78,7 +106,50 @@ class Student extends BaseModel {
       GROUP BY s.id
     `;
     const results = await this.query(sql, [id]);
-    return results[0] || null;
+    if (results.length > 0) {
+      const student = results[0];
+      // Ensure documents is properly parsed
+      if (student.documents) {
+        if (typeof student.documents === 'string') {
+          try {
+            student.documents = JSON.parse(student.documents);
+          } catch (e) {
+            console.error('Error parsing documents:', e.message);
+            student.documents = [];
+          }
+        } else if (!Array.isArray(student.documents)) {
+          student.documents = [];
+        }
+      } else {
+        student.documents = [];
+      }
+      return student;
+    }
+    return null;
+  }
+
+  // Create student (override base method for any custom logic)
+  async create(data) {
+    console.log('🆕 Student.create called with data:', Object.keys(data));
+    return await super.create(data);
+  }
+
+  // Update student (override base method for any custom logic)
+  async update(id, data) {
+    console.log('🔄 Student.update called:', { id, fields: Object.keys(data) });
+    
+    // Handle documents field separately if it exists
+    if (data.documents && typeof data.documents === 'object') {
+      data.documents = JSON.stringify(data.documents);
+    }
+    
+    return await super.update(id, data);
+  }
+
+  // Get single student by ID
+  async getStudent(id) {
+    console.log('🔍 Student.getStudent called with ID:', id);
+    return await this.findById(id);
   }
 }
 
