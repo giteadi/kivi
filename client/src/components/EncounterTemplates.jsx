@@ -1,52 +1,52 @@
 import { motion } from 'framer-motion';
 import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiFileText, FiCopy } from 'react-icons/fi';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
+import api from '../services/api';
 
 const EncounterTemplates = ({ onCreateTemplate, onEditTemplate, onViewTemplate, onDuplicateTemplate, onDeleteTemplate }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [templates, setTemplates] = useState([
-    {
-      id: 1,
-      name: 'General Consultation Template',
-      description: 'Standard template for general medical consultations',
-      category: 'General',
-      createdBy: 'Dr. Smith',
-      createdDate: '2026-01-15',
-      usageCount: 45,
-      sections: ['Patient History', 'Physical Examination', 'Diagnosis', 'Treatment Plan']
-    },
-    {
-      id: 2,
-      name: 'Emergency Visit Template',
-      description: 'Template for emergency department visits',
-      category: 'Emergency',
-      createdBy: 'Dr. Johnson',
-      createdDate: '2026-01-10',
-      usageCount: 23,
-      sections: ['Chief Complaint', 'Vital Signs', 'Assessment', 'Immediate Care']
-    },
-    {
-      id: 3,
-      name: 'Follow-up Visit Template',
-      description: 'Template for patient follow-up appointments',
-      category: 'Follow-up',
-      createdBy: 'Dr. Wilson',
-      createdDate: '2026-01-08',
-      usageCount: 67,
-      sections: ['Previous Treatment Review', 'Current Status', 'Adjustments', 'Next Steps']
-    }
-  ]);
-
+  const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [templateToDelete, setTemplateToDelete] = useState(null);
 
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
+
+  const fetchTemplates = async () => {
+    try {
+      setLoading(true);
+      console.log('🔍 Fetching encounter templates...');
+      const response = await api.getTemplates({ type: 'encounter' });
+      console.log('📊 API Response:', response);
+      
+      if (response.success) {
+        console.log('✅ Templates fetched:', response.data);
+        setTemplates(response.data);
+      } else {
+        console.log('❌ API returned success: false');
+        setTemplates([]);
+      }
+    } catch (error) {
+      console.error('❌ Error fetching templates:', error);
+      toast.error('Failed to fetch templates');
+      setTemplates([]); // Set empty array instead of static data
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredTemplates = templates.filter(template =>
-    template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    template.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    template.category.toLowerCase().includes(searchTerm.toLowerCase())
+    template.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    template.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    template.template_data?.category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getCategoryColor = (category) => {
+    if (!category) return 'bg-gray-100 text-gray-800';
+    
     switch (category.toLowerCase()) {
       case 'general':
         return 'bg-blue-100 text-blue-800';
@@ -62,6 +62,10 @@ const EncounterTemplates = ({ onCreateTemplate, onEditTemplate, onViewTemplate, 
   const handleDeleteTemplate = (template) => {
     setTemplateToDelete(template);
     setShowDeleteModal(true);
+  };
+
+  const handleViewTemplate = (template) => {
+    onViewTemplate(template);
   };
 
   const confirmDelete = () => {
@@ -81,10 +85,6 @@ const EncounterTemplates = ({ onCreateTemplate, onEditTemplate, onViewTemplate, 
       createdDate: new Date().toISOString().split('T')[0]
     };
     setTemplates(prev => [...prev, newTemplate]);
-  };
-
-  const handleViewTemplate = (template) => {
-    onViewTemplate(template);
   };
 
   return (
@@ -183,13 +183,19 @@ const EncounterTemplates = ({ onCreateTemplate, onEditTemplate, onViewTemplate, 
                         <FiFileText className="w-5 h-5 text-blue-600" />
                       </div>
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{template.name}</div>
-                        <div className="text-sm text-gray-500">{template.description}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {template.template_data?.template_data?.name || template.template_data?.name || template.name}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {template.template_data?.template_data?.description || template.template_data?.description || template.description}
+                        </div>
                         <div className="flex items-center space-x-2 mt-1">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getCategoryColor(template.category)}`}>
-                            {template.category}
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getCategoryColor(template.template_data?.template_data?.category || template.template_data?.category)}`}>
+                            {template.template_data?.template_data?.category || template.template_data?.category || 'General'}
                           </span>
-                          <span className="text-xs text-gray-500">Used {template.usageCount} times</span>
+                          <span className="text-xs text-gray-500">
+                            Created by {template.template_data?.template_data?.createdBy || template.template_data?.createdBy || 'Unknown'}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -257,19 +263,23 @@ const EncounterTemplates = ({ onCreateTemplate, onEditTemplate, onViewTemplate, 
           </div>
           <div className="bg-white rounded-lg p-4 shadow-sm border">
             <div className="text-2xl font-bold text-green-600">
-              {templates.filter(t => t.category === 'General').length}
+              {templates.filter(t => 
+                (t.template_data?.template_data?.category || t.template_data?.category) === 'General'
+              ).length}
             </div>
             <div className="text-sm text-gray-600">General Templates</div>
           </div>
           <div className="bg-white rounded-lg p-4 shadow-sm border">
             <div className="text-2xl font-bold text-red-600">
-              {templates.filter(t => t.category === 'Emergency').length}
+              {templates.filter(t => 
+                (t.template_data?.template_data?.category || t.template_data?.category) === 'Emergency'
+              ).length}
             </div>
             <div className="text-sm text-gray-600">Emergency Templates</div>
           </div>
           <div className="bg-white rounded-lg p-4 shadow-sm border">
             <div className="text-2xl font-bold text-purple-600">
-              {templates.reduce((sum, t) => sum + t.usageCount, 0)}
+              {templates.reduce((sum, t) => sum + (t.usageCount || 0), 0)}
             </div>
             <div className="text-sm text-gray-600">Total Usage</div>
           </div>
