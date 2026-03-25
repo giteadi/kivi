@@ -30,6 +30,13 @@ const TemplateTypeSelector = ({ onSelect, onCancel }) => {
       description: 'DSM-5 ADHD Checklist with checkbox-based criteria selection for inattention and hyperactivity',
       color: 'green',
       icon: '✅'
+    },
+    {
+      type: 'Aston-Index',
+      name: 'Aston Index Assessment',
+      description: 'Comprehensive battery of tests for diagnosing language difficulties in children with performance items',
+      color: 'purple',
+      icon: '🧠'
     }
   ];
 

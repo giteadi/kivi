@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import api from '../services/api';
 import ADHDT2Template from './ADHDT2Template';
 import ADHTBSMTemplate from './ADHTBSMTemplate';
+import AstonIndexTemplate from './AstonIndexTemplate';
 import TemplateTypeSelector from './TemplateTypeSelector';
 
 const TemplateManager = () => {
@@ -18,27 +19,213 @@ const TemplateManager = () => {
   const [viewMode, setViewMode] = useState('list'); // 'list', 'view', 'edit'
   const [activeTab, setActiveTab] = useState('details'); // 'details', 'preview'
 
+  // Static templates data for design purposes
+  const staticTemplates = [
+    {
+      id: 1,
+      name: 'ADHT-DSM 5 Checklist',
+      type: 'ADHT-BSM',
+      description: 'DSM-5 ADHD Checklist with checkbox-based criteria selection for inattention and hyperactivity',
+      template_data: {
+        type: 'ADHT-BSM',
+        name: 'ADHD-DSM 5 Checklist',
+        studentName: '',
+        examinerName: '',
+        testDate: new Date().toISOString().split('T')[0],
+        inattentionCriteria: [
+          { id: 'A1', text: 'Often fails to give close attention to details or makes careless mistakes', checked: false },
+          { id: 'A2', text: 'Often has trouble sustaining attention in tasks or play activities', checked: false },
+          { id: 'A3', text: 'Often does not seem to listen when spoken to directly', checked: false },
+          { id: 'A4', text: 'Often does not follow through on instructions', checked: false },
+          { id: 'A5', text: 'Often has difficulty organizing tasks and activities', checked: false },
+          { id: 'A6', text: 'Often avoids tasks that require mental effort', checked: false },
+          { id: 'A7', text: 'Often loses things necessary for tasks', checked: false },
+          { id: 'A8', text: 'Is often easily distracted by extraneous stimuli', checked: false },
+          { id: 'A9', text: 'Is often forgetful in daily activities', checked: false }
+        ],
+        hyperactivityCriteria: [
+          { id: 'A10', text: 'Often fidgets with or taps hands or feet', checked: false },
+          { id: 'A11', text: 'Often leaves seat when remaining seated is expected', checked: false },
+          { id: 'A12', text: 'Often runs about or climbs in inappropriate situations', checked: false }
+        ],
+        inattentionTotal: 0,
+        hyperactivityTotal: 0,
+        remarks: ''
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 2,
+      name: 'Aston Index Assessment',
+      type: 'Aston-Index',
+      description: 'Comprehensive battery of tests for diagnosing language difficulties in children',
+      template_data: {
+        type: 'Aston-Index',
+        name: 'Aston Index Assessment',
+        studentName: '',
+        examinerName: '',
+        testDate: new Date().toISOString().split('T')[0],
+        description: 'The Aston Index is a comprehensive battery of tests for diagnosing language difficulties in children.',
+        generalUnderlyingAbility: [
+          { id: 1, test: 'Picture Recognition', score: '9', remarks: '' },
+          { id: 2, test: 'Vocabulary', score: '5/6 years', remarks: '' },
+          { id: 3, test: 'Good-enough draw-a-man', score: '4 years(MA)', remarks: '' },
+          { id: 4, test: 'Copying geometric designs', score: '6', remarks: '' },
+          { id: 5, test: 'Grapheme-Phoneme correspondence', score: 'Could identify the uppercase and lower case letter, but could not say the individual specific sounds', remarks: '' },
+          { id: 6, test: 'Schonell\'s reading test', score: 'NA', remarks: '' },
+          { id: 7, test: 'Schonell\'s spelling test', score: 'NA', remarks: '' },
+          { id: 8, test: 'Visual discrimination test', score: '9', remarks: '' }
+        ],
+        performanceItems: [
+          { id: 9, test: 'Child\'s laterality', score: 'Left', remarks: '' },
+          { id: 10, test: 'Copying name', score: '8', remarks: '' },
+          { id: 11, test: 'Free writing', score: 'NA', remarks: '' },
+          { id: 12, test: 'Visual sequential memory (pictorial)', score: '3', remarks: '' },
+          { id: 13, test: 'Auditory sequential memory', score: '6 (8 forward, 4 reverse)', remarks: '' },
+          { id: 14, test: 'Sound Blending', score: '4', remarks: '' },
+          { id: 15, test: 'Visual Sequential memory (symbolic)', score: '7', remarks: '' },
+          { id: 16, test: 'Sound discrimination', score: '9', remarks: '' },
+          { id: 17, test: 'Grapho-motor test', score: 'NA', remarks: '' }
+        ],
+        interpretation: `Interpretation:
+General Underlying Ability and Attainment
+1. Picture Recognition- On this subtest, ABC was able to recognize and give names of 9 pictures and was able to tag common objects in the environment.
+2. Vocabulary- On this subtest ABC's vocabulary was equivalent to that of a 5 year old child.
+She showed some difficulty with verbal expression of meaning of words presented to her, and had difficulty in describing and defining words adequately, which was suggestive of underdevelopment of understanding of verbal concepts for ABC.
+3. Good-enough draw-a-man test- On this subtest, ABC's mental age was found to be 4 years which is lower than her chronological age.
+4. Copying Geometric designs-ABC was able to copy geometric designs and her basic shapes were adequately defined except for her diamond shape. However, she showed difficulty with motor control.`,
+        conclusions: 'Based on the assessment results, the student shows strengths in certain areas while requiring support in others.',
+        recommendations: 'Recommendations include targeted interventions to strengthen specific language and cognitive skills identified during assessment.'
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 3,
+      name: 'ADHDT-2 Assessment',
+      type: 'ADHDT2',
+      description: 'Attention-Deficit/Hyperactivity Disorder Test-Second Edition with comprehensive scoring',
+      template_data: {
+        type: 'ADHDT2',
+        name: 'ADHDT-2 Assessment Report',
+        studentName: '',
+        examinerName: '',
+        testDate: new Date().toISOString().split('T')[0],
+        description: 'The Attention-Deficit/Hyperactivity Disorder Test-Second Edition (ADHDT-2) is a norm-referenced assessment.',
+        subscales: [
+          { name: 'Inattention', rawScore: 0, percentileRank: 0, scaledScore: 0 },
+          { name: 'Hyperactivity/Impulsivity', rawScore: 0, percentileRank: 0, scaledScore: 0 }
+        ],
+        adhdIndex: 0,
+        remark: '',
+        disclaimer: 'The scores listed in the table imply that it is \'very likely\' that the student has symptoms of ADHD.'
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+  ];
+
   useEffect(() => {
-    fetchTemplates();
+    // Use static templates for design purposes
+    loadStaticTemplates();
   }, [searchTerm, filterType]);
 
-  const fetchTemplates = async () => {
-    try {
-      setLoading(true);
-      const filters = {};
-      if (searchTerm) filters.search = searchTerm;
-      if (filterType) filters.type = filterType;
+  const loadStaticTemplates = () => {
+    setLoading(true);
+    
+    // Simulate loading delay for better UX
+    setTimeout(() => {
+      let filteredTemplates = staticTemplates;
+      
+      // Apply search filter
+      if (searchTerm) {
+        filteredTemplates = filteredTemplates.filter(template =>
+          template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          template.description.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+      
+      // Apply type filter
+      if (filterType) {
+        filteredTemplates = filteredTemplates.filter(template =>
+          template.type === filterType
+        );
+      }
+      
+      setTemplates(filteredTemplates);
+      setLoading(false);
+    }, 500);
+  };
 
-      const response = await api.getTemplates(filters);
+  const createDefaultAstonIndexTemplate = async () => {
+    try {
+      const defaultAstonIndexData = {
+        name: 'Aston Index Assessment',
+        type: 'Aston-Index',
+        description: 'Comprehensive battery of tests for diagnosing language difficulties in children',
+        template_data: {
+          name: 'Aston Index Assessment',
+          studentName: '',
+          examinerName: '',
+          testDate: new Date().toISOString().split('T')[0],
+          description: 'The Aston Index is a comprehensive battery of tests for diagnosing language difficulties in children. It provides a systematic approach to identifying specific areas of difficulty in language development, including underlying abilities and attainment levels.',
+          performanceItems: [
+            { id: 1, test: 'Child\'s laterality', score: 'Left', remarks: '' },
+            { id: 2, test: 'Copying name', score: '8', remarks: '' },
+            { id: 3, test: 'Free writing', score: 'NA', remarks: '' },
+            { id: 4, test: 'Visual sequential memory (pictorial)', score: '3', remarks: '' },
+            { id: 5, test: 'Auditory sequential memory', score: '6 (8 forward, 4 reverse)', remarks: '' },
+            { id: 6, test: 'Sound Blending', score: '4', remarks: '' },
+            { id: 7, test: 'Visual Sequential memory (symbolic)', score: '7', remarks: '' },
+            { id: 8, test: 'Sound discrimination', score: '9', remarks: '' },
+            { id: 9, test: 'Grapho-motor test', score: 'NA', remarks: '' }
+          ],
+          interpretation: 'The student demonstrates varying abilities across different cognitive and language domains. In picture recognition, the student shows age-appropriate visual processing skills. Vocabulary development appears to be within expected range for the age group.',
+          conclusions: 'Based on the assessment results, the student shows strengths in certain areas while requiring support in others.',
+          recommendations: 'Recommendations include targeted interventions to strengthen specific language and cognitive skills identified during assessment.'
+        }
+      };
+
+      const response = await api.createTemplate(defaultAstonIndexData);
       if (response.success) {
-        setTemplates(response.data);
+        toast.success('Default Aston Index template created successfully');
+        fetchTemplates(); // Refresh the list
       }
     } catch (error) {
-      console.error('Error fetching templates:', error);
-      toast.error('Failed to fetch templates');
-    } finally {
-      setLoading(false);
+      console.error('Error creating default Aston Index template:', error);
+      toast.error('Failed to create default template');
     }
+  };
+
+  const handleTemplateSave = (templateData) => {
+    if (isEditing && selectedTemplate) {
+      // Update existing template in static list
+      setTemplates(prev => prev.map(t => 
+        t.id === selectedTemplate.id 
+          ? { ...t, template_data: templateData, updated_at: new Date().toISOString() }
+          : t
+      ));
+      toast.success('Template updated successfully (Design Mode)');
+    } else {
+      // Create new template in static list
+      const newTemplate = {
+        id: Date.now(),
+        name: templateData.name || 'New Template',
+        description: templateData.description || '',
+        type: templateData.type || 'ADHDT2',
+        template_data: templateData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      setTemplates(prev => [...prev, newTemplate]);
+      toast.success('Template created successfully (Design Mode)');
+    }
+    handleBackToList();
+  };
+
+  const handleTemplateCancel = () => {
+    handleBackToList();
   };
 
   const handleCreateTemplate = () => {
@@ -83,40 +270,10 @@ const TemplateManager = () => {
   };
 
   const handleDeleteTemplate = (template) => {
-    if (window.confirm(`Are you sure you want to delete "${template.name}"?`)) {
+    if (window.confirm(`Are you sure you want to delete "${template.name}"? (Design Mode)`)) {
       setTemplates(prev => prev.filter(t => t.id !== template.id));
-      toast.success('Template deleted successfully');
+      toast.success('Template deleted successfully (Design Mode)');
     }
-  };
-
-  const handleTemplateSave = (templateData) => {
-    if (isEditing && selectedTemplate) {
-      // Update existing template
-      setTemplates(prev => prev.map(t => 
-        t.id === selectedTemplate.id 
-          ? { ...t, template_data: templateData }
-          : t
-      ));
-      toast.success('Template updated successfully');
-    } else {
-      // Create new template
-      const newTemplate = {
-        id: Date.now(),
-        name: templateData.name || 'New Template',
-        description: templateData.description || '',
-        template_data: templateData,
-        type: templateData.type || 'ADHDT2',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      setTemplates(prev => [...prev, newTemplate]);
-      toast.success('Template created successfully');
-    }
-    handleBackToList();
-  };
-
-  const handleTemplateCancel = () => {
-    handleBackToList();
   };
 
   const getTypeIcon = (type) => {
@@ -131,6 +288,9 @@ const TemplateManager = () => {
   const getTypeColor = (type, templateName) => {
     if (type === 'ADHT-BSM' || templateName?.toLowerCase().includes('dsm')) {
       return 'bg-green-100 text-green-800';
+    }
+    if (type === 'Aston-Index' || templateName?.toLowerCase().includes('aston')) {
+      return 'bg-purple-100 text-purple-800';
     }
     switch (type) {
       case 'ADHDT2':
@@ -152,11 +312,24 @@ const TemplateManager = () => {
   if (viewMode === 'edit' || showCreateForm) {
     const templateType = selectedTemplate?.template_data?.type || 
                         (selectedTemplate?.name?.toLowerCase().includes('dsm') ? 'ADHT-BSM' : 
-                         selectedTemplate?.template_data?.name?.toLowerCase().includes('dsm') ? 'ADHT-BSM' : 'ADHDT2');
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('dsm') ? 'ADHT-BSM' : 
+                         selectedTemplate?.name?.toLowerCase().includes('aston') ? 'Aston-Index' :
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('aston') ? 'Aston-Index' : 'ADHDT2');
     
     if (templateType === 'ADHT-BSM') {
       return (
         <ADHTBSMTemplate
+          onSave={handleTemplateSave}
+          onCancel={handleTemplateCancel}
+          studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
+          examinerName={selectedTemplate?.template_data?.examinerName || 'Dr. Smith'}
+        />
+      );
+    }
+
+    if (templateType === 'Aston-Index') {
+      return (
+        <AstonIndexTemplate
           onSave={handleTemplateSave}
           onCancel={handleTemplateCancel}
           studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
@@ -428,6 +601,152 @@ const TemplateManager = () => {
                       )}
                     </div>
                   </div>
+                ) : selectedTemplate.template_data?.type === 'Aston-Index' || 
+                 selectedTemplate?.name?.toLowerCase().includes('aston') || 
+                 selectedTemplate?.template_data?.name?.toLowerCase().includes('aston') ? (
+                  /* Aston Index Preview */
+                  <div className="bg-white rounded-lg border-2 border-gray-200">
+                    <div className="p-8">
+                      {/* Template Header */}
+                      <div className="text-center mb-8 border-b-2 border-gray-200 pb-6">
+                        <h1 className="text-2xl font-bold text-gray-800 mb-4">
+                          ASTON INDEX ASSESSMENT REPORT
+                        </h1>
+                        <div className="flex justify-center items-center space-x-8 text-sm text-gray-600 mb-4">
+                          <span>Student: <strong className="text-purple-600">{selectedTemplate.template_data?.studentName || '[Student Name]'}</strong></span>
+                          <span>Examiner: <strong className="text-purple-600">{selectedTemplate.template_data?.examinerName || '[Examiner Name]'}</strong></span>
+                          <span>Date: <strong className="text-purple-600">{selectedTemplate.template_data?.testDate || '[Test Date]'}</strong></span>
+                        </div>
+                      </div>
+
+                      {/* Performance Items Table */}
+                      <div className="mb-8">
+                        <h2 className="text-xl font-semibold text-gray-800 mb-4 text-center">1. ASTON INDEX</h2>
+                        <div className="border border-black">
+                          <div className="bg-purple-50 p-2 text-center font-semibold text-sm border-b border-black">
+                            1. ASTON INDEX
+                          </div>
+                          
+                          <div className="p-3 border-b border-black">
+                            <p className="text-xs text-gray-700 leading-relaxed">
+                              The Aston Index is a comprehensive battery of tests for diagnosing language difficulties in children. 
+                              It identifies children with special educational needs, language difficulties, auditory and visual 
+                              perception difficulties, reading and spelling difficulties. The index contains 16 tests.
+                            </p>
+                          </div>
+
+                          {/* Section I */}
+                          <div className="border-b border-black">
+                            <div className="bg-gray-100 p-2 text-center font-semibold text-sm border-b border-black">
+                              SECTION I: GENERAL UNDERLYING ABILITY AND ATTAINMENT
+                            </div>
+                            <div className="grid grid-cols-12 border-b border-black bg-gray-50">
+                              <div className="col-span-1 border-r border-black p-1 text-center font-bold text-xs">S.No</div>
+                              <div className="col-span-8 border-r border-black p-1 text-center font-bold text-xs">Test</div>
+                              <div className="col-span-3 p-1 text-center font-bold text-xs">Score</div>
+                            </div>
+                            {(selectedTemplate.template_data?.generalUnderlyingAbility || [
+                              { id: 1, test: 'Picture Recognition', score: '9' },
+                              { id: 2, test: 'Vocabulary', score: '5/6 years' },
+                              { id: 3, test: 'Good-enough draw-a-man', score: '4 years(MA)' },
+                              { id: 4, test: 'Copying geometric designs', score: '6' },
+                              { id: 5, test: 'Grapheme-Phoneme correspondence', score: 'Could identify the uppercase and lower case letter, but could not say the individual specific sounds' },
+                              { id: 6, test: 'Schonell\'s reading test', score: 'NA' },
+                              { id: 7, test: 'Schonell\'s spelling test', score: 'NA' },
+                              { id: 8, test: 'Visual discrimination test', score: '9' }
+                            ]).map((item, index) => (
+                              <div key={item.id} className="border-b border-black">
+                                <div className="grid grid-cols-12">
+                                  <div className="col-span-1 border-r border-black p-1 text-center text-xs">
+                                    {index + 1}
+                                  </div>
+                                  <div className="col-span-8 border-r border-black p-1 text-xs">
+                                    {item.test}
+                                  </div>
+                                  <div className="col-span-3 p-1 text-center text-xs">
+                                    {item.score}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Section II */}
+                          <div>
+                            <div className="bg-gray-100 p-2 text-center font-semibold text-sm border-b border-black">
+                              SECTION II: PERFORMANCE ITEMS
+                            </div>
+                            <div className="grid grid-cols-12 border-b border-black bg-gray-50">
+                              <div className="col-span-1 border-r border-black p-1 text-center font-bold text-xs">S.No</div>
+                              <div className="col-span-8 border-r border-black p-1 text-center font-bold text-xs">Test</div>
+                              <div className="col-span-3 p-1 text-center font-bold text-xs">Score</div>
+                            </div>
+                            {(selectedTemplate.template_data?.performanceItems || [
+                              { id: 9, test: 'Child\'s laterality', score: 'Left' },
+                              { id: 10, test: 'Copying name', score: '8' },
+                              { id: 11, test: 'Free writing', score: 'NA' },
+                              { id: 12, test: 'Visual sequential memory (pictorial)', score: '3' },
+                              { id: 13, test: 'Auditory sequential memory', score: '6 (8 forward, 4 reverse)' },
+                              { id: 14, test: 'Sound Blending', score: '4' },
+                              { id: 15, test: 'Visual Sequential memory (symbolic)', score: '7' },
+                              { id: 16, test: 'Sound discrimination', score: '9' },
+                              { id: 17, test: 'Grapho-motor test', score: 'NA' }
+                            ]).map((item, index) => (
+                              <div key={item.id} className="border-b border-black">
+                                <div className="grid grid-cols-12">
+                                  <div className="col-span-1 border-r border-black p-1 text-center text-xs">
+                                    {index + 1}
+                                  </div>
+                                  <div className="col-span-8 border-r border-black p-1 text-xs">
+                                    {item.test}
+                                  </div>
+                                  <div className="col-span-3 p-1 text-center text-xs">
+                                    {item.score}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Interpretation */}
+                      {selectedTemplate.template_data?.interpretation && (
+                        <div className="mb-6">
+                          <h2 className="text-xl font-semibold text-gray-800 mb-4">Interpretation</h2>
+                          <div className="bg-purple-50 rounded-lg p-6">
+                            <p className="text-gray-700 leading-relaxed text-sm whitespace-pre-wrap">
+                              {selectedTemplate.template_data.interpretation}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Conclusions */}
+                      {selectedTemplate.template_data?.conclusions && (
+                        <div className="mb-6">
+                          <h2 className="text-xl font-semibold text-gray-800 mb-4">Conclusions</h2>
+                          <div className="bg-blue-50 rounded-lg p-6">
+                            <p className="text-gray-700 leading-relaxed text-sm whitespace-pre-wrap">
+                              {selectedTemplate.template_data.conclusions}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Recommendations */}
+                      {selectedTemplate.template_data?.recommendations && (
+                        <div className="mb-6">
+                          <h2 className="text-xl font-semibold text-gray-800 mb-4">Recommendations</h2>
+                          <div className="bg-green-50 rounded-lg p-6">
+                            <p className="text-gray-700 leading-relaxed text-sm whitespace-pre-wrap">
+                              {selectedTemplate.template_data.recommendations}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 ) : (
                   /* ADHDT-2 Preview */
                   <div className="bg-white rounded-lg border-2 border-gray-200">
@@ -533,6 +852,14 @@ const TemplateManager = () => {
             <p className="text-gray-600">Create and manage assessment templates</p>
           </div>
           
+          <div className="flex space-x-2">
+          <button
+            onClick={createDefaultAstonIndexTemplate}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center transition-colors"
+          >
+            <FiPlus className="w-4 h-4 mr-2" />
+            Add Aston Index
+          </button>
           <button
             onClick={handleCreateTemplate}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center transition-colors"
@@ -540,6 +867,7 @@ const TemplateManager = () => {
             <FiPlus className="w-4 h-4 mr-2" />
             Create Template
           </button>
+        </div>
         </div>
 
         {/* Search */}
@@ -572,6 +900,7 @@ const TemplateManager = () => {
                   <option value="">All Types</option>
                   <option value="ADHDT2">ADHDT-2</option>
                   <option value="ADHT-BSM">ADHT-BSM</option>
+                  <option value="Aston-Index">Aston Index</option>
                 </select>
               </div>
             </div>
