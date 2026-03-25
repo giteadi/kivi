@@ -14,6 +14,7 @@ const TemplateManager = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [viewMode, setViewMode] = useState('list'); // 'list', 'view', 'edit'
+  const [activeTab, setActiveTab] = useState('details'); // 'details', 'preview'
 
   useEffect(() => {
     fetchTemplates();
@@ -48,6 +49,7 @@ const TemplateManager = () => {
   const handleViewTemplate = (template) => {
     setSelectedTemplate(template);
     setViewMode('view');
+    setActiveTab('details');
   };
 
   const handleEditTemplate = (template) => {
@@ -163,6 +165,29 @@ const TemplateManager = () => {
             animate={{ opacity: 1, y: 0 }}
             className="bg-white rounded-xl shadow-sm border p-6"
           >
+            {/* Tab Navigation */}
+            <div className="flex space-x-1 mb-6 border-b">
+              <button
+                onClick={() => setActiveTab('details')}
+                className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+                  activeTab === 'details'
+                    ? 'text-blue-600 border-blue-600'
+                    : 'text-gray-500 border-transparent hover:text-gray-700'
+                }`}
+              >
+                Details
+              </button>
+              <button
+                onClick={() => setActiveTab('preview')}
+                className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+                  activeTab === 'preview'
+                    ? 'text-blue-600 border-blue-600'
+                    : 'text-gray-500 border-transparent hover:text-gray-700'
+                }`}
+              >
+                Preview
+              </button>
+            </div>
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h2 className="text-xl font-semibold text-gray-800 mb-2">
@@ -198,65 +223,165 @@ const TemplateManager = () => {
               </div>
             </div>
 
-            {/* Template Details */}
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-medium text-gray-800 mb-2">Description</h3>
-                <p className="text-gray-600">
-                  {selectedTemplate.description || selectedTemplate.template_data?.description || 'No description available'}
-                </p>
+            {/* Tab Content */}
+            {activeTab === 'details' ? (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-800 mb-2">Description</h3>
+                  <p className="text-gray-600">
+                    {selectedTemplate.description || selectedTemplate.template_data?.description || 'No description available'}
+                  </p>
+                </div>
+
+                {selectedTemplate.template_data?.studentName && (
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-800 mb-2">Student Name</h3>
+                    <p className="text-gray-600">{selectedTemplate.template_data.studentName}</p>
+                  </div>
+                )}
+
+                {selectedTemplate.template_data?.examinerName && (
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-800 mb-2">Examiner Name</h3>
+                    <p className="text-gray-600">{selectedTemplate.template_data.examinerName}</p>
+                  </div>
+                )}
+
+                {selectedTemplate.template_data?.subscales && (
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-800 mb-2">Subscales</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {selectedTemplate.template_data.subscales.map((subscale, index) => (
+                        <div key={index} className="bg-gray-50 rounded-lg p-4">
+                          <h4 className="font-medium text-gray-800">{subscale.name}</h4>
+                          <p className="text-sm text-gray-600">Raw Score: {subscale.rawScore}</p>
+                          <p className="text-sm text-gray-600">Scaled Score: {subscale.scaledScore}</p>
+                          {subscale.percentileRank && (
+                            <p className="text-sm text-gray-600">Percentile: {subscale.percentileRank}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <h3 className="text-lg font-medium text-gray-800 mb-2">Template Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium text-gray-700">Created:</span>
+                      <span className="ml-2 text-gray-600">
+                        {new Date(selectedTemplate.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">Last Updated:</span>
+                      <span className="ml-2 text-gray-600">
+                        {new Date(selectedTemplate.updated_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
-
-              {selectedTemplate.template_data?.studentName && (
-                <div>
-                  <h3 className="text-lg font-medium text-gray-800 mb-2">Student Name</h3>
-                  <p className="text-gray-600">{selectedTemplate.template_data.studentName}</p>
-                </div>
-              )}
-
-              {selectedTemplate.template_data?.examinerName && (
-                <div>
-                  <h3 className="text-lg font-medium text-gray-800 mb-2">Examiner Name</h3>
-                  <p className="text-gray-600">{selectedTemplate.template_data.examinerName}</p>
-                </div>
-              )}
-
-              {selectedTemplate.template_data?.subscales && (
-                <div>
-                  <h3 className="text-lg font-medium text-gray-800 mb-2">Subscales</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {selectedTemplate.template_data.subscales.map((subscale, index) => (
-                      <div key={index} className="bg-gray-50 rounded-lg p-4">
-                        <h4 className="font-medium text-gray-800">{subscale.name}</h4>
-                        <p className="text-sm text-gray-600">Raw Score: {subscale.rawScore}</p>
-                        <p className="text-sm text-gray-600">Scaled Score: {subscale.scaledScore}</p>
-                        {subscale.percentileRank && (
-                          <p className="text-sm text-gray-600">Percentile: {subscale.percentileRank}</p>
-                        )}
+            ) : (
+              <div className="space-y-6">
+                {/* Complete Template Preview */}
+                <div className="bg-white rounded-lg border-2 border-gray-200">
+                  <div className="p-8">
+                    {/* Template Header */}
+                    <div className="text-center mb-8 border-b-2 border-gray-200 pb-6">
+                      <h1 className="text-3xl font-bold text-gray-800 mb-4">
+                        {selectedTemplate.template_data?.name || 'Assessment Report'}
+                      </h1>
+                      <div className="flex justify-center items-center space-x-8 text-sm text-gray-600 mb-4">
+                        <span>Student: <strong className="text-blue-600">[Student Name]</strong></span>
+                        <span>Examiner: <strong className="text-blue-600">[Examiner Name]</strong></span>
+                        <span>Date: <strong className="text-blue-600">[Test Date]</strong></span>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                    </div>
 
-              <div>
-                <h3 className="text-lg font-medium text-gray-800 mb-2">Template Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium text-gray-700">Created:</span>
-                    <span className="ml-2 text-gray-600">
-                      {new Date(selectedTemplate.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Last Updated:</span>
-                    <span className="ml-2 text-gray-600">
-                      {new Date(selectedTemplate.updated_at).toLocaleDateString()}
-                    </span>
+                    {/* Template Description */}
+                    {selectedTemplate.template_data?.description && (
+                      <div className="mb-8">
+                        <h2 className="text-xl font-semibold text-gray-800 mb-4">Assessment Description</h2>
+                        <div className="bg-blue-50 rounded-lg p-6">
+                          <p className="text-gray-700 leading-relaxed text-base">
+                            {selectedTemplate.template_data.description}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Test Results Section */}
+                    <div className="mb-8">
+                      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Test Results</h2>
+                      
+                      {/* Results Table */}
+                      <div className="overflow-x-auto mb-8">
+                        <table className="w-full border-collapse border-2 border-gray-300 shadow-lg">
+                          <thead>
+                            <tr className="bg-gradient-to-r from-blue-50 to-blue-100">
+                              <th className="border-2 border-gray-300 px-6 py-4 text-left font-bold text-gray-800">Subscales</th>
+                              <th className="border-2 border-gray-300 px-6 py-4 text-center font-bold text-gray-800">Raw Scores</th>
+                              <th className="border-2 border-gray-300 px-6 py-4 text-center font-bold text-gray-800">Percentile Ranks</th>
+                              <th className="border-2 border-gray-300 px-6 py-4 text-center font-bold text-gray-800">Scaled Scores</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="hover:bg-blue-50 transition-colors">
+                              <td className="border-2 border-gray-300 px-6 py-4 font-medium text-gray-800">Inattention</td>
+                              <td className="border-2 border-gray-300 px-6 py-4 text-center font-semibold text-blue-600">0</td>
+                              <td className="border-2 border-gray-300 px-6 py-4 text-center font-semibold text-blue-600">0</td>
+                              <td className="border-2 border-gray-300 px-6 py-4 text-center font-semibold text-blue-600">0</td>
+                            </tr>
+                            <tr className="hover:bg-blue-50 transition-colors">
+                              <td className="border-2 border-gray-300 px-6 py-4 font-medium text-gray-800">Hyperactivity/Impulsivity</td>
+                              <td className="border-2 border-gray-300 px-6 py-4 text-center font-semibold text-blue-600">0</td>
+                              <td className="border-2 border-gray-300 px-6 py-4 text-center font-semibold text-blue-600">0</td>
+                              <td className="border-2 border-gray-300 px-6 py-4 text-center font-semibold text-blue-600">0</td>
+                            </tr>
+                            <tr className="bg-gradient-to-r from-gray-100 to-gray-200 font-bold">
+                              <td className="border-2 border-gray-300 px-6 py-4 font-bold text-gray-800">ADHD Index</td>
+                              <td className="border-2 border-gray-300 px-6 py-4 text-center font-bold text-red-600" colSpan="3">0</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Assessment Remark */}
+                    {selectedTemplate.template_data?.remark && (
+                      <div className="mb-8">
+                        <h2 className="text-xl font-semibold text-gray-800 mb-4">Assessment Remark</h2>
+                        <div className="bg-green-50 rounded-lg p-6">
+                          <p className="text-gray-700 leading-relaxed text-base">
+                            [Assessment Remark]
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Disclaimer */}
+                    <div className="mb-8">
+                      <h2 className="text-xl font-semibold text-gray-800 mb-4">Disclaimer</h2>
+                      <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-6">
+                        <p className="text-gray-700 leading-relaxed text-base">
+                          The scores listed in the table imply that it is 'very likely' that [Student Name] has symptoms of ADHD. However, the checklist cannot be fully endorsed by the tester due to the one-to-one situation. The scores are based on the reports from the mother.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Footer Information */}
+                    <div className="mt-12 pt-6 border-t-2 border-gray-200">
+                      <div className="flex justify-between items-center text-sm text-gray-500">
+                        <span>Template ID: {selectedTemplate.id}</span>
+                        <span>Created: {new Date(selectedTemplate.created_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
           </motion.div>
         </div>
       </div>
