@@ -4,6 +4,8 @@ import { FiPlus, FiEdit2, FiTrash2, FiFileText, FiCopy, FiSearch, FiFilter } fro
 import { toast } from 'react-hot-toast';
 import api from '../services/api';
 import ADHDT2Template from './ADHDT2Template';
+import ADHTBSMTemplate from './ADHTBSMTemplate';
+import TemplateTypeSelector from './TemplateTypeSelector';
 
 const TemplateManager = () => {
   const [templates, setTemplates] = useState([]);
@@ -43,6 +45,11 @@ const TemplateManager = () => {
     setSelectedTemplate(null);
     setIsEditing(false);
     setShowCreateForm(true);
+    setViewMode('template-select');
+  };
+
+  const handleTemplateTypeSelect = (type) => {
+    setSelectedTemplate({ template_data: { type } });
     setViewMode('edit');
   };
 
@@ -121,7 +128,10 @@ const TemplateManager = () => {
     }
   };
 
-  const getTypeColor = (type) => {
+  const getTypeColor = (type, templateName) => {
+    if (type === 'ADHT-BSM' || templateName?.toLowerCase().includes('dsm')) {
+      return 'bg-green-100 text-green-800';
+    }
     switch (type) {
       case 'ADHDT2':
         return 'bg-blue-100 text-blue-800';
@@ -130,7 +140,31 @@ const TemplateManager = () => {
     }
   };
 
+  if (viewMode === 'template-select') {
+    return (
+      <TemplateTypeSelector
+        onSelect={handleTemplateTypeSelect}
+        onCancel={handleBackToList}
+      />
+    );
+  }
+
   if (viewMode === 'edit' || showCreateForm) {
+    const templateType = selectedTemplate?.template_data?.type || 
+                        (selectedTemplate?.name?.toLowerCase().includes('dsm') ? 'ADHT-BSM' : 
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('dsm') ? 'ADHT-BSM' : 'ADHDT2');
+    
+    if (templateType === 'ADHT-BSM') {
+      return (
+        <ADHTBSMTemplate
+          onSave={handleTemplateSave}
+          onCancel={handleTemplateCancel}
+          studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
+          examinerName={selectedTemplate?.template_data?.examinerName || 'Dr. Smith'}
+        />
+      );
+    }
+    
     return (
       <ADHDT2Template
         templateData={selectedTemplate?.template_data}
@@ -193,7 +227,7 @@ const TemplateManager = () => {
                 <h2 className="text-xl font-semibold text-gray-800 mb-2">
                   {selectedTemplate.template_data?.name || selectedTemplate.name || 'Untitled Template'}
                 </h2>
-                <span className={`inline-block px-3 py-1 text-sm rounded-full ${getTypeColor(selectedTemplate.template_data?.type)}`}>
+                <span className={`inline-block px-3 py-1 text-sm rounded-full ${getTypeColor(selectedTemplate.template_data?.type, selectedTemplate.template_data?.name || selectedTemplate.name)}`}>
                   {selectedTemplate.template_data?.type || selectedTemplate.type || 'Unknown'}
                 </span>
               </div>
@@ -285,101 +319,202 @@ const TemplateManager = () => {
               </div>
             ) : (
               <div className="space-y-6">
-                {/* Complete Template Preview */}
-                <div className="bg-white rounded-lg border-2 border-gray-200">
-                  <div className="p-8">
-                    {/* Template Header */}
-                    <div className="text-center mb-8 border-b-2 border-gray-200 pb-6">
-                      <h1 className="text-3xl font-bold text-gray-800 mb-4">
-                        {selectedTemplate.template_data?.name || 'Assessment Report'}
-                      </h1>
-                      <div className="flex justify-center items-center space-x-8 text-sm text-gray-600 mb-4">
-                        <span>Student: <strong className="text-blue-600">[Student Name]</strong></span>
-                        <span>Examiner: <strong className="text-blue-600">[Examiner Name]</strong></span>
-                        <span>Date: <strong className="text-blue-600">[Test Date]</strong></span>
-                      </div>
-                    </div>
-
-                    {/* Template Description */}
-                    {selectedTemplate.template_data?.description && (
-                      <div className="mb-8">
-                        <h2 className="text-xl font-semibold text-gray-800 mb-4">Assessment Description</h2>
-                        <div className="bg-blue-50 rounded-lg p-6">
-                          <p className="text-gray-700 leading-relaxed text-base">
-                            {selectedTemplate.template_data.description}
-                          </p>
+                {/* Template-specific Preview */}
+                {selectedTemplate.template_data?.type === 'ADHT-BSM' || 
+                 selectedTemplate?.name?.toLowerCase().includes('dsm') || 
+                 selectedTemplate?.template_data?.name?.toLowerCase().includes('dsm') ? (
+                  <div className="bg-white rounded-lg border-2 border-gray-200">
+                    <div className="p-8">
+                      {/* Template Header */}
+                      <div className="text-center mb-8 border-b-2 border-gray-200 pb-6">
+                        <h1 className="text-2xl font-bold text-gray-800 mb-4">
+                          ATTENTION-DEFICIT/HYPERACTIVITY DISORDER - DSM 5 CHECKLIST
+                        </h1>
+                        <div className="flex justify-center items-center space-x-8 text-sm text-gray-600 mb-4">
+                          <span>Student: <strong className="text-green-600">{selectedTemplate.template_data?.studentName || '[Student Name]'}</strong></span>
+                          <span>Examiner: <strong className="text-green-600">{selectedTemplate.template_data?.examinerName || '[Examiner Name]'}</strong></span>
+                          <span>Date: <strong className="text-green-600">{selectedTemplate.template_data?.testDate || '[Test Date]'}</strong></span>
                         </div>
                       </div>
-                    )}
 
-                    {/* Test Results Section */}
-                    <div className="mb-8">
-                      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Test Results</h2>
-                      
-                      {/* Results Table */}
-                      <div className="overflow-x-auto mb-8">
-                        <table className="w-full border-collapse border-2 border-gray-300 shadow-lg">
-                          <thead>
-                            <tr className="bg-gradient-to-r from-blue-50 to-blue-100">
-                              <th className="border-2 border-gray-300 px-6 py-4 text-left font-bold text-gray-800">Subscales</th>
-                              <th className="border-2 border-gray-300 px-6 py-4 text-center font-bold text-gray-800">Raw Scores</th>
-                              <th className="border-2 border-gray-300 px-6 py-4 text-center font-bold text-gray-800">Percentile Ranks</th>
-                              <th className="border-2 border-gray-300 px-6 py-4 text-center font-bold text-gray-800">Scaled Scores</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr className="hover:bg-blue-50 transition-colors">
-                              <td className="border-2 border-gray-300 px-6 py-4 font-medium text-gray-800">Inattention</td>
-                              <td className="border-2 border-gray-300 px-6 py-4 text-center font-semibold text-blue-600">0</td>
-                              <td className="border-2 border-gray-300 px-6 py-4 text-center font-semibold text-blue-600">0</td>
-                              <td className="border-2 border-gray-300 px-6 py-4 text-center font-semibold text-blue-600">0</td>
-                            </tr>
-                            <tr className="hover:bg-blue-50 transition-colors">
-                              <td className="border-2 border-gray-300 px-6 py-4 font-medium text-gray-800">Hyperactivity/Impulsivity</td>
-                              <td className="border-2 border-gray-300 px-6 py-4 text-center font-semibold text-blue-600">0</td>
-                              <td className="border-2 border-gray-300 px-6 py-4 text-center font-semibold text-blue-600">0</td>
-                              <td className="border-2 border-gray-300 px-6 py-4 text-center font-semibold text-blue-600">0</td>
-                            </tr>
-                            <tr className="bg-gradient-to-r from-gray-100 to-gray-200 font-bold">
-                              <td className="border-2 border-gray-300 px-6 py-4 font-bold text-gray-800">ADHD Index</td>
-                              <td className="border-2 border-gray-300 px-6 py-4 text-center font-bold text-red-600" colSpan="3">0</td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
+                      {/* Excel-style Preview */}
+                      <div className="border border-black">
+                        {/* Inattention Preview */}
+                        <div className="border-b border-black">
+                          <div className="bg-gray-100 p-2 text-center font-semibold text-sm">
+                            INATTENTION
+                          </div>
+                          {(selectedTemplate.template_data?.inattentionCriteria || [
+                            { id: 'A1', text: 'Often fails to give close attention to details or makes careless mistakes in schoolwork, at work, or during other activities', checked: false },
+                            { id: 'A2', text: 'Often has trouble sustaining attention in tasks or play activities', checked: false },
+                            { id: 'A3', text: 'Often does not seem to listen when spoken to directly', checked: false },
+                            { id: 'A4', text: 'Often does not follow through on instructions and fails to finish schoolwork, chores, or duties in the workplace', checked: false },
+                            { id: 'A5', text: 'Often has difficulty organizing tasks and activities', checked: false },
+                            { id: 'A6', text: 'Often avoids, dislikes, or is reluctant to engage in tasks that require sustained mental effort', checked: false },
+                            { id: 'A7', text: 'Often loses things necessary for tasks or activities', checked: false },
+                            { id: 'A8', text: 'Is often easily distracted by extraneous stimuli', checked: false },
+                            { id: 'A9', text: 'Is often forgetful in daily activities', checked: false }
+                          ]).map((criteria) => (
+                            <div key={criteria.id} className="border-b border-black">
+                              <div className="grid grid-cols-12">
+                                <div className="col-span-1 border-r border-black p-2 text-center font-medium text-xs">
+                                  {criteria.id}
+                                </div>
+                                <div className="col-span-10 border-r border-black p-2 text-xs">
+                                  {criteria.text}
+                                </div>
+                                <div className="col-span-1 p-2 text-center text-xs font-semibold">
+                                  {criteria.checked ? 'Y' : ''}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                          <div className="grid grid-cols-12">
+                            <div className="col-span-1 border-r border-black p-2 text-center font-bold text-xs">
+                              TOTAL
+                            </div>
+                            <div className="col-span-10 border-r border-black p-2"></div>
+                            <div className="col-span-1 p-2 text-center font-bold underline text-xs">
+                              {selectedTemplate.template_data?.inattentionTotal || 0}
+                            </div>
+                          </div>
+                        </div>
 
-                    {/* Assessment Remark */}
-                    {selectedTemplate.template_data?.remark && (
-                      <div className="mb-8">
-                        <h2 className="text-xl font-semibold text-gray-800 mb-4">Assessment Remark</h2>
-                        <div className="bg-green-50 rounded-lg p-6">
-                          <p className="text-gray-700 leading-relaxed text-base">
-                            [Assessment Remark]
-                          </p>
+                        {/* Hyperactivity Preview */}
+                        <div>
+                          <div className="bg-gray-100 p-2 text-center font-semibold text-sm">
+                            HYPERACTIVITY AND IMPULSIVITY
+                            <div className="text-xs font-normal">
+                              (Only behaviours occurring for 6 months or more are ticked)
+                            </div>
+                          </div>
+                          {(selectedTemplate.template_data?.hyperactivityCriteria || [
+                            { id: 'A10', text: 'Often fidgets with or taps hands or feet or squirms in seat', checked: false },
+                            { id: 'A11', text: 'Often leaves seat in situations when remaining seated is expected', checked: false },
+                            { id: 'A12', text: 'Often runs about or climbs in situations where it is inappropriate', checked: false }
+                          ]).map((criteria) => (
+                            <div key={criteria.id} className="border-b border-black">
+                              <div className="grid grid-cols-12">
+                                <div className="col-span-1 border-r border-black p-2 text-center font-medium text-xs">
+                                  {criteria.id}
+                                </div>
+                                <div className="col-span-10 border-r border-black p-2 text-xs">
+                                  {criteria.text}
+                                </div>
+                                <div className="col-span-1 p-2 text-center text-xs font-semibold">
+                                  {criteria.checked ? 'Y' : ''}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                          <div className="grid grid-cols-12">
+                            <div className="col-span-1 border-r border-black p-2 text-center font-bold text-xs">
+                              TOTAL
+                            </div>
+                            <div className="col-span-10 border-r border-black p-2"></div>
+                            <div className="col-span-1 p-2 text-center font-bold underline text-xs">
+                              {selectedTemplate.template_data?.hyperactivityTotal || 0}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    )}
 
-                    {/* Disclaimer */}
-                    <div className="mb-8">
-                      <h2 className="text-xl font-semibold text-gray-800 mb-4">Disclaimer</h2>
-                      <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-6">
-                        <p className="text-gray-700 leading-relaxed text-base">
-                          The scores listed in the table imply that it is 'very likely' that [Student Name] has symptoms of ADHD. However, the checklist cannot be fully endorsed by the tester due to the one-to-one situation. The scores are based on the reports from the mother.
-                        </p>
-                      </div>
+                      {/* Remarks */}
+                      {selectedTemplate.template_data?.remarks && (
+                        <div className="mt-4">
+                          <h6 className="font-semibold text-gray-800 mb-2">Remarks</h6>
+                          <p className="text-sm text-gray-700">{selectedTemplate.template_data.remarks}</p>
+                        </div>
+                      )}
                     </div>
+                  </div>
+                ) : (
+                  /* ADHDT-2 Preview */
+                  <div className="bg-white rounded-lg border-2 border-gray-200">
+                    <div className="p-8">
+                      {/* Template Header */}
+                      <div className="text-center mb-8 border-b-2 border-gray-200 pb-6">
+                        <h1 className="text-3xl font-bold text-gray-800 mb-4">
+                          {selectedTemplate.template_data?.name || 'Assessment Report'}
+                        </h1>
+                        <div className="flex justify-center items-center space-x-8 text-sm text-gray-600 mb-4">
+                          <span>Student: <strong className="text-blue-600">{selectedTemplate.template_data?.studentName || '[Student Name]'}</strong></span>
+                          <span>Examiner: <strong className="text-blue-600">{selectedTemplate.template_data?.examinerName || '[Examiner Name]'}</strong></span>
+                          <span>Date: <strong className="text-blue-600">{selectedTemplate.template_data?.testDate || '[Test Date]'}</strong></span>
+                        </div>
+                      </div>
 
-                    {/* Footer Information */}
-                    <div className="mt-12 pt-6 border-t-2 border-gray-200">
-                      <div className="flex justify-between items-center text-sm text-gray-500">
-                        <span>Template ID: {selectedTemplate.id}</span>
-                        <span>Created: {new Date(selectedTemplate.created_at).toLocaleDateString()}</span>
+                      {/* Template Description */}
+                      {selectedTemplate.template_data?.description && (
+                        <div className="mb-8">
+                          <h2 className="text-xl font-semibold text-gray-800 mb-4">Assessment Description</h2>
+                          <div className="bg-blue-50 rounded-lg p-6">
+                            <p className="text-gray-700 leading-relaxed text-base">
+                              {selectedTemplate.template_data.description}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Test Results Section */}
+                      <div className="mb-8">
+                        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Test Results</h2>
+                        
+                        {/* Results Table */}
+                        <div className="overflow-x-auto mb-8">
+                          <table className="w-full border-collapse border-2 border-gray-300 shadow-lg">
+                            <thead>
+                              <tr className="bg-gradient-to-r from-blue-50 to-blue-100">
+                                <th className="border-2 border-gray-300 px-6 py-4 text-left font-bold text-gray-800">Subscales</th>
+                                <th className="border-2 border-gray-300 px-6 py-4 text-center font-bold text-gray-800">Raw Scores</th>
+                                <th className="border-2 border-gray-300 px-6 py-4 text-center font-bold text-gray-800">Percentile Ranks</th>
+                                <th className="border-2 border-gray-300 px-6 py-4 text-center font-bold text-gray-800">Scaled Scores</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {selectedTemplate.template_data?.subscales?.map((subscale, index) => (
+                                <tr key={index} className="hover:bg-blue-50 transition-colors">
+                                  <td className="border-2 border-gray-300 px-6 py-4 font-medium text-gray-800">{subscale.name}</td>
+                                  <td className="border-2 border-gray-300 px-6 py-4 text-center font-semibold text-blue-600">{subscale.rawScore}</td>
+                                  <td className="border-2 border-gray-300 px-6 py-4 text-center font-semibold text-blue-600">{subscale.percentileRank}</td>
+                                  <td className="border-2 border-gray-300 px-6 py-4 text-center font-semibold text-blue-600">{subscale.scaledScore}</td>
+                                </tr>
+                              ))}
+                              <tr className="bg-gradient-to-r from-gray-100 to-gray-200 font-bold">
+                                <td className="border-2 border-gray-300 px-6 py-4 font-bold text-gray-800">ADHD Index</td>
+                                <td className="border-2 border-gray-300 px-6 py-4 text-center font-bold text-red-600" colSpan="3">
+                                  {selectedTemplate.template_data?.adhdIndex || 0}
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* Assessment Remark */}
+                      {selectedTemplate.template_data?.remark && (
+                        <div className="mb-8">
+                          <h2 className="text-xl font-semibold text-gray-800 mb-4">Assessment Remark</h2>
+                          <div className="bg-green-50 rounded-lg p-6">
+                            <p className="text-gray-700 leading-relaxed text-base">
+                              {selectedTemplate.template_data.remark}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Disclaimer */}
+                      <div className="mb-8">
+                        <h2 className="text-xl font-semibold text-gray-800 mb-4">Disclaimer</h2>
+                        <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-6">
+                          <p className="text-gray-700 leading-relaxed text-base">
+                            {selectedTemplate.template_data?.disclaimer || 'The scores listed in the table imply that it is \'very likely\' that [Student Name] has symptoms of ADHD. However, the checklist cannot be fully endorsed by the tester due to the one-to-one situation. The scores are based on the reports from the mother.'}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
           </motion.div>
@@ -436,6 +571,7 @@ const TemplateManager = () => {
                 >
                   <option value="">All Types</option>
                   <option value="ADHDT2">ADHDT-2</option>
+                  <option value="ADHT-BSM">ADHT-BSM</option>
                 </select>
               </div>
             </div>
@@ -482,7 +618,7 @@ const TemplateManager = () => {
                         <h3 className="font-semibold text-gray-800 truncate">
                           {template.template_data?.name || template.name || 'Untitled Template'}
                         </h3>
-                        <span className={`inline-block px-2 py-1 text-xs rounded-full ${getTypeColor(template.template_data?.type)}`}>
+                        <span className={`inline-block px-2 py-1 text-xs rounded-full ${getTypeColor(template.template_data?.type, template.template_data?.name || template.name)}`}>
                           {template.template_data?.type || template.type || 'Unknown'}
                         </span>
                       </div>
