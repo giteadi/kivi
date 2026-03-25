@@ -244,6 +244,46 @@ class ApiService {
     });
   }
 
+  // Templates endpoints
+  async getTemplates(filters = {}) {
+    const queryParams = new URLSearchParams(filters);
+    return this.request(`/templates?${queryParams}`);
+  }
+
+  async getTemplate(id) {
+    return this.request(`/templates/${id}`);
+  }
+
+  async createTemplate(templateData) {
+    return this.request('/templates', {
+      method: 'POST',
+      body: JSON.stringify(templateData),
+    });
+  }
+
+  async updateTemplate(id, templateData) {
+    return this.request(`/templates/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(templateData),
+    });
+  }
+
+  async deleteTemplate(id) {
+    return this.request(`/templates/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async generateReportFromTemplate(templateId, studentId, customData = {}) {
+    return this.request(`/templates/${templateId}/generate-report`, {
+      method: 'POST',
+      body: JSON.stringify({
+        studentId,
+        customData
+      }),
+    });
+  }
+
   // Therapists endpoints (mapped from doctors for frontend compatibility)
   async getDoctors(filters = {}) {
     const queryParams = new URLSearchParams(filters);

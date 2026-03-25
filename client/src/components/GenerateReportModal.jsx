@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchExaminees, createExaminee, createAssessmentWithScores, setSelectedExaminee, clearSelectedExaminee } from '../store/slices/examineeSlice';
+import api from '../services/api';
 
 /* ═══════════════════════════════════════════════════════════
    MOCK DATA  (replace with real API calls in production)
@@ -614,7 +615,7 @@ const SI = ({val,onChange}) => (
   <input className="grm-in grm-score-input" placeholder="—" value={val||''} onChange={e=>onChange(e.target.value)}/>
 );
 
-const Step2 = ({assess,setAssess,scores,setScores,errors,selectedExaminee,selectedAssessment,setSelectedAssessment,isPrefilled,setIsPrefilled}) => {
+const Step2 = ({assess,setAssess,scores,setScores,errors,selectedExaminee,selectedAssessment,setSelectedAssessment,isPrefilled,setIsPrefilled,templates,selectedTemplate,setSelectedTemplate,useTemplate,setUseTemplate}) => {
   const [showAssessmentPicker, setShowAssessmentPicker] = useState(false);
 
   const availableAssessments = selectedExaminee?.assessments || [];
@@ -698,6 +699,59 @@ const Step2 = ({assess,setAssess,scores,setScores,errors,selectedExaminee,select
             </div>
           ))}
           <button className="grm-ghost" style={{marginTop:4,fontSize:13}} onClick={()=>setShowAssessmentPicker(false)}>Cancel</button>
+        </div>
+      )}
+
+      {/* Template Selection */}
+      {templates && templates.length > 0 && (
+        <div style={{marginBottom:20,padding:'12px 16px',background:useTemplate?'#e3f2fd':'#f8f9fa',border:'1px solid #2196f3',borderRadius:4,display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}}>
+          <div style={{display:'flex',alignItems:'center',gap:10}}>
+            <div style={{fontSize:20}}>📋</div>
+            <div>
+              <div style={{fontWeight:700,fontSize:13.5,color:'#1976d2'}}>Use Template for Report</div>
+              <div style={{fontSize:12.5,color:'#666'}}>
+                {useTemplate ? (
+                  <>Using template: {selectedTemplate?.template_data?.name || 'Selected template'}</>
+                ) : (
+                  <>{templates.length} template(s) available — generate report using a template</>
+                )}
+              </div>
+            </div>
+          </div>
+          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+            {useTemplate && (
+              <select 
+                className="grm-in grm-sel" 
+                value={selectedTemplate?.id || ''} 
+                onChange={(e) => {
+                  const template = templates.find(t => t.id === parseInt(e.target.value));
+                  setSelectedTemplate(template);
+                }}
+                style={{width:200,fontSize:12.5}}
+              >
+                <option value="">Select Template</option>
+                {templates.map(template => (
+                  <option key={template.id} value={template.id}>
+                    {template.template_data?.name || 'Untitled Template'}
+                  </option>
+                ))}
+              </select>
+            )}
+            <button 
+              className="grm-ghost" 
+              style={{fontSize:13,padding:'6px 12px'}}
+              onClick={() => {
+                if (useTemplate) {
+                  setUseTemplate(false);
+                  setSelectedTemplate(null);
+                } else {
+                  setUseTemplate(true);
+                }
+              }}
+            >
+              {useTemplate ? 'Clear Template' : 'Use Template'}
+            </button>
+          </div>
         </div>
       )}
 
@@ -920,6 +974,11 @@ const GenerateReportModal = ({ isOpen, onClose, examineeData }) => {
   const [reportData, setReportData] = useState(null);
   const [errors, setErrors] = useState({});
 
+  // Template state
+  const [templates, setTemplates] = useState([]);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [useTemplate, setUseTemplate] = useState(false);
+
   // Step 1 state
   const [selectedExaminee, setSelectedExaminee] = useState(null);
   const [examinee, setExaminee] = useState({
@@ -957,6 +1016,24 @@ const GenerateReportModal = ({ isOpen, onClose, examineeData }) => {
       }
     }
   }, [isOpen, examineeData, examinees]);
+
+  // Fetch templates when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchTemplates();
+    }
+  }, [isOpen]);
+
+  const fetchTemplates = async () => {
+    try {
+      const response = await api.getTemplates();
+      if (response.success) {
+        setTemplates(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+    }
+  };
 
   // Step 2 state
   const [selectedAssessment, setSelectedAssessment] = useState(null);
@@ -1060,7 +1137,9 @@ const GenerateReportModal = ({ isOpen, onClose, examineeData }) => {
       console.log('🔍 Debug info:', {
         selectedExaminee: selectedExaminee?.id,
         examinee: examinee?.id,
-        resolvedId: examineeId
+        resolvedId: examineeId,
+        useTemplate,
+        selectedTemplate: selectedTemplate?.id
       });
 
       if (!examineeId) {
@@ -1069,49 +1148,83 @@ const GenerateReportModal = ({ isOpen, onClose, examineeData }) => {
         setIsGenerating(false);
         return;
       }
-      
-      // Create assessment with scores
-      const assessmentData = {
-        examineeId: examineeId,
-        deliveryMethod: assess.deliveryMethod,
-        testDate: assess.testDate,
-        examiner: assess.examiner,
-        language: assess.language,
-        gradeLevel: assess.gradeLevel,
-        reasonForReferral: assess.reasonForReferral,
-        medications: assess.medications,
-        testingSite: assess.testingSite,
-        scores: scores
-      };
 
-      console.log('📤 Sending assessment data to API:', {
-        examineeId,
-        deliveryMethod: assess.deliveryMethod,
-        testDate: assess.testDate,
-        ...assessmentData
-      });
+      let reportData;
 
-      const result = await dispatch(createAssessmentWithScores(assessmentData)).unwrap();
-      
-      console.log('✅ Assessment created successfully:', result);
+      if (useTemplate && selectedTemplate) {
+        // Generate report using template
+        console.log('📄 Generating report using template:', selectedTemplate.template_data?.name);
+        
+        const customData = {
+          testDate: assess.testDate,
+          examiner: assess.examiner,
+          // Add any other assessment data that should override template
+        };
 
-      if (result.success || result.id || result.data) {
-        // Store report data for preview
-        setReportData({
-          examinee: activeEx,
-          assessment: assessmentData,
-          scores: scores,
-          options: opts,
-          timestamp: new Date().toLocaleString()
+        const result = await api.generateReportFromTemplate(selectedTemplate.id, examineeId, customData);
+        
+        if (result.success) {
+          reportData = {
+            examinee: activeEx,
+            template: result.data,
+            options: opts,
+            timestamp: new Date().toLocaleString(),
+            isTemplateBased: true
+          };
+        } else {
+          throw new Error(result.message || 'Failed to generate report from template');
+        }
+      } else {
+        // Generate report normally (existing logic)
+        console.log('📊 Generating report normally');
+        
+        // Create assessment with scores
+        const assessmentData = {
+          examineeId: examineeId,
+          deliveryMethod: assess.deliveryMethod,
+          testDate: assess.testDate,
+          examiner: assess.examiner,
+          language: assess.language,
+          gradeLevel: assess.gradeLevel,
+          reasonForReferral: assess.reasonForReferral,
+          medications: assess.medications,
+          testingSite: assess.testingSite,
+          scores: scores
+        };
+
+        console.log('📤 Sending assessment data to API:', {
+          examineeId,
+          deliveryMethod: assess.deliveryMethod,
+          testDate: assess.testDate,
+          ...assessmentData
         });
-        setIsGenerated(true);
-        // Automatically open preview
-        setTimeout(() => setIsPreviewOpen(true), 300);
+
+        const result = await dispatch(createAssessmentWithScores(assessmentData)).unwrap();
+        
+        console.log('✅ Assessment created successfully:', result);
+
+        if (result.success || result.id || result.data) {
+          reportData = {
+            examinee: activeEx,
+            assessment: assessmentData,
+            scores: scores,
+            options: opts,
+            timestamp: new Date().toLocaleString(),
+            isTemplateBased: false
+          };
+        }
       }
+
+      // Store report data for preview
+      setReportData(reportData);
+      setIsGenerated(true);
+      // Automatically open preview
+      setTimeout(() => setIsPreviewOpen(true), 300);
+      
     } catch (error) {
-      console.error('❌ Failed to create assessment:', error);
+      console.error('❌ Failed to generate report:', error);
       console.error('Error details:', error?.message || JSON.stringify(error));
-      alert('Failed to create assessment: ' + (error?.message || 'Unknown error. Check console for details.'));
+      alert('Failed to generate report: ' + (error?.message || 'Unknown error. Check console for details.'));
     } finally {
       setIsGenerating(false);
     }
@@ -1129,6 +1242,9 @@ const GenerateReportModal = ({ isOpen, onClose, examineeData }) => {
     setIsPrefilled(false);
     setScores(BLANK_SCORES());
     setAssess({deliveryMethod:'Manual Entry', testDate:'', examiner:'', language:'English', gradeLevel:'Please select...', reasonForReferral:'Please select...', medications:'', testingSite:''});
+    // Reset template state
+    setSelectedTemplate(null);
+    setUseTemplate(false);
     onClose?.();
   };
 
@@ -1323,6 +1439,9 @@ const GenerateReportModal = ({ isOpen, onClose, examineeData }) => {
                   selectedExaminee={selectedExaminee}
                   selectedAssessment={selectedAssessment} setSelectedAssessment={setSelectedAssessment}
                   isPrefilled={isPrefilled} setIsPrefilled={setIsPrefilled}
+                  templates={templates}
+                  selectedTemplate={selectedTemplate} setSelectedTemplate={setSelectedTemplate}
+                  useTemplate={useTemplate} setUseTemplate={setUseTemplate}
                 />
               )}
               {step===3 && <Step3 opts={opts} setOpts={setOpts} isGenerated={isGenerated}/>}

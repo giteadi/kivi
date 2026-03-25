@@ -67,6 +67,7 @@ import SessionEditForm from './components/SessionEditForm';
 import SessionList from './components/SessionList';
 import PlansList from './components/PlansList';
 import AdminSessionsList from './components/AdminSessionsList';
+import TemplateManager from './components/TemplateManager';
 
 function App() {
   const dispatch = useDispatch();
@@ -1105,6 +1106,9 @@ ${service.target_age_group || 'Not specified'}
       
       case 'sessions':
         return <PlansList />;
+      
+      case 'template-manager':
+        return <TemplateManager />;
       
       case 'clinic-revenue':
         return <ClinicRevenue />;
