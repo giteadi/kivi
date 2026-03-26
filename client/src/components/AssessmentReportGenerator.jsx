@@ -55,16 +55,12 @@ const AssessmentReportGenerator = ({
     return {
       title: 'ADHDT-2 Assessment Report',
       formulas: [
-        {
-          name: 'ADHD Index Calculation',
-          formula: 'Sum of Standard Scores',
-          description: 'ADHD Index = Inattention Standard Score + Hyperactivity/Impulsivity Standard Score'
-        },
-        {
-          name: 'Percentile Rank',
-          formula: 'Based on Age/Gender Norms',
-          description: 'Percentile ranks indicate the percentage of individuals in the normative sample who scored below the obtained score.'
-        }
+        'ADHD Index = Inattention Standard Score + Hyperactivity/Impulsivity Standard Score',
+        'Standard Score Calculation: Raw Score → T-Score (Mean=50, SD=10)',
+        'Percentile Rank = Based on Age/Gender Normative Data',
+        'ADHD Likelihood Classification: Very High (≥90), High (80-89), Moderate (70-79), Low (60-69), Very Low (<60)',
+        'DSM-5 Criteria: Based on Diagnostic and Statistical Manual of Mental Disorders, 5th Edition',
+        'Norm-Referenced: Scores compared to standardized sample population'
       ],
       analysis: {
         adhdIndex,
@@ -74,7 +70,22 @@ const AssessmentReportGenerator = ({
         inattentionPercentile: inattention?.percentileRank || 0,
         hyperactivityPercentile: hyperactivity?.percentileRank || 0
       },
-      interpretation: `The ADHD Index of ${adhdIndex} indicates a ${adhdLikelihood} likelihood of ADHD. Inattention subscale score of ${inattention?.rawScore} (percentile rank: ${inattention?.percentileRank}) and Hyperactivity/Impulsivity score of ${hyperactivity?.rawScore} (percentile rank: ${hyperactivity?.percentileRank}) suggest specific areas of concern.`
+      interpretation: `ATTENTION-DEFICIT / HYPERACTIVITY DISORDER TEST-ADHDT-2
+
+The Attention-Deficit/Hyperactivity Disorder Test-Second Edition (ADHDT-2) is a norm-referenced screening test used to identify persons who have attention-deficit/hyperactivity disorder (ADHDT). It is designed to identify individuals who present severe behavioral problems that may be indicative of ADHD. Its content is based on the definition of ADHD from the DSM-5.
+
+TEST RESULTS
+Remark: The scores imply it is '${adhdLikelihood.toLowerCase()}' that ${template.studentName || 'the student'} has symptoms of ADHD.
+
+It must be noted that this checklist cannot be fully endorsed by the tester, as she is in a one-to-one situation, and many of these behaviors cannot be evaluated in that situation. The scores above are those reported by his mother after being given insight by the tester. They can be used as a rough guide for indicators.
+
+ADHD Index: ${adhdIndex}
+Inattention Subscale: ${inattention?.rawScore} (Percentile: ${inattention?.percentileRank})
+Hyperactivity/Impulsivity Subscale: ${hyperactivity?.rawScore} (Percentile: ${hyperactivity?.percentileRank})
+
+The assessment indicates ${adhdLikelihood.toLowerCase()} likelihood of ADHD based on the combined subscale scores. The Inattention subscale score suggests ${inattention?.percentileRank >= 90 ? 'severe' : inattention?.percentileRank >= 80 ? 'significant' : inattention?.percentileRank >= 70 ? 'moderate' : 'mild'} difficulties in maintaining attention, while the Hyperactivity/Impulsivity subscale indicates ${hyperactivity?.percentileRank >= 90 ? 'severe' : hyperactivity?.percentileRank >= 80 ? 'significant' : hyperactivity?.percentileRank >= 70 ? 'moderate' : 'mild'} problems with impulse control and activity regulation.
+
+These results should be considered in conjunction with other assessment tools and clinical observations for a comprehensive ADHD evaluation.`
     };
   };
 
@@ -103,16 +114,12 @@ const AssessmentReportGenerator = ({
     return {
       title: 'ADHD-DSM 5 Assessment Report',
       formulas: [
-        {
-          name: 'DSM-5 Criteria Formula',
-          formula: 'Symptom Count Analysis',
-          description: '≥6 symptoms from either category required for diagnosis (symptoms must be present for ≥6 months, present before age 12, and present in ≥2 settings)'
-        },
-        {
-          name: 'Severity Assessment',
-          formula: 'Clinical Judgment',
-          description: 'Severity based on functional impairment and number of symptoms across settings'
-        }
+        'DSM-5 Criteria: ≥6 symptoms from either category required for diagnosis',
+        'Symptom Duration: Must be present for ≥6 months',
+        'Age of Onset: Several symptoms present before age 12',
+        'Setting Requirement: Symptoms present in ≥2 settings (home, school, work)',
+        'Impairment: Symptoms interfere with social, academic, or occupational functioning',
+        'Diagnosis Types: Combined, Predominantly Inattentive, Predominantly Hyperactive/Impulsive'
       ],
       analysis: {
         inattentionChecked,
@@ -123,7 +130,48 @@ const AssessmentReportGenerator = ({
         totalHyperactivity: hyperactivityCriteria.length,
         diagnosis
       },
-      interpretation: `Based on DSM-5 criteria, ${inattentionChecked} out of ${inattentionCriteria.length} inattention symptoms and ${hyperactivityChecked} out of ${hyperactivityCriteria.length} hyperactivity/impulsivity symptoms were endorsed. This meets criteria for ${diagnosis}.`
+      interpretation: `ATTENTION-DEFICIT/HYPERACTIVITY DISORDER - DSM 5 CHECKLIST
+ADHD DSM-5 Criteria-Parent Completion (American Psychiatric Association, 2013)
+
+INATTENTION
+(Only behaviours occurring for 6 months or more are ticked)
+
+A1 Often fails to give close attention to details or makes careless mistakes in schoolwork, at work, or during other activities (e.g., overlooks or misses details, work is inaccurate).
+A2 Often has difficulty sustaining attention in tasks or play activities (e.g., has difficulty remaining focused during lectures, conversations, or lengthy reading).
+A3 Often does not seem to listen when spoken to directly (e.g., mind seems elsewhere, even in the absence of any obvious distraction).
+A4 Often does not follow through on instructions and fails to finish schoolwork, chores, or duties in the workplace (e.g., starts tasks but quickly loses focus and is easily side-tracked).
+A5 Often has difficulty organizing tasks and activities (e.g., difficulty managing sequential tasks; difficulty keeping materials and belongings in order; messy, disorganizedized work; poor time management; fails to meet deadlines).
+A6 Often avoids, dislikes, or is reluctant to engage in tasks that require sustained mental effort (e.g., schoolwork or homework; for older adolescents and adults, preparing reports, completing forms, reviewing lengthy papers).
+A7 Often loses things necessary for tasks or activities (e.g., school materials, pencils, books, tools, wallets, keys, paperwork, eyeglasses, mobile telephones).
+A8 Often is easily distracted by extraneous stimuli (for older adolescents and adults, may include unrelated thoughts).
+A9 Often is forgetful in daily activities (e.g., doing chores, running errands; for older adolescents and adults, returning calls, paying bills, keeping appointments).
+
+INATTENTION TOTAL: ${inattentionChecked} out of 9
+
+HYPERACTIVITY AND IMPULSIVITY
+(Only behaviours occurring for 6 months or more are ticked)
+
+A1 Often fidgets with or taps hands or feet or squirms in seat.
+A2 Often leaves seat in situations when remaining seated is expected (e.g., leaves his or her place in the classroom, office or other workplace, or in other situations that require remaining seated).
+A3 Often runs about or climbs in situations where it is inappropriate. (Note: In adolescents or adults, may be limited to feeling restless).
+A4 Often unable to play or engage in leisure activities quietly.
+A5 Is often "on the go" or often acts as if "driven by a motor" (e.g., is unable to be or uncomfortable being still for extended time, as in restaurants, meetings; may be experienced by others as being restless or difficult to keep up with).
+A6 Often talks excessively.
+A7 Often blurts out an answer before a question has been completed (e.g., completes people's sentences; cannot wait for turn in conversation).
+A8 Often has difficulty waiting his or her turn (e.g., while waiting in line).
+A9 Often interrupts or intrudes on others (e.g., butts into conversations, games, or activities; may start using other people's things without asking or receiving permission; for adolescents and adults, may intrude into or take over what others are doing).
+
+HYPERACTIVITY AND IMPULSIVITY TOTAL: ${hyperactivityChecked} out of 9
+
+DIAGNOSTIC IMPRESSION:
+Based on DSM-5 criteria, ${template.studentName || 'the student'} exhibits ${inattentionChecked} inattention symptoms and ${hyperactivityChecked} hyperactivity/impulsivity symptoms.
+
+${inattentionMet ? '✓' : '✗'} Meets criteria for Inattention (≥6 symptoms required)
+${hyperactivityMet ? '✓' : '✗'} Meets criteria for Hyperactivity/Impulsivity (≥6 symptoms required)
+
+DIAGNOSIS: ${diagnosis}
+
+This assessment indicates ${diagnosis === 'Insufficient Symptoms for ADHD Diagnosis' ? 'insufficient symptoms for ADHD diagnosis' : 'symptoms consistent with ' + diagnosis.toLowerCase()}. These findings should be considered in the context of the individual's developmental level, academic performance, and functioning across multiple settings. A comprehensive evaluation including clinical interview, behavioral observations, and additional assessment measures is recommended for definitive diagnosis.`
     };
   };
 
