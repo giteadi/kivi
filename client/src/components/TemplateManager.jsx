@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiPlus, FiEdit2, FiTrash2, FiFileText, FiCopy, FiSearch, FiFilter } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiFileText, FiCopy, FiSearch, FiFilter, FiEye } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import api from '../services/api';
 import ADHDT2Template from './ADHDT2Template';
 import ADHTBSMTemplate from './ADHTBSMTemplate';
 import AstonIndexTemplate from './AstonIndexTemplate';
+import BKTTemplate from './BKTTemplate';
+import RavensCPMTemplate from './RavensCPMTemplate';
+import GARS3Template from './GARS3Template';
+import BrownEFAScaleTemplate from './BrownEFAScaleTemplate';
+import EACATemplate from './EACATemplate';
+import NelsonDennyReadingTestTemplate from './NelsonDennyReadingTestTemplate';
+import AssessmentReportGenerator from './AssessmentReportGenerator';
 import TemplateTypeSelector from './TemplateTypeSelector';
 
 const TemplateManager = () => {
@@ -16,7 +23,7 @@ const TemplateManager = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [viewMode, setViewMode] = useState('list'); // 'list', 'view', 'edit'
+  const [viewMode, setViewMode] = useState('list'); // 'list', 'view', 'edit', 'report'
   const [activeTab, setActiveTab] = useState('details'); // 'details', 'preview'
 
   // Static templates data for design purposes
@@ -28,28 +35,32 @@ const TemplateManager = () => {
       description: 'DSM-5 ADHD Checklist with checkbox-based criteria selection for inattention and hyperactivity',
       template_data: {
         type: 'ADHT-BSM',
-        name: 'ADHD-DSM 5 Checklist',
+        name: 'ADHT-DSM 5 Checklist',
         studentName: '',
         examinerName: '',
         testDate: new Date().toISOString().split('T')[0],
         inattentionCriteria: [
-          { id: 'A1', text: 'Often fails to give close attention to details or makes careless mistakes', checked: false },
-          { id: 'A2', text: 'Often has trouble sustaining attention in tasks or play activities', checked: false },
-          { id: 'A3', text: 'Often does not seem to listen when spoken to directly', checked: false },
-          { id: 'A4', text: 'Often does not follow through on instructions', checked: false },
-          { id: 'A5', text: 'Often has difficulty organizing tasks and activities', checked: false },
-          { id: 'A6', text: 'Often avoids tasks that require mental effort', checked: false },
-          { id: 'A7', text: 'Often loses things necessary for tasks', checked: false },
-          { id: 'A8', text: 'Is often easily distracted by extraneous stimuli', checked: false },
-          { id: 'A9', text: 'Is often forgetful in daily activities', checked: false }
+          { id: 1, symptom: 'Often fails to give close attention to details or makes careless mistakes', checked: false },
+          { id: 2, symptom: 'Often has trouble sustaining attention in tasks or activities', checked: false },
+          { id: 3, symptom: 'Often does not seem to listen when spoken to directly', checked: false },
+          { id: 4, symptom: 'Often does not follow through on instructions and fails to finish tasks', checked: false },
+          { id: 5, symptom: 'Often has trouble organizing tasks and activities', checked: false },
+          { id: 6, symptom: 'Often avoids, dislikes, or is reluctant to do tasks that require mental effort', checked: false },
+          { id: 7, symptom: 'Often loses things necessary for tasks or activities', checked: false },
+          { id: 8, symptom: 'Is often easily distracted by external stimuli', checked: false },
+          { id: 9, symptom: 'Is often forgetful in daily activities', checked: false }
         ],
         hyperactivityCriteria: [
-          { id: 'A10', text: 'Often fidgets with or taps hands or feet', checked: false },
-          { id: 'A11', text: 'Often leaves seat when remaining seated is expected', checked: false },
-          { id: 'A12', text: 'Often runs about or climbs in inappropriate situations', checked: false }
+          { id: 10, symptom: 'Often fidgets with or taps hands or feet or squirms in seat', checked: false },
+          { id: 11, symptom: 'Often leaves seat in situations when remaining seated is expected', checked: false },
+          { id: 12, symptom: 'Often runs about or climbs in situations where it is not appropriate', checked: false },
+          { id: 13, symptom: 'Unable to play or engage in leisure activities quietly', checked: false },
+          { id: 14, symptom: 'Is often "on the go" or acts as if "driven by a motor"', checked: false },
+          { id: 15, symptom: 'Often talks excessively', checked: false },
+          { id: 16, symptom: 'Often blurts out an answer before a question has been completed', checked: false },
+          { id: 17, symptom: 'Has trouble waiting for their turn', checked: false },
+          { id: 18, symptom: 'Often interrupts or intrudes on others', checked: false }
         ],
-        inattentionTotal: 0,
-        hyperactivityTotal: 0,
         remarks: ''
       },
       created_at: new Date().toISOString(),
@@ -108,11 +119,10 @@ She showed some difficulty with verbal expression of meaning of words presented 
       description: 'Attention-Deficit/Hyperactivity Disorder Test-Second Edition with comprehensive scoring',
       template_data: {
         type: 'ADHDT2',
-        name: 'ADHDT-2 Assessment Report',
+        name: 'ADHDT-2 Assessment',
         studentName: '',
         examinerName: '',
         testDate: new Date().toISOString().split('T')[0],
-        description: 'The Attention-Deficit/Hyperactivity Disorder Test-Second Edition (ADHDT-2) is a norm-referenced assessment.',
         subscales: [
           { name: 'Inattention', rawScore: 0, percentileRank: 0, scaledScore: 0 },
           { name: 'Hyperactivity/Impulsivity', rawScore: 0, percentileRank: 0, scaledScore: 0 }
@@ -120,6 +130,487 @@ She showed some difficulty with verbal expression of meaning of words presented 
         adhdIndex: 0,
         remark: '',
         disclaimer: 'The scores listed in the table imply that it is \'very likely\' that the student has symptoms of ADHD.'
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 4,
+      name: 'Basic Kinesthetic Test',
+      type: 'BKT',
+      description: 'Motor coordination and kinesthetic perception assessment',
+      template_data: {
+        type: 'BKT',
+        name: 'Basic Kinesthetic Test',
+        studentName: '',
+        examinerName: '',
+        testDate: new Date().toISOString().split('T')[0],
+        description: 'The Basic Kinesthetic Test (BKT) is an assessment tool designed to evaluate kinesthetic perception and motor coordination abilities in children.',
+        grossMotorSkills: [
+          { id: 1, test: 'Balance on one foot (right)', score: '', remarks: '' },
+          { id: 2, test: 'Balance on one foot (left)', score: '', remarks: '' },
+          { id: 3, test: 'Hop on one foot (right)', score: '', remarks: '' },
+          { id: 4, test: 'Hop on one foot (left)', score: '', remarks: '' },
+          { id: 5, test: 'Jump forward with both feet', score: '', remarks: '' },
+          { id: 6, test: 'Throw ball forward', score: '', remarks: '' },
+          { id: 7, test: 'Catch ball with both hands', score: '', remarks: '' }
+        ],
+        fineMotorSkills: [
+          { id: 8, test: 'Finger tapping (right hand)', score: '', remarks: '' },
+          { id: 9, test: 'Finger tapping (left hand)', score: '', remarks: '' },
+          { id: 10, test: 'Touch finger to thumb (right)', score: '', remarks: '' },
+          { id: 11, test: 'Touch finger to thumb (left)', score: '', remarks: '' },
+          { id: 12, test: 'Copy simple shapes', score: '', remarks: '' },
+          { id: 13, test: 'Draw a person', score: '', remarks: '' }
+        ],
+        bodyAwareness: [
+          { id: 14, test: 'Identify body parts', score: '', remarks: '' },
+          { id: 15, test: 'Left-right discrimination', score: '', remarks: '' },
+          { id: 16, test: 'Body coordination', score: '', remarks: '' },
+          { id: 17, test: 'Spatial orientation', score: '', remarks: '' }
+        ],
+        interpretation: '',
+        conclusions: '',
+        recommendations: ''
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 5,
+      name: 'Raven\'s Coloured Progressive Matrices',
+      type: 'Ravens-CPM',
+      description: 'Non-verbal assessment of eductive ability and problem-solving skills',
+      template_data: {
+        type: 'Ravens-CPM',
+        name: 'Raven\'s Coloured Progressive Matrices',
+        studentName: '',
+        examinerName: '',
+        testDate: new Date().toISOString().split('T')[0],
+        description: 'Raven\'s Coloured Progressive Matrices (CPM) is a non-verbal test designed to assess eductive ability.',
+        sections: [
+          {
+            name: 'Set A',
+            items: [
+              { id: 1, question: 'Pattern Completion 1', answer: '', correct: 6 },
+              { id: 2, question: 'Pattern Completion 2', answer: '', correct: 2 },
+              { id: 3, question: 'Pattern Completion 3', answer: '', correct: 4 },
+              { id: 4, question: 'Pattern Completion 4', answer: '', correct: 1 },
+              { id: 5, question: 'Pattern Completion 5', answer: '', correct: 3 },
+              { id: 6, question: 'Pattern Completion 6', answer: '', correct: 5 },
+              { id: 7, question: 'Pattern Completion 7', answer: '', correct: 2 },
+              { id: 8, question: 'Pattern Completion 8', answer: '', correct: 6 },
+              { id: 9, question: 'Pattern Completion 9', answer: '', correct: 4 },
+              { id: 10, question: 'Pattern Completion 10', answer: '', correct: 1 },
+              { id: 11, question: 'Pattern Completion 11', answer: '', correct: 3 },
+              { id: 12, question: 'Pattern Completion 12', answer: '', correct: 5 }
+            ]
+          },
+          {
+            name: 'Set AB',
+            items: [
+              { id: 13, question: 'Pattern Completion 13', answer: '', correct: 4 },
+              { id: 14, question: 'Pattern Completion 14', answer: '', correct: 2 },
+              { id: 15, question: 'Pattern Completion 15', answer: '', correct: 6 },
+              { id: 16, question: 'Pattern Completion 16', answer: '', correct: 1 },
+              { id: 17, question: 'Pattern Completion 17', answer: '', correct: 3 },
+              { id: 18, question: 'Pattern Completion 18', answer: '', correct: 5 },
+              { id: 19, question: 'Pattern Completion 19', answer: '', correct: 2 },
+              { id: 20, question: 'Pattern Completion 20', answer: '', correct: 4 },
+              { id: 21, question: 'Pattern Completion 21', answer: '', correct: 6 },
+              { id: 22, question: 'Pattern Completion 22', answer: '', correct: 1 },
+              { id: 23, question: 'Pattern Completion 23', answer: '', correct: 3 },
+              { id: 24, question: 'Pattern Completion 24', answer: '', correct: 5 }
+            ]
+          },
+          {
+            name: 'Set B',
+            items: [
+              { id: 25, question: 'Pattern Completion 25', answer: '', correct: 6 },
+              { id: 26, question: 'Pattern Completion 26', answer: '', correct: 4 },
+              { id: 27, question: 'Pattern Completion 27', answer: '', correct: 2 },
+              { id: 28, question: 'Pattern Completion 28', answer: '', correct: 1 },
+              { id: 29, question: 'Pattern Completion 29', answer: '', correct: 3 },
+              { id: 30, question: 'Pattern Completion 30', answer: '', correct: 5 },
+              { id: 31, question: 'Pattern Completion 31', answer: '', correct: 2 },
+              { id: 32, question: 'Pattern Completion 32', answer: '', correct: 6 },
+              { id: 33, question: 'Pattern Completion 33', answer: '', correct: 4 },
+              { id: 34, question: 'Pattern Completion 34', answer: '', correct: 1 },
+              { id: 35, question: 'Pattern Completion 35', answer: '', correct: 3 },
+              { id: 36, question: 'Pattern Completion 36', answer: '', correct: 5 }
+            ]
+          }
+        ],
+        rawScore: 0,
+        percentileRank: 0,
+        interpretation: '',
+        conclusions: '',
+        recommendations: ''
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 6,
+      name: 'Gilliam Autism Rating Scale - 3',
+      type: 'GARS-3',
+      description: 'Comprehensive assessment tool for identifying autism spectrum disorders',
+      template_data: {
+        type: 'GARS-3',
+        name: 'Gilliam Autism Rating Scale - 3',
+        studentName: '',
+        examinerName: '',
+        testDate: new Date().toISOString().split('T')[0],
+        description: 'The Gilliam Autism Rating Scale, Third Edition (GARS-3) is a standardized instrument used to identify autism spectrum disorders.',
+        subscales: [
+          {
+            name: 'Restricted/Repetitive Behaviors',
+            items: [
+              { id: 1, description: 'Engages in repetitive motor movements', frequency: '', severity: '' },
+              { id: 2, description: 'Insists on sameness, routines, or rituals', frequency: '', severity: '' },
+              { id: 3, description: 'Has highly restricted interests', frequency: '', severity: '' },
+              { id: 4, description: 'Hyper- or hypo-reactive to sensory input', frequency: '', severity: '' },
+              { id: 5, description: 'Lines up objects or toys', frequency: '', severity: '' },
+              { id: 6, description: 'Repeats words or phrases', frequency: '', severity: '' },
+              { id: 7, description: 'Has difficulty with changes in routine', frequency: '', severity: '' },
+              { id: 8, description: 'Shows unusual attachments to objects', frequency: '', severity: '' }
+            ]
+          },
+          {
+            name: 'Social Interaction',
+            items: [
+              { id: 9, description: 'Has difficulty making eye contact', frequency: '', severity: '' },
+              { id: 10, description: 'Does not respond to name being called', frequency: '', severity: '' },
+              { id: 11, description: 'Has difficulty understanding others feelings', frequency: '', severity: '' },
+              { id: 12, description: 'Prefers to play alone', frequency: '', severity: '' },
+              { id: 13, description: 'Has difficulty making friends', frequency: '', severity: '' },
+              { id: 14, description: 'Does not share interests or achievements', frequency: '', severity: '' },
+              { id: 15, description: 'Has difficulty initiating social interaction', frequency: '', severity: '' },
+              { id: 16, description: 'Does not engage in pretend play', frequency: '', severity: '' }
+            ]
+          },
+          {
+            name: 'Communication',
+            items: [
+              { id: 17, description: 'Has delayed speech development', frequency: '', severity: '' },
+              { id: 18, description: 'Repeats words or phrases heard', frequency: '', severity: '' },
+              { id: 19, description: 'Uses pronouns incorrectly', frequency: '', severity: '' },
+              { id: 20, description: 'Has difficulty expressing needs', frequency: '', severity: '' },
+              { id: 21, description: 'Does not understand jokes or sarcasm', frequency: '', severity: '' },
+              { id: 22, description: 'Has difficulty following conversations', frequency: '', severity: '' },
+              { id: 23, description: 'Speaks in flat or robotic tone', frequency: '', severity: '' },
+              { id: 24, description: 'Has difficulty with back-and-forth conversation', frequency: '', severity: '' }
+            ]
+          },
+          {
+            name: 'Emotional Regulation',
+            items: [
+              { id: 25, description: 'Has frequent emotional outbursts', frequency: '', severity: '' },
+              { id: 26, description: 'Has difficulty calming down', frequency: '', severity: '' },
+              { id: 27, description: 'Shows excessive anxiety', frequency: '', severity: '' },
+              { id: 28, description: 'Has difficulty with transitions', frequency: '', severity: '' },
+              { id: 29, description: 'Shows self-injurious behavior', frequency: '', severity: '' },
+              { id: 30, description: 'Has aggressive behavior', frequency: '', severity: '' },
+              { id: 31, description: 'Has unusual sleep patterns', frequency: '', severity: '' },
+              { id: 32, description: 'Has unusual eating habits', frequency: '', severity: '' }
+            ]
+          },
+          {
+            name: 'Cognitive Style',
+            items: [
+              { id: 33, description: 'Has excellent memory for details', frequency: '', severity: '' },
+              { id: 34, description: 'Thinks in visual terms', frequency: '', severity: '' },
+              { id: 35, description: 'Has difficulty with abstract concepts', frequency: '', severity: '' },
+              { id: 36, description: 'Shows strong interest in patterns', frequency: '', severity: '' },
+              { id: 37, description: 'Has unusual problem-solving approach', frequency: '', severity: '' },
+              { id: 38, description: 'Shows exceptional ability in specific area', frequency: '', severity: '' },
+              { id: 39, description: 'Has difficulty with flexible thinking', frequency: '', severity: '' },
+              { id: 40, description: 'Processes information differently', frequency: '', severity: '' }
+            ]
+          },
+          {
+            name: 'Maladaptive Behaviors',
+            items: [
+              { id: 41, description: 'Engages in self-stimulatory behavior', frequency: '', severity: '' },
+              { id: 42, description: 'Has difficulty with personal space', frequency: '', severity: '' },
+              { id: 43, description: 'Shows inappropriate social behavior', frequency: '', severity: '' },
+              { id: 44, description: 'Has difficulty with personal hygiene', frequency: '', severity: '' },
+              { id: 45, description: 'Engages in property destruction', frequency: '', severity: '' },
+              { id: 46, description: 'Shows inappropriate sexual behavior', frequency: '', severity: '' },
+              { id: 47, description: 'Has difficulty with personal safety', frequency: '', severity: '' },
+              { id: 48, description: 'Shows inappropriate eating behavior', frequency: '', severity: '' }
+            ]
+          }
+        ],
+        autismIndex: 0,
+        probabilityLevel: '',
+        interpretation: '',
+        conclusions: '',
+        recommendations: ''
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 7,
+      name: 'Brown Executive Function/Attention Scales',
+      type: 'Brown-EF-A',
+      description: 'Comprehensive assessment of executive function and attention processes',
+      template_data: {
+        type: 'Brown-EF-A',
+        name: 'Brown Executive Function/Attention Scales',
+        studentName: '',
+        examinerName: '',
+        testDate: new Date().toISOString().split('T')[0],
+        description: 'The Brown Executive Function/Attention Scales (Brown EF/A Scales) is a comprehensive assessment tool designed to evaluate executive function and attention processes.',
+        subscales: [
+          {
+            name: 'Organization',
+            items: [
+              { id: 1, description: 'Has difficulty organizing materials for school/work', frequency: '', impact: '' },
+              { id: 2, description: 'Loses or misplaces important items', frequency: '', impact: '' },
+              { id: 3, description: 'Has trouble keeping workspace organized', frequency: '', impact: '' },
+              { id: 4, description: 'Struggles to organize thoughts before speaking/writing', frequency: '', impact: '' },
+              { id: 5, description: 'Has difficulty planning multi-step tasks', frequency: '', impact: '' },
+              { id: 6, description: 'Forgets to bring necessary items to activities', frequency: '', impact: '' },
+              { id: 7, description: 'Has messy backpack, desk, or room', frequency: '', impact: '' },
+              { id: 8, description: 'Struggles with organizing digital files/documents', frequency: '', impact: '' }
+            ]
+          },
+          {
+            name: 'Time Management',
+            items: [
+              { id: 9, description: 'Has difficulty estimating time needed for tasks', frequency: '', impact: '' },
+              { id: 10, description: 'Often runs late to appointments or activities', frequency: '', impact: '' },
+              { id: 11, description: 'Procrastinates on starting tasks', frequency: '', impact: '' },
+              { id: 12, description: 'Has trouble completing tasks on time', frequency: '', impact: '' },
+              { id: 13, description: 'Gets absorbed in one activity, loses track of time', frequency: '', impact: '' },
+              { id: 14, description: 'Has difficulty breaking large tasks into smaller steps', frequency: '', impact: '' },
+              { id: 15, description: 'Rushes through tasks at the last minute', frequency: '', impact: '' },
+              { id: 16, description: 'Has trouble establishing daily routines', frequency: '', impact: '' }
+            ]
+          },
+          {
+            name: 'Working Memory',
+            items: [
+              { id: 17, description: 'Forgets instructions soon after hearing them', frequency: '', impact: '' },
+              { id: 18, description: 'Has trouble remembering multiple steps', frequency: '', impact: '' },
+              { id: 19, description: 'Loses track of what they were saying', frequency: '', impact: '' },
+              { id: 20, description: 'Forgets information while reading', frequency: '', impact: '' },
+              { id: 21, description: 'Has difficulty holding information in mind', frequency: '', impact: '' },
+              { id: 22, description: 'Forgets what they were supposed to do next', frequency: '', impact: '' },
+              { id: 23, description: 'Has trouble recalling recent events', frequency: '', impact: '' },
+              { id: 24, description: 'Forgets appointments or commitments', frequency: '', impact: '' }
+            ]
+          },
+          {
+            name: 'Emotional Regulation',
+            items: [
+              { id: 25, description: 'Has sudden mood changes', frequency: '', impact: '' },
+              { id: 26, description: 'Overreacts to minor frustrations', frequency: '', impact: '' },
+              { id: 27, description: 'Has difficulty calming down when upset', frequency: '', impact: '' },
+              { id: 28, description: 'Is easily frustrated by small problems', frequency: '', impact: '' },
+              { id: 29, description: 'Has explosive reactions to stress', frequency: '', impact: '' },
+              { id: 30, description: 'Has difficulty managing anxiety', frequency: '', impact: '' },
+              { id: 31, description: 'Shows excessive emotional responses', frequency: '', impact: '' },
+              { id: 32, description: 'Has difficulty with emotional self-control', frequency: '', impact: '' }
+            ]
+          },
+          {
+            name: 'Task Initiation',
+            items: [
+              { id: 33, description: 'Has trouble getting started on tasks', frequency: '', impact: '' },
+              { id: 34, description: 'Avoids starting difficult or boring tasks', frequency: '', impact: '' },
+              { id: 35, description: 'Delays beginning assignments or projects', frequency: '', impact: '' },
+              { id: 36, description: 'Has difficulty initiating daily routines', frequency: '', impact: '' },
+              { id: 37, description: 'Waits until last minute to start', frequency: '', impact: '' },
+              { id: 38, description: 'Has trouble transitioning between activities', frequency: '', impact: '' },
+              { id: 39, description: 'Appears "stuck" when starting tasks', frequency: '', impact: '' },
+              { id: 40, description: 'Needs external prompts to begin activities', frequency: '', impact: '' }
+            ]
+          },
+          {
+            name: 'Sustained Attention',
+            items: [
+              { id: 41, description: 'Has difficulty maintaining focus during tasks', frequency: '', impact: '' },
+              { id: 42, description: 'Gets easily distracted by external stimuli', frequency: '', impact: '' },
+              { id: 43, description: 'Loses focus during conversations', frequency: '', impact: '' },
+              { id: 44, description: 'Has trouble completing reading assignments', frequency: '', impact: '' },
+              { id: 45, description: 'Mind wanders during important activities', frequency: '', impact: '' },
+              { id: 46, description: 'Has trouble staying on task', frequency: '', impact: '' },
+              { id: 47, description: 'Frequently daydreams or zones out', frequency: '', impact: '' },
+              { id: 48, description: 'Has trouble maintaining attention in meetings/classes', frequency: '', impact: '' }
+            ]
+          }
+        ],
+        executiveFunctionIndex: 0,
+        attentionIndex: 0,
+        overallIndex: 0,
+        severityLevel: '',
+        interpretation: '',
+        conclusions: '',
+        recommendations: ''
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 8,
+      name: 'Early Academic Competency Assessment',
+      type: 'EACA',
+      description: 'Comprehensive screening tool for early academic skills and school readiness',
+      template_data: {
+        type: 'EACA',
+        name: 'Early Academic Competency Assessment',
+        studentName: '',
+        examinerName: '',
+        testDate: new Date().toISOString().split('T')[0],
+        description: 'The Early Academic Competency Assessment (EACA) is a comprehensive screening tool designed to evaluate early academic skills and school readiness.',
+        domains: [
+          {
+            name: 'Pre-Reading Skills',
+            items: [
+              { id: 1, skill: 'Letter Recognition', score: '', maxScore: 26, remarks: '' },
+              { id: 2, skill: 'Letter Sounds', score: '', maxScore: 26, remarks: '' },
+              { id: 3, skill: 'Print Awareness', score: '', maxScore: 10, remarks: '' },
+              { id: 4, skill: 'Phonological Awareness', score: '', maxScore: 15, remarks: '' },
+              { id: 5, skill: 'Rhyming Skills', score: '', maxScore: 10, remarks: '' },
+              { id: 6, skill: 'Syllable Segmentation', score: '', maxScore: 8, remarks: '' },
+              { id: 7, skill: 'Beginning Sounds', score: '', maxScore: 12, remarks: '' },
+              { id: 8, skill: 'Sight Word Recognition', score: '', maxScore: 20, remarks: '' }
+            ]
+          },
+          {
+            name: 'Pre-Writing Skills',
+            items: [
+              { id: 9, skill: 'Fine Motor Control', score: '', maxScore: 10, remarks: '' },
+              { id: 10, skill: 'Pencil Grip', score: '', maxScore: 5, remarks: '' },
+              { id: 11, skill: 'Hand Dominance', score: '', maxScore: 3, remarks: '' },
+              { id: 12, skill: 'Shape Drawing', score: '', maxScore: 8, remarks: '' },
+              { id: 13, skill: 'Letter Formation', score: '', maxScore: 15, remarks: '' },
+              { id: 14, skill: 'Name Writing', score: '', maxScore: 5, remarks: '' },
+              { id: 15, skill: 'Copying Patterns', score: '', maxScore: 10, remarks: '' },
+              { id: 16, skill: 'Drawing Skills', score: '', maxScore: 8, remarks: '' }
+            ]
+          },
+          {
+            name: 'Early Mathematics',
+            items: [
+              { id: 17, skill: 'Number Recognition', score: '', maxScore: 20, remarks: '' },
+              { id: 18, skill: 'Counting Skills', score: '', maxScore: 15, remarks: '' },
+              { id: 19, skill: 'One-to-One Correspondence', score: '', maxScore: 10, remarks: '' },
+              { id: 20, skill: 'Basic Addition', score: '', maxScore: 10, remarks: '' },
+              { id: 21, skill: 'Basic Subtraction', score: '', maxScore: 10, remarks: '' },
+              { id: 22, skill: 'Pattern Recognition', score: '', maxScore: 8, remarks: '' },
+              { id: 23, skill: 'Shape Recognition', score: '', maxScore: 10, remarks: '' },
+              { id: 24, skill: 'Measurement Concepts', score: '', maxScore: 5, remarks: '' }
+            ]
+          },
+          {
+            name: 'Language Development',
+            items: [
+              { id: 25, skill: 'Receptive Vocabulary', score: '', maxScore: 25, remarks: '' },
+              { id: 26, skill: 'Expressive Vocabulary', score: '', maxScore: 25, remarks: '' },
+              { id: 27, skill: 'Sentence Structure', score: '', maxScore: 15, remarks: '' },
+              { id: 28, skill: 'Following Directions', score: '', maxScore: 10, remarks: '' },
+              { id: 29, skill: 'Story Comprehension', score: '', maxScore: 10, remarks: '' },
+              { id: 30, skill: 'Oral Expression', score: '', maxScore: 10, remarks: '' },
+              { id: 31, skill: 'Grammar Usage', score: '', maxScore: 8, remarks: '' },
+              { id: 32, skill: 'Social Communication', score: '', maxScore: 10, remarks: '' }
+            ]
+          },
+          {
+            name: 'Cognitive Skills',
+            items: [
+              { id: 33, skill: 'Visual Memory', score: '', maxScore: 10, remarks: '' },
+              { id: 34, skill: 'Auditory Memory', score: '', maxScore: 10, remarks: '' },
+              { id: 35, skill: 'Spatial Awareness', score: '', maxScore: 8, remarks: '' },
+              { id: 36, skill: 'Problem Solving', score: '', maxScore: 10, remarks: '' },
+              { id: 37, skill: 'Attention Span', score: '', maxScore: 10, remarks: '' },
+              { id: 38, skill: 'Processing Speed', score: '', maxScore: 8, remarks: '' },
+              { id: 39, skill: 'Classification Skills', score: '', maxScore: 8, remarks: '' },
+              { id: 40, skill: 'Sequential Memory', score: '', maxScore: 8, remarks: '' }
+            ]
+          }
+        ],
+        totalScore: 0,
+        maxTotalScore: 0,
+        competencyLevel: '',
+        readinessLevel: '',
+        interpretation: '',
+        conclusions: '',
+        recommendations: ''
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 9,
+      name: 'Nelson-Denny Reading Test',
+      type: 'Nelson-Denny',
+      description: 'Comprehensive assessment of reading comprehension, vocabulary, and reading rate',
+      template_data: {
+        type: 'Nelson-Denny',
+        name: 'Nelson-Denny Reading Test',
+        studentName: '',
+        examinerName: '',
+        testDate: new Date().toISOString().split('T')[0],
+        description: 'The Nelson-Denny Reading Test is a standardized assessment designed to measure reading comprehension, vocabulary, and reading rate.',
+        vocabularySubtest: {
+          rawScore: 0,
+          maxScore: 80,
+          scaledScore: 0,
+          percentileRank: 0,
+          gradeEquivalent: '',
+          items: [
+            { id: 1, word: 'abundant', selected: '', correct: 'plentiful' },
+            { id: 2, word: 'analyze', selected: '', correct: 'examine' },
+            { id: 3, word: 'beneficial', selected: '', correct: 'helpful' },
+            { id: 4, word: 'comprehensive', selected: '', correct: 'complete' },
+            { id: 5, word: 'determine', selected: '', correct: 'decide' },
+            { id: 6, word: 'efficient', selected: '', correct: 'effective' },
+            { id: 7, word: 'fundamental', selected: '', correct: 'basic' },
+            { id: 8, word: 'genuine', selected: '', correct: 'authentic' },
+            { id: 9, word: 'hypothesis', selected: '', correct: 'theory' },
+            { id: 10, word: 'implement', selected: '', correct: 'execute' }
+          ]
+        },
+        comprehensionSubtest: {
+          rawScore: 0,
+          maxScore: 36,
+          scaledScore: 0,
+          percentileRank: 0,
+          gradeEquivalent: '',
+          passages: [
+            {
+              id: 1,
+              title: 'Passage 1: Scientific Discovery',
+              questions: [
+                { id: 1, question: 'What is the main topic of this passage?', selected: '', correct: 'A' },
+                { id: 2, question: 'According to the passage, what was the breakthrough?', selected: '', correct: 'C' },
+                { id: 3, question: 'What conclusion can be drawn from the evidence?', selected: '', correct: 'B' },
+                { id: 4, question: 'What does the author suggest about future research?', selected: '', correct: 'D' },
+                { id: 5, question: 'What is the tone of this passage?', selected: '', correct: 'A' },
+                { id: 6, question: 'What assumption does the author make?', selected: '', correct: 'C' }
+              ]
+            }
+          ]
+        },
+        readingRateSubtest: {
+          wordsPerMinute: 0,
+          accuracy: 0,
+          comprehensionAccuracy: 0,
+          scaledScore: 0,
+          percentileRank: 0,
+          gradeEquivalent: '',
+          passageLength: 600,
+          timeLimit: 60
+        },
+        totalScore: 0,
+        overallReadingLevel: '',
+        interpretation: '',
+        conclusions: '',
+        recommendations: ''
       },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -133,99 +624,24 @@ She showed some difficulty with verbal expression of meaning of words presented 
 
   const loadStaticTemplates = () => {
     setLoading(true);
+    // Filter templates based on search and filter
+    let filteredTemplates = staticTemplates;
     
-    // Simulate loading delay for better UX
-    setTimeout(() => {
-      let filteredTemplates = staticTemplates;
-      
-      // Apply search filter
-      if (searchTerm) {
-        filteredTemplates = filteredTemplates.filter(template =>
-          template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          template.description.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-      }
-      
-      // Apply type filter
-      if (filterType) {
-        filteredTemplates = filteredTemplates.filter(template =>
-          template.type === filterType
-        );
-      }
-      
-      setTemplates(filteredTemplates);
-      setLoading(false);
-    }, 500);
-  };
-
-  const createDefaultAstonIndexTemplate = async () => {
-    try {
-      const defaultAstonIndexData = {
-        name: 'Aston Index Assessment',
-        type: 'Aston-Index',
-        description: 'Comprehensive battery of tests for diagnosing language difficulties in children',
-        template_data: {
-          name: 'Aston Index Assessment',
-          studentName: '',
-          examinerName: '',
-          testDate: new Date().toISOString().split('T')[0],
-          description: 'The Aston Index is a comprehensive battery of tests for diagnosing language difficulties in children. It provides a systematic approach to identifying specific areas of difficulty in language development, including underlying abilities and attainment levels.',
-          performanceItems: [
-            { id: 1, test: 'Child\'s laterality', score: 'Left', remarks: '' },
-            { id: 2, test: 'Copying name', score: '8', remarks: '' },
-            { id: 3, test: 'Free writing', score: 'NA', remarks: '' },
-            { id: 4, test: 'Visual sequential memory (pictorial)', score: '3', remarks: '' },
-            { id: 5, test: 'Auditory sequential memory', score: '6 (8 forward, 4 reverse)', remarks: '' },
-            { id: 6, test: 'Sound Blending', score: '4', remarks: '' },
-            { id: 7, test: 'Visual Sequential memory (symbolic)', score: '7', remarks: '' },
-            { id: 8, test: 'Sound discrimination', score: '9', remarks: '' },
-            { id: 9, test: 'Grapho-motor test', score: 'NA', remarks: '' }
-          ],
-          interpretation: 'The student demonstrates varying abilities across different cognitive and language domains. In picture recognition, the student shows age-appropriate visual processing skills. Vocabulary development appears to be within expected range for the age group.',
-          conclusions: 'Based on the assessment results, the student shows strengths in certain areas while requiring support in others.',
-          recommendations: 'Recommendations include targeted interventions to strengthen specific language and cognitive skills identified during assessment.'
-        }
-      };
-
-      const response = await api.createTemplate(defaultAstonIndexData);
-      if (response.success) {
-        toast.success('Default Aston Index template created successfully');
-        fetchTemplates(); // Refresh the list
-      }
-    } catch (error) {
-      console.error('Error creating default Aston Index template:', error);
-      toast.error('Failed to create default template');
+    if (searchTerm) {
+      filteredTemplates = filteredTemplates.filter(template =>
+        template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        template.description.toLowerCase().includes(searchTerm.toLowerCase())
+      );
     }
-  };
-
-  const handleTemplateSave = (templateData) => {
-    if (isEditing && selectedTemplate) {
-      // Update existing template in static list
-      setTemplates(prev => prev.map(t => 
-        t.id === selectedTemplate.id 
-          ? { ...t, template_data: templateData, updated_at: new Date().toISOString() }
-          : t
-      ));
-      toast.success('Template updated successfully (Design Mode)');
-    } else {
-      // Create new template in static list
-      const newTemplate = {
-        id: Date.now(),
-        name: templateData.name || 'New Template',
-        description: templateData.description || '',
-        type: templateData.type || 'ADHDT2',
-        template_data: templateData,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      setTemplates(prev => [...prev, newTemplate]);
-      toast.success('Template created successfully (Design Mode)');
+    
+    if (filterType) {
+      filteredTemplates = filteredTemplates.filter(template =>
+        template.type === filterType
+      );
     }
-    handleBackToList();
-  };
-
-  const handleTemplateCancel = () => {
-    handleBackToList();
+    
+    setTemplates(filteredTemplates);
+    setLoading(false);
   };
 
   const handleCreateTemplate = () => {
@@ -242,14 +658,23 @@ She showed some difficulty with verbal expression of meaning of words presented 
 
   const handleViewTemplate = (template) => {
     setSelectedTemplate(template);
+    setIsEditing(false);
+    setShowCreateForm(false);
     setViewMode('view');
-    setActiveTab('details');
   };
 
   const handleEditTemplate = (template) => {
     setSelectedTemplate(template);
     setIsEditing(true);
+    setShowCreateForm(false);
     setViewMode('edit');
+  };
+
+  const handleGenerateReport = (template) => {
+    setSelectedTemplate(template);
+    setIsEditing(false);
+    setShowCreateForm(false);
+    setViewMode('view');
   };
 
   const handleBackToList = () => {
@@ -262,11 +687,13 @@ She showed some difficulty with verbal expression of meaning of words presented 
   const handleDuplicateTemplate = (template) => {
     const newTemplate = {
       ...template,
+      id: Date.now(),
       name: `${template.name} (Copy)`,
-      id: Date.now()
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
     setTemplates(prev => [...prev, newTemplate]);
-    toast.success('Template duplicated successfully');
+    toast.success('Template duplicated successfully (Design Mode)');
   };
 
   const handleDeleteTemplate = (template) => {
@@ -276,10 +703,52 @@ She showed some difficulty with verbal expression of meaning of words presented 
     }
   };
 
+  const handleTemplateSave = (templateData) => {
+    if (isEditing && selectedTemplate) {
+      // Update existing template
+      setTemplates(prev => prev.map(t => 
+        t.id === selectedTemplate.id 
+          ? { ...t, template_data: templateData, updated_at: new Date().toISOString() }
+          : t
+      ));
+      toast.success('Template updated successfully (Design Mode)');
+    } else {
+      // Create new template
+      const newTemplate = {
+        id: Date.now(),
+        name: templateData.name || 'Untitled Template',
+        type: templateData.type || 'ADHDT2',
+        description: templateData.description || 'No description',
+        template_data: templateData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      setTemplates(prev => [...prev, newTemplate]);
+      toast.success('Template created successfully (Design Mode)');
+    }
+    handleBackToList();
+  };
+
+  const handleTemplateCancel = () => {
+    handleBackToList();
+  };
+
   const getTypeIcon = (type) => {
     switch (type) {
       case 'ADHDT2':
         return <FiFileText className="w-5 h-5 text-blue-500" />;
+      case 'BKT':
+        return <FiFileText className="w-5 h-5 text-orange-500" />;
+      case 'Ravens-CPM':
+        return <FiFileText className="w-5 h-5 text-indigo-500" />;
+      case 'GARS-3':
+        return <FiFileText className="w-5 h-5 text-red-500" />;
+      case 'Brown-EF-A':
+        return <FiFileText className="w-5 h-5 text-yellow-500" />;
+      case 'EACA':
+        return <FiFileText className="w-5 h-5 text-teal-500" />;
+      case 'Nelson-Denny':
+        return <FiFileText className="w-5 h-5 text-cyan-500" />;
       default:
         return <FiFileText className="w-5 h-5 text-gray-500" />;
     }
@@ -291,6 +760,24 @@ She showed some difficulty with verbal expression of meaning of words presented 
     }
     if (type === 'Aston-Index' || templateName?.toLowerCase().includes('aston')) {
       return 'bg-purple-100 text-purple-800';
+    }
+    if (type === 'BKT' || templateName?.toLowerCase().includes('bkt')) {
+      return 'bg-orange-100 text-orange-800';
+    }
+    if (type === 'Ravens-CPM' || templateName?.toLowerCase().includes('raven')) {
+      return 'bg-indigo-100 text-indigo-800';
+    }
+    if (type === 'GARS-3' || templateName?.toLowerCase().includes('gars')) {
+      return 'bg-red-100 text-red-800';
+    }
+    if (type === 'Brown-EF-A' || templateName?.toLowerCase().includes('brown')) {
+      return 'bg-yellow-100 text-yellow-800';
+    }
+    if (type === 'EACA' || templateName?.toLowerCase().includes('eaca')) {
+      return 'bg-teal-100 text-teal-800';
+    }
+    if (type === 'Nelson-Denny' || templateName?.toLowerCase().includes('nelson')) {
+      return 'bg-cyan-100 text-cyan-800';
     }
     switch (type) {
       case 'ADHDT2':
@@ -314,7 +801,19 @@ She showed some difficulty with verbal expression of meaning of words presented 
                         (selectedTemplate?.name?.toLowerCase().includes('dsm') ? 'ADHT-BSM' : 
                          selectedTemplate?.template_data?.name?.toLowerCase().includes('dsm') ? 'ADHT-BSM' : 
                          selectedTemplate?.name?.toLowerCase().includes('aston') ? 'Aston-Index' :
-                         selectedTemplate?.template_data?.name?.toLowerCase().includes('aston') ? 'Aston-Index' : 'ADHDT2');
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('aston') ? 'Aston-Index' :
+                         selectedTemplate?.name?.toLowerCase().includes('bkt') ? 'BKT' :
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('bkt') ? 'BKT' :
+                         selectedTemplate?.name?.toLowerCase().includes('raven') ? 'Ravens-CPM' :
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('raven') ? 'Ravens-CPM' :
+                         selectedTemplate?.name?.toLowerCase().includes('gars') ? 'GARS-3' :
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('gars') ? 'GARS-3' :
+                         selectedTemplate?.name?.toLowerCase().includes('brown') ? 'Brown-EF-A' :
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('brown') ? 'Brown-EF-A' :
+                         selectedTemplate?.name?.toLowerCase().includes('eaca') ? 'EACA' :
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('eaca') ? 'EACA' :
+                         selectedTemplate?.name?.toLowerCase().includes('nelson') ? 'Nelson-Denny' :
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('nelson') ? 'Nelson-Denny' : 'ADHDT2');
     
     if (templateType === 'ADHT-BSM') {
       return (
@@ -337,6 +836,72 @@ She showed some difficulty with verbal expression of meaning of words presented 
         />
       );
     }
+
+    if (templateType === 'BKT') {
+      return (
+        <BKTTemplate
+          onSave={handleTemplateSave}
+          onCancel={handleTemplateCancel}
+          studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
+          examinerName={selectedTemplate?.template_data?.examinerName || 'Dr. Smith'}
+        />
+      );
+    }
+
+    if (templateType === 'Ravens-CPM') {
+      return (
+        <RavensCPMTemplate
+          onSave={handleTemplateSave}
+          onCancel={handleTemplateCancel}
+          studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
+          examinerName={selectedTemplate?.template_data?.examinerName || 'Dr. Smith'}
+        />
+      );
+    }
+
+    if (templateType === 'GARS-3') {
+      return (
+        <GARS3Template
+          onSave={handleTemplateSave}
+          onCancel={handleTemplateCancel}
+          studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
+          examinerName={selectedTemplate?.template_data?.examinerName || 'Dr. Smith'}
+        />
+      );
+    }
+
+    if (templateType === 'Brown-EF-A') {
+      return (
+        <BrownEFAScaleTemplate
+          onSave={handleTemplateSave}
+          onCancel={handleTemplateCancel}
+          studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
+          examinerName={selectedTemplate?.template_data?.examinerName || 'Dr. Smith'}
+        />
+      );
+    }
+
+    if (templateType === 'EACA') {
+      return (
+        <EACATemplate
+          onSave={handleTemplateSave}
+          onCancel={handleTemplateCancel}
+          studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
+          examinerName={selectedTemplate?.template_data?.examinerName || 'Dr. Smith'}
+        />
+      );
+    }
+
+    if (templateType === 'Nelson-Denny') {
+      return (
+        <NelsonDennyReadingTestTemplate
+          onSave={handleTemplateSave}
+          onCancel={handleTemplateCancel}
+          studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
+          examinerName={selectedTemplate?.template_data?.examinerName || 'Dr. Smith'}
+        />
+      );
+    }
     
     return (
       <ADHDT2Template
@@ -350,559 +915,74 @@ She showed some difficulty with verbal expression of meaning of words presented 
 
   if (viewMode === 'view' && selectedTemplate) {
     return (
-      <div className="lg:ml-64 min-h-screen bg-gray-50">
-        <div className="p-4 lg:p-6">
-          {/* Header */}
-          <div className="flex items-center mb-6">
-            <button
-              onClick={handleBackToList}
-              className="mr-4 p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <FiFileText className="w-5 h-5" />
-            </button>
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-800">Template Details</h1>
-              <p className="text-gray-600">View and manage template information</p>
-            </div>
-          </div>
-
-          {/* Template Content */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-xl shadow-sm border p-6"
-          >
-            {/* Tab Navigation */}
-            <div className="flex space-x-1 mb-6 border-b">
-              <button
-                onClick={() => setActiveTab('details')}
-                className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-                  activeTab === 'details'
-                    ? 'text-blue-600 border-blue-600'
-                    : 'text-gray-500 border-transparent hover:text-gray-700'
-                }`}
-              >
-                Details
-              </button>
-              <button
-                onClick={() => setActiveTab('preview')}
-                className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-                  activeTab === 'preview'
-                    ? 'text-blue-600 border-blue-600'
-                    : 'text-gray-500 border-transparent hover:text-gray-700'
-                }`}
-              >
-                Preview
-              </button>
-            </div>
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h2 className="text-xl font-semibold text-gray-800 mb-2">
-                  {selectedTemplate.template_data?.name || selectedTemplate.name || 'Untitled Template'}
-                </h2>
-                <span className={`inline-block px-3 py-1 text-sm rounded-full ${getTypeColor(selectedTemplate.template_data?.type, selectedTemplate.template_data?.name || selectedTemplate.name)}`}>
-                  {selectedTemplate.template_data?.type || selectedTemplate.type || 'Unknown'}
-                </span>
-              </div>
-              
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => handleEditTemplate(selectedTemplate)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center transition-colors"
-                >
-                  <FiEdit2 className="w-4 h-4 mr-2" />
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDuplicateTemplate(selectedTemplate)}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center transition-colors"
-                >
-                  <FiCopy className="w-4 h-4 mr-2" />
-                  Duplicate
-                </button>
-                <button
-                  onClick={() => handleDeleteTemplate(selectedTemplate)}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center transition-colors"
-                >
-                  <FiTrash2 className="w-4 h-4 mr-2" />
-                  Delete
-                </button>
-              </div>
-            </div>
-
-            {/* Tab Content */}
-            {activeTab === 'details' ? (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-medium text-gray-800 mb-2">Description</h3>
-                  <p className="text-gray-600">
-                    {selectedTemplate.description || selectedTemplate.template_data?.description || 'No description available'}
-                  </p>
-                </div>
-
-                {selectedTemplate.template_data?.studentName && (
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-800 mb-2">Student Name</h3>
-                    <p className="text-gray-600">{selectedTemplate.template_data.studentName}</p>
-                  </div>
-                )}
-
-                {selectedTemplate.template_data?.examinerName && (
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-800 mb-2">Examiner Name</h3>
-                    <p className="text-gray-600">{selectedTemplate.template_data.examinerName}</p>
-                  </div>
-                )}
-
-                {selectedTemplate.template_data?.subscales && (
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-800 mb-2">Subscales</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {selectedTemplate.template_data.subscales.map((subscale, index) => (
-                        <div key={index} className="bg-gray-50 rounded-lg p-4">
-                          <h4 className="font-medium text-gray-800">{subscale.name}</h4>
-                          <p className="text-sm text-gray-600">Raw Score: {subscale.rawScore}</p>
-                          <p className="text-sm text-gray-600">Scaled Score: {subscale.scaledScore}</p>
-                          {subscale.percentileRank && (
-                            <p className="text-sm text-gray-600">Percentile: {subscale.percentileRank}</p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <h3 className="text-lg font-medium text-gray-800 mb-2">Template Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium text-gray-700">Created:</span>
-                      <span className="ml-2 text-gray-600">
-                        {new Date(selectedTemplate.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">Last Updated:</span>
-                      <span className="ml-2 text-gray-600">
-                        {new Date(selectedTemplate.updated_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {/* Template-specific Preview */}
-                {selectedTemplate.template_data?.type === 'ADHT-BSM' || 
-                 selectedTemplate?.name?.toLowerCase().includes('dsm') || 
-                 selectedTemplate?.template_data?.name?.toLowerCase().includes('dsm') ? (
-                  <div className="bg-white rounded-lg border-2 border-gray-200">
-                    <div className="p-8">
-                      {/* Template Header */}
-                      <div className="text-center mb-8 border-b-2 border-gray-200 pb-6">
-                        <h1 className="text-2xl font-bold text-gray-800 mb-4">
-                          ATTENTION-DEFICIT/HYPERACTIVITY DISORDER - DSM 5 CHECKLIST
-                        </h1>
-                        <div className="flex justify-center items-center space-x-8 text-sm text-gray-600 mb-4">
-                          <span>Student: <strong className="text-green-600">{selectedTemplate.template_data?.studentName || '[Student Name]'}</strong></span>
-                          <span>Examiner: <strong className="text-green-600">{selectedTemplate.template_data?.examinerName || '[Examiner Name]'}</strong></span>
-                          <span>Date: <strong className="text-green-600">{selectedTemplate.template_data?.testDate || '[Test Date]'}</strong></span>
-                        </div>
-                      </div>
-
-                      {/* Excel-style Preview */}
-                      <div className="border border-black">
-                        {/* Inattention Preview */}
-                        <div className="border-b border-black">
-                          <div className="bg-gray-100 p-2 text-center font-semibold text-sm">
-                            INATTENTION
-                          </div>
-                          {(selectedTemplate.template_data?.inattentionCriteria || [
-                            { id: 'A1', text: 'Often fails to give close attention to details or makes careless mistakes in schoolwork, at work, or during other activities', checked: false },
-                            { id: 'A2', text: 'Often has trouble sustaining attention in tasks or play activities', checked: false },
-                            { id: 'A3', text: 'Often does not seem to listen when spoken to directly', checked: false },
-                            { id: 'A4', text: 'Often does not follow through on instructions and fails to finish schoolwork, chores, or duties in the workplace', checked: false },
-                            { id: 'A5', text: 'Often has difficulty organizing tasks and activities', checked: false },
-                            { id: 'A6', text: 'Often avoids, dislikes, or is reluctant to engage in tasks that require sustained mental effort', checked: false },
-                            { id: 'A7', text: 'Often loses things necessary for tasks or activities', checked: false },
-                            { id: 'A8', text: 'Is often easily distracted by extraneous stimuli', checked: false },
-                            { id: 'A9', text: 'Is often forgetful in daily activities', checked: false }
-                          ]).map((criteria) => (
-                            <div key={criteria.id} className="border-b border-black">
-                              <div className="grid grid-cols-12">
-                                <div className="col-span-1 border-r border-black p-2 text-center font-medium text-xs">
-                                  {criteria.id}
-                                </div>
-                                <div className="col-span-10 border-r border-black p-2 text-xs">
-                                  {criteria.text}
-                                </div>
-                                <div className="col-span-1 p-2 text-center text-xs font-semibold">
-                                  {criteria.checked ? 'Y' : ''}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                          <div className="grid grid-cols-12">
-                            <div className="col-span-1 border-r border-black p-2 text-center font-bold text-xs">
-                              TOTAL
-                            </div>
-                            <div className="col-span-10 border-r border-black p-2"></div>
-                            <div className="col-span-1 p-2 text-center font-bold underline text-xs">
-                              {selectedTemplate.template_data?.inattentionTotal || 0}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Hyperactivity Preview */}
-                        <div>
-                          <div className="bg-gray-100 p-2 text-center font-semibold text-sm">
-                            HYPERACTIVITY AND IMPULSIVITY
-                            <div className="text-xs font-normal">
-                              (Only behaviours occurring for 6 months or more are ticked)
-                            </div>
-                          </div>
-                          {(selectedTemplate.template_data?.hyperactivityCriteria || [
-                            { id: 'A10', text: 'Often fidgets with or taps hands or feet or squirms in seat', checked: false },
-                            { id: 'A11', text: 'Often leaves seat in situations when remaining seated is expected', checked: false },
-                            { id: 'A12', text: 'Often runs about or climbs in situations where it is inappropriate', checked: false }
-                          ]).map((criteria) => (
-                            <div key={criteria.id} className="border-b border-black">
-                              <div className="grid grid-cols-12">
-                                <div className="col-span-1 border-r border-black p-2 text-center font-medium text-xs">
-                                  {criteria.id}
-                                </div>
-                                <div className="col-span-10 border-r border-black p-2 text-xs">
-                                  {criteria.text}
-                                </div>
-                                <div className="col-span-1 p-2 text-center text-xs font-semibold">
-                                  {criteria.checked ? 'Y' : ''}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                          <div className="grid grid-cols-12">
-                            <div className="col-span-1 border-r border-black p-2 text-center font-bold text-xs">
-                              TOTAL
-                            </div>
-                            <div className="col-span-10 border-r border-black p-2"></div>
-                            <div className="col-span-1 p-2 text-center font-bold underline text-xs">
-                              {selectedTemplate.template_data?.hyperactivityTotal || 0}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Remarks */}
-                      {selectedTemplate.template_data?.remarks && (
-                        <div className="mt-4">
-                          <h6 className="font-semibold text-gray-800 mb-2">Remarks</h6>
-                          <p className="text-sm text-gray-700">{selectedTemplate.template_data.remarks}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ) : selectedTemplate.template_data?.type === 'Aston-Index' || 
-                 selectedTemplate?.name?.toLowerCase().includes('aston') || 
-                 selectedTemplate?.template_data?.name?.toLowerCase().includes('aston') ? (
-                  /* Aston Index Preview */
-                  <div className="bg-white rounded-lg border-2 border-gray-200">
-                    <div className="p-8">
-                      {/* Template Header */}
-                      <div className="text-center mb-8 border-b-2 border-gray-200 pb-6">
-                        <h1 className="text-2xl font-bold text-gray-800 mb-4">
-                          ASTON INDEX ASSESSMENT REPORT
-                        </h1>
-                        <div className="flex justify-center items-center space-x-8 text-sm text-gray-600 mb-4">
-                          <span>Student: <strong className="text-purple-600">{selectedTemplate.template_data?.studentName || '[Student Name]'}</strong></span>
-                          <span>Examiner: <strong className="text-purple-600">{selectedTemplate.template_data?.examinerName || '[Examiner Name]'}</strong></span>
-                          <span>Date: <strong className="text-purple-600">{selectedTemplate.template_data?.testDate || '[Test Date]'}</strong></span>
-                        </div>
-                      </div>
-
-                      {/* Performance Items Table */}
-                      <div className="mb-8">
-                        <h2 className="text-xl font-semibold text-gray-800 mb-4 text-center">1. ASTON INDEX</h2>
-                        <div className="border border-black">
-                          <div className="bg-purple-50 p-2 text-center font-semibold text-sm border-b border-black">
-                            1. ASTON INDEX
-                          </div>
-                          
-                          <div className="p-3 border-b border-black">
-                            <p className="text-xs text-gray-700 leading-relaxed">
-                              The Aston Index is a comprehensive battery of tests for diagnosing language difficulties in children. 
-                              It identifies children with special educational needs, language difficulties, auditory and visual 
-                              perception difficulties, reading and spelling difficulties. The index contains 16 tests.
-                            </p>
-                          </div>
-
-                          {/* Section I */}
-                          <div className="border-b border-black">
-                            <div className="bg-gray-100 p-2 text-center font-semibold text-sm border-b border-black">
-                              SECTION I: GENERAL UNDERLYING ABILITY AND ATTAINMENT
-                            </div>
-                            <div className="grid grid-cols-12 border-b border-black bg-gray-50">
-                              <div className="col-span-1 border-r border-black p-1 text-center font-bold text-xs">S.No</div>
-                              <div className="col-span-8 border-r border-black p-1 text-center font-bold text-xs">Test</div>
-                              <div className="col-span-3 p-1 text-center font-bold text-xs">Score</div>
-                            </div>
-                            {(selectedTemplate.template_data?.generalUnderlyingAbility || [
-                              { id: 1, test: 'Picture Recognition', score: '9' },
-                              { id: 2, test: 'Vocabulary', score: '5/6 years' },
-                              { id: 3, test: 'Good-enough draw-a-man', score: '4 years(MA)' },
-                              { id: 4, test: 'Copying geometric designs', score: '6' },
-                              { id: 5, test: 'Grapheme-Phoneme correspondence', score: 'Could identify the uppercase and lower case letter, but could not say the individual specific sounds' },
-                              { id: 6, test: 'Schonell\'s reading test', score: 'NA' },
-                              { id: 7, test: 'Schonell\'s spelling test', score: 'NA' },
-                              { id: 8, test: 'Visual discrimination test', score: '9' }
-                            ]).map((item, index) => (
-                              <div key={item.id} className="border-b border-black">
-                                <div className="grid grid-cols-12">
-                                  <div className="col-span-1 border-r border-black p-1 text-center text-xs">
-                                    {index + 1}
-                                  </div>
-                                  <div className="col-span-8 border-r border-black p-1 text-xs">
-                                    {item.test}
-                                  </div>
-                                  <div className="col-span-3 p-1 text-center text-xs">
-                                    {item.score}
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Section II */}
-                          <div>
-                            <div className="bg-gray-100 p-2 text-center font-semibold text-sm border-b border-black">
-                              SECTION II: PERFORMANCE ITEMS
-                            </div>
-                            <div className="grid grid-cols-12 border-b border-black bg-gray-50">
-                              <div className="col-span-1 border-r border-black p-1 text-center font-bold text-xs">S.No</div>
-                              <div className="col-span-8 border-r border-black p-1 text-center font-bold text-xs">Test</div>
-                              <div className="col-span-3 p-1 text-center font-bold text-xs">Score</div>
-                            </div>
-                            {(selectedTemplate.template_data?.performanceItems || [
-                              { id: 9, test: 'Child\'s laterality', score: 'Left' },
-                              { id: 10, test: 'Copying name', score: '8' },
-                              { id: 11, test: 'Free writing', score: 'NA' },
-                              { id: 12, test: 'Visual sequential memory (pictorial)', score: '3' },
-                              { id: 13, test: 'Auditory sequential memory', score: '6 (8 forward, 4 reverse)' },
-                              { id: 14, test: 'Sound Blending', score: '4' },
-                              { id: 15, test: 'Visual Sequential memory (symbolic)', score: '7' },
-                              { id: 16, test: 'Sound discrimination', score: '9' },
-                              { id: 17, test: 'Grapho-motor test', score: 'NA' }
-                            ]).map((item, index) => (
-                              <div key={item.id} className="border-b border-black">
-                                <div className="grid grid-cols-12">
-                                  <div className="col-span-1 border-r border-black p-1 text-center text-xs">
-                                    {index + 1}
-                                  </div>
-                                  <div className="col-span-8 border-r border-black p-1 text-xs">
-                                    {item.test}
-                                  </div>
-                                  <div className="col-span-3 p-1 text-center text-xs">
-                                    {item.score}
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Interpretation */}
-                      {selectedTemplate.template_data?.interpretation && (
-                        <div className="mb-6">
-                          <h2 className="text-xl font-semibold text-gray-800 mb-4">Interpretation</h2>
-                          <div className="bg-purple-50 rounded-lg p-6">
-                            <p className="text-gray-700 leading-relaxed text-sm whitespace-pre-wrap">
-                              {selectedTemplate.template_data.interpretation}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Conclusions */}
-                      {selectedTemplate.template_data?.conclusions && (
-                        <div className="mb-6">
-                          <h2 className="text-xl font-semibold text-gray-800 mb-4">Conclusions</h2>
-                          <div className="bg-blue-50 rounded-lg p-6">
-                            <p className="text-gray-700 leading-relaxed text-sm whitespace-pre-wrap">
-                              {selectedTemplate.template_data.conclusions}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Recommendations */}
-                      {selectedTemplate.template_data?.recommendations && (
-                        <div className="mb-6">
-                          <h2 className="text-xl font-semibold text-gray-800 mb-4">Recommendations</h2>
-                          <div className="bg-green-50 rounded-lg p-6">
-                            <p className="text-gray-700 leading-relaxed text-sm whitespace-pre-wrap">
-                              {selectedTemplate.template_data.recommendations}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  /* ADHDT-2 Preview */
-                  <div className="bg-white rounded-lg border-2 border-gray-200">
-                    <div className="p-8">
-                      {/* Template Header */}
-                      <div className="text-center mb-8 border-b-2 border-gray-200 pb-6">
-                        <h1 className="text-3xl font-bold text-gray-800 mb-4">
-                          {selectedTemplate.template_data?.name || 'Assessment Report'}
-                        </h1>
-                        <div className="flex justify-center items-center space-x-8 text-sm text-gray-600 mb-4">
-                          <span>Student: <strong className="text-blue-600">{selectedTemplate.template_data?.studentName || '[Student Name]'}</strong></span>
-                          <span>Examiner: <strong className="text-blue-600">{selectedTemplate.template_data?.examinerName || '[Examiner Name]'}</strong></span>
-                          <span>Date: <strong className="text-blue-600">{selectedTemplate.template_data?.testDate || '[Test Date]'}</strong></span>
-                        </div>
-                      </div>
-
-                      {/* Template Description */}
-                      {selectedTemplate.template_data?.description && (
-                        <div className="mb-8">
-                          <h2 className="text-xl font-semibold text-gray-800 mb-4">Assessment Description</h2>
-                          <div className="bg-blue-50 rounded-lg p-6">
-                            <p className="text-gray-700 leading-relaxed text-base">
-                              {selectedTemplate.template_data.description}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Test Results Section */}
-                      <div className="mb-8">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Test Results</h2>
-                        
-                        {/* Results Table */}
-                        <div className="overflow-x-auto mb-8">
-                          <table className="w-full border-collapse border-2 border-gray-300 shadow-lg">
-                            <thead>
-                              <tr className="bg-gradient-to-r from-blue-50 to-blue-100">
-                                <th className="border-2 border-gray-300 px-6 py-4 text-left font-bold text-gray-800">Subscales</th>
-                                <th className="border-2 border-gray-300 px-6 py-4 text-center font-bold text-gray-800">Raw Scores</th>
-                                <th className="border-2 border-gray-300 px-6 py-4 text-center font-bold text-gray-800">Percentile Ranks</th>
-                                <th className="border-2 border-gray-300 px-6 py-4 text-center font-bold text-gray-800">Scaled Scores</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {selectedTemplate.template_data?.subscales?.map((subscale, index) => (
-                                <tr key={index} className="hover:bg-blue-50 transition-colors">
-                                  <td className="border-2 border-gray-300 px-6 py-4 font-medium text-gray-800">{subscale.name}</td>
-                                  <td className="border-2 border-gray-300 px-6 py-4 text-center font-semibold text-blue-600">{subscale.rawScore}</td>
-                                  <td className="border-2 border-gray-300 px-6 py-4 text-center font-semibold text-blue-600">{subscale.percentileRank}</td>
-                                  <td className="border-2 border-gray-300 px-6 py-4 text-center font-semibold text-blue-600">{subscale.scaledScore}</td>
-                                </tr>
-                              ))}
-                              <tr className="bg-gradient-to-r from-gray-100 to-gray-200 font-bold">
-                                <td className="border-2 border-gray-300 px-6 py-4 font-bold text-gray-800">ADHD Index</td>
-                                <td className="border-2 border-gray-300 px-6 py-4 text-center font-bold text-red-600" colSpan="3">
-                                  {selectedTemplate.template_data?.adhdIndex || 0}
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-
-                      {/* Assessment Remark */}
-                      {selectedTemplate.template_data?.remark && (
-                        <div className="mb-8">
-                          <h2 className="text-xl font-semibold text-gray-800 mb-4">Assessment Remark</h2>
-                          <div className="bg-green-50 rounded-lg p-6">
-                            <p className="text-gray-700 leading-relaxed text-base">
-                              {selectedTemplate.template_data.remark}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Disclaimer */}
-                      <div className="mb-8">
-                        <h2 className="text-xl font-semibold text-gray-800 mb-4">Disclaimer</h2>
-                        <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-6">
-                          <p className="text-gray-700 leading-relaxed text-base">
-                            {selectedTemplate.template_data?.disclaimer || 'The scores listed in the table imply that it is \'very likely\' that [Student Name] has symptoms of ADHD. However, the checklist cannot be fully endorsed by the tester due to the one-to-one situation. The scores are based on the reports from the mother.'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </motion.div>
-        </div>
-      </div>
+      <AssessmentReportGenerator
+        template={selectedTemplate.template_data}
+        studentName={selectedTemplate.template_data?.studentName || 'Student'}
+        examinerName={selectedTemplate.template_data?.examinerName || 'Examiner'}
+        testDate={selectedTemplate.template_data?.testDate || new Date().toISOString().split('T')[0]}
+        onEdit={() => handleEditTemplate(selectedTemplate)}
+      />
     );
   }
 
+  // Main return for template list view
   return (
     <div className="lg:ml-64 min-h-screen bg-gray-50">
       <div className="p-4 lg:p-6">
         {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 space-y-4 lg:space-y-0">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex justify-between items-center mb-8"
+        >
           <div>
-            <h1 className="text-2xl font-semibold text-gray-800">Assessment Templates</h1>
-            <p className="text-gray-600">Create and manage assessment templates</p>
+            <h1 className="text-3xl font-bold text-gray-800">Assessment Templates</h1>
+            <p className="text-gray-600 mt-2">Manage and create assessment templates</p>
           </div>
-          
-          <div className="flex space-x-2">
-          <button
-            onClick={createDefaultAstonIndexTemplate}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center transition-colors"
-          >
-            <FiPlus className="w-4 h-4 mr-2" />
-            Add Aston Index
-          </button>
           <button
             onClick={handleCreateTemplate}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center transition-colors"
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center space-x-2 transition-colors"
           >
-            <FiPlus className="w-4 h-4 mr-2" />
-            Create Template
+            <FiPlus className="w-5 h-5" />
+            <span>Create Template</span>
           </button>
-        </div>
-        </div>
+        </motion.div>
 
-        {/* Search */}
+        {/* Search and Filter */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl p-6 shadow-sm border mb-6"
+          className="bg-white rounded-xl shadow-sm border p-6 mb-6"
         >
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Search templates..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="relative">
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search templates..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
             </div>
-            <div className="lg:w-48">
-              <div className="relative">
-                <FiFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <select
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
-                >
-                  <option value="">All Types</option>
-                  <option value="ADHDT2">ADHDT-2</option>
-                  <option value="ADHT-BSM">ADHT-BSM</option>
-                  <option value="Aston-Index">Aston Index</option>
-                </select>
-              </div>
+            <div className="relative">
+              <FiFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
+              >
+                <option value="">All Types</option>
+                <option value="ADHDT2">ADHDT-2</option>
+                <option value="ADHT-BSM">ADHT-BSM</option>
+                <option value="Aston-Index">Aston Index</option>
+                <option value="BKT">BKT</option>
+                <option value="Ravens-CPM">Raven's CPM</option>
+                <option value="GARS-3">GARS-3</option>
+                <option value="Brown-EF-A">Brown EF-A Scale</option>
+                <option value="EACA">EACA</option>
+                <option value="Nelson-Denny">Nelson-Denny</option>
+              </select>
             </div>
           </div>
         </motion.div>
@@ -912,92 +992,77 @@ She showed some difficulty with verbal expression of meaning of words presented 
           <div className="flex justify-center items-center h-64 bg-white rounded-xl shadow-sm border">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
           </div>
-        ) : templates.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-xl shadow-sm border">
-            <FiFileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No templates found</h3>
-            <p className="text-gray-600 mb-4">
-              {searchTerm || filterType ? 'Try adjusting your search or filters' : 'Create your first template to get started'}
-            </p>
-            <button
-              onClick={handleCreateTemplate}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Create Template
-            </button>
-          </div>
         ) : (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-white rounded-xl shadow-sm border overflow-hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-              {templates.map((template) => (
-                <div
-                  key={template.id}
-                  onClick={() => handleViewTemplate(template)}
-                  className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center">
-                      {getTypeIcon(template.template_data?.type)}
-                      <div className="ml-2">
-                        <h3 className="font-semibold text-gray-800 truncate">
-                          {template.template_data?.name || template.name || 'Untitled Template'}
-                        </h3>
-                        <span className={`inline-block px-2 py-1 text-xs rounded-full ${getTypeColor(template.template_data?.type, template.template_data?.name || template.name)}`}>
-                          {template.template_data?.type || template.type || 'Unknown'}
+            {templates.map((template, index) => (
+              <motion.div
+                key={template.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-white rounded-xl shadow-sm border hover:shadow-md transition-shadow"
+              >
+                <div className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      {getTypeIcon(template.type)}
+                      <div>
+                        <h3 className="font-semibold text-gray-800">{template.name}</h3>
+                        <span className={`inline-block px-2 py-1 text-xs rounded-full ${getTypeColor(template.type, template.name)}`}>
+                          {template.type}
                         </span>
                       </div>
                     </div>
                   </div>
-                  
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                    {template.description || template.template_data?.description || 'No description available'}
-                  </p>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">
-                      Created: {new Date(template.created_at).toLocaleDateString()}
-                    </span>
-                    <div className="flex space-x-1">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditTemplate(template);
-                        }}
-                        className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                        title="Edit"
-                      >
-                        <FiEdit2 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDuplicateTemplate(template);
-                        }}
-                        className="p-1 text-green-600 hover:bg-green-50 rounded"
-                        title="Duplicate"
-                      >
-                        <FiCopy className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteTemplate(template);
-                        }}
-                        className="p-1 text-red-600 hover:bg-red-50 rounded"
-                        title="Delete"
-                      >
-                        <FiTrash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                  <p className="text-gray-600 text-sm mb-4">{template.description}</p>
+                  <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                    <span>Created: {new Date(template.created_at).toLocaleDateString()}</span>
+                    <span>Updated: {new Date(template.updated_at).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => handleViewTemplate(template)}
+                      className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                      title="View Template"
+                    >
+                      <FiEye className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleEditTemplate(template)}
+                      className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                      title="Edit Template"
+                    >
+                      <FiEdit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleGenerateReport(template)}
+                      className="px-3 py-1 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition-colors"
+                      title="Generate Report"
+                    >
+                      <FiFileText className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDuplicateTemplate(template)}
+                      className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors"
+                      title="Duplicate Template"
+                    >
+                      <FiCopy className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTemplate(template)}
+                      className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                      title="Delete Template"
+                    >
+                      <FiTrash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
+              </motion.div>
+            ))}
           </motion.div>
         )}
       </div>

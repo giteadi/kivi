@@ -37,6 +37,48 @@ const TemplateTypeSelector = ({ onSelect, onCancel }) => {
       description: 'Comprehensive battery of tests for diagnosing language difficulties in children with performance items',
       color: 'purple',
       icon: '🧠'
+    },
+    {
+      type: 'BKT',
+      name: 'Basic Kinesthetic Test',
+      description: 'Motor coordination and kinesthetic perception assessment for children',
+      color: 'orange',
+      icon: '🏃'
+    },
+    {
+      type: 'Ravens-CPM',
+      name: 'Raven\'s Coloured Progressive Matrices',
+      description: 'Non-verbal assessment of eductive ability and problem-solving skills',
+      color: 'indigo',
+      icon: '🧩'
+    },
+    {
+      type: 'GARS-3',
+      name: 'Gilliam Autism Rating Scale - 3',
+      description: 'Comprehensive assessment tool for identifying autism spectrum disorders',
+      color: 'red',
+      icon: '🧠'
+    },
+    {
+      type: 'Brown-EF-A',
+      name: 'Brown Executive Function/Attention Scales',
+      description: 'Comprehensive assessment of executive function and attention processes',
+      color: 'yellow',
+      icon: '🧠'
+    },
+    {
+      type: 'EACA',
+      name: 'Early Academic Competency Assessment',
+      description: 'Comprehensive screening tool for early academic skills and school readiness',
+      color: 'teal',
+      icon: '📚'
+    },
+    {
+      type: 'Nelson-Denny',
+      name: 'Nelson-Denny Reading Test',
+      description: 'Comprehensive assessment of reading comprehension, vocabulary, and reading rate',
+      color: 'cyan',
+      icon: '📖'
     }
   ];
 
