@@ -6,6 +6,25 @@ const TemplateSelector = ({ onSelectTemplate, onCancel, patientData }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
+  const handleTemplateSelect = (template) => {
+    // Special handling for assessment templates
+    if (template.name === 'TEST OF AUDITORY PROCESSING SKILLS-TAPS-3') {
+      // Import and render TAPS3Template directly
+      import('./TAPS3Template').then((module) => {
+        const TAPS3Template = module.default;
+        // Create a wrapper that handles the template
+        const templateWrapper = {
+          ...template,
+          component: TAPS3Template,
+          isAssessmentTemplate: true
+        };
+        onSelectTemplate(templateWrapper);
+      });
+    } else {
+      onSelectTemplate(template);
+    }
+  };
+
   // Educational assessment templates
   const templates = [
     {
@@ -89,10 +108,30 @@ const TemplateSelector = ({ onSelectTemplate, onCancel, patientData }) => {
         { id: 3, name: 'Vaccination Status', type: 'text', required: true },
         { id: 4, name: 'Parent Concerns', type: 'text', required: false }
       ]
+    },
+    {
+      id: 5,
+      name: 'TEST OF AUDITORY PROCESSING SKILLS-TAPS-3',
+      description: 'Comprehensive auditory processing assessment for phonological skills, memory abilities, and auditory cohesion',
+      category: 'Assessment',
+      usageCount: 28,
+      estimatedTime: '45-60 min',
+      sections: [
+        { id: 1, name: 'Word Discrimination', type: 'text', required: true },
+        { id: 2, name: 'Phonological Segmentation', type: 'text', required: true },
+        { id: 3, name: 'Phonological Blending', type: 'text', required: true },
+        { id: 4, name: 'Number Memory Forward', type: 'text', required: true },
+        { id: 5, name: 'Number Memory Reversed', type: 'text', required: true },
+        { id: 6, name: 'Word Memory', type: 'text', required: true },
+        { id: 7, name: 'Sentence Memory', type: 'text', required: true },
+        { id: 8, name: 'Auditory Comprehension', type: 'text', required: true },
+        { id: 9, name: 'Auditory Reasoning', type: 'text', required: true },
+        { id: 10, name: 'Interpretation', type: 'text', required: true }
+      ]
     }
   ];
 
-  const categories = ['all', 'General', 'Emergency', 'Follow-up', 'Pediatric', 'Specialist'];
+  const categories = ['all', 'General', 'Emergency', 'Follow-up', 'Pediatric', 'Specialist', 'Assessment'];
 
   const filteredTemplates = templates.filter(template => {
     const matchesSearch = template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -113,6 +152,8 @@ const TemplateSelector = ({ onSelectTemplate, onCancel, patientData }) => {
         return 'bg-yellow-100 text-yellow-800';
       case 'specialist':
         return 'bg-purple-100 text-purple-800';
+      case 'assessment':
+        return 'bg-teal-100 text-teal-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -200,7 +241,7 @@ const TemplateSelector = ({ onSelectTemplate, onCancel, patientData }) => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
               className="bg-white rounded-xl p-6 shadow-sm border hover:shadow-md transition-all duration-300 cursor-pointer group"
-              onClick={() => onSelectTemplate(template)}
+              onClick={() => handleTemplateSelect(template)}
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">

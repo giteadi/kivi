@@ -8,94 +8,82 @@ const NelsonDennyReadingTestTemplate = ({
   examinerName = 'Dr. Smith'
 }) => {
   const [template, setTemplate] = useState({
-    name: 'Nelson-Denny Reading Test',
+    name: 'Nelson-Denny Reading Test (Form I & J)',
     studentName: studentName,
     examinerName: examinerName,
     testDate: new Date().toISOString().split('T')[0],
-    description: `The Nelson-Denny Reading Test is a standardized assessment designed to measure reading comprehension, vocabulary, and reading rate for high school and college students. The test consists of three subtests: Vocabulary, Comprehension, and Reading Rate, providing a comprehensive evaluation of reading proficiency.`,
+    description: `The Nelson-Denny Reading Test Form I and J is a valid and reliable measure of silent reading vocabulary, comprehension, and rate.
+
+Core Subtests and Composite:
+• Vocabulary—Students are presented with an opening statement and five answer choices; for example, "A chef works with A. bricks B. music C. clothes D. food E. statues." Students select the option that best completes the opening statement.
+• Comprehension—The Comprehension subtest consists of seven reading passages and comprehension questions, each with five answer choices. Students are instructed to read as many passages and answer as many comprehension questions as they can.
+• General Reading Ability—This composite is derived by combining index scores from the Vocabulary and Comprehension subtests to achieve a stronger and more reliable index of overall reading ability.`,
     vocabularySubtest: {
       rawScore: 0,
       maxScore: 80,
-      scaledScore: 0,
+      standardScore: 0,
       percentileRank: 0,
-      gradeEquivalent: '',
+      descriptiveTerm: '',
       items: [
-        { id: 1, word: 'abundant', selected: '', correct: 'plentiful' },
-        { id: 2, word: 'analyze', selected: '', correct: 'examine' },
-        { id: 3, word: 'beneficial', selected: '', correct: 'helpful' },
-        { id: 4, word: 'comprehensive', selected: '', correct: 'complete' },
-        { id: 5, word: 'determine', selected: '', correct: 'decide' },
-        { id: 6, word: 'efficient', selected: '', correct: 'effective' },
-        { id: 7, word: 'fundamental', selected: '', correct: 'basic' },
-        { id: 8, word: 'genuine', selected: '', correct: 'authentic' },
-        { id: 9, word: 'hypothesis', selected: '', correct: 'theory' },
-        { id: 10, word: 'implement', selected: '', correct: 'execute' },
-        { id: 11, word: 'justification', selected: '', correct: 'reason' },
-        { id: 12, word: 'legitimate', selected: '', correct: 'lawful' },
-        { id: 13, word: 'modification', selected: '', correct: 'change' },
-        { id: 14, word: 'negotiate', selected: '', correct: 'discuss' },
-        { id: 15, word: 'obstacle', selected: '', correct: 'barrier' },
-        { id: 16, word: 'perspective', selected: '', correct: 'viewpoint' },
-        { id: 17, word: 'qualitative', selected: '', correct: 'descriptive' },
-        { id: 18, word: 'relevance', selected: '', correct: 'importance' },
-        { id: 19, word: 'substantial', selected: '', correct: 'significant' },
-        { id: 20, word: 'tangible', selected: '', correct: 'concrete' }
+        { id: 1, word: 'chef works with', question: 'A chef works with A. bricks B. music C. clothes D. food E. statues.', selected: '', correct: 'D' },
+        { id: 2, word: 'physician treats', question: 'A physician treats A. diseases B. buildings C. cars D. books E. music.', selected: '', correct: 'A' },
+        { id: 3, word: 'author writes', question: 'An author writes A. prescriptions B. books C. music D. plays E. articles.', selected: '', correct: 'B' },
+        { id: 4, word: 'musician plays', question: 'A musician plays A. football B. instruments C. games D. movies E. sports.', selected: '', correct: 'B' },
+        { id: 5, word: 'teacher educates', question: 'A teacher educates A. patients B. animals C. students D. customers E. clients.', selected: '', correct: 'C' },
+        { id: 6, word: 'lawyer defends', question: 'A lawyer defends A. criminals B. patients C. students D. clients E. customers.', selected: '', correct: 'D' },
+        { id: 7, word: 'engineer designs', question: 'An engineer designs A. clothes B. food C. buildings D. books E. music.', selected: '', correct: 'C' },
+        { id: 8, word: 'artist paints', question: 'An artist paints A. pictures B. buildings C. cars D. books E. music.', selected: '', correct: 'A' },
+        { id: 9, word: 'chef prepares', question: 'A chef prepares A. meals B. reports C. lessons D. plans E. schedules.', selected: '', correct: 'A' },
+        { id: 10, word: 'doctor diagnoses', question: 'A doctor diagnoses A. problems B. diseases C. situations D. conditions E. symptoms.', selected: '', correct: 'B' }
       ]
     },
     comprehensionSubtest: {
       rawScore: 0,
       maxScore: 36,
-      scaledScore: 0,
+      standardScore: 0,
       percentileRank: 0,
-      gradeEquivalent: '',
+      descriptiveTerm: '',
       passages: [
         {
           id: 1,
-          title: 'Passage 1: Scientific Discovery',
+          title: 'Passage 1',
           questions: [
-            { id: 1, question: 'What is the main topic of this passage?', selected: '', correct: 'A' },
-            { id: 2, question: 'According to the passage, what was the breakthrough?', selected: '', correct: 'C' },
-            { id: 3, question: 'What conclusion can be drawn from the evidence?', selected: '', correct: 'B' },
-            { id: 4, question: 'What does the author suggest about future research?', selected: '', correct: 'D' },
+            { id: 1, question: 'What is the main purpose of this passage?', selected: '', correct: 'A' },
+            { id: 2, question: 'According to the author, what is the most important factor?', selected: '', correct: 'C' },
+            { id: 3, question: 'What conclusion can be drawn from the information provided?', selected: '', correct: 'B' },
+            { id: 4, question: 'What evidence supports the author\'s main argument?', selected: '', correct: 'D' },
             { id: 5, question: 'What is the tone of this passage?', selected: '', correct: 'A' },
             { id: 6, question: 'What assumption does the author make?', selected: '', correct: 'C' }
           ]
         },
         {
           id: 2,
-          title: 'Passage 2: Historical Analysis',
+          title: 'Passage 2',
           questions: [
-            { id: 7, question: 'What period is being discussed?', selected: '', correct: 'B' },
-            { id: 8, question: 'What was the primary cause mentioned?', selected: '', correct: 'A' },
-            { id: 9, question: 'What evidence supports the author\'s claim?', selected: '', correct: 'D' },
-            { id: 10, question: 'What was the outcome described?', selected: '', correct: 'C' },
-            { id: 11, question: 'What implication does the author make?', selected: '', correct: 'B' },
-            { id: 12, question: 'What perspective is missing from the analysis?', selected: '', correct: 'A' }
-          ]
-        },
-        {
-          id: 3,
-          title: 'Passage 3: Literary Criticism',
-          questions: [
-            { id: 13, question: 'What literary device is primarily used?', selected: '', correct: 'C' },
-            { id: 14, question: 'What is the author\'s main argument?', selected: '', correct: 'D' },
-            { id: 15, question: 'What does the symbol represent?', selected: '', correct: 'A' },
-            { id: 16, question: 'What theme is explored throughout?', selected: '', correct: 'B' },
-            { id: 17, question: 'What is the significance of the ending?', selected: '', correct: 'C' },
-            { id: 18, question: 'What literary tradition does this follow?', selected: '', correct: 'D' }
+            { id: 7, question: 'What is the primary topic discussed in this passage?', selected: '', correct: 'B' },
+            { id: 8, question: 'What relationship does the author describe?', selected: '', correct: 'A' },
+            { id: 9, question: 'What is the significance of the mentioned event?', selected: '', correct: 'D' },
+            { id: 10, question: 'What contrast does the author present?', selected: '', correct: 'C' },
+            { id: 11, question: 'What implication does the author suggest?', selected: '', correct: 'B' },
+            { id: 12, question: 'What perspective is missing from the discussion?', selected: '', correct: 'A' }
           ]
         }
       ]
     },
     readingRateSubtest: {
       wordsPerMinute: 0,
-      accuracy: 0,
-      comprehensionAccuracy: 0,
-      scaledScore: 0,
+      standardScore: 0,
       percentileRank: 0,
-      gradeEquivalent: '',
+      descriptiveTerm: '',
       passageLength: 600,
-      timeLimit: 60 // seconds
+      timeLimit: 60
+    },
+    generalReadingAbility: {
+      sumOfCoreIndexScores: 0,
+      percentileRank: 0,
+      standardScore: 0,
+      confidenceInterval: '',
+      descriptiveTerm: ''
     },
     totalScore: 0,
     overallReadingLevel: '',
@@ -161,10 +149,10 @@ const NelsonDennyReadingTestTemplate = ({
       }
     });
     
-    const vocabRawScore = vocabCorrect * 4; // Each item worth 4 points
-    const vocabScaledScore = calculateScaledScore(vocabRawScore, 80);
-    const vocabPercentile = calculatePercentile(vocabScaledScore);
-    const vocabGradeEquivalent = calculateGradeEquivalent(vocabPercentile);
+    const vocabRawScore = vocabCorrect;
+    const vocabStandardScore = calculateStandardScore(vocabRawScore, 80);
+    const vocabPercentile = calculatePercentile(vocabStandardScore);
+    const vocabDescriptiveTerm = getDescriptiveTerm(vocabPercentile);
 
     // Comprehension Subtest Scoring
     let compCorrect = 0;
@@ -176,95 +164,106 @@ const NelsonDennyReadingTestTemplate = ({
       });
     });
     
-    const compRawScore = compCorrect * 6; // Each item worth 6 points
-    const compScaledScore = calculateScaledScore(compRawScore, 36);
-    const compPercentile = calculatePercentile(compScaledScore);
-    const compGradeEquivalent = calculateGradeEquivalent(compPercentile);
+    const compRawScore = compCorrect;
+    const compStandardScore = calculateStandardScore(compRawScore, 36);
+    const compPercentile = calculatePercentile(compStandardScore);
+    const compDescriptiveTerm = getDescriptiveTerm(compPercentile);
 
     // Reading Rate Subtest Scoring
     const wpm = parseInt(template.readingRateSubtest.wordsPerMinute) || 0;
-    const accuracy = parseInt(template.readingRateSubtest.accuracy) || 0;
-    const compAccuracy = parseInt(template.readingRateSubtest.comprehensionAccuracy) || 0;
-    
-    const rateScaledScore = calculateRateScaledScore(wpm, accuracy, compAccuracy);
-    const ratePercentile = calculatePercentile(rateScaledScore);
-    const rateGradeEquivalent = calculateGradeEquivalent(ratePercentile);
+    const rateStandardScore = calculateRateStandardScore(wpm);
+    const ratePercentile = calculatePercentile(rateStandardScore);
+    const rateDescriptiveTerm = getDescriptiveTerm(ratePercentile);
 
-    // Total Score
-    const totalScore = (vocabScaledScore + compScaledScore + rateScaledScore) / 3;
-    const overallLevel = getOverallReadingLevel(totalScore);
+    // General Reading Ability Composite
+    const sumOfCoreIndexScores = vocabStandardScore + compStandardScore;
+    const generalPercentile = calculatePercentile(sumOfCoreIndexScores / 2);
+    const generalStandardScore = Math.round(sumOfCoreIndexScores / 2);
+    const confidenceInterval = calculateConfidenceInterval(generalStandardScore);
+    const generalDescriptiveTerm = getDescriptiveTerm(generalPercentile);
 
     setTemplate(prev => ({
       ...prev,
       vocabularySubtest: {
         ...prev.vocabularySubtest,
         rawScore: vocabRawScore,
-        scaledScore: vocabScaledScore,
+        standardScore: vocabStandardScore,
         percentileRank: vocabPercentile,
-        gradeEquivalent: vocabGradeEquivalent
+        descriptiveTerm: vocabDescriptiveTerm
       },
       comprehensionSubtest: {
         ...prev.comprehensionSubtest,
         rawScore: compRawScore,
-        scaledScore: compScaledScore,
+        standardScore: compStandardScore,
         percentileRank: compPercentile,
-        gradeEquivalent: compGradeEquivalent
+        descriptiveTerm: compDescriptiveTerm
       },
       readingRateSubtest: {
         ...prev.readingRateSubtest,
-        scaledScore: rateScaledScore,
+        standardScore: rateStandardScore,
         percentileRank: ratePercentile,
-        gradeEquivalent: rateGradeEquivalent
+        descriptiveTerm: rateDescriptiveTerm
       },
-      totalScore: Math.round(totalScore),
-      overallReadingLevel: overallLevel
+      generalReadingAbility: {
+        sumOfCoreIndexScores: sumOfCoreIndexScores,
+        percentileRank: generalPercentile,
+        standardScore: generalStandardScore,
+        confidenceInterval: confidenceInterval,
+        descriptiveTerm: generalDescriptiveTerm
+      },
+      totalScore: Math.round((vocabStandardScore + compStandardScore + rateStandardScore) / 3),
+      overallReadingLevel: generalDescriptiveTerm
     }));
   };
 
-  const calculateScaledScore = (rawScore, maxScore) => {
-    return Math.round((rawScore / maxScore) * 100);
+  const calculateStandardScore = (rawScore, maxScore) => {
+    // Convert raw score to standard score (mean=100, SD=15)
+    const percentage = (rawScore / maxScore) * 100;
+    return Math.round(85 + (percentage - 50) * 0.3); // Simplified conversion
   };
 
-  const calculatePercentile = (scaledScore) => {
-    // Simplified percentile calculation
-    if (scaledScore >= 95) return 95;
-    if (scaledScore >= 90) return 85;
-    if (scaledScore >= 85) return 75;
-    if (scaledScore >= 80) return 65;
-    if (scaledScore >= 75) return 55;
-    if (scaledScore >= 70) return 45;
-    if (scaledScore >= 65) return 35;
-    if (scaledScore >= 60) return 25;
-    if (scaledScore >= 55) return 15;
-    return 5;
+  const calculatePercentile = (standardScore) => {
+    // Convert standard score to percentile
+    if (standardScore >= 130) return 95;
+    if (standardScore >= 120) return 90;
+    if (standardScore >= 115) return 84;
+    if (standardScore >= 110) return 75;
+    if (standardScore >= 105) return 63;
+    if (standardScore >= 100) return 50;
+    if (standardScore >= 95) return 37;
+    if (standardScore >= 90) return 25;
+    if (standardScore >= 85) return 16;
+    if (standardScore >= 80) return 10;
+    if (standardScore >= 75) return 5;
+    return 3;
   };
 
-  const calculateGradeEquivalent = (percentile) => {
-    if (percentile >= 90) return '12.9+';
-    if (percentile >= 80) return '12.5';
-    if (percentile >= 70) return '11.8';
-    if (percentile >= 60) return '10.9';
-    if (percentile >= 50) return '9.8';
-    if (percentile >= 40) return '8.7';
-    if (percentile >= 30) return '7.5';
-    if (percentile >= 20) return '6.3';
-    return '5.0';
+  const getDescriptiveTerm = (percentile) => {
+    if (percentile >= 91) return 'Very Superior';
+    if (percentile >= 75) return 'Superior';
+    if (percentile >= 60) return 'Above Average';
+    if (percentile >= 40) return 'Average';
+    if (percentile >= 25) return 'Below Average';
+    if (percentile >= 10) return 'Poor';
+    return 'Very Poor';
   };
 
-  const calculateRateScaledScore = (wpm, accuracy, compAccuracy) => {
-    const wpmScore = Math.min((wpm / 250) * 50, 50); // Max 50 points for WPM
-    const accuracyScore = (accuracy / 100) * 25; // Max 25 points for accuracy
-    const compAccScore = (compAccuracy / 100) * 25; // Max 25 points for comprehension accuracy
-    return Math.round(wpmScore + accuracyScore + compAccScore);
+  const calculateRateStandardScore = (wpm) => {
+    // Convert WPM to standard score
+    if (wpm >= 250) return 130;
+    if (wpm >= 200) return 115;
+    if (wpm >= 150) return 100;
+    if (wpm >= 120) return 90;
+    if (wpm >= 100) return 85;
+    if (wpm >= 80) return 80;
+    if (wpm >= 60) return 75;
+    return 70;
   };
 
-  const getOverallReadingLevel = (totalScore) => {
-    if (totalScore >= 90) return 'Advanced';
-    if (totalScore >= 80) return 'Proficient';
-    if (totalScore >= 70) return 'Competent';
-    if (totalScore >= 60) return 'Developing';
-    if (totalScore >= 50) return 'Emergent';
-    return 'Beginning';
+  const calculateConfidenceInterval = (standardScore) => {
+    const lower = Math.round(standardScore - 7);
+    const upper = Math.round(standardScore + 7);
+    return `${lower} to ${upper}`;
   };
 
   const handleSave = () => {
@@ -369,9 +368,9 @@ const NelsonDennyReadingTestTemplate = ({
               <div className="border border-black">
                 <div className="grid grid-cols-12 border-b border-black bg-gray-100">
                   <div className="col-span-1 border-r border-black p-2 text-center font-bold text-xs">No.</div>
-                  <div className="col-span-3 border-r border-black p-2 text-center font-bold text-xs">Word</div>
-                  <div className="col-span-6 border-r border-black p-2 text-center font-bold text-xs">Select Definition</div>
-                  <div className="col-span-2 p-2 text-center font-bold text-xs">Correct</div>
+                  <div className="col-span-8 border-r border-black p-2 text-center font-bold text-xs">Question</div>
+                  <div className="col-span-2 border-r border-black p-2 text-center font-bold text-xs">Answer</div>
+                  <div className="col-span-1 p-2 text-center font-bold text-xs">Correct</div>
                 </div>
                 {template.vocabularySubtest.items.map((item, index) => (
                   <div key={item.id} className="border-b border-black">
@@ -379,23 +378,24 @@ const NelsonDennyReadingTestTemplate = ({
                       <div className="col-span-1 border-r border-black p-2 text-center text-xs">
                         {item.id}
                       </div>
-                      <div className="col-span-3 border-r border-black p-2 text-center text-xs font-semibold">
-                        {item.word}
+                      <div className="col-span-8 border-r border-black p-2 text-xs">
+                        {item.question}
                       </div>
-                      <div className="col-span-6 border-r border-black p-2">
+                      <div className="col-span-2 border-r border-black p-2">
                         <select
                           value={item.selected}
                           onChange={(e) => handleVocabularyChange(index, e.target.value)}
                           className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-cyan-500"
                         >
                           <option value="">Select...</option>
-                          <option value="A">A. Option A</option>
-                          <option value="B">B. Option B</option>
-                          <option value="C">C. Option C</option>
-                          <option value="D">D. Option D</option>
+                          <option value="A">A</option>
+                          <option value="B">B</option>
+                          <option value="C">C</option>
+                          <option value="D">D</option>
+                          <option value="E">E</option>
                         </select>
                       </div>
-                      <div className="col-span-2 p-2 text-center text-xs">
+                      <div className="col-span-1 p-2 text-center text-xs">
                         {item.correct}
                       </div>
                     </div>
@@ -465,30 +465,6 @@ const NelsonDennyReadingTestTemplate = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Accuracy (%)</label>
-                  <input
-                    type="number"
-                    value={template.readingRateSubtest.accuracy}
-                    onChange={(e) => handleReadingRateChange('accuracy', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-                    placeholder="Enter accuracy"
-                    min="0"
-                    max="100"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Comprehension Accuracy (%)</label>
-                  <input
-                    type="number"
-                    value={template.readingRateSubtest.comprehensionAccuracy}
-                    onChange={(e) => handleReadingRateChange('comprehensionAccuracy', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-                    placeholder="Enter comprehension accuracy"
-                    min="0"
-                    max="100"
-                  />
-                </div>
-                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Passage Length</label>
                   <input
                     type="text"
@@ -500,36 +476,102 @@ const NelsonDennyReadingTestTemplate = ({
               </div>
             </div>
 
-            {/* Total Scores */}
+            {/* Subtest Scores */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Total Scores</h2>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Total Score</label>
-                  <input
-                    type="text"
-                    value={template.totalScore}
-                    readOnly
-                    className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg"
-                  />
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Subtest Scores</h2>
+              <div className="border border-black">
+                <div className="grid grid-cols-5 border-b border-black bg-gray-100">
+                  <div className="col-span-2 border-r border-black p-2 text-center font-bold text-xs">SUBTEST</div>
+                  <div className="col-span-1 border-r border-black p-2 text-center font-bold text-xs">RAW SCORE</div>
+                  <div className="col-span-1 border-r border-black p-2 text-center font-bold text-xs">PERCENTILE RANK</div>
+                  <div className="col-span-1 p-2 text-center font-bold text-xs">STANDARD SCORE</div>
+                </div>
+                <div className="border-b border-black">
+                  <div className="grid grid-cols-5">
+                    <div className="col-span-2 border-r border-black p-2 text-xs">
+                      Vocabulary
+                    </div>
+                    <div className="col-span-1 border-r border-black p-2 text-center text-xs">
+                      {template.vocabularySubtest.rawScore}
+                    </div>
+                    <div className="col-span-1 border-r border-black p-2 text-center text-xs">
+                      {template.vocabularySubtest.percentileRank}
+                    </div>
+                    <div className="col-span-1 p-2 text-center text-xs">
+                      {template.vocabularySubtest.standardScore}
+                    </div>
+                  </div>
+                </div>
+                <div className="border-b border-black">
+                  <div className="grid grid-cols-5">
+                    <div className="col-span-2 border-r border-black p-2 text-xs">
+                      Comprehension
+                    </div>
+                    <div className="col-span-1 border-r border-black p-2 text-center text-xs">
+                      {template.comprehensionSubtest.rawScore}
+                    </div>
+                    <div className="col-span-1 border-r border-black p-2 text-center text-xs">
+                      {template.comprehensionSubtest.percentileRank}
+                    </div>
+                    <div className="col-span-1 p-2 text-center text-xs">
+                      {template.comprehensionSubtest.standardScore}
+                    </div>
+                  </div>
+                </div>
+                <div className="border-b border-black">
+                  <div className="grid grid-cols-5">
+                    <div className="col-span-2 border-r border-black p-2 text-xs">
+                      Reading Rate
+                    </div>
+                    <div className="col-span-1 border-r border-black p-2 text-center text-xs">
+                      {template.readingRateSubtest.wordsPerMinute}
+                    </div>
+                    <div className="col-span-1 border-r border-black p-2 text-center text-xs">
+                      {template.readingRateSubtest.percentileRank}
+                    </div>
+                    <div className="col-span-1 p-2 text-center text-xs">
+                      {template.readingRateSubtest.standardScore}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* General Reading Ability */}
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">General Reading Ability</h2>
+              <div className="border border-black">
+                <div className="grid grid-cols-5 border-b border-black bg-gray-100">
+                  <div className="col-span-2 border-r border-black p-2 text-center font-bold text-xs">SUM OF CORE INDEX SCORES</div>
+                  <div className="col-span-1 border-r border-black p-2 text-center font-bold text-xs">PERCENTILE RANK</div>
+                  <div className="col-span-1 border-r border-black p-2 text-center font-bold text-xs">STANDARD SCORE</div>
+                  <div className="col-span-1 p-2 text-center font-bold text-xs">95% CONFIDENCE INTERVAL</div>
+                </div>
+                <div className="border-b border-black">
+                  <div className="grid grid-cols-5">
+                    <div className="col-span-2 border-r border-black p-2 text-center text-xs font-bold">
+                      {template.generalReadingAbility.sumOfCoreIndexScores}
+                    </div>
+                    <div className="col-span-1 border-r border-black p-2 text-center text-xs">
+                      {template.generalReadingAbility.percentileRank}
+                    </div>
+                    <div className="col-span-1 border-r border-black p-2 text-center text-xs">
+                      {template.generalReadingAbility.standardScore}
+                    </div>
+                    <div className="col-span-1 p-2 text-center text-xs">
+                      {template.generalReadingAbility.confidenceInterval}
+                    </div>
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Overall Reading Level</label>
-                  <input
-                    type="text"
-                    value={template.overallReadingLevel}
-                    readOnly
-                    className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Grade Equivalent</label>
-                  <input
-                    type="text"
-                    value={template.vocabularySubtest.gradeEquivalent}
-                    readOnly
-                    className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg"
-                  />
+                  <div className="grid grid-cols-5">
+                    <div className="col-span-2 border-r border-black p-2 text-center text-xs font-bold">
+                      DESCRIPTIVE TERM
+                    </div>
+                    <div className="col-span-3 p-2 text-center text-xs font-bold">
+                      {template.generalReadingAbility.descriptiveTerm}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -594,7 +636,7 @@ const NelsonDennyReadingTestTemplate = ({
             {/* Template Header */}
             <div className="text-center mb-8 border-b-2 border-gray-200 pb-6">
               <h1 className="text-2xl font-bold text-gray-800 mb-4">
-                NELSON-DENNY READING TEST REPORT
+                NELSON DENNY READING TEST (FORM I & J)
               </h1>
               <div className="flex justify-center items-center space-x-8 text-sm text-gray-600 mb-4">
                 <span>Student: <strong className="text-cyan-600">{template.studentName}</strong></span>
@@ -603,45 +645,111 @@ const NelsonDennyReadingTestTemplate = ({
               </div>
             </div>
 
-            {/* Subtest Results Preview */}
+            {/* Description */}
             <div className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Subtest Results</h2>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="bg-cyan-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-cyan-800 mb-2">Vocabulary</h3>
-                  <p className="text-sm">Raw Score: {template.vocabularySubtest.rawScore}/80</p>
-                  <p className="text-sm">Scaled Score: {template.vocabularySubtest.scaledScore}</p>
-                  <p className="text-sm">Percentile: {template.vocabularySubtest.percentileRank}th</p>
-                  <p className="text-sm">Grade: {template.vocabularySubtest.gradeEquivalent}</p>
+              <div className="bg-cyan-50 rounded-lg p-6">
+                <p className="text-gray-700 leading-relaxed text-sm whitespace-pre-wrap">
+                  {template.description}
+                </p>
+              </div>
+            </div>
+
+            {/* Subtest Scores Table */}
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Subtest Scores</h2>
+              <div className="border border-black">
+                <div className="grid grid-cols-5 border-b border-black bg-gray-100">
+                  <div className="col-span-2 border-r border-black p-2 text-center font-bold text-xs">SUBTEST</div>
+                  <div className="col-span-1 border-r border-black p-2 text-center font-bold text-xs">RAW SCORE</div>
+                  <div className="col-span-1 border-r border-black p-2 text-center font-bold text-xs">PERCENTILE RANK</div>
+                  <div className="col-span-1 p-2 text-center font-bold text-xs">STANDARD SCORE</div>
                 </div>
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-blue-800 mb-2">Comprehension</h3>
-                  <p className="text-sm">Raw Score: {template.comprehensionSubtest.rawScore}/36</p>
-                  <p className="text-sm">Scaled Score: {template.comprehensionSubtest.scaledScore}</p>
-                  <p className="text-sm">Percentile: {template.comprehensionSubtest.percentileRank}th</p>
-                  <p className="text-sm">Grade: {template.comprehensionSubtest.gradeEquivalent}</p>
+                <div className="border-b border-black">
+                  <div className="grid grid-cols-5">
+                    <div className="col-span-2 border-r border-black p-2 text-xs">
+                      Vocabulary
+                    </div>
+                    <div className="col-span-1 border-r border-black p-2 text-center text-xs">
+                      {template.vocabularySubtest.rawScore}
+                    </div>
+                    <div className="col-span-1 border-r border-black p-2 text-center text-xs">
+                      {template.vocabularySubtest.percentileRank}
+                    </div>
+                    <div className="col-span-1 p-2 text-center text-xs">
+                      {template.vocabularySubtest.standardScore}
+                    </div>
+                  </div>
                 </div>
-                <div className="bg-purple-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-purple-800 mb-2">Reading Rate</h3>
-                  <p className="text-sm">WPM: {template.readingRateSubtest.wordsPerMinute}</p>
-                  <p className="text-sm">Accuracy: {template.readingRateSubtest.accuracy}%</p>
-                  <p className="text-sm">Scaled Score: {template.readingRateSubtest.scaledScore}</p>
-                  <p className="text-sm">Grade: {template.readingRateSubtest.gradeEquivalent}</p>
+                <div className="border-b border-black">
+                  <div className="grid grid-cols-5">
+                    <div className="col-span-2 border-r border-black p-2 text-xs">
+                      Comprehension
+                    </div>
+                    <div className="col-span-1 border-r border-black p-2 text-center text-xs">
+                      {template.comprehensionSubtest.rawScore}
+                    </div>
+                    <div className="col-span-1 border-r border-black p-2 text-center text-xs">
+                      {template.comprehensionSubtest.percentileRank}
+                    </div>
+                    <div className="col-span-1 p-2 text-center text-xs">
+                      {template.comprehensionSubtest.standardScore}
+                    </div>
+                  </div>
+                </div>
+                <div className="border-b border-black">
+                  <div className="grid grid-cols-5">
+                    <div className="col-span-2 border-r border-black p-2 text-xs">
+                      Reading Rate
+                    </div>
+                    <div className="col-span-1 border-r border-black p-2 text-center text-xs">
+                      {template.readingRateSubtest.wordsPerMinute}
+                    </div>
+                    <div className="col-span-1 border-r border-black p-2 text-center text-xs">
+                      {template.readingRateSubtest.percentileRank}
+                    </div>
+                    <div className="col-span-1 p-2 text-center text-xs">
+                      {template.readingRateSubtest.standardScore}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Overall Results */}
+            {/* General Reading Ability */}
             <div className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Overall Results</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-green-800 mb-2">Total Score</h3>
-                  <p className="text-2xl font-bold text-green-600">{template.totalScore}</p>
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">General Reading Ability</h2>
+              <div className="border border-black">
+                <div className="grid grid-cols-5 border-b border-black bg-gray-100">
+                  <div className="col-span-2 border-r border-black p-2 text-center font-bold text-xs">SUM OF CORE INDEX SCORES</div>
+                  <div className="col-span-1 border-r border-black p-2 text-center font-bold text-xs">PERCENTILE RANK</div>
+                  <div className="col-span-1 border-r border-black p-2 text-center font-bold text-xs">STANDARD SCORE</div>
+                  <div className="col-span-1 p-2 text-center font-bold text-xs">95% CONFIDENCE INTERVAL</div>
                 </div>
-                <div className="bg-orange-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-orange-800 mb-2">Reading Level</h3>
-                  <p className="text-lg font-bold text-orange-600">{template.overallReadingLevel}</p>
+                <div className="border-b border-black">
+                  <div className="grid grid-cols-5">
+                    <div className="col-span-2 border-r border-black p-2 text-center text-xs font-bold">
+                      {template.generalReadingAbility.sumOfCoreIndexScores}
+                    </div>
+                    <div className="col-span-1 border-r border-black p-2 text-center text-xs">
+                      {template.generalReadingAbility.percentileRank}
+                    </div>
+                    <div className="col-span-1 border-r border-black p-2 text-center text-xs">
+                      {template.generalReadingAbility.standardScore}
+                    </div>
+                    <div className="col-span-1 p-2 text-center text-xs">
+                      {template.generalReadingAbility.confidenceInterval}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div className="grid grid-cols-5">
+                    <div className="col-span-2 border-r border-black p-2 text-center text-xs font-bold">
+                      DESCRIPTIVE TERM
+                    </div>
+                    <div className="col-span-3 p-2 text-center text-xs font-bold">
+                      {template.generalReadingAbility.descriptiveTerm}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

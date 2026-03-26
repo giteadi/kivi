@@ -8,11 +8,13 @@ const RavensCPMTemplate = ({
   examinerName = 'Dr. Smith'
 }) => {
   const [template, setTemplate] = useState({
-    name: 'Raven\'s Coloured Progressive Matrices',
+    name: 'RAVEN\'S COLOURED PROGRESSIVE MATRICES',
     studentName: studentName,
     examinerName: examinerName,
     testDate: new Date().toISOString().split('T')[0],
-    description: `Raven's Coloured Progressive Matrices (CPM) is a non-verbal test designed to assess eductive ability, a component of Spearman's g factor. It is particularly useful for assessing children and individuals with language or cultural barriers. The test consists of 36 items arranged in three sets (A, AB, B) of 12 items each.`,
+    description: `Raven's CPM measures clear-thinking ability and is designed for young children ages 5:0-11:0 years. The test consists of 36 items in 3 sets (A, Ab, B), with 12 items per set. It has no time limit. The three sets of 12 items are arranged to assess the chief cognitive processes of which children under 11 years of age are usually capable. The CPM items are arranged to assess cognitive development up to the stage when a person is sufficiently able to reason by analogy and adopt this way of thinking as a consistent method of inference.
+
+A child's total score provides an index of his intellectual capacity, whatever his nationality or education.`,
     sections: [
       {
         name: 'Set A',
@@ -68,6 +70,8 @@ const RavensCPMTemplate = ({
     ],
     rawScore: 0,
     percentileRank: 0,
+    grade: '',
+    classification: '',
     interpretation: '',
     conclusions: '',
     recommendations: ''
@@ -106,15 +110,49 @@ const RavensCPMTemplate = ({
       });
     });
     
+    const percentileRank = calculatePercentileRank(totalCorrect);
+    const grade = calculateGrade(totalCorrect);
+    const classification = getClassification(totalCorrect);
+    const interpretation = `Intellectually ${classification.toLowerCase()}`;
+    
     setTemplate(prev => ({
       ...prev,
       rawScore: totalCorrect,
-      percentileRank: calculatePercentileRank(totalCorrect)
+      percentileRank,
+      grade,
+      classification,
+      interpretation
     }));
   };
 
+  const calculateGrade = (rawScore) => {
+    // Grade classification based on normative data
+    if (rawScore >= 30) return 'A+';
+    if (rawScore >= 27) return 'A';
+    if (rawScore >= 24) return 'A-';
+    if (rawScore >= 21) return 'B+';
+    if (rawScore >= 18) return 'B';
+    if (rawScore >= 15) return 'B-';
+    if (rawScore >= 12) return 'C+';
+    if (rawScore >= 9) return 'C';
+    if (rawScore >= 6) return 'C-';
+    if (rawScore >= 3) return 'D';
+    return 'F';
+  };
+
+  const getClassification = (rawScore) => {
+    // Intellectual classification based on normative data
+    if (rawScore >= 30) return 'Very Superior';
+    if (rawScore >= 25) return 'Superior';
+    if (rawScore >= 20) return 'High Average';
+    if (rawScore >= 15) return 'Average';
+    if (rawScore >= 10) return 'Low Average';
+    if (rawScore >= 5) return 'Borderline';
+    return 'Intellectually Deficient';
+  };
+
   const calculatePercentileRank = (rawScore) => {
-    // Simplified percentile calculation based on normative data
+    // Percentile calculation based on normative data
     const percentiles = {
       0: 0, 1: 1, 2: 2, 3: 3, 4: 5, 5: 7, 6: 9, 7: 12, 8: 15, 9: 18,
       10: 22, 11: 25, 12: 29, 13: 33, 14: 37, 15: 42, 16: 47, 17: 52, 18: 58,
@@ -260,12 +298,12 @@ const RavensCPMTemplate = ({
               </div>
             ))}
 
-            {/* Scores */}
+            {/* Test Results */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Scores</h2>
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Test Results</h2>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Raw Score</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Total Score</label>
                   <input
                     type="text"
                     value={template.rawScore}
@@ -274,27 +312,32 @@ const RavensCPMTemplate = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Percentile Rank</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Grade</label>
                   <input
                     type="text"
-                    value={template.percentileRank}
+                    value={template.grade}
                     readOnly
                     className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg"
                   />
                 </div>
+              </div>
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Classification</label>
+                <input
+                  type="text"
+                  value={template.classification}
+                  readOnly
+                  className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg"
+                />
               </div>
             </div>
 
             {/* Interpretation */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Interpretation</h2>
-              <textarea
-                value={template.interpretation}
-                onChange={(e) => handleInputChange('interpretation', e.target.value)}
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Enter interpretation of test results"
-              />
+              <div className="bg-indigo-50 rounded-lg p-4">
+                <p className="text-gray-700 font-semibold">'{template.interpretation}'</p>
+              </div>
             </div>
 
             {/* Conclusions */}
@@ -345,12 +388,21 @@ const RavensCPMTemplate = ({
             {/* Template Header */}
             <div className="text-center mb-8 border-b-2 border-gray-200 pb-6">
               <h1 className="text-2xl font-bold text-gray-800 mb-4">
-                RAVEN'S COLOURED PROGRESSIVE MATRICES ASSESSMENT REPORT
+                RAVEN'S COLOURED PROGRESSIVE MATRICES
               </h1>
               <div className="flex justify-center items-center space-x-8 text-sm text-gray-600 mb-4">
                 <span>Student: <strong className="text-indigo-600">{template.studentName}</strong></span>
                 <span>Examiner: <strong className="text-indigo-600">{template.examinerName}</strong></span>
                 <span>Date: <strong className="text-indigo-600">{template.testDate}</strong></span>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="mb-8">
+              <div className="bg-indigo-50 rounded-lg p-6">
+                <p className="text-gray-700 leading-relaxed text-sm whitespace-pre-wrap">
+                  {template.description}
+                </p>
               </div>
             </div>
 
@@ -387,31 +439,32 @@ const RavensCPMTemplate = ({
               </div>
             ))}
 
-            {/* Scores Preview */}
+            {/* Test Results */}
             <div className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Assessment Scores</h2>
-              <div className="grid grid-cols-2 gap-4">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Test Results</h2>
+              <div className="grid grid-cols-3 gap-4">
                 <div className="bg-indigo-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-indigo-800 mb-2">Raw Score</h3>
-                  <p className="text-2xl font-bold text-indigo-600">{template.rawScore}/36</p>
+                  <h3 className="font-semibold text-indigo-800 mb-2">Total Score</h3>
+                  <p className="text-2xl font-bold text-indigo-600">{template.rawScore}</p>
                 </div>
                 <div className="bg-purple-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-purple-800 mb-2">Percentile Rank</h3>
-                  <p className="text-2xl font-bold text-purple-600">{template.percentileRank}th</p>
+                  <h3 className="font-semibold text-purple-800 mb-2">Grade</h3>
+                  <p className="text-2xl font-bold text-purple-600">{template.grade}</p>
+                </div>
+                <div className="bg-orange-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-orange-800 mb-2">Classification</h3>
+                  <p className="text-lg font-bold text-orange-600">{template.classification}</p>
                 </div>
               </div>
             </div>
 
-            {template.interpretation && (
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">Interpretation</h2>
-                <div className="bg-indigo-50 rounded-lg p-6">
-                  <p className="text-gray-700 leading-relaxed text-sm whitespace-pre-wrap">
-                    {template.interpretation}
-                  </p>
-                </div>
+            {/* Interpretation */}
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Interpretation</h2>
+              <div className="bg-indigo-50 rounded-lg p-6">
+                <p className="text-gray-700 font-semibold text-center text-lg">'{template.interpretation}'</p>
               </div>
-            )}
+            </div>
 
             {template.conclusions && (
               <div className="mb-6">

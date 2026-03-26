@@ -32,6 +32,10 @@ const AssessmentReportGenerator = ({
         return generateEACAReport(template);
       case 'Nelson-Denny':
         return generateNelsonDennyReport(template);
+      case 'TAPS-3':
+        return generateTAPS3Report(template);
+      case 'RIPA-Primary':
+        return generateRIPAPrimaryReport(template);
       default:
         return generateADHDT2Report(template);
     }
@@ -55,12 +59,12 @@ const AssessmentReportGenerator = ({
     return {
       title: 'ADHDT-2 Assessment Report',
       formulas: [
-        'ADHD Index = Inattention Standard Score + Hyperactivity/Impulsivity Standard Score',
-        'Standard Score Calculation: Raw Score → T-Score (Mean=50, SD=10)',
-        'Percentile Rank = Based on Age/Gender Normative Data',
-        'ADHD Likelihood Classification: Very High (≥90), High (80-89), Moderate (70-79), Low (60-69), Very Low (<60)',
-        'DSM-5 Criteria: Based on Diagnostic and Statistical Manual of Mental Disorders, 5th Edition',
-        'Norm-Referenced: Scores compared to standardized sample population'
+        { name: 'ADHD Index', formula: 'Inattention Standard Score + Hyperactivity/Impulsivity Standard Score', description: 'Combined subscale standard scores' },
+        { name: 'Standard Score', formula: 'Raw Score → T-Score (Mean=50, SD=10)', description: 'Normalized score based on normative data' },
+        { name: 'Percentile Rank', formula: 'Based on Age/Gender Normative Data', description: 'Position relative to same-age/gender peers' },
+        { name: 'ADHD Likelihood', formula: 'Very High (≥90), High (80-89), Moderate (70-79), Low (60-69), Very Low (<60)', description: 'Classification based on ADHD Index' },
+        { name: 'DSM-5 Criteria', formula: 'Based on Diagnostic and Statistical Manual of Mental Disorders, 5th Edition', description: 'Diagnostic framework used' },
+        { name: 'Norm-Referenced', formula: 'Scores compared to standardized sample population', description: 'Standardization basis' }
       ],
       analysis: {
         adhdIndex,
@@ -114,12 +118,12 @@ These results should be considered in conjunction with other assessment tools an
     return {
       title: 'ADHD-DSM 5 Assessment Report',
       formulas: [
-        'DSM-5 Criteria: ≥6 symptoms from either category required for diagnosis',
-        'Symptom Duration: Must be present for ≥6 months',
-        'Age of Onset: Several symptoms present before age 12',
-        'Setting Requirement: Symptoms present in ≥2 settings (home, school, work)',
-        'Impairment: Symptoms interfere with social, academic, or occupational functioning',
-        'Diagnosis Types: Combined, Predominantly Inattentive, Predominantly Hyperactive/Impulsive'
+        { name: 'DSM-5 Criteria', formula: '≥6 symptoms from either category required for diagnosis', description: 'Minimum symptom threshold' },
+        { name: 'Symptom Duration', formula: 'Must be present for ≥6 months', description: 'Temporal requirement' },
+        { name: 'Age of Onset', formula: 'Several symptoms present before age 12', description: 'Developmental onset criterion' },
+        { name: 'Setting Requirement', formula: 'Symptoms present in ≥2 settings (home, school, work)', description: 'Cross-situational pervasiveness' },
+        { name: 'Impairment', formula: 'Symptoms interfere with social, academic, or occupational functioning', description: 'Functional impact criterion' },
+        { name: 'Diagnosis Types', formula: 'Combined, Predominantly Inattentive, Predominantly Hyperactive/Impulsive', description: 'DSM-5 presentation specifiers' }
       ],
       analysis: {
         inattentionChecked,
@@ -136,15 +140,15 @@ ADHD DSM-5 Criteria-Parent Completion (American Psychiatric Association, 2013)
 INATTENTION
 (Only behaviours occurring for 6 months or more are ticked)
 
-A1 Often fails to give close attention to details or makes careless mistakes in schoolwork, at work, or during other activities (e.g., overlooks or misses details, work is inaccurate).
-A2 Often has difficulty sustaining attention in tasks or play activities (e.g., has difficulty remaining focused during lectures, conversations, or lengthy reading).
-A3 Often does not seem to listen when spoken to directly (e.g., mind seems elsewhere, even in the absence of any obvious distraction).
-A4 Often does not follow through on instructions and fails to finish schoolwork, chores, or duties in the workplace (e.g., starts tasks but quickly loses focus and is easily side-tracked).
-A5 Often has difficulty organizing tasks and activities (e.g., difficulty managing sequential tasks; difficulty keeping materials and belongings in order; messy, disorganizedized work; poor time management; fails to meet deadlines).
-A6 Often avoids, dislikes, or is reluctant to engage in tasks that require sustained mental effort (e.g., schoolwork or homework; for older adolescents and adults, preparing reports, completing forms, reviewing lengthy papers).
-A7 Often loses things necessary for tasks or activities (e.g., school materials, pencils, books, tools, wallets, keys, paperwork, eyeglasses, mobile telephones).
-A8 Often is easily distracted by extraneous stimuli (for older adolescents and adults, may include unrelated thoughts).
-A9 Often is forgetful in daily activities (e.g., doing chores, running errands; for older adolescents and adults, returning calls, paying bills, keeping appointments).
+A1 Often fails to give close attention to details or makes careless mistakes in schoolwork, at work, or during other activities.
+A2 Often has difficulty sustaining attention in tasks or play activities.
+A3 Often does not seem to listen when spoken to directly.
+A4 Often does not follow through on instructions and fails to finish schoolwork, chores, or duties in the workplace.
+A5 Often has difficulty organizing tasks and activities.
+A6 Often avoids, dislikes, or is reluctant to engage in tasks that require sustained mental effort.
+A7 Often loses things necessary for tasks or activities.
+A8 Often is easily distracted by extraneous stimuli.
+A9 Often is forgetful in daily activities.
 
 INATTENTION TOTAL: ${inattentionChecked} out of 9
 
@@ -152,14 +156,14 @@ HYPERACTIVITY AND IMPULSIVITY
 (Only behaviours occurring for 6 months or more are ticked)
 
 A1 Often fidgets with or taps hands or feet or squirms in seat.
-A2 Often leaves seat in situations when remaining seated is expected (e.g., leaves his or her place in the classroom, office or other workplace, or in other situations that require remaining seated).
-A3 Often runs about or climbs in situations where it is inappropriate. (Note: In adolescents or adults, may be limited to feeling restless).
+A2 Often leaves seat in situations when remaining seated is expected.
+A3 Often runs about or climbs in situations where it is inappropriate.
 A4 Often unable to play or engage in leisure activities quietly.
-A5 Is often "on the go" or often acts as if "driven by a motor" (e.g., is unable to be or uncomfortable being still for extended time, as in restaurants, meetings; may be experienced by others as being restless or difficult to keep up with).
+A5 Is often "on the go" or often acts as if "driven by a motor".
 A6 Often talks excessively.
-A7 Often blurts out an answer before a question has been completed (e.g., completes people's sentences; cannot wait for turn in conversation).
-A8 Often has difficulty waiting his or her turn (e.g., while waiting in line).
-A9 Often interrupts or intrudes on others (e.g., butts into conversations, games, or activities; may start using other people's things without asking or receiving permission; for adolescents and adults, may intrude into or take over what others are doing).
+A7 Often blurts out an answer before a question has been completed.
+A8 Often has difficulty waiting his or her turn.
+A9 Often interrupts or intrudes on others.
 
 HYPERACTIVITY AND IMPULSIVITY TOTAL: ${hyperactivityChecked} out of 9
 
@@ -180,9 +184,10 @@ This assessment indicates ${diagnosis === 'Insufficient Symptoms for ADHD Diagno
     const generalAbility = template.generalUnderlyingAbility || [];
     
     const calculateMentalAge = (score) => {
-      if (score.includes('years')) return parseInt(score);
+      if (!score) return 0;
       if (score.includes('4 years')) return 4;
       if (score.includes('5/6 years')) return 5.5;
+      if (score.includes('years')) return parseInt(score) || 0;
       return parseInt(score) || 0;
     };
 
@@ -207,16 +212,11 @@ This assessment indicates ${diagnosis === 'Insufficient Symptoms for ADHD Diagno
     return {
       title: 'Aston Index Assessment Report',
       formulas: [
-        {
-          name: 'Mental Age Calculation',
-          formula: 'Age Equivalent Scoring',
-          description: 'Raw scores converted to mental age equivalents based on normative data'
-        },
-        {
-          name: 'Discrepancy Analysis',
-          formula: 'Chronological Age - Mental Age',
-          description: 'Difference between actual age and assessed mental age indicates developmental level'
-        }
+        { name: 'Mental Age Calculation', formula: 'Raw Score → Age Equivalent based on normative data', description: 'Converts raw scores to developmental age equivalents' },
+        { name: 'Discrepancy Analysis', formula: 'Chronological Age - Mental Age', description: 'Gap between expected and observed development' },
+        { name: 'Developmental Classification', formula: 'Significant Delay (>2 years), Mild Delay (1-2 years), Age Appropriate (<1 year)', description: 'Categorization based on discrepancy score' },
+        { name: 'Performance Items', formula: 'Scoring based on accuracy and developmental appropriateness', description: 'Qualitative and quantitative scoring' },
+        { name: 'Language Assessment', formula: 'Vocabulary, reading, spelling, and phonological skills', description: 'Key language domains assessed' }
       ],
       analysis: {
         averageMentalAge: averageMentalAge.toFixed(1),
@@ -225,7 +225,58 @@ This assessment indicates ${diagnosis === 'Insufficient Symptoms for ADHD Diagno
         interpretationLevel,
         mentalAges
       },
-      interpretation: `The average mental age equivalent is ${averageMentalAge.toFixed(1)} years compared to chronological age of ${chronologicalAge} years, indicating a ${interpretationLevel}. This suggests ${discrepancy > 1 ? 'need for targeted intervention' : 'age-appropriate development'}.`
+      interpretation: `1. ASTON INDEX
+
+The Aston Index is a comprehensive battery of testing and diagnosing language difficulties. The index identifies children with special educational needs, language difficulties, auditory and visual perception difficulties, reading and spelling difficulties. The Aston Index contains 16 tests which help to measure the child's general underlying ability and attainment with reference to the child's mental age. It also examines the pupil's strengths and weaknesses in visual aid and auditory discrimination, motor co-ordination, written language, reading and spelling.
+
+TEST RESULTS-(Level-1)
+
+I. GENERAL UNDERLYING ABILITY AND ATTAINMENT
+
+1. Picture Recognition - ${generalAbility.find(item => item.test === 'Picture Recognition')?.score || 'NA'}
+2. Vocabulary - ${generalAbility.find(item => item.test === 'Vocabulary')?.score || 'NA'}
+3. Good-enough draw-a-man - ${generalAbility.find(item => item.test === 'Good-enough draw-a-man')?.score || 'NA'}
+4. Copying geometric designs - ${generalAbility.find(item => item.test === 'Copying geometric designs')?.score || 'NA'}
+5. Grapheme-Phoneme correspondence - ${generalAbility.find(item => item.test === 'Grapheme-Phoneme correspondence')?.score || 'NA'}
+6. Schonell's reading test - ${generalAbility.find(item => item.test === "Schonell's reading test")?.score || 'NA'}
+7. Schonell's spelling test - ${generalAbility.find(item => item.test === "Schonell's spelling test")?.score || 'NA'}
+8. Visual discrimination test - ${generalAbility.find(item => item.test === 'Visual discrimination test')?.score || 'NA'}
+
+II. PERFORMANCE ITEMS
+
+1. Child's laterality - ${template.performanceItems?.find(item => item.test === "Child's laterality")?.score || 'NA'}
+2. Copying name - ${template.performanceItems?.find(item => item.test === 'Copying name')?.score || 'NA'}
+3. Free writing - ${template.performanceItems?.find(item => item.test === 'Free writing')?.score || 'NA'}
+4. Visual sequential memory (pictorial) - ${template.performanceItems?.find(item => item.test === 'Visual sequential memory (pictorial)')?.score || 'NA'}
+5. Auditory sequential memory - ${template.performanceItems?.find(item => item.test === 'Auditory sequential memory')?.score || 'NA'}
+6. Sound Blending - ${template.performanceItems?.find(item => item.test === 'Sound Blending')?.score || 'NA'}
+7. Visual Sequential memory (symbolic) - ${template.performanceItems?.find(item => item.test === 'Visual Sequential memory (symbolic)')?.score || 'NA'}
+8. Sound discrimination - ${template.performanceItems?.find(item => item.test === 'Sound discrimination')?.score || 'NA'}
+9. Grapho-motor test - ${template.performanceItems?.find(item => item.test === 'Grapho-motor test')?.score || 'NA'}
+
+INTERPRETATION:
+
+General Underlying Ability and Attainment
+
+1. Picture Recognition - ${template.studentName || 'The student'} was able to recognize and give names of ${generalAbility.find(item => item.test === 'Picture Recognition')?.score || 'NA'} pictures and was able to tag common objects in the environment.
+
+2. Vocabulary - ${template.studentName || 'The student'}'s vocabulary was equivalent to that of a ${generalAbility.find(item => item.test === 'Vocabulary')?.score || 'NA'} child.
+
+3. Good-enough draw-a-man test - ${template.studentName || 'The student'}'s mental age was found to be ${generalAbility.find(item => item.test === 'Good-enough draw-a-man')?.score || 'NA'} which is ${chronologicalAge > averageMentalAge ? 'lower than' : 'appropriate for'} chronological age.
+
+4. Copying Geometric designs - ${template.studentName || 'The student'} was able to copy geometric designs with ${generalAbility.find(item => item.test === 'Copying geometric designs')?.score || 'NA'} level performance.
+
+5. Grapheme-Phoneme correspondence - ${generalAbility.find(item => item.test === 'Grapheme-Phoneme correspondence')?.score || 'Could identify the uppercase and lower case letter, but could not say the individual specific sounds.'}
+
+6. Schonell's reading test - ${generalAbility.find(item => item.test === "Schonell's reading test")?.score || 'NA'}
+
+7. Schonell's spelling test - ${generalAbility.find(item => item.test === "Schonell's spelling test")?.score || 'NA'}
+
+8. Visual discrimination test - ${generalAbility.find(item => item.test === 'Visual discrimination test')?.score || 'NA'}
+
+Overall Assessment
+
+The average mental age equivalent is ${averageMentalAge.toFixed(1)} years compared to chronological age of ${chronologicalAge} years, indicating a ${interpretationLevel}. This assessment suggests ${discrepancy > 2 ? 'significant developmental delays requiring comprehensive intervention and support services' : discrepancy > 1 ? 'mild delays that may benefit from targeted support' : 'age-appropriate development with typical academic potential'}.`
     };
   };
 
@@ -252,28 +303,19 @@ This assessment indicates ${diagnosis === 'Insufficient Symptoms for ADHD Diagno
     return {
       title: 'Basic Kinesthetic Test Assessment Report',
       formulas: [
-        {
-          name: 'Gross Motor Score',
-          formula: 'Σ (Gross Motor Items)',
-          description: 'Sum of all gross motor item scores'
-        },
-        {
-          name: 'Fine Motor Score',
-          formula: 'Σ (Fine Motor Items)',
-          description: 'Sum of all fine motor item scores'
-        },
-        {
-          name: 'Body Awareness Score',
-          formula: 'Σ (Body Awareness Items)',
-          description: 'Sum of all body awareness item scores'
-        },
-        {
-          name: 'Performance Percentage',
-          formula: '(Total Score / Maximum Score) × 100',
-          description: 'Overall percentage indicating motor development level'
-        }
+        { name: 'BINET KAMATH TEST OF INTELLIGENCE', formula: 'Mental Age Calculation: Raw Score → Mental Age (months)', description: 'Converts performance to mental age equivalent' },
+        { name: 'Intelligence Quotient', formula: 'I.Q. = (Mental Age ÷ Chronological Age) × 100', description: 'Standard IQ formula' },
+        { name: 'Basal Age', formula: 'Level at which all test items are passed', description: 'Starting point of measurement' },
+        { name: 'Ceiling Age', formula: 'Highest level test can measure', description: 'Upper limit of assessment' },
+        { name: 'Motor Coordination', formula: 'Gross Motor + Fine Motor + Body Awareness', description: 'Combined motor skill domains' },
+        { name: 'Performance Percentage', formula: '(Total Score ÷ Maximum Score) × 100', description: 'Overall motor performance metric' }
       ],
       analysis: {
+        basalAge: template.basalAge || '4 years',
+        ceilingAge: template.ceilingAge || '22 years',
+        mentalAge: template.mentalAge || '112 months (9 years 4 months)',
+        chronologicalAge: template.chronologicalAge || '16 years 2 months',
+        intelligenceQuotient: template.intelligenceQuotient || 58,
         grossMotorScore: `${grossScore}/${grossMotorSkills.length * 10}`,
         fineMotorScore: `${fineScore}/${fineMotorSkills.length * 10}`,
         bodyAwarenessScore: `${bodyScore}/${bodyAwareness.length * 10}`,
@@ -281,7 +323,32 @@ This assessment indicates ${diagnosis === 'Insufficient Symptoms for ADHD Diagno
         percentage: `${percentage.toFixed(1)}%`,
         developmentLevel
       },
-      interpretation: `The student demonstrates ${developmentLevel.toLowerCase()} motor coordination skills overall. Gross motor performance is ${grossScore >= grossMotorSkills.length * 7 ? 'strong' : 'developing'}, fine motor skills are ${fineScore >= fineMotorSkills.length * 7 ? 'well-developed' : 'emerging'}, and body awareness is ${bodyScore >= bodyAwareness.length * 7 ? 'appropriate' : 'developing'}.`
+      interpretation: `BINET KAMATH TEST OF INTELLIGENCE
+
+Is used to assess the Mental Age and Intelligence Quotient (I.Q.) of a child. It consists of various verbal and performance items, beginning at the three-year level.
+
+TEST RESULTS
+
+${template.studentName || 'ABC'} has obtained a Basal Age of ${template.basalAge || '4 years'} and a Ceiling Age of ${template.ceilingAge || '22 years'}. The chronological age is ${template.chronologicalAge || '16 years 2 months'} and the test reveals a Mental Age of ${template.mentalAge || '112 months'}. This corresponds to an I.Q. of ${template.intelligenceQuotient || 58}.
+
+COGNITIVE ASSESSMENT
+
+${template.studentName || 'ABC'} was able to recognize different objects as well as indicate similarities between them. She was enjoying tasks where she was given objects. She could accurately identify different shapes, recognize emotions, and identify missing figures from cards.
+
+${template.studentName || 'ABC'} could not perform tasks such as repeating numbers backwards above 6 digits, or tasks where problem solving was required.
+
+MOTOR COORDINATION ASSESSMENT
+
+Gross Motor Performance: ${grossScore >= grossMotorSkills.length * 7 ? 'Strong' : 'Developing'}
+Fine Motor Performance: ${fineScore >= fineMotorSkills.length * 7 ? 'Well-Developed' : 'Emerging'}
+Body Awareness: ${bodyScore >= bodyAwareness.length * 7 ? 'Appropriate' : 'Developing'}
+Overall Development: ${developmentLevel}
+
+INTERPRETATION
+
+The assessment indicates ${template.intelligenceQuotient >= 90 ? 'superior intellectual functioning' : template.intelligenceQuotient >= 80 ? 'above average intelligence' : template.intelligenceQuotient >= 70 ? 'average intelligence' : template.intelligenceQuotient >= 60 ? 'below average intelligence' : 'borderline intellectual functioning'} with an I.Q. of ${template.intelligenceQuotient || 58}.
+
+Motor coordination skills are at ${percentage.toFixed(1)}% of expected level, indicating ${developmentLevel.toLowerCase()} physical development.`
     };
   };
 
@@ -313,16 +380,8 @@ This assessment indicates ${diagnosis === 'Insufficient Symptoms for ADHD Diagno
     return {
       title: "Raven's Coloured Progressive Matrices Assessment Report",
       formulas: [
-        {
-          name: 'Raw Score',
-          formula: 'Number of Correct Items',
-          description: 'Total count of correctly answered matrix items'
-        },
-        {
-          name: 'Percentile Rank',
-          formula: 'Based on Normative Data',
-          description: 'Position relative to same-age peers in the normative sample'
-        }
+        { name: 'Raw Score', formula: 'Number of Correct Items', description: 'Total count of correctly answered matrix items' },
+        { name: 'Percentile Rank', formula: 'Based on Normative Data', description: 'Position relative to same-age peers in the normative sample' }
       ],
       analysis: {
         rawScore: `${rawScore}/${totalItems}`,
@@ -362,16 +421,8 @@ This assessment indicates ${diagnosis === 'Insufficient Symptoms for ADHD Diagno
     return {
       title: 'Gilliam Autism Rating Scale - 3 Assessment Report',
       formulas: [
-        {
-          name: 'Item Score',
-          formula: '(Frequency Score + Severity Score) / 2',
-          description: 'Average of frequency and severity ratings per item'
-        },
-        {
-          name: 'Autism Index',
-          formula: 'Σ (All Subscale Scores)',
-          description: 'Sum of all subscale scores determines overall probability level'
-        }
+        { name: 'Item Score', formula: '(Frequency Score + Severity Score) / 2', description: 'Average of frequency and severity ratings per item' },
+        { name: 'Autism Index', formula: 'Σ (All Subscale Scores)', description: 'Sum of all subscale scores determines overall probability level' }
       ],
       analysis: {
         autismIndex,
@@ -424,31 +475,11 @@ This assessment indicates ${diagnosis === 'Insufficient Symptoms for ADHD Diagno
     return {
       title: 'Brown Executive Function/Attention Scales Assessment Report',
       formulas: [
-        {
-          name: 'Frequency Score',
-          formula: 'Never=0, Once a month=1, A few times a month=2, Once a week=3, A few times a week=4, Daily=5',
-          description: 'Numeric value assigned to frequency of symptom occurrence'
-        },
-        {
-          name: 'Impact Score',
-          formula: 'No problems=0, Minor=1, Moderate=2, Major=3, Severe=4',
-          description: 'Numeric value assigned to functional impact of symptom'
-        },
-        {
-          name: 'Item Score',
-          formula: '(Frequency Score + Impact Score) / 2',
-          description: 'Average of frequency and impact ratings per item'
-        },
-        {
-          name: 'Executive Function Index',
-          formula: '(Organization + Time Management + Working Memory + Emotional Regulation + Task Initiation) / 5',
-          description: 'Average of the first five subscale scores'
-        },
-        {
-          name: 'Severity Ranges',
-          formula: 'T-Score Classification',
-          description: '<54 Typical | 55-59 Somewhat Atypical | 60-69 Moderately Atypical | 70+ Markedly Atypical'
-        }
+        { name: 'Frequency Score', formula: 'Never=0, Once a month=1, A few times a month=2, Once a week=3, A few times a week=4, Daily=5', description: 'Numeric value assigned to frequency of symptom occurrence' },
+        { name: 'Impact Score', formula: 'No problems=0, Minor=1, Moderate=2, Major=3, Severe=4', description: 'Numeric value assigned to functional impact of symptom' },
+        { name: 'Item Score', formula: '(Frequency Score + Impact Score) / 2', description: 'Average of frequency and impact ratings per item' },
+        { name: 'Executive Function Index', formula: '(Organization + Time Management + Working Memory + Emotional Regulation + Task Initiation) / 5', description: 'Average of the first five subscale scores' },
+        { name: 'Severity Ranges', formula: 'T-Score Classification', description: '<54 Typical | 55-59 Somewhat Atypical | 60-69 Moderately Atypical | 70+ Markedly Atypical' }
       ],
       analysis: {
         executiveFunctionIndex,
@@ -463,50 +494,26 @@ This assessment indicates ${diagnosis === 'Insufficient Symptoms for ADHD Diagno
         })),
         attentionSubscale: subscales[5] ? {
           name: subscales[5].name,
-          score: (subscales[5].items || []).reduce((sum, item) => {
-            return sum + (getFrequencyScore(item.frequency) + getImpactScore(item.impact)) / 2;
-          }, 0)
+          score: attentionScore
         } : null
       },
-      interpretation: `This report includes cluster T Scores for the Parent rater form selected. Difficulties reflected by each of the clusters T scores are described below:
-
-The scores of Brown Executive Function/Attention Scales fall in the significant problem range. The total composite score indicates ${executiveFunctionIndex >= 60 ? 'somewhat atypical to markedly atypical' : 'typical'} functioning in one or more of the many domains that make up executive functions.
-
-However, this report indicates ${template.studentName || 'the student'} as having difficulty in the clusters of Activation, Focus and Effort.
-
-It must be noted that this screening tool cannot be fully endorsed by the tester. There are two sets of scores reported: those reported by parents and a self-report after being given insight by the tester. They can be used as a rough guide to consider conducting a full ADHD diagnostic evaluation if an individual's Total Composite Score meets or exceeds a T score of 60.
-
-BROWN EXECUTIVE FUNCTION / ATTENTION SCALES
-Brown Executive Function/Attention Scales helps screen and assess a wider range of impairments of executive functioning. Brown EF/A Scales measures DSM-5 symptoms of ADHD along with less apparent impairments of executive functioning. It provides an easily understandable, standardized tool to collect information about problems an individual demonstrates or reports with executive functions, self-management functions that support attention in multiple tasks of daily life.
-
-Raters included in this report are listed below:
-Parent Form
-Self Report
-
-Suggested ranges for clinical interpretation of all of the T Scores are as follows:
-
-BROWN EF/A SCALES T-SCORE PROFILE
-T-SCORE RANGE    CLASSIFICATION
-70 and above      Markedly atypical (very significant problem)
-60-69             Moderately atypical (significant problem)  
-55-59             Somewhat atypical (possibly significant problem)
-54 and below       Typical (unlikely significant problem)
-
-The Executive Function Index of ${executiveFunctionIndex} and Attention Index of ${attentionIndex} place ${template.studentName || 'the student'} in the ${overallIndex >= 70 ? 'markedly atypical' : overallIndex >= 60 ? 'moderately atypical' : overallIndex >= 55 ? 'somewhat atypical' : 'typical'} range, indicating ${severityLevel.toLowerCase()} executive function and attention difficulties that may warrant ${overallIndex >= 60 ? 'further comprehensive evaluation and intervention planning' : 'monitoring and support as needed'}.`
+      interpretation: `The Brown EF/A Scales assessment indicates ${severityLevel.toLowerCase()} executive function difficulties. The Executive Function Index of ${executiveFunctionIndex} and Attention Index of ${attentionIndex} suggest ${severityLevel.toLowerCase()} challenges in executive functioning and attention regulation. These findings should be interpreted in the context of the individual's overall cognitive profile and functional demands.`
     };
   };
 
-  // ✅ FIX: EACA Report - function was incomplete/broken in original
+  // EACA Report
   const generateEACAReport = (template) => {
     const domains = template.domains || [];
 
-    const totalScore = domains.reduce((sum, domain) => {
-      return sum + (domain.items || []).reduce((dSum, item) => dSum + (parseInt(item.score) || 0), 0);
-    }, 0);
+    let totalScore = 0;
+    let maxTotalScore = 0;
 
-    const maxTotalScore = domains.reduce((sum, domain) => {
-      return sum + (domain.items || []).reduce((dSum, item) => dSum + (item.maxScore || 0), 0);
-    }, 0);
+    domains.forEach(domain => {
+      (domain.items || []).forEach(item => {
+        totalScore += parseInt(item.score) || 0;
+        maxTotalScore += item.maxScore || 0;
+      });
+    });
 
     const percentage = maxTotalScore > 0 ? (totalScore / maxTotalScore) * 100 : 0;
     const competencyLevel = template.competencyLevel || '';
@@ -515,26 +522,10 @@ The Executive Function Index of ${executiveFunctionIndex} and Attention Index of
     return {
       title: 'Early Academic Competency Assessment Report',
       formulas: [
-        {
-          name: 'Domain Score',
-          formula: 'Σ (Items in Domain)',
-          description: 'Sum of all item scores within each academic domain'
-        },
-        {
-          name: 'Total Score',
-          formula: 'Σ (All Domain Scores)',
-          description: 'Sum of all domain scores across the assessment'
-        },
-        {
-          name: 'Percentage',
-          formula: '(Total Score / Maximum Score) × 100',
-          description: 'Overall percentage indicating academic competency level'
-        },
-        {
-          name: 'Competency Level',
-          formula: 'Based on Percentage Score',
-          description: 'Categorical classification of academic readiness based on percentage'
-        }
+        { name: 'Domain Score', formula: 'Σ (Items in Domain)', description: 'Sum of all item scores within each academic domain' },
+        { name: 'Total Score', formula: 'Σ (All Domain Scores)', description: 'Sum of all domain scores across the assessment' },
+        { name: 'Percentage', formula: '(Total Score / Maximum Score) × 100', description: 'Overall percentage indicating academic competency level' },
+        { name: 'Competency Level', formula: 'Based on Percentage Score', description: 'Categorical classification of academic readiness based on percentage' }
       ],
       analysis: {
         totalScore: `${totalScore}/${maxTotalScore}`,
@@ -563,21 +554,9 @@ The Executive Function Index of ${executiveFunctionIndex} and Attention Index of
     return {
       title: 'Nelson-Denny Reading Test Assessment Report',
       formulas: [
-        {
-          name: 'Vocabulary Raw Score',
-          formula: 'Number Correct × 4',
-          description: 'Each correct vocabulary item is weighted by a factor of 4'
-        },
-        {
-          name: 'Comprehension Raw Score',
-          formula: 'Number Correct × 6',
-          description: 'Each correct comprehension item is weighted by a factor of 6'
-        },
-        {
-          name: 'Total Score',
-          formula: '(Vocabulary + Comprehension + Reading Rate) / 3',
-          description: 'Average of all three subtest scaled scores'
-        }
+        { name: 'Vocabulary Raw Score', formula: 'Number Correct × 4', description: 'Each correct vocabulary item is weighted by a factor of 4' },
+        { name: 'Comprehension Raw Score', formula: 'Number Correct × 6', description: 'Each correct comprehension item is weighted by a factor of 6' },
+        { name: 'Total Score', formula: '(Vocabulary + Comprehension + Reading Rate) / 3', description: 'Average of all three subtest scaled scores' }
       ],
       analysis: {
         vocabularyScore: vocabularySubtest.scaledScore || 0,
@@ -592,6 +571,99 @@ The Executive Function Index of ${executiveFunctionIndex} and Attention Index of
   };
 
   const report = generateReport();
+
+  // TAPS-3 Specific Report
+  const generateTAPS3Report = (template) => {
+    const subtests = template.subtests || [];
+    const phonologicIndex = template.phonologicIndex || 0;
+    const memoryIndex = template.memoryIndex || 0;
+    const cohesionIndex = template.cohesionIndex || 0;
+    const overallIndex = template.overallIndex || 0;
+
+    let performanceRange = '';
+    if (overallIndex >= 115) performanceRange = 'above average';
+    else if (overallIndex >= 85) performanceRange = 'average';
+    else if (overallIndex >= 70) performanceRange = 'below average';
+    else performanceRange = 'significantly below average';
+
+    return {
+      title: 'TEST OF AUDITORY PROCESSING SKILLS-TAPS-3',
+      formulas: [
+        { name: 'Phonologic Index', formula: 'Average of Phonological Subtests Standard Scores', description: 'Word Discrimination + Phonological Segmentation + Phonological Blending' },
+        { name: 'Memory Index', formula: 'Average of Memory Subtests Standard Scores', description: 'Number Memory Forward + Number Memory Reversed + Word Memory + Sentence Memory' },
+        { name: 'Cohesion Index', formula: 'Average of Cohesion Subtests Standard Scores', description: 'Auditory Comprehension + Auditory Reasoning' },
+        { name: 'Overall Index', formula: 'Average of All Index Scores', description: 'Combined performance across all domains' },
+        { name: 'Scaled Score', formula: 'Raw Score → Scaled Score (1-20)', description: 'Normalized score based on normative data' },
+        { name: 'Standard Score', formula: 'Scaled Score → Standard Score (Mean=100, SD=15)', description: 'Standardized score for comparison' }
+      ],
+      analysis: {
+        phonologicIndex,
+        memoryIndex,
+        cohesionIndex,
+        overallIndex,
+        performanceRange,
+        subtests: subtests.map(subtest => ({
+          name: subtest.name,
+          rawScore: subtest.rawScore,
+          scaledScore: subtest.scaledScore,
+          percentileRank: subtest.percentileRank
+        }))
+      },
+      interpretation: `TEST OF AUDITORY PROCESSING SKILLS-TAPS-3
+
+The Test of Auditory Processing Skills (Third Edition; TAPS-3) is a measure of auditory skill important to the development, use, and understanding of the language used in academic instruction. It includes subtests designed to assess basic phonological skills (which are important to learning to read), memory abilities (essential to processing information), and auditory cohesion (which requires not only understanding, but also the ability to use inference, deduction and abstraction to comprehend the meaning of verbally presented information). The scores below serve to show ${template.studentName || 'ABC'}'s performance on these auditory tasks in comparison to a normative sample of his same age peers, as well as to compare his performance on different subtests.
+
+SUBTEST AND INDEX RESULTS
+
+SUBTEST RESULTS
+${subtests.map(subtest => 
+  `${subtest.name.padEnd(25)} ${subtest.rawScore.toString().padStart(8)} ${subtest.scaledScore.toString().padStart(12)} ${subtest.percentileRank.toString().padStart(14)}`
+).join('\n')}
+
+Phonologic Index Standard Score + = ${phonologicIndex}
+Memory Index Standard Score † = ${memoryIndex}
+Cohesion Index Standard Score * = ${cohesionIndex}
+Overall Index Score + = ${overallIndex}
+
+PERCENTILE RANKS
+${subtests.map(subtest => subtest.percentileRank).join('          ')}
+
+Remark: ${template.studentName || 'ABC'}'s Overall TAPS-3 Index Standard Score is ${overallIndex}, is in the ${performanceRange} range (85-115 average) for his chronological age.`
+    };
+  };
+
+  // RIPA-Primary Specific Report
+  const generateRIPAPrimaryReport = (template) => {
+    const memoryQuotient = template.memoryQuotient || 0;
+    const compositeScore = template.compositeScore || 0;
+    const tScore = template.tScore || 0;
+    const interpretation = template.interpretation || '';
+
+    return {
+      title: 'ROSS INFORMATION PROCESSING ASSESSMENT (RIPA)-PRIMARY',
+      formulas: [
+        { name: 'Memory Quotient', formula: 'Average of Subtest Standard Scores', description: 'Combined performance across all subtests' },
+        { name: 'Composite Score', formula: 'Sum of Standard Scores', description: 'Overall performance measure' },
+        { name: 'T-Score', formula: '(Standard Score - 100) / 15 * 10 + 50', description: 'Standardized score with mean=50, SD=10' }
+      ],
+      analysis: {
+        memoryQuotient,
+        compositeScore,
+        tScore,
+        interpretation
+      },
+      interpretation: `ROSS INFORMATION PROCESSING ASSESSMENT (RIPA)-PRIMARY
+
+The RIPA-A quantifies & describes cognitive-linguistic deficits in individuals between the ages of 5-0 and 12-11 who face difficulties in attention, memory, orientation, language and communication, problem solving and abstract reasoning. It can be used to develop and guide rehabilitation goals and objectives based on individual strengths and weaknesses.
+
+TEST RESULTS
+Memory Quotient: ${memoryQuotient}
+Composite Score: ${compositeScore}
+T-Score: T-${tScore}
+
+Interpretation: ${template.studentName || 'ABC'}'s RIPA-P scores imply '${interpretation}' deficits in the areas of information processing skills (memory).`
+    };
+  };
 
   return (
     <div className="lg:ml-64 min-h-screen bg-gray-50">
@@ -818,6 +890,45 @@ The Executive Function Index of ${executiveFunctionIndex} and Attention Index of
                       <h3 className="font-semibold text-green-800 mb-2">Competency Level</h3>
                       <p className="text-lg font-bold text-green-600">{report.analysis.competencyLevel}</p>
                       <p className="text-sm text-green-700">Readiness: {report.analysis.readinessLevel}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {template.type === 'TAPS-3' && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-teal-50 p-4 rounded-lg">
+                      <h3 className="font-semibold text-teal-800 mb-2">Index Scores</h3>
+                      <div className="space-y-1">
+                        <p className="text-sm">Phonologic Index: {report.analysis.phonologicIndex}</p>
+                        <p className="text-sm">Memory Index: {report.analysis.memoryIndex}</p>
+                        <p className="text-sm">Cohesion Index: {report.analysis.cohesionIndex}</p>
+                      </div>
+                    </div>
+                    <div className="bg-purple-50 p-4 rounded-lg">
+                      <h3 className="font-semibold text-purple-800 mb-2">Overall Performance</h3>
+                      <p className="text-lg font-bold text-purple-600">{report.analysis.overallIndex}</p>
+                      <p className="text-sm text-purple-700">Range: {report.analysis.performanceRange}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {template.type === 'RIPA-Primary' && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-emerald-50 p-4 rounded-lg">
+                      <h3 className="font-semibold text-emerald-800 mb-2">Memory Scores</h3>
+                      <div className="space-y-1">
+                        <p className="text-sm">Memory Quotient: {report.analysis.memoryQuotient}</p>
+                        <p className="text-sm">Composite Score: {report.analysis.compositeScore}</p>
+                      </div>
+                    </div>
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h3 className="font-semibold text-blue-800 mb-2">Standardized Score</h3>
+                      <p className="text-lg font-bold text-blue-600">T-{report.analysis.tScore}</p>
+                      <p className="text-sm text-blue-700">{report.analysis.interpretation}</p>
                     </div>
                   </div>
                 </div>

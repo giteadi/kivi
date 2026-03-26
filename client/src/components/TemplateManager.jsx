@@ -11,7 +11,9 @@ import RavensCPMTemplate from './RavensCPMTemplate';
 import GARS3Template from './GARS3Template';
 import BrownEFAScaleTemplate from './BrownEFAScaleTemplate';
 import EACATemplate from './EACATemplate';
+import EACAAutismTemplate from './EACAAutismTemplate';
 import NelsonDennyReadingTestTemplate from './NelsonDennyReadingTestTemplate';
+import TAPS3Template from './TAPS3Template';
 import AssessmentReportGenerator from './AssessmentReportGenerator';
 import TemplateTypeSelector from './TemplateTypeSelector';
 
@@ -546,6 +548,113 @@ She showed some difficulty with verbal expression of meaning of words presented 
     },
     {
       id: 9,
+      name: 'Educational Assessment of Children with Autism (EACA)',
+      type: 'EACA-Autism',
+      description: 'Comprehensive assessment of children with autism focusing on the triad of impairments across 7 domains',
+      template_data: {
+        type: 'EACA-Autism',
+        name: 'Educational Assessment of Children with Autism (EACA)',
+        studentName: '',
+        examinerName: '',
+        testDate: new Date().toISOString().split('T')[0],
+        description: 'The Educational Assessment of Children with Autism (EACA) consists of a checklist of skill behaviours that are functionally relevant for such children. With the focus on the triad of impairments (impairment in social interaction, delay in language and communication, and limited interests and activities) in autism, EACA views how the impairments may impact acquisition of learning skills. The test contains 48 items and have been categorized within 7 domains namely: Attention Skills, Imitation Skills, Language and Communication Skills, Cognitive Skills, Play Skills, Self-help Skills, and Behaviour Skills.',
+        domains: [
+          {
+            name: 'Attention Skills',
+            items: [
+              { id: 1, skill: 'Sustains attention to preferred activities', score: '', maxScore: 4, remarks: '' },
+              { id: 2, skill: 'Shifts attention between objects/people', score: '', maxScore: 4, remarks: '' },
+              { id: 3, skill: 'Responds to name when called', score: '', maxScore: 4, remarks: '' },
+              { id: 4, skill: 'Maintains eye contact during interaction', score: '', maxScore: 4, remarks: '' },
+              { id: 5, skill: 'Attends to group activities', score: '', maxScore: 4, remarks: '' },
+              { id: 6, skill: 'Focuses on teacher-directed tasks', score: '', maxScore: 4, remarks: '' },
+              { id: 7, skill: 'Screens out environmental distractions', score: '', maxScore: 4, remarks: '' }
+            ]
+          },
+          {
+            name: 'Imitation Skills',
+            items: [
+              { id: 8, skill: 'Imitates simple motor actions', score: '', maxScore: 4, remarks: '' },
+              { id: 9, skill: 'Imitates facial expressions', score: '', maxScore: 4, remarks: '' },
+              { id: 10, skill: 'Imitates sounds/vocalizations', score: '', maxScore: 4, remarks: '' },
+              { id: 11, skill: 'Imitates object use', score: '', maxScore: 4, remarks: '' },
+              { id: 12, skill: 'Imitates multi-step actions', score: '', maxScore: 4, remarks: '' },
+              { id: 13, skill: 'Imitates peer behaviors', score: '', maxScore: 4, remarks: '' },
+              { id: 14, skill: 'Spontaneous imitation of new skills', score: '', maxScore: 4, remarks: '' }
+            ]
+          },
+          {
+            name: 'Language and Communication Skills',
+            items: [
+              { id: 15, skill: 'Uses gestures for communication', score: '', maxScore: 4, remarks: '' },
+              { id: 16, skill: 'Follows simple verbal instructions', score: '', maxScore: 4, remarks: '' },
+              { id: 17, skill: 'Understands questions', score: '', maxScore: 4, remarks: '' },
+              { id: 18, skill: 'Expresses needs verbally/non-verbally', score: '', maxScore: 4, remarks: '' },
+              { id: 19, skill: 'Initiates conversations', score: '', maxScore: 4, remarks: '' },
+              { id: 20, skill: 'Maintains topic of conversation', score: '', maxScore: 4, remarks: '' },
+              { id: 21, skill: 'Uses appropriate social language', score: '', maxScore: 4, remarks: '' }
+            ]
+          },
+          {
+            name: 'Cognitive Skills',
+            items: [
+              { id: 22, skill: 'Problem-solving skills', score: '', maxScore: 4, remarks: '' },
+              { id: 23, skill: 'Cause and effect understanding', score: '', maxScore: 4, remarks: '' },
+              { id: 24, skill: 'Object permanence', score: '', maxScore: 4, remarks: '' },
+              { id: 25, skill: 'Classification/sorting skills', score: '', maxScore: 4, remarks: '' },
+              { id: 26, skill: 'Sequencing abilities', score: '', maxScore: 4, remarks: '' },
+              { id: 27, skill: 'Memory skills', score: '', maxScore: 4, remarks: '' },
+              { id: 28, skill: 'Abstract thinking', score: '', maxScore: 4, remarks: '' }
+            ]
+          },
+          {
+            name: 'Play and Social Skills',
+            items: [
+              { id: 29, skill: 'Engages in solitary play', score: '', maxScore: 4, remarks: '' },
+              { id: 30, skill: 'Parallel play with peers', score: '', maxScore: 4, remarks: '' },
+              { id: 31, skill: 'Interactive play with others', score: '', maxScore: 4, remarks: '' },
+              { id: 32, skill: 'Shares toys/materials', score: '', maxScore: 4, remarks: '' },
+              { id: 33, skill: 'Takes turns in games', score: '', maxScore: 4, remarks: '' },
+              { id: 34, skill: 'Shows empathy to others', score: '', maxScore: 4, remarks: '' },
+              { id: 35, skill: 'Initiates social interactions', score: '', maxScore: 4, remarks: '' }
+            ]
+          },
+          {
+            name: 'Self-help Skills',
+            items: [
+              { id: 36, skill: 'Self-feeding skills', score: '', maxScore: 4, remarks: '' },
+              { id: 37, skill: 'Toilet training', score: '', maxScore: 4, remarks: '' },
+              { id: 38, skill: 'Dressing independently', score: '', maxScore: 4, remarks: '' },
+              { id: 39, skill: 'Personal hygiene', score: '', maxScore: 4, remarks: '' },
+              { id: 40, skill: 'Organizes personal belongings', score: '', maxScore: 4, remarks: '' },
+              { id: 41, skill: 'Manages personal schedule', score: '', maxScore: 4, remarks: '' },
+              { id: 42, skill: 'Independent work completion', score: '', maxScore: 4, remarks: '' }
+            ]
+          },
+          {
+            name: 'Behaviour Skills',
+            items: [
+              { id: 43, skill: 'Manages frustration appropriately', score: '', maxScore: 4, remarks: '' },
+              { id: 44, skill: 'Follows classroom rules', score: '', maxScore: 4, remarks: '' },
+              { id: 45, skill: 'Transitions between activities', score: '', maxScore: 4, remarks: '' },
+              { id: 46, skill: 'Accepts changes in routine', score: '', maxScore: 4, remarks: '' },
+              { id: 47, skill: 'Appropriate emotional expression', score: '', maxScore: 4, remarks: '' },
+              { id: 48, skill: 'Self-regulation skills', score: '', maxScore: 4, remarks: '' }
+            ]
+          }
+        ],
+        totalScore: 0,
+        maxTotalScore: 192,
+        percentage: 0,
+        interpretation: '',
+        conclusions: '',
+        recommendations: ''
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 10,
       name: 'Nelson-Denny Reading Test',
       type: 'Nelson-Denny',
       description: 'Comprehensive assessment of reading comprehension, vocabulary, and reading rate',
@@ -608,6 +717,201 @@ She showed some difficulty with verbal expression of meaning of words presented 
         },
         totalScore: 0,
         overallReadingLevel: '',
+        interpretation: '',
+        conclusions: '',
+        recommendations: ''
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 11,
+      name: 'TEST OF AUDITORY PROCESSING SKILLS-TAPS-3',
+      type: 'TAPS-3',
+      description: 'Comprehensive auditory processing assessment for phonological skills, memory abilities, and auditory cohesion',
+      template_data: {
+        type: 'TAPS-3',
+        name: 'TEST OF AUDITORY PROCESSING SKILLS-TAPS-3',
+        studentName: '',
+        examinerName: '',
+        testDate: new Date().toISOString().split('T')[0],
+        description: `The Test of Auditory Processing Skills (Third Edition; TAPS-3) is a measure of auditory skill important to the development, use, and understanding of the language used in academic instruction. It includes subtests designed to assess basic phonological skills (which are important to learning to read), memory abilities (essential to processing information), and auditory cohesion (which requires not only understanding, but also the ability to use inference, deduction and abstraction to comprehend the meaning of verbally presented information). The scores below serve to show a student's performance on these auditory tasks in comparison to a normative sample of his same age peers, as well as to compare his performance on different subtests.`,
+        subtests: [
+          {
+            name: 'Word Discrimination',
+            category: 'Phonological',
+            rawScore: 0,
+            scaledScore: 0,
+            percentileRank: 0,
+            maxScore: 36,
+            items: [
+              { id: 1, item: 'Word pair 1', response: '', correct: true },
+              { id: 2, item: 'Word pair 2', response: '', correct: true },
+              { id: 3, item: 'Word pair 3', response: '', correct: true },
+              { id: 4, item: 'Word pair 4', response: '', correct: true },
+              { id: 5, item: 'Word pair 5', response: '', correct: true },
+              { id: 6, item: 'Word pair 6', response: '', correct: true },
+              { id: 7, item: 'Word pair 7', response: '', correct: true },
+              { id: 8, item: 'Word pair 8', response: '', correct: true },
+              { id: 9, item: 'Word pair 9', response: '', correct: true },
+              { id: 10, item: 'Word pair 10', response: '', correct: true },
+              { id: 11, item: 'Word pair 11', response: '', correct: true },
+              { id: 12, item: 'Word pair 12', response: '', correct: true }
+            ]
+          },
+          {
+            name: 'Phonological Segmentation',
+            category: 'Phonological',
+            rawScore: 0,
+            scaledScore: 0,
+            percentileRank: 0,
+            maxScore: 30,
+            items: [
+              { id: 13, item: 'Segment word 1', response: '', correct: true },
+              { id: 14, item: 'Segment word 2', response: '', correct: true },
+              { id: 15, item: 'Segment word 3', response: '', correct: true },
+              { id: 16, item: 'Segment word 4', response: '', correct: true },
+              { id: 17, item: 'Segment word 5', response: '', correct: true },
+              { id: 18, item: 'Segment word 6', response: '', correct: true },
+              { id: 19, item: 'Segment word 7', response: '', correct: true },
+              { id: 20, item: 'Segment word 8', response: '', correct: true },
+              { id: 21, item: 'Segment word 9', response: '', correct: true },
+              { id: 22, item: 'Segment word 10', response: '', correct: true }
+            ]
+          },
+          {
+            name: 'Phonological Blending',
+            category: 'Phonological',
+            rawScore: 0,
+            scaledScore: 0,
+            percentileRank: 0,
+            maxScore: 30,
+            items: [
+              { id: 23, item: 'Blend sounds 1', response: '', correct: true },
+              { id: 24, item: 'Blend sounds 2', response: '', correct: true },
+              { id: 25, item: 'Blend sounds 3', response: '', correct: true },
+              { id: 26, item: 'Blend sounds 4', response: '', correct: true },
+              { id: 27, item: 'Blend sounds 5', response: '', correct: true },
+              { id: 28, item: 'Blend sounds 6', response: '', correct: true },
+              { id: 29, item: 'Blend sounds 7', response: '', correct: true },
+              { id: 30, item: 'Blend sounds 8', response: '', correct: true },
+              { id: 31, item: 'Blend sounds 9', response: '', correct: true },
+              { id: 32, item: 'Blend sounds 10', response: '', correct: true }
+            ]
+          },
+          {
+            name: 'Number Memory Forward',
+            category: 'Memory',
+            rawScore: 0,
+            scaledScore: 0,
+            percentileRank: 0,
+            maxScore: 30,
+            items: [
+              { id: 33, item: 'Repeat 2 numbers', response: '', correct: true },
+              { id: 34, item: 'Repeat 3 numbers', response: '', correct: true },
+              { id: 35, item: 'Repeat 4 numbers', response: '', correct: true },
+              { id: 36, item: 'Repeat 5 numbers', response: '', correct: true },
+              { id: 37, item: 'Repeat 6 numbers', response: '', correct: true },
+              { id: 38, item: 'Repeat 7 numbers', response: '', correct: true },
+              { id: 39, item: 'Repeat 8 numbers', response: '', correct: true },
+              { id: 40, item: 'Repeat 9 numbers', response: '', correct: true },
+              { id: 41, item: 'Repeat 10 numbers', response: '', correct: true }
+            ]
+          },
+          {
+            name: 'Number Memory Reversed',
+            category: 'Memory',
+            rawScore: 0,
+            scaledScore: 0,
+            percentileRank: 0,
+            maxScore: 18,
+            items: [
+              { id: 42, item: 'Reverse 2 numbers', response: '', correct: true },
+              { id: 43, item: 'Reverse 3 numbers', response: '', correct: true },
+              { id: 44, item: 'Reverse 4 numbers', response: '', correct: true },
+              { id: 45, item: 'Reverse 5 numbers', response: '', correct: true },
+              { id: 46, item: 'Reverse 6 numbers', response: '', correct: true },
+              { id: 47, item: 'Reverse 7 numbers', response: '', correct: true }
+            ]
+          },
+          {
+            name: 'Word Memory',
+            category: 'Memory',
+            rawScore: 0,
+            scaledScore: 0,
+            percentileRank: 0,
+            maxScore: 24,
+            items: [
+              { id: 48, item: 'Recall 2 words', response: '', correct: true },
+              { id: 49, item: 'Recall 3 words', response: '', correct: true },
+              { id: 50, item: 'Recall 4 words', response: '', correct: true },
+              { id: 51, item: 'Recall 5 words', response: '', correct: true },
+              { id: 52, item: 'Recall 6 words', response: '', correct: true },
+              { id: 53, item: 'Recall 7 words', response: '', correct: true },
+              { id: 54, item: 'Recall 8 words', response: '', correct: true }
+            ]
+          },
+          {
+            name: 'Sentence Memory',
+            category: 'Memory',
+            rawScore: 0,
+            scaledScore: 0,
+            percentileRank: 0,
+            maxScore: 30,
+            items: [
+              { id: 55, item: 'Recall sentence 1', response: '', correct: true },
+              { id: 56, item: 'Recall sentence 2', response: '', correct: true },
+              { id: 57, item: 'Recall sentence 3', response: '', correct: true },
+              { id: 58, item: 'Recall sentence 4', response: '', correct: true },
+              { id: 59, item: 'Recall sentence 5', response: '', correct: true },
+              { id: 60, item: 'Recall sentence 6', response: '', correct: true },
+              { id: 61, item: 'Recall sentence 7', response: '', correct: true },
+              { id: 62, item: 'Recall sentence 8', response: '', correct: true },
+              { id: 63, item: 'Recall sentence 9', response: '', correct: true },
+              { id: 64, item: 'Recall sentence 10', response: '', correct: true }
+            ]
+          },
+          {
+            name: 'Auditory Comprehension',
+            category: 'Cohesion',
+            rawScore: 0,
+            scaledScore: 0,
+            percentileRank: 0,
+            maxScore: 30,
+            items: [
+              { id: 65, item: 'Comprehension 1', response: '', correct: true },
+              { id: 66, item: 'Comprehension 2', response: '', correct: true },
+              { id: 67, item: 'Comprehension 3', response: '', correct: true },
+              { id: 68, item: 'Comprehension 4', response: '', correct: true },
+              { id: 69, item: 'Comprehension 5', response: '', correct: true },
+              { id: 70, item: 'Comprehension 6', response: '', correct: true },
+              { id: 71, item: 'Comprehension 7', response: '', correct: true },
+              { id: 72, item: 'Comprehension 8', response: '', correct: true },
+              { id: 73, item: 'Comprehension 9', response: '', correct: true },
+              { id: 74, item: 'Comprehension 10', response: '', correct: true }
+            ]
+          },
+          {
+            name: 'Auditory Reasoning',
+            category: 'Cohesion',
+            rawScore: 0,
+            scaledScore: 0,
+            percentileRank: 0,
+            maxScore: 18,
+            items: [
+              { id: 75, item: 'Reasoning 1', response: '', correct: true },
+              { id: 76, item: 'Reasoning 2', response: '', correct: true },
+              { id: 77, item: 'Reasoning 3', response: '', correct: true },
+              { id: 78, item: 'Reasoning 4', response: '', correct: true },
+              { id: 79, item: 'Reasoning 5', response: '', correct: true },
+              { id: 80, item: 'Reasoning 6', response: '', correct: true }
+            ]
+          }
+        ],
+        phonologicIndex: 0,
+        memoryIndex: 0,
+        cohesionIndex: 0,
+        overallIndex: 0,
         interpretation: '',
         conclusions: '',
         recommendations: ''
@@ -749,6 +1053,10 @@ She showed some difficulty with verbal expression of meaning of words presented 
         return <FiFileText className="w-5 h-5 text-teal-500" />;
       case 'Nelson-Denny':
         return <FiFileText className="w-5 h-5 text-cyan-500" />;
+      case 'TAPS-3':
+        return <FiFileText className="w-5 h-5 text-teal-500" />;
+      case 'EACA-Autism':
+        return <FiFileText className="w-5 h-5 text-purple-500" />;
       default:
         return <FiFileText className="w-5 h-5 text-gray-500" />;
     }
@@ -773,11 +1081,17 @@ She showed some difficulty with verbal expression of meaning of words presented 
     if (type === 'Brown-EF-A' || templateName?.toLowerCase().includes('brown')) {
       return 'bg-yellow-100 text-yellow-800';
     }
+    if (type === 'EACA-Autism' || templateName?.toLowerCase().includes('autism')) {
+      return 'bg-purple-100 text-purple-800';
+    }
     if (type === 'EACA' || templateName?.toLowerCase().includes('eaca')) {
       return 'bg-teal-100 text-teal-800';
     }
     if (type === 'Nelson-Denny' || templateName?.toLowerCase().includes('nelson')) {
       return 'bg-cyan-100 text-cyan-800';
+    }
+    if (type === 'TAPS-3' || templateName?.toLowerCase().includes('taps')) {
+      return 'bg-teal-100 text-teal-800';
     }
     switch (type) {
       case 'ADHDT2':
@@ -810,10 +1124,14 @@ She showed some difficulty with verbal expression of meaning of words presented 
                          selectedTemplate?.template_data?.name?.toLowerCase().includes('gars') ? 'GARS-3' :
                          selectedTemplate?.name?.toLowerCase().includes('brown') ? 'Brown-EF-A' :
                          selectedTemplate?.template_data?.name?.toLowerCase().includes('brown') ? 'Brown-EF-A' :
-                         selectedTemplate?.name?.toLowerCase().includes('eaca') ? 'EACA' :
-                         selectedTemplate?.template_data?.name?.toLowerCase().includes('eaca') ? 'EACA' :
+                         selectedTemplate?.name?.toLowerCase().includes('eaca') && !selectedTemplate?.name?.toLowerCase().includes('autism') ? 'EACA' :
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('eaca') && !selectedTemplate?.template_data?.name?.toLowerCase().includes('autism') ? 'EACA' :
+                         selectedTemplate?.name?.toLowerCase().includes('autism') ? 'EACA-Autism' :
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('autism') ? 'EACA-Autism' :
                          selectedTemplate?.name?.toLowerCase().includes('nelson') ? 'Nelson-Denny' :
-                         selectedTemplate?.template_data?.name?.toLowerCase().includes('nelson') ? 'Nelson-Denny' : 'ADHDT2');
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('nelson') ? 'Nelson-Denny' :
+                         selectedTemplate?.name?.toLowerCase().includes('taps') ? 'TAPS-3' :
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('taps') ? 'TAPS-3' : 'ADHDT2');
     
     if (templateType === 'ADHT-BSM') {
       return (
@@ -881,6 +1199,17 @@ She showed some difficulty with verbal expression of meaning of words presented 
       );
     }
 
+    if (templateType === 'EACA-Autism') {
+      return (
+        <EACAAutismTemplate
+          onSave={handleTemplateSave}
+          onCancel={handleTemplateCancel}
+          studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
+          examinerName={selectedTemplate?.template_data?.examinerName || 'Dr. Smith'}
+        />
+      );
+    }
+
     if (templateType === 'EACA') {
       return (
         <EACATemplate
@@ -895,6 +1224,17 @@ She showed some difficulty with verbal expression of meaning of words presented 
     if (templateType === 'Nelson-Denny') {
       return (
         <NelsonDennyReadingTestTemplate
+          onSave={handleTemplateSave}
+          onCancel={handleTemplateCancel}
+          studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
+          examinerName={selectedTemplate?.template_data?.examinerName || 'Dr. Smith'}
+        />
+      );
+    }
+
+    if (templateType === 'TAPS-3') {
+      return (
+        <TAPS3Template
           onSave={handleTemplateSave}
           onCancel={handleTemplateCancel}
           studentName={selectedTemplate?.template_data?.studentName || 'ABC'}

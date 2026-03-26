@@ -74,6 +74,13 @@ const TemplateTypeSelector = ({ onSelect, onCancel }) => {
       icon: '📚'
     },
     {
+      type: 'EACA-Autism',
+      name: 'Educational Assessment of Children with Autism (EACA)',
+      description: 'Comprehensive assessment of children with autism focusing on triad of impairments across 7 domains',
+      color: 'purple',
+      icon: '🧩'
+    },
+    {
       type: 'Nelson-Denny',
       name: 'Nelson-Denny Reading Test',
       description: 'Comprehensive assessment of reading comprehension, vocabulary, and reading rate',

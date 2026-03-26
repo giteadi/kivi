@@ -133,6 +133,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
                 src="https://res.cloudinary.com/bazeercloud/image/upload/v1765087953/Gemini_Generated_Image_o8ciwko8ciwko8ci-removebg-preview_l4nnui.png" 
                 alt="MindSaid Learning Logo" 
                 className="w-full h-full object-contain"
+                loading="lazy"
               />
             </div>
             <span className="text-xl font-semibold text-gray-800">MindSaid Learning</span>

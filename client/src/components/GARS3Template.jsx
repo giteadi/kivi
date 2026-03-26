@@ -12,88 +12,109 @@ const GARS3Template = ({
     studentName: studentName,
     examinerName: examinerName,
     testDate: new Date().toISOString().split('T')[0],
-    description: `The Gilliam Autism Rating Scale, Third Edition (GARS-3) is a standardized, norm-referenced instrument used to identify autism spectrum disorders and assist in designing intervention programs. The instrument consists of 56 items describing characteristic behaviors of persons with autism.`,
+    description: `Autism is a developmental disorder characterized by severe and pervasive impairments in communication, social interaction, and a markedly restricted repertoire of activity and interests. The GARS-3 is a norm-referenced screening instrument used to identify persons who have severe behavioural problems that may be indicative of autism spectrum disorders. Its six subscales are related to the Autism Society's definition of autism spectrum disorder (ASD), which describe specific, observable, and measurable behaviours. The subscales are Restricted/Repetitive Behaviours, Social Interaction, Social Communication, Emotional Responses, Cognitive Style, and Maladaptive Speech.
+    
+The Autism Index mean for the normative sample is 100, with a standard deviation of 15. The higher the Autism Index score, the greater is the probability that the person has ASD. Also, the greater the index score, the more severe the autistic behaviour is.`,
     subscales: [
       {
-        name: 'Restricted/Repetitive Behaviors',
+        name: 'Restricted/Repetitive Behaviours',
+        rawScore: 0,
+        scaledScore: 0,
+        percentile: 0,
         items: [
-          { id: 1, description: 'Engages in repetitive motor movements', frequency: '', severity: '' },
-          { id: 2, description: 'Insists on sameness, routines, or rituals', frequency: '', severity: '' },
-          { id: 3, description: 'Has highly restricted interests', frequency: '', severity: '' },
-          { id: 4, description: 'Hyper- or hypo-reactive to sensory input', frequency: '', severity: '' },
-          { id: 5, description: 'Lines up objects or toys', frequency: '', severity: '' },
-          { id: 6, description: 'Repeats words or phrases', frequency: '', severity: '' },
-          { id: 7, description: 'Has difficulty with changes in routine', frequency: '', severity: '' },
-          { id: 8, description: 'Shows unusual attachments to objects', frequency: '', severity: '' }
+          { id: 1, description: 'Engages in repetitive motor movements (e.g., hand flapping, body rocking)', rating: 0 },
+          { id: 2, description: 'Insists on sameness, routines, or rituals', rating: 0 },
+          { id: 3, description: 'Has highly restricted interests (fixated interests that are abnormal in intensity or focus)', rating: 0 },
+          { id: 4, description: 'Hyper- or hypo-reactive to sensory input (unusual sensory interests)', rating: 0 },
+          { id: 5, description: 'Lines up objects or toys in a specific pattern', rating: 0 },
+          { id: 6, description: 'Repeats words or phrases (echolalia)', rating: 0 },
+          { id: 7, description: 'Has difficulty with changes in routine', rating: 0 },
+          { id: 8, description: 'Shows unusual attachments to objects', rating: 0 }
         ]
       },
       {
         name: 'Social Interaction',
+        rawScore: 0,
+        scaledScore: 0,
+        percentile: 0,
         items: [
-          { id: 9, description: 'Has difficulty making eye contact', frequency: '', severity: '' },
-          { id: 10, description: 'Does not respond to name being called', frequency: '', severity: '' },
-          { id: 11, description: 'Has difficulty understanding others feelings', frequency: '', severity: '' },
-          { id: 12, description: 'Prefers to play alone', frequency: '', severity: '' },
-          { id: 13, description: 'Has difficulty making friends', frequency: '', severity: '' },
-          { id: 14, description: 'Does not share interests or achievements', frequency: '', severity: '' },
-          { id: 15, description: 'Has difficulty initiating social interaction', frequency: '', severity: '' },
-          { id: 16, description: 'Does not engage in pretend play', frequency: '', severity: '' }
+          { id: 9, description: 'Has difficulty making eye contact', rating: 0 },
+          { id: 10, description: 'Does not respond to name being called', rating: 0 },
+          { id: 11, description: 'Has difficulty understanding others feelings', rating: 0 },
+          { id: 12, description: 'Prefers to play alone', rating: 0 },
+          { id: 13, description: 'Has difficulty making friends', rating: 0 },
+          { id: 14, description: 'Does not share interests or achievements', rating: 0 },
+          { id: 15, description: 'Has difficulty initiating social interaction', rating: 0 },
+          { id: 16, description: 'Does not engage in pretend play', rating: 0 }
         ]
       },
       {
-        name: 'Communication',
+        name: 'Social Communication',
+        rawScore: 0,
+        scaledScore: 0,
+        percentile: 0,
         items: [
-          { id: 17, description: 'Has delayed speech development', frequency: '', severity: '' },
-          { id: 18, description: 'Repeats words or phrases heard', frequency: '', severity: '' },
-          { id: 19, description: 'Uses pronouns incorrectly', frequency: '', severity: '' },
-          { id: 20, description: 'Has difficulty expressing needs', frequency: '', severity: '' },
-          { id: 21, description: 'Does not understand jokes or sarcasm', frequency: '', severity: '' },
-          { id: 22, description: 'Has difficulty following conversations', frequency: '', severity: '' },
-          { id: 23, description: 'Speaks in flat or robotic tone', frequency: '', severity: '' },
-          { id: 24, description: 'Has difficulty with back-and-forth conversation', frequency: '', severity: '' }
+          { id: 17, description: 'Has delayed speech development', rating: 0 },
+          { id: 18, description: 'Repeats words or phrases heard (echolalia)', rating: 0 },
+          { id: 19, description: 'Uses pronouns incorrectly', rating: 0 },
+          { id: 20, description: 'Has difficulty expressing needs', rating: 0 },
+          { id: 21, description: 'Does not understand jokes or sarcasm', rating: 0 },
+          { id: 22, description: 'Has difficulty following conversations', rating: 0 },
+          { id: 23, description: 'Speaks in flat or robotic tone', rating: 0 },
+          { id: 24, description: 'Has difficulty with back-and-forth conversation', rating: 0 }
         ]
       },
       {
-        name: 'Emotional Regulation',
+        name: 'Emotional Responses',
+        rawScore: 0,
+        scaledScore: 0,
+        percentile: 0,
         items: [
-          { id: 25, description: 'Has frequent emotional outbursts', frequency: '', severity: '' },
-          { id: 26, description: 'Has difficulty calming down', frequency: '', severity: '' },
-          { id: 27, description: 'Shows excessive anxiety', frequency: '', severity: '' },
-          { id: 28, description: 'Has difficulty with transitions', frequency: '', severity: '' },
-          { id: 29, description: 'Shows self-injurious behavior', frequency: '', severity: '' },
-          { id: 30, description: 'Has aggressive behavior', frequency: '', severity: '' },
-          { id: 31, description: 'Has unusual sleep patterns', frequency: '', severity: '' },
-          { id: 32, description: 'Has unusual eating habits', frequency: '', severity: '' }
+          { id: 25, description: 'Has frequent emotional outbursts', rating: 0 },
+          { id: 26, description: 'Has difficulty calming down when upset', rating: 0 },
+          { id: 27, description: 'Shows excessive anxiety', rating: 0 },
+          { id: 28, description: 'Has difficulty with transitions between activities', rating: 0 },
+          { id: 29, description: 'Becomes upset when routines are changed', rating: 0 },
+          { id: 30, description: 'Temper tantrums when frustrated', rating: 0 },
+          { id: 31, description: 'Shows unusual sleep patterns', rating: 0 },
+          { id: 32, description: 'Has unusual eating habits', rating: 0 }
         ]
       },
       {
         name: 'Cognitive Style',
+        rawScore: 0,
+        scaledScore: 0,
+        percentile: 0,
         items: [
-          { id: 33, description: 'Has excellent memory for details', frequency: '', severity: '' },
-          { id: 34, description: 'Thinks in visual terms', frequency: '', severity: '' },
-          { id: 35, description: 'Has difficulty with abstract concepts', frequency: '', severity: '' },
-          { id: 36, description: 'Shows strong interest in patterns', frequency: '', severity: '' },
-          { id: 37, description: 'Has unusual problem-solving approach', frequency: '', severity: '' },
-          { id: 38, description: 'Shows exceptional ability in specific area', frequency: '', severity: '' },
-          { id: 39, description: 'Has difficulty with flexible thinking', frequency: '', severity: '' },
-          { id: 40, description: 'Processes information differently', frequency: '', severity: '' }
+          { id: 33, description: 'Has excellent memory for details', rating: 0 },
+          { id: 34, description: 'Thinks in visual terms', rating: 0 },
+          { id: 35, description: 'Has difficulty with abstract concepts', rating: 0 },
+          { id: 36, description: 'Shows strong interest in patterns', rating: 0 },
+          { id: 37, description: 'Has unusual problem-solving approach', rating: 0 },
+          { id: 38, description: 'Shows exceptional ability in specific area', rating: 0 },
+          { id: 39, description: 'Talks about a single subject excessively', rating: 0 },
+          { id: 40, description: 'Displays excellent memory for specific information', rating: 0 }
         ]
       },
       {
-        name: 'Maladaptive Behaviors',
+        name: 'Maladaptive Speech',
+        rawScore: 0,
+        scaledScore: 0,
+        percentile: 0,
         items: [
-          { id: 41, description: 'Engages in self-stimulatory behavior', frequency: '', severity: '' },
-          { id: 42, description: 'Has difficulty with personal space', frequency: '', severity: '' },
-          { id: 43, description: 'Shows inappropriate social behavior', frequency: '', severity: '' },
-          { id: 44, description: 'Has difficulty with personal hygiene', frequency: '', severity: '' },
-          { id: 45, description: 'Engages in property destruction', frequency: '', severity: '' },
-          { id: 46, description: 'Shows inappropriate sexual behavior', frequency: '', severity: '' },
-          { id: 47, description: 'Has difficulty with personal safety', frequency: '', severity: '' },
-          { id: 48, description: 'Shows inappropriate eating behavior', frequency: '', severity: '' }
+          { id: 41, description: 'Engages in self-stimulatory vocalizations', rating: 0 },
+          { id: 42, description: 'Has difficulty with personal space in conversation', rating: 0 },
+          { id: 43, description: 'Shows inappropriate social communication', rating: 0 },
+          { id: 44, description: 'Has difficulty with conversational turn-taking', rating: 0 },
+          { id: 45, description: 'Engages in repetitive speech patterns', rating: 0 },
+          { id: 46, description: 'Shows unusual vocal intonation or pitch', rating: 0 },
+          { id: 47, description: 'Has difficulty with conversational topic maintenance', rating: 0 },
+          { id: 48, description: 'Shows deficits in pragmatic language skills', rating: 0 }
         ]
       }
     ],
-    autismIndex: 0,
+    autismIndex4: 0,  // Autism Index based on 4 subscales
+    autismIndex6: 0,  // Autism Index based on 6 subscales
     probabilityLevel: '',
     interpretation: '',
     conclusions: '',
@@ -107,7 +128,7 @@ const GARS3Template = ({
     }));
   };
 
-  const handleItemChange = (subscaleIndex, itemIndex, field, value) => {
+  const handleItemChange = (subscaleIndex, itemIndex, value) => {
     setTemplate(prev => ({
       ...prev,
       subscales: prev.subscales.map((subscale, sIndex) => 
@@ -115,7 +136,7 @@ const GARS3Template = ({
           ? {
               ...subscale,
               items: subscale.items.map((item, iIndex) => 
-                iIndex === itemIndex ? { ...item, [field]: value } : item
+                iIndex === itemIndex ? { ...item, rating: parseInt(value) || 0 } : item
               )
             }
           : subscale
@@ -123,46 +144,63 @@ const GARS3Template = ({
     }));
   };
 
-  const calculateScores = () => {
-    let totalScore = 0;
-    template.subscales.forEach(subscale => {
-      subscale.items.forEach(item => {
-        const freqScore = getFrequencyScore(item.frequency);
-        const sevScore = getSeverityScore(item.severity);
-        totalScore += (freqScore + sevScore) / 2;
-      });
+  const calculateSubscaleScores = () => {
+    const updatedSubscales = template.subscales.map(subscale => {
+      const rawScore = subscale.items.reduce((sum, item) => sum + item.rating, 0);
+      const scaledScore = calculateScaledScore(rawScore);
+      const percentile = calculatePercentile(scaledScore);
+      return {
+        ...subscale,
+        rawScore,
+        scaledScore,
+        percentile
+      };
     });
-    
-    const autismIndex = Math.round(totalScore);
-    const probabilityLevel = getProbabilityLevel(autismIndex);
-    
+
+    // Calculate Autism Indices
+    const autismIndex4 = calculateAutismIndex(updatedSubscales.slice(0, 4)); // First 4 subscales
+    const autismIndex6 = calculateAutismIndex(updatedSubscales); // All 6 subscales
+    const probabilityLevel = getProbabilityLevel(autismIndex6);
+
     setTemplate(prev => ({
       ...prev,
-      autismIndex,
+      subscales: updatedSubscales,
+      autismIndex4,
+      autismIndex6,
       probabilityLevel
     }));
   };
 
-  const getFrequencyScore = (frequency) => {
-    const scores = { 'Never': 0, 'Rarely': 1, 'Sometimes': 2, 'Often': 3, 'Very Often': 4 };
-    return scores[frequency] || 0;
+  const calculateScaledScore = (rawScore) => {
+    // Simplified scaling - in real GARS-3 this would use complex normative tables
+    return Math.round(rawScore * 1.5 + 5);
   };
 
-  const getSeverityScore = (severity) => {
-    const scores = { 'None': 0, 'Mild': 1, 'Moderate': 2, 'Severe': 3, 'Very Severe': 4 };
-    return scores[severity] || 0;
+  const calculatePercentile = (scaledScore) => {
+    // Simplified percentile calculation
+    if (scaledScore >= 13) return 84;
+    if (scaledScore >= 11) return 50;
+    if (scaledScore >= 9) return 37;
+    if (scaledScore >= 7) return 16;
+    return 3;
+  };
+
+  const calculateAutismIndex = (subscales) => {
+    const totalScaledScore = subscales.reduce((sum, subscale) => sum + subscale.scaledScore, 0);
+    // Convert to Autism Index (mean=100, SD=15)
+    return Math.round(totalScaledScore * 2 + 40);
   };
 
   const getProbabilityLevel = (score) => {
-    if (score >= 90) return 'Very High';
-    if (score >= 75) return 'High';
-    if (score >= 60) return 'Moderate';
-    if (score >= 45) return 'Low';
-    return 'Very Low';
+    if (score >= 130) return 'Very Likely';
+    if (score >= 115) return 'Likely';
+    if (score >= 100) return 'Possible';
+    if (score >= 85) return 'Unlikely';
+    return 'Very Unlikely';
   };
 
   const handleSave = () => {
-    calculateScores();
+    calculateSubscaleScores();
     onSave(template);
   };
 
@@ -251,7 +289,7 @@ const GARS3Template = ({
               <textarea
                 value={template.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
-                rows={4}
+                rows={6}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                 placeholder="Enter test description"
               />
@@ -264,9 +302,8 @@ const GARS3Template = ({
                 <div className="border border-black">
                   <div className="grid grid-cols-12 border-b border-black bg-gray-100">
                     <div className="col-span-1 border-r border-black p-2 text-center font-bold text-xs">ID</div>
-                    <div className="col-span-6 border-r border-black p-2 text-center font-bold text-xs">Behavior Description</div>
-                    <div className="col-span-3 border-r border-black p-2 text-center font-bold text-xs">Frequency</div>
-                    <div className="col-span-2 p-2 text-center font-bold text-xs">Severity</div>
+                    <div className="col-span-8 border-r border-black p-2 text-center font-bold text-xs">Behavior Description</div>
+                    <div className="col-span-3 p-2 text-center font-bold text-xs">Rating (0-3)</div>
                   </div>
                   {subscale.items.map((item, itemIndex) => (
                     <div key={item.id} className="border-b border-black">
@@ -274,35 +311,19 @@ const GARS3Template = ({
                         <div className="col-span-1 border-r border-black p-2 text-center text-xs">
                           {item.id}
                         </div>
-                        <div className="col-span-6 border-r border-black p-2 text-xs">
+                        <div className="col-span-8 border-r border-black p-2 text-xs">
                           {item.description}
                         </div>
-                        <div className="col-span-3 border-r border-black p-2">
+                        <div className="col-span-3 p-2">
                           <select
-                            value={item.frequency}
-                            onChange={(e) => handleItemChange(subscaleIndex, itemIndex, 'frequency', e.target.value)}
+                            value={item.rating}
+                            onChange={(e) => handleItemChange(subscaleIndex, itemIndex, e.target.value)}
                             className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-red-500"
                           >
-                            <option value="">Select</option>
-                            <option value="Never">Never</option>
-                            <option value="Rarely">Rarely</option>
-                            <option value="Sometimes">Sometimes</option>
-                            <option value="Often">Often</option>
-                            <option value="Very Often">Very Often</option>
-                          </select>
-                        </div>
-                        <div className="col-span-2 p-2">
-                          <select
-                            value={item.severity}
-                            onChange={(e) => handleItemChange(subscaleIndex, itemIndex, 'severity', e.target.value)}
-                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-red-500"
-                          >
-                            <option value="">Select</option>
-                            <option value="None">None</option>
-                            <option value="Mild">Mild</option>
-                            <option value="Moderate">Moderate</option>
-                            <option value="Severe">Severe</option>
-                            <option value="Very Severe">Very Severe</option>
+                            <option value={0}>0 - Never</option>
+                            <option value={1}>1 - Seldom</option>
+                            <option value={2}>2 - Sometimes</option>
+                            <option value={3}>3 - Frequently</option>
                           </select>
                         </div>
                       </div>
@@ -312,28 +333,68 @@ const GARS3Template = ({
               </div>
             ))}
 
+            {/* Subscale Scores Summary */}
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Subscale Scores</h2>
+              <div className="border border-black">
+                <div className="grid grid-cols-5 border-b border-black bg-gray-100">
+                  <div className="col-span-2 border-r border-black p-2 text-center font-bold text-xs">Sub-Scales</div>
+                  <div className="col-span-1 border-r border-black p-2 text-center font-bold text-xs">Raw Score</div>
+                  <div className="col-span-1 border-r border-black p-2 text-center font-bold text-xs">Scaled Scores</div>
+                  <div className="col-span-1 p-2 text-center font-bold text-xs">%ile</div>
+                </div>
+                {template.subscales.map((subscale, index) => (
+                  <div key={index} className="border-b border-black">
+                    <div className="grid grid-cols-5">
+                      <div className="col-span-2 border-r border-black p-2 text-xs">
+                        {subscale.name}
+                      </div>
+                      <div className="col-span-1 border-r border-black p-2 text-center text-xs">
+                        {subscale.rawScore}
+                      </div>
+                      <div className="col-span-1 border-r border-black p-2 text-center text-xs">
+                        {subscale.scaledScore}
+                      </div>
+                      <div className="col-span-1 p-2 text-center text-xs">
+                        {subscale.percentile}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Autism Index */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Autism Index</h2>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Autism Index Score</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">AUTISM INDEX (4 SCORES)</label>
                   <input
                     type="text"
-                    value={template.autismIndex}
+                    value={template.autismIndex4}
                     readOnly
                     className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Probability Level</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">AUTISM INDEX (6 SCORES)</label>
                   <input
                     type="text"
-                    value={template.probabilityLevel}
+                    value={template.autismIndex6}
                     readOnly
                     className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg"
                   />
                 </div>
+              </div>
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Probability Level</label>
+                <input
+                  type="text"
+                  value={template.probabilityLevel}
+                  readOnly
+                  className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg"
+                />
               </div>
             </div>
 
@@ -397,7 +458,7 @@ const GARS3Template = ({
             {/* Template Header */}
             <div className="text-center mb-8 border-b-2 border-gray-200 pb-6">
               <h1 className="text-2xl font-bold text-gray-800 mb-4">
-                GILLIAM AUTISM RATING SCALE - THIRD EDITION
+                GILLIAM AUTISM RATING SCALE - THIRD EDITION (GARS-3)
               </h1>
               <div className="flex justify-center items-center space-x-8 text-sm text-gray-600 mb-4">
                 <span>Student: <strong className="text-red-600">{template.studentName}</strong></span>
@@ -406,50 +467,70 @@ const GARS3Template = ({
               </div>
             </div>
 
-            {/* Subscales Preview */}
-            {template.subscales.map((subscale, subscaleIndex) => (
-              <div key={subscaleIndex} className="mb-8">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">{subscale.name}</h2>
-                <div className="border border-black">
-                  <div className="grid grid-cols-12 border-b border-black bg-gray-100">
-                    <div className="col-span-1 border-r border-black p-1 text-center font-bold text-xs">ID</div>
-                    <div className="col-span-6 border-r border-black p-1 text-center font-bold text-xs">Behavior Description</div>
-                    <div className="col-span-3 border-r border-black p-1 text-center font-bold text-xs">Frequency</div>
-                    <div className="col-span-2 p-1 text-center font-bold text-xs">Severity</div>
-                  </div>
-                  {subscale.items.map((item, itemIndex) => (
-                    <div key={item.id} className="border-b border-black">
-                      <div className="grid grid-cols-12">
-                        <div className="col-span-1 border-r border-black p-1 text-center text-xs">
-                          {item.id}
-                        </div>
-                        <div className="col-span-6 border-r border-black p-1 text-xs">
-                          {item.description}
-                        </div>
-                        <div className="col-span-3 border-r border-black p-1 text-center text-xs">
-                          {item.frequency}
-                        </div>
-                        <div className="col-span-2 p-1 text-center text-xs">
-                          {item.severity}
-                        </div>
+            {/* Description */}
+            <div className="mb-8">
+              <div className="bg-red-50 rounded-lg p-6">
+                <p className="text-gray-700 leading-relaxed text-sm whitespace-pre-wrap">
+                  {template.description}
+                </p>
+              </div>
+            </div>
+
+            {/* Subscale Scores Table */}
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Subscale Scores</h2>
+              <div className="border border-black">
+                <div className="grid grid-cols-5 border-b border-black bg-gray-100">
+                  <div className="col-span-2 border-r border-black p-2 text-center font-bold text-xs">Sub-Scales</div>
+                  <div className="col-span-1 border-r border-black p-2 text-center font-bold text-xs">Raw Scale</div>
+                  <div className="col-span-1 border-r border-black p-2 text-center font-bold text-xs">Scaled Scores</div>
+                  <div className="col-span-1 p-2 text-center font-bold text-xs">%ile</div>
+                </div>
+                {template.subscales.map((subscale, index) => (
+                  <div key={index} className="border-b border-black">
+                    <div className="grid grid-cols-5">
+                      <div className="col-span-2 border-r border-black p-2 text-xs">
+                        {subscale.name}
+                      </div>
+                      <div className="col-span-1 border-r border-black p-2 text-center text-xs">
+                        {subscale.rawScore}
+                      </div>
+                      <div className="col-span-1 border-r border-black p-2 text-center text-xs">
+                        {subscale.scaledScore}
+                      </div>
+                      <div className="col-span-1 p-2 text-center text-xs">
+                        {subscale.percentile}
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
 
-            {/* Autism Index Preview */}
+            {/* Autism Index Results */}
             <div className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Assessment Results</h2>
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Autism Index Results</h2>
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-red-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-red-800 mb-2">Autism Index</h3>
-                  <p className="text-2xl font-bold text-red-600">{template.autismIndex}</p>
+                  <h3 className="font-semibold text-red-800 mb-2">AUTISM INDEX (4 SCORES)</h3>
+                  <p className="text-2xl font-bold text-red-600">{template.autismIndex4}</p>
                 </div>
                 <div className="bg-orange-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-orange-800 mb-2">Probability Level</h3>
-                  <p className="text-lg font-bold text-orange-600">{template.probabilityLevel}</p>
+                  <h3 className="font-semibold text-orange-800 mb-2">AUTISM INDEX (6 SCORES)</h3>
+                  <p className="text-2xl font-bold text-orange-600">{template.autismIndex6}</p>
+                </div>
+              </div>
+              <div className="mt-4">
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-purple-800 mb-2">Probability Level</h3>
+                  <p className="text-xl font-bold text-purple-600">{template.probabilityLevel}</p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {template.probabilityLevel === 'Very Likely' && 'The person shows strong indicators of ASD and requires comprehensive evaluation'}
+                    {template.probabilityLevel === 'Likely' && 'The person shows several indicators of ASD and further evaluation is recommended'}
+                    {template.probabilityLevel === 'Possible' && 'The person shows some indicators of ASD and monitoring is suggested'}
+                    {template.probabilityLevel === 'Unlikely' && 'The person shows few indicators of ASD'}
+                    {template.probabilityLevel === 'Very Unlikely' && 'The person shows minimal indicators of ASD'}
+                  </p>
                 </div>
               </div>
             </div>
