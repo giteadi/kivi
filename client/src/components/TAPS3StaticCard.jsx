@@ -69,20 +69,12 @@ const TAPS3StaticCard = ({ onSelect }) => {
   };
 
   const handleSelect = () => {
-    // Import the TAPS3Template dynamically
-    import('./TAPS3Template').then((module) => {
-      const TemplateComponent = module.default;
-      const templateWrapper = {
-        ...template,
-        component: TemplateComponent,
-        isAssessmentTemplate: true
-      };
-      onSelect(templateWrapper);
-    }).catch(error => {
-      console.error('Error loading TAPS-3 template:', error);
-      // Fallback to basic template
-      onSelect(template);
-    });
+    // Direct template selection without dynamic import
+    const templateWrapper = {
+      ...template,
+      isAssessmentTemplate: true
+    };
+    onSelect(templateWrapper);
   };
 
   return (

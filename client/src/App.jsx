@@ -57,6 +57,7 @@ import ServiceCreateForm from './components/ServiceCreateForm';
 import ServiceEditForm from './components/ServiceEditForm';
 import ExamineeCreateForm from './components/ExamineeCreateForm';
 import ExamineeDetail from './components/ExamineeDetail';
+import AssessmentTemplateSelector from './components/AssessmentTemplateSelector';
 // import TherapistCreateForm from './components/TherapistCreateForm'; // Temporarily disabled
 import SessionCreateForm from './components/SessionCreateForm';
 import SessionEditForm from './components/SessionEditForm';
@@ -175,7 +176,7 @@ function App() {
   const handleSetActiveItem = (item) => {
     setActiveItem(item);
     // Reset currentView when navigating to main sections to avoid conflicts
-    if (item === 'sessions' || item === 'dashboard' || item === 'patients' || item === 'doctors' || item === 'clinics' || item === 'services') {
+    if (item === 'sessions' || item === 'dashboard' || item === 'patients' || item === 'doctors' || item === 'clinics' || item === 'services' || item === 'template-manager') {
       setCurrentView(item);
     }
     updateNavigationHistory(item);
@@ -909,10 +910,18 @@ ${service.target_age_group || 'Not specified'}
       );
     }
 
-    // Handle template selection (removed - using Redux now)
-    if (currentView === 'template-selector') {
-      // Redirect to session creation instead
-      return <SessionCreateForm onSave={handleSaveSession} onCancel={() => setIsSessionCreateModalOpen(false)} />;
+    // Handle template selection (now using API data)
+    if (currentView === 'template-selector' || currentView === 'template-manager') {
+      return (
+        <AssessmentTemplateSelector 
+          onSelectTemplate={(template) => {
+            console.log('Template selected:', template);
+            // Handle template selection logic here
+          }}
+          onCancel={() => setCurrentView('dashboard')}
+          studentName="Student"
+        />
+      );
     }
 
     // Handle encounter detail view

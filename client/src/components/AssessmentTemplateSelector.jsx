@@ -1,183 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiSearch, FiFileText, FiArrowRight, FiClock, FiUsers, FiArrowLeft, FiX, FiCpu, FiUser, FiEye, FiBook, FiActivity } from 'react-icons/fi';
 import TAPS3StaticCard from './TAPS3StaticCard';
+import api from '../services/api';
 
 const AssessmentTemplateSelector = ({ onSelectTemplate, onCancel, studentName = 'ABC' }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Comprehensive assessment templates
-  const templates = [
-    {
-      id: 1,
-      name: 'ROSS INFORMATION PROCESSING ASSESSMENT (RIPA)-PRIMARY',
-      description: 'Cognitive-linguistic assessment for ages 5-0 to 12-11 years focusing on memory and processing',
-      category: 'Cognitive Processing',
-      usageCount: 15,
-      estimatedTime: '60-75 min',
-      icon: FiCpu,
-      color: 'emerald',
-      type: 'RIPA-Primary',
-      sections: [
-        'Immediate Memory', 'Recent Memory', 'Recall of General Information', 'Spatial Orientation'
-      ]
-    },
-    {
-      id: 2,
-      name: 'RAVEN\'S COLOURED PROGRESSIVE MATRICES',
-      description: 'Non-verbal cognitive assessment measuring clear-thinking ability for ages 5:0-11:0 years',
-      category: 'Cognitive Assessment',
-      usageCount: 42,
-      estimatedTime: '30-45 min',
-      icon: FiEye,
-      color: 'indigo',
-      type: 'Ravens-CPM',
-      sections: [
-        'Set A (12 items)', 'Set Ab (12 items)', 'Set B (12 items)'
-      ]
-    },
-    {
-      id: 3,
-      name: 'NELSON-DENNY READING TEST',
-      description: 'Comprehensive reading assessment with vocabulary, comprehension, and reading rate subtests',
-      category: 'Reading Assessment',
-      usageCount: 35,
-      estimatedTime: '45-60 min',
-      icon: FiBook,
-      color: 'blue',
-      type: 'Nelson-Denny',
-      sections: [
-        'Vocabulary Subtest', 'Comprehension Subtest', 'Reading Rate'
-      ]
-    },
-    {
-      id: 4,
-      name: 'ADHD-T2 ASSESSMENT',
-      description: 'Attention-Deficit/Hyperactivity Disorder Test based on DSM-5 criteria',
-      category: 'Attention Assessment',
-      usageCount: 67,
-      estimatedTime: '20-30 min',
-      icon: FiActivity,
-      color: 'purple',
-      type: 'ADHDT2',
-      sections: [
-        'Inattention Subscale', 'Hyperactivity/Impulsivity Subscale', 'DSM-5 Criteria Analysis'
-      ]
-    },
-    {
-      id: 5,
-      name: 'GILLIAM AUTISM RATING SCALE-3 (GARS-3)',
-      description: 'Autism assessment with 6 subscales for identifying autism spectrum disorders',
-      category: 'Autism Assessment',
-      usageCount: 23,
-      estimatedTime: '35-50 min',
-      icon: FiCpu,
-      color: 'pink',
-      type: 'GARS-3',
-      sections: [
-        'Restricted/Repetitive Behaviors', 'Social Interaction', 'Social Communication',
-        'Emotional Regulation', 'Cognitive Style', 'Maladaptive Speech'
-      ]
-    },
-    {
-      id: 6,
-      name: 'BROWN EXECUTIVE FUNCTION ASSESSMENT SCALE',
-      description: 'Comprehensive assessment of executive functioning abilities',
-      category: 'Executive Function',
-      usageCount: 19,
-      estimatedTime: '40-55 min',
-      icon: FiCpu,
-      color: 'orange',
-      type: 'Brown-EF-A',
-      sections: [
-        'Inhibition', 'Shifting', 'Emotional Control', 'Initiation',
-        'Working Memory', 'Planning/Organization', 'Organization of Materials', 'Self-Monitoring'
-      ]
-    },
-    {
-      id: 7,
-      name: 'ADHD-DSM5 CHECKLIST',
-      description: 'DSM-5 based ADHD assessment with detailed criteria analysis',
-      category: 'Attention Assessment',
-      usageCount: 31,
-      estimatedTime: '25-35 min',
-      icon: FiActivity,
-      color: 'red',
-      type: 'ADHT-BSM',
-      sections: [
-        'Inattention Criteria', 'Hyperactivity/Impulsivity Criteria', 'DSM-5 Diagnosis'
-      ]
-    },
-    {
-      id: 8,
-      name: 'ASTON INDEX',
-      description: 'Learning difficulties assessment for children with developmental delays',
-      category: 'Learning Assessment',
-      usageCount: 26,
-      estimatedTime: '30-40 min',
-      icon: FiCpu,
-      color: 'yellow',
-      type: 'Aston-Index',
-      sections: [
-        'Visual-Motor Skills', 'Language Skills', 'Cognitive Skills', 'Social Skills'
-      ]
-    },
-    {
-      id: 9,
-      name: 'BENDER GESTALT TEST (BKT)',
-      description: 'Visual-motor functioning assessment using geometric figure reproduction',
-      category: 'Motor Assessment',
-      usageCount: 18,
-      estimatedTime: '15-20 min',
-      icon: FiActivity,
-      color: 'green',
-      type: 'BKT',
-      sections: [
-        'Figure Reproduction', 'Motor Coordination', 'Visual Perception'
-      ]
-    },
-    {
-      id: 10,
-      name: 'EACA AUTISM ASSESSMENT',
-      description: 'Educational Assessment for Children with Autism - comprehensive evaluation',
-      category: 'Autism Assessment',
-      usageCount: 22,
-      estimatedTime: '50-65 min',
-      icon: FiCpu,
-      color: 'cyan',
-      type: 'EACA',
-      sections: [
-        'Communication Skills', 'Social Interaction', 'Behavioral Patterns', 'Cognitive Abilities'
-      ]
-    }
-  ];
-
-  const categories = [
-    'all', 'Auditory Processing', 'Cognitive Processing', 'Cognitive Assessment',
-    'Reading Assessment', 'Attention Assessment', 'Autism Assessment',
-    'Executive Function', 'Learning Assessment', 'Motor Assessment'
-  ];
-
-  const filteredTemplates = templates.filter(template => {
-    const matchesSearch = template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         template.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  const getCategoryColor = (category) => {
-    const colors = {
-      'Auditory Processing': 'bg-teal-100 text-teal-800',
-      'Cognitive Processing': 'bg-emerald-100 text-emerald-800',
-      'Cognitive Assessment': 'bg-indigo-100 text-indigo-800',
-      'Reading Assessment': 'bg-blue-100 text-blue-800',
-      'Attention Assessment': 'bg-purple-100 text-purple-800',
-      'Autism Assessment': 'bg-pink-100 text-pink-800',
-      'Executive Function': 'bg-orange-100 text-orange-800',
-      'Learning Assessment': 'bg-yellow-100 text-yellow-800',
-      'Motor Assessment': 'bg-green-100 text-green-800'
+  // Fetch templates from API
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        setLoading(true);
+        const response = await api.getTemplates();
+        if (response.success) {
+          setTemplates(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching templates:', error);
+      } finally {
+        setLoading(false);
+      }
     };
-    return colors[category] || 'bg-gray-100 text-gray-800';
+
+    fetchTemplates();
+  }, []);
+
+  // Get unique categories from templates
+  const categories = ['all', ...new Set(templates && templates.map ? templates.map(t => t.category).filter(Boolean) : [])];
+
+  // Filter templates based on search and category
+  const filteredTemplates = templates && templates.filter ? templates.filter(template => {
+    const matchesSearch = !searchTerm || 
+      template.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      template.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  }) : [];
+
+  const handleTemplateSelect = (template) => {
+    console.log('Selected template:', template);
+    if (onSelectTemplate) {
+      onSelectTemplate(template);
+    }
   };
 
   const getColorClasses = (color) => {
@@ -214,61 +83,48 @@ const AssessmentTemplateSelector = ({ onSelectTemplate, onCancel, studentName = 
     return iconColors[color] || 'text-gray-600';
   };
 
-  const handleTemplateSelect = (template) => {
-    // Import and render the appropriate template component
-    let componentPath = '';
-    switch (template.type) {
-      case 'TAPS-3':
-        componentPath = './TAPS3Template';
-        break;
-      case 'RIPA-Primary':
-        componentPath = './RIPAPrimaryTemplate';
-        break;
-      case 'Ravens-CPM':
-        componentPath = './RavensCPMTemplate';
-        break;
-      case 'Nelson-Denny':
-        componentPath = './NelsonDennyReadingTestTemplate';
-        break;
-      case 'ADHDT2':
-        componentPath = './ADHDT2Template';
-        break;
-      case 'GARS-3':
-        componentPath = './GARS3Template';
-        break;
-      case 'Brown-EF-A':
-        componentPath = './BrownEFAScaleTemplate';
-        break;
-      case 'ADHT-BSM':
-        componentPath = './ADHTBSMTemplate';
-        break;
-      case 'Aston-Index':
-        componentPath = './AstonIndexTemplate';
-        break;
-      case 'BKT':
-        componentPath = './BKTTemplate';
-        break;
-      case 'EACA':
-        componentPath = './EACAAutismTemplate';
-        break;
-      default:
-        componentPath = './TAPS3Template';
-    }
-
-    import(componentPath).then((module) => {
-      const TemplateComponent = module.default;
-      const templateWrapper = {
-        ...template,
-        component: TemplateComponent,
-        isAssessmentTemplate: true
-      };
-      onSelectTemplate(templateWrapper);
-    }).catch(error => {
-      console.error('Error loading template:', error);
-      // Fallback to basic template
-      onSelectTemplate(template);
-    });
+  const getCategoryColor = (category) => {
+    const colors = {
+      'Cognitive': 'bg-blue-100 text-blue-800',
+      'Cognitive Processing': 'bg-emerald-100 text-emerald-800',
+      'Reading Assessment': 'bg-green-100 text-green-800',
+      'Cognitive Assessment': 'bg-indigo-100 text-indigo-800',
+      'Language': 'bg-yellow-100 text-yellow-800',
+      'Executive': 'bg-red-100 text-red-800',
+      'Autism': 'bg-pink-100 text-pink-800',
+      'ADHD': 'bg-orange-100 text-orange-800',
+      'Academic': 'bg-emerald-100 text-emerald-800',
+      'Intelligence': 'bg-violet-100 text-violet-800',
+      'Diagnostic': 'bg-rose-100 text-rose-800',
+      'Summary': 'bg-cyan-100 text-cyan-800'
+    };
+    return colors[category] || 'bg-gray-100 text-gray-800';
   };
+
+  // Map API template data to component format
+  const mappedTemplates = filteredTemplates.map(template => ({
+    id: template.id,
+    name: template.name,
+    description: template.description,
+    category: template.category,
+    usageCount: template.usage_count || 0,
+    estimatedTime: template.estimated_time || '30-60 min',
+    icon: FiFileText, // Default icon, can be mapped from template.icon
+    color: 'blue', // Default color, can be mapped from template.category
+    type: template.type,
+    sections: template.template_data?.subtests || ['Assessment']
+  }));
+
+  if (loading) {
+    return (
+      <div className="lg:ml-64 min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading templates...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="lg:ml-64 min-h-screen bg-gray-50">
@@ -344,7 +200,7 @@ const AssessmentTemplateSelector = ({ onSelectTemplate, onCancel, studentName = 
           {/* Static TAPS-3 Card */}
           <TAPS3StaticCard onSelect={onSelectTemplate} />
           
-          {filteredTemplates.map((template) => {
+          {mappedTemplates && mappedTemplates.map && mappedTemplates.map((template) => {
             const IconComponent = template.icon;
             return (
               <div
@@ -384,15 +240,15 @@ const AssessmentTemplateSelector = ({ onSelectTemplate, onCancel, studentName = 
 
                   <div>
                     <p className="text-xs text-gray-500 mb-2">
-                      {template.sections.length} sections
+                      {(template.sections && template.sections.length) || 0} sections
                     </p>
                     <div className="flex flex-wrap gap-1">
-                      {template.sections.slice(0, 3).map((section, idx) => (
+                      {template.sections && template.sections.slice(0, 3).map((section, idx) => (
                         <span key={idx} className="text-xs bg-white bg-opacity-60 px-2 py-1 rounded">
                           {section}
                         </span>
                       ))}
-                      {template.sections.length > 3 && (
+                      {template.sections && template.sections.length > 3 && (
                         <span className="text-xs text-gray-500">
                           +{template.sections.length - 3} more
                         </span>
@@ -405,7 +261,7 @@ const AssessmentTemplateSelector = ({ onSelectTemplate, onCancel, studentName = 
           })}
         </div>
 
-        {filteredTemplates.length === 0 && (
+        {mappedTemplates && mappedTemplates.length === 0 && (
           <div className="text-center py-12">
             <FiFileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No templates found</h3>
