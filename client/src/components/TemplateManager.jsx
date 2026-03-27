@@ -20,6 +20,10 @@ import VABS3Template from './VABS3Template';
 import WISC4Template from './WISC4Template';
 import WJ3Template from './WJ3Template';
 import WJCogTemplate from './WJCogTemplate';
+import WJAchTemplate from './WJAchTemplate';
+import WRAT5Template from './WRAT5Template';
+import WRMT2Template from './WRMT2Template';
+import DiagnosticReportTemplate from './DiagnosticReportTemplate';
 import AssessmentReportGenerator from './AssessmentReportGenerator';
 import TemplateTypeSelector from './TemplateTypeSelector';
 
@@ -2282,6 +2286,788 @@ She showed some difficulty with verbal expression of meaning of words presented 
       },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
+    },
+    {
+      id: 20,
+      name: 'WOODCOCK JOHNSON IV TESTS OF ACHIEVEMENT (WJ-Ach)',
+      type: 'WJ-Ach',
+      description: 'Comprehensive set of individually administered tests to measure educational achievement in reading, mathematics, written language, and academic skills.',
+      template_data: {
+        type: 'WJ-Ach',
+        name: 'WOODCOCK JOHNSON IV TESTS OF ACHIEVEMENT (WJ-Ach)',
+        studentName: '',
+        examinerName: '',
+        testDate: new Date().toISOString().split('T')[0],
+        age: '',
+        grade: '',
+        description: `Woodcock-Johnson IV Tests of Achievement (WJ IV ACH) is a comprehensive set of individually administered, norm-referenced tests to measure educational achievement in the areas of reading, mathematics, written language, and academic skills. The standard battery contains eleven subtests. Both subtests and cluster scores are distributed with a mean of 100 and a standard deviation of 15. The tests are designed for administration to individuals aged two through adulthood.`,
+        
+        standardScoreDescriptors: [
+          { range: '121-130', descriptor: 'Very Superior', percentileRank: '91st-97th' },
+          { range: '111-120', descriptor: 'Superior', percentileRank: '75th-91st' },
+          { range: '90-110', descriptor: 'High Average', percentileRank: '25th-75th' },
+          { range: '80-89', descriptor: 'Average', percentileRank: '9th-23rd' },
+          { range: '70-79', descriptor: 'Low Average', percentileRank: '2nd-8th' },
+          { range: '<69', descriptor: 'Very Poor', percentileRank: '<2nd' }
+        ],
+
+        clusters: [
+          {
+            name: 'READING',
+            description: 'Reading skills assessment including letter-word identification, passage comprehension, and fluency.',
+            subtests: [
+              {
+                name: 'Letter-Word Identification',
+                description: 'Ability to identify letters and words',
+                rawScore: 0,
+                standardScore: 94,
+                percentileRank: 34,
+                relativeProficiencyIndex: 91,
+                descriptor: 'Average',
+                items: [
+                  { id: 1, item: 'Letter Recognition A', response: '', correct: true },
+                  { id: 2, item: 'Letter Recognition B', response: '', correct: true },
+                  { id: 3, item: 'Word Recognition: cat', response: '', correct: true },
+                  { id: 4, item: 'Word Recognition: dog', response: '', correct: true },
+                  { id: 5, item: 'Word Recognition: house', response: '', correct: true }
+                ]
+              },
+              {
+                name: 'Passage Comprehension',
+                description: 'Ability to understand written text',
+                rawScore: 0,
+                standardScore: 91,
+                percentileRank: 27,
+                relativeProficiencyIndex: 75,
+                descriptor: 'Average',
+                items: [
+                  { id: 6, item: 'Simple Sentence 1', response: '', correct: true },
+                  { id: 7, item: 'Simple Sentence 2', response: '', correct: true },
+                  { id: 8, item: 'Short Paragraph 1', response: '', correct: true },
+                  { id: 9, item: 'Short Paragraph 2', response: '', correct: true },
+                  { id: 10, item: 'Story Passage 1', response: '', correct: true }
+                ]
+              }
+            ],
+            clusterScore: 91,
+            clusterPercentile: 27,
+            clusterDescriptor: 'Average'
+          },
+          {
+            name: 'BROAD READING',
+            description: 'Comprehensive reading assessment including fluency',
+            subtests: [
+              {
+                name: 'Letter-Word Identification',
+                description: 'Ability to identify letters and words',
+                rawScore: 0,
+                standardScore: 94,
+                percentileRank: 34,
+                relativeProficiencyIndex: 91,
+                descriptor: 'Average',
+                items: [
+                  { id: 11, item: 'Advanced Word Recognition 1', response: '', correct: true },
+                  { id: 12, item: 'Advanced Word Recognition 2', response: '', correct: true },
+                  { id: 13, item: 'Advanced Word Recognition 3', response: '', correct: true },
+                  { id: 14, item: 'Advanced Word Recognition 4', response: '', correct: true },
+                  { id: 15, item: 'Advanced Word Recognition 5', response: '', correct: true }
+                ]
+              },
+              {
+                name: 'Passage Comprehension',
+                description: 'Ability to understand written text',
+                rawScore: 0,
+                standardScore: 91,
+                percentileRank: 27,
+                relativeProficiencyIndex: 75,
+                descriptor: 'Average',
+                items: [
+                  { id: 16, item: 'Complex Paragraph 1', response: '', correct: true },
+                  { id: 17, item: 'Complex Paragraph 2', response: '', correct: true },
+                  { id: 18, item: 'Complex Paragraph 3', response: '', correct: true },
+                  { id: 19, item: 'Complex Paragraph 4', response: '', correct: true },
+                  { id: 20, item: 'Complex Paragraph 5', response: '', correct: true }
+                ]
+              },
+              {
+                name: 'Sentence Reading Fluency',
+                description: 'Reading speed and accuracy with sentences',
+                rawScore: 0,
+                standardScore: 101,
+                percentileRank: 53,
+                relativeProficiencyIndex: 95,
+                descriptor: 'High Average',
+                timeLimit: 180,
+                items: [
+                  { id: 21, item: 'Fluency Sentence 1', response: '', correct: true, timeTaken: 0 },
+                  { id: 22, item: 'Fluency Sentence 2', response: '', correct: true, timeTaken: 0 },
+                  { id: 23, item: 'Fluency Sentence 3', response: '', correct: true, timeTaken: 0 }
+                ]
+              }
+            ],
+            clusterScore: 97,
+            clusterPercentile: 42,
+            clusterDescriptor: 'Average'
+          },
+          {
+            name: 'BASIC READING SKILLS',
+            description: 'Fundamental reading skills including word attack',
+            subtests: [
+              {
+                name: 'Letter-Word Identification',
+                description: 'Ability to identify letters and words',
+                rawScore: 0,
+                standardScore: 94,
+                percentileRank: 34,
+                relativeProficiencyIndex: 91,
+                descriptor: 'Average',
+                items: [
+                  { id: 24, item: 'Basic Word Recognition 1', response: '', correct: true },
+                  { id: 25, item: 'Basic Word Recognition 2', response: '', correct: true },
+                  { id: 26, item: 'Basic Word Recognition 3', response: '', correct: true },
+                  { id: 27, item: 'Basic Word Recognition 4', response: '', correct: true },
+                  { id: 28, item: 'Basic Word Recognition 5', response: '', correct: true }
+                ]
+              },
+              {
+                name: 'Word Attack',
+                description: 'Phonetic decoding and word analysis skills',
+                rawScore: 0,
+                standardScore: 112,
+                percentileRank: 79,
+                relativeProficiencyIndex: 98,
+                descriptor: 'High Average',
+                items: [
+                  { id: 29, item: 'Word Attack 1', response: '', correct: true },
+                  { id: 30, item: 'Word Attack 2', response: '', correct: true },
+                  { id: 31, item: 'Word Attack 3', response: '', correct: true },
+                  { id: 32, item: 'Word Attack 4', response: '', correct: true },
+                  { id: 33, item: 'Word Attack 5', response: '', correct: true }
+                ]
+              }
+            ],
+            clusterScore: 105,
+            clusterPercentile: 63,
+            clusterDescriptor: 'High Average'
+          },
+          {
+            name: 'READING FLUENCY',
+            description: 'Reading speed and accuracy assessment',
+            subtests: [
+              {
+                name: 'Oral Reading',
+                description: 'Oral reading fluency and accuracy',
+                rawScore: 0,
+                standardScore: 109,
+                percentileRank: 73,
+                relativeProficiencyIndex: 114,
+                descriptor: 'High Average',
+                timeLimit: 180,
+                items: [
+                  { id: 34, item: 'Oral Reading Passage 1', response: '', correct: true, timeTaken: 0 },
+                  { id: 35, item: 'Oral Reading Passage 2', response: '', correct: true, timeTaken: 0 },
+                  { id: 36, item: 'Oral Reading Passage 3', response: '', correct: true, timeTaken: 0 }
+                ]
+              },
+              {
+                name: 'Sentence Reading Fluency',
+                description: 'Reading speed and accuracy with sentences',
+                rawScore: 0,
+                standardScore: 101,
+                percentileRank: 53,
+                relativeProficiencyIndex: 95,
+                descriptor: 'High Average',
+                timeLimit: 180,
+                items: [
+                  { id: 37, item: 'Sentence Fluency 1', response: '', correct: true, timeTaken: 0 },
+                  { id: 38, item: 'Sentence Fluency 2', response: '', correct: true, timeTaken: 0 },
+                  { id: 39, item: 'Sentence Fluency 3', response: '', correct: true, timeTaken: 0 }
+                ]
+              }
+            ],
+            clusterScore: 109,
+            clusterPercentile: 73,
+            clusterDescriptor: 'High Average'
+          },
+          {
+            name: 'MATHEMATICS',
+            description: 'Mathematics skills assessment including applied problems and calculation',
+            subtests: [
+              {
+                name: 'Applied Problems',
+                description: 'Mathematical problem solving',
+                rawScore: 0,
+                standardScore: 92,
+                percentileRank: 30,
+                relativeProficiencyIndex: 79,
+                descriptor: 'Average',
+                items: [
+                  { id: 40, item: 'Basic Addition: 2+3', response: '5', correct: true },
+                  { id: 41, item: 'Basic Subtraction: 8-5', response: '3', correct: true },
+                  { id: 42, item: 'Word Problem 1', response: '', correct: true },
+                  { id: 43, item: 'Word Problem 2', response: '', correct: true },
+                  { id: 44, item: 'Word Problem 3', response: '', correct: true }
+                ]
+              },
+              {
+                name: 'Calculation',
+                description: 'Mathematical computation skills',
+                rawScore: 0,
+                standardScore: 95,
+                percentileRank: 37,
+                relativeProficiencyIndex: 86,
+                descriptor: 'Average',
+                items: [
+                  { id: 45, item: 'Addition: 45+23', response: '68', correct: true },
+                  { id: 46, item: 'Subtraction: 87-34', response: '53', correct: true },
+                  { id: 47, item: 'Multiplication: 6×7', response: '42', correct: true },
+                  { id: 48, item: 'Division: 72÷8', response: '9', correct: true },
+                  { id: 49, item: 'Mixed Operations 1', response: '', correct: true }
+                ]
+              }
+            ],
+            clusterScore: 92,
+            clusterPercentile: 30,
+            clusterDescriptor: 'Average'
+          },
+          {
+            name: 'BROAD MATHEMATICS',
+            description: 'Comprehensive mathematics assessment including fluency',
+            subtests: [
+              {
+                name: 'Applied Problems',
+                description: 'Mathematical problem solving',
+                rawScore: 0,
+                standardScore: 92,
+                percentileRank: 30,
+                relativeProficiencyIndex: 79,
+                descriptor: 'Average',
+                items: [
+                  { id: 50, item: 'Advanced Word Problem 1', response: '', correct: true },
+                  { id: 51, item: 'Advanced Word Problem 2', response: '', correct: true },
+                  { id: 52, item: 'Advanced Word Problem 3', response: '', correct: true },
+                  { id: 53, item: 'Advanced Word Problem 4', response: '', correct: true },
+                  { id: 54, item: 'Advanced Word Problem 5', response: '', correct: true }
+                ]
+              },
+              {
+                name: 'Calculation',
+                description: 'Mathematical computation skills',
+                rawScore: 0,
+                standardScore: 95,
+                percentileRank: 37,
+                relativeProficiencyIndex: 86,
+                descriptor: 'Average',
+                items: [
+                  { id: 55, item: 'Advanced Calculation 1', response: '', correct: true },
+                  { id: 56, item: 'Advanced Calculation 2', response: '', correct: true },
+                  { id: 57, item: 'Advanced Calculation 3', response: '', correct: true },
+                  { id: 58, item: 'Advanced Calculation 4', response: '', correct: true },
+                  { id: 59, item: 'Advanced Calculation 5', response: '', correct: true }
+                ]
+              },
+              {
+                name: 'Math Facts Fluency',
+                description: 'Math fact retrieval speed and accuracy',
+                rawScore: 0,
+                standardScore: 118,
+                percentileRank: 88,
+                relativeProficiencyIndex: 124,
+                descriptor: 'High Average',
+                timeLimit: 180,
+                items: [
+                  { id: 60, item: 'Math Facts 1', response: '', correct: true, timeTaken: 0 },
+                  { id: 61, item: 'Math Facts 2', response: '', correct: true, timeTaken: 0 },
+                  { id: 62, item: 'Math Facts 3', response: '', correct: true, timeTaken: 0 }
+                ]
+              }
+            ],
+            clusterScore: 105,
+            clusterPercentile: 63,
+            clusterDescriptor: 'High Average'
+          },
+          {
+            name: 'MATH CALCULATION SKILLS',
+            description: 'Math computation abilities and fluency',
+            subtests: [
+              {
+                name: 'Calculation',
+                description: 'Mathematical computation skills',
+                rawScore: 0,
+                standardScore: 95,
+                percentileRank: 37,
+                relativeProficiencyIndex: 86,
+                descriptor: 'Average',
+                items: [
+                  { id: 63, item: 'Complex Calculation 1', response: '', correct: true },
+                  { id: 64, item: 'Complex Calculation 2', response: '', correct: true },
+                  { id: 65, item: 'Complex Calculation 3', response: '', correct: true },
+                  { id: 66, item: 'Complex Calculation 4', response: '', correct: true },
+                  { id: 67, item: 'Complex Calculation 5', response: '', correct: true }
+                ]
+              },
+              {
+                name: 'Math Fact Fluency',
+                description: 'Math fact retrieval speed and accuracy',
+                rawScore: 0,
+                standardScore: 112,
+                percentileRank: 79,
+                relativeProficiencyIndex: 98,
+                descriptor: 'High Average',
+                timeLimit: 180,
+                items: [
+                  { id: 68, item: 'Math Fluency 1', response: '', correct: true, timeTaken: 0 },
+                  { id: 69, item: 'Math Fluency 2', response: '', correct: true, timeTaken: 0 },
+                  { id: 70, item: 'Math Fluency 3', response: '', correct: true, timeTaken: 0 }
+                ]
+              }
+            ],
+            clusterScore: 106,
+            clusterPercentile: 66,
+            clusterDescriptor: 'High Average'
+          }
+        ],
+
+        interpretation: '',
+        conclusions: '',
+        recommendations: ''
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 21,
+      name: 'WIDE RANGE ACHIEVEMENT TEST- WRAT-5 (ENGLISH)',
+      type: 'WRAT-5',
+      description: 'Norm-referenced test measuring basic academic skills of word reading, sentence comprehension, spelling, and math computation.',
+      template_data: {
+        type: 'WRAT-5',
+        name: 'WIDE RANGE ACHIEVEMENT TEST- WRAT-5 (ENGLISH)',
+        studentName: '',
+        examinerName: '',
+        testDate: new Date().toISOString().split('T')[0],
+        age: '',
+        grade: '',
+        description: `The WRAT-5 is a norm-referenced test that measures basic academic skills of word reading, sentence comprehension, spelling, and math computation. The WRAT-5 includes the following four subtests: Word Reading measures letter and word decoding through letter identification and word recognition. Sentence Comprehension measures an individual's ability to gain meaning from words and to comprehend ideas and information contained in sentences through use of a modified cloze. Spelling measures an individual's ability to encode sounds into written form through use of dictated spelling format containing both letters and word. Math Computation measures an individual's ability to perform basic mathematics computations through counting, identifying numbers, solving simple oral problems, and calculating written mathematics problems.`,
+        
+        subtests: [
+          {
+            name: 'Word Reading',
+            description: 'Measures letter and word decoding through letter identification and word recognition',
+            rawScore: 0,
+            standardScore: 78,
+            ageEquivalent: 8.09,
+            percentileRank: 8,
+            descriptiveCategory: 'Very Low',
+            items: [
+              { id: 1, item: 'Letter Recognition A', response: '', correct: true },
+              { id: 2, item: 'Letter Recognition B', response: '', correct: true },
+              { id: 3, item: 'Word Recognition: cat', response: '', correct: true },
+              { id: 4, item: 'Word Recognition: dog', response: '', correct: true },
+              { id: 5, item: 'Word Recognition: house', response: '', correct: true },
+              { id: 6, item: 'Word Recognition: tree', response: '', correct: true },
+              { id: 7, item: 'Word Recognition: book', response: '', correct: true },
+              { id: 8, item: 'Word Recognition: school', response: '', correct: true },
+              { id: 9, item: 'Word Recognition: friend', response: '', correct: true },
+              { id: 10, item: 'Word Recognition: happy', response: '', correct: true }
+            ]
+          },
+          {
+            name: 'Sentence Comprehension',
+            description: 'Measures an individual\'s ability to gain meaning from words and to comprehend ideas and information contained in sentences through use of a modified cloze',
+            rawScore: 0,
+            standardScore: 30,
+            ageEquivalent: 97,
+            percentileRank: 13.1,
+            descriptiveCategory: 'Average',
+            items: [
+              { id: 11, item: 'Simple Sentence Completion 1', response: '', correct: true },
+              { id: 12, item: 'Simple Sentence Completion 2', response: '', correct: true },
+              { id: 13, item: 'Simple Sentence Completion 3', response: '', correct: true },
+              { id: 14, item: 'Complex Sentence Completion 1', response: '', correct: true },
+              { id: 15, item: 'Complex Sentence Completion 2', response: '', correct: true },
+              { id: 16, item: 'Complex Sentence Completion 3', response: '', correct: true },
+              { id: 17, item: 'Paragraph Comprehension 1', response: '', correct: true },
+              { id: 18, item: 'Paragraph Comprehension 2', response: '', correct: true },
+              { id: 19, item: 'Paragraph Comprehension 3', response: '', correct: true },
+              { id: 20, item: 'Story Comprehension 1', response: '', correct: true }
+            ]
+          },
+          {
+            name: 'Spelling',
+            description: 'Measures an individual\'s ability to encode sounds into written form through use of dictated spelling format containing both letters and word',
+            rawScore: 0,
+            standardScore: 43,
+            ageEquivalent: 106,
+            percentileRank: 17.07,
+            descriptiveCategory: 'Average',
+            items: [
+              { id: 21, item: 'Dictated Word: cat', response: 'cat', correct: true },
+              { id: 22, item: 'Dictated Word: house', response: 'house', correct: true },
+              { id: 23, item: 'Dictated Word: because', response: 'because', correct: true },
+              { id: 24, item: 'Dictated Word: beautiful', response: 'beautiful', correct: true },
+              { id: 25, item: 'Dictated Word: friend', response: 'friend', correct: true },
+              { id: 26, item: 'Dictated Word: school', response: 'school', correct: true },
+              { id: 27, item: 'Dictated Word: important', response: 'important', correct: true },
+              { id: 28, item: 'Dictated Word: together', response: 'together', correct: true },
+              { id: 29, item: 'Dictated Word: morning', response: 'morning', correct: true },
+              { id: 30, item: 'Dictated Word: yesterday', response: 'yesterday', correct: true }
+            ]
+          },
+          {
+            name: 'Math Computation',
+            description: 'Measures an individual\'s ability to perform basic mathematics computations through counting, identifying numbers, solving simple oral problems, and calculating written mathematics problems',
+            rawScore: 0,
+            standardScore: 34,
+            ageEquivalent: 86,
+            percentileRank: 10.08,
+            descriptiveCategory: 'Low Average',
+            items: [
+              { id: 31, item: 'Counting: 1-10', response: '10', correct: true },
+              { id: 32, item: 'Number Recognition: 5', response: '5', correct: true },
+              { id: 33, item: 'Number Recognition: 12', response: '12', correct: true },
+              { id: 34, item: 'Number Recognition: 25', response: '25', correct: true },
+              { id: 35, item: 'Number Recognition: 100', response: '100', correct: true },
+              { id: 36, item: 'Basic Addition: 2+3', response: '5', correct: true },
+              { id: 37, item: 'Basic Subtraction: 8-5', response: '3', correct: true },
+              { id: 38, item: 'Basic Multiplication: 3×4', response: '12', correct: true },
+              { id: 39, item: 'Basic Division: 12÷3', response: '4', correct: true },
+              { id: 40, item: 'Simple Word Problem: 2+3', response: '5', correct: true },
+              { id: 41, item: 'Simple Word Problem: 5 apples', response: '', correct: true },
+              { id: 42, item: 'Written Computation: 45+23', response: '68', correct: true },
+              { id: 43, item: 'Written Computation: 87-34', response: '53', correct: true },
+              { id: 44, item: 'Written Computation: 6×7', response: '42', correct: true },
+              { id: 45, item: 'Written Computation: 72÷8', response: '9', correct: true }
+            ]
+          }
+        ],
+
+        compositeScores: [
+          {
+            name: 'Reading Composite',
+            description: 'Combined score from Word Reading and Sentence Comprehension',
+            standardScore: 175,
+            ageEquivalent: 85,
+            descriptiveCategory: 'Low Average'
+          }
+        ],
+
+        interpretation: '',
+        conclusions: '',
+        recommendations: ''
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 22,
+      name: 'WOODCOCK READING MASTERY TESTS-II (WRMT-II)',
+      type: 'WRMT-II',
+      description: 'Individually administered, timed tests measuring Basic Skills, Reading Comprehension, Oral Reading Fluency and Listening Comprehension.',
+      template_data: {
+        type: 'WRMT-II',
+        name: 'WOODCOCK READING MASTERY TESTS-II (WRMT-II)',
+        studentName: '',
+        examinerName: '',
+        testDate: new Date().toISOString().split('T')[0],
+        age: '',
+        grade: '',
+        description: `The Woodcock Reading Mastery Tests-III are individually administered, timed tests measuring Basic Skills, Reading Comprehension, Oral Reading Fluency and Listening Comprehension. Area tests of the Woodcock Reading Mastery Tests-III include: Basic Skills: Measures the ability to read words and includes the sub tests: Word Identification and Word Attack. Reading Comprehension: Measures understanding of words and the ability to read and understand and includes the sub tests: Word Comprehension-Antonyms, Synonyms, Analogies and Passage Comprehension. Oral Reading Fluency: Measures the ability to read fluently and integrate reading abilities such as decoding, expression, and phrasing. The above sub tests are used to calculate students' Total Test Performance. Listening Comprehension: Measures the ability to listen to short passages and verbally respond to questions about their content.`,
+        
+        subtests: [
+          {
+            name: 'Word Identification',
+            description: 'Measures the ability to read words in isolation',
+            rawScore: 0,
+            standardScore: 88,
+            ageEquivalent: '9:3',
+            relativeProficiencyIndex: '48/90',
+            percentileRank: 7,
+            descriptiveCategory: 'Average',
+            items: [
+              { id: 1, item: 'Word Recognition: cat', response: '', correct: true },
+              { id: 2, item: 'Word Recognition: dog', response: '', correct: true },
+              { id: 3, item: 'Word Recognition: house', response: '', correct: true },
+              { id: 4, item: 'Word Recognition: tree', response: '', correct: true },
+              { id: 5, item: 'Word Recognition: book', response: '', correct: true },
+              { id: 6, item: 'Word Recognition: school', response: '', correct: true },
+              { id: 7, item: 'Word Recognition: friend', response: '', correct: true },
+              { id: 8, item: 'Word Recognition: happy', response: '', correct: true },
+              { id: 9, item: 'Word Recognition: because', response: '', correct: true },
+              { id: 10, item: 'Word Recognition: morning', response: '', correct: true }
+            ]
+          },
+          {
+            name: 'Word Attack',
+            description: 'The ability to decode nonsense words',
+            rawScore: 0,
+            standardScore: 71,
+            ageEquivalent: '7:3',
+            relativeProficiencyIndex: '21/90',
+            percentileRank: 7,
+            descriptiveCategory: 'Average',
+            items: [
+              { id: 11, item: 'Nonsense Word 1', response: '', correct: true },
+              { id: 12, item: 'Nonsense Word 2', response: '', correct: true },
+              { id: 13, item: 'Nonsense Word 3', response: '', correct: true },
+              { id: 14, item: 'Nonsense Word 4', response: '', correct: true },
+              { id: 15, item: 'Nonsense Word 5', response: '', correct: true },
+              { id: 16, item: 'Nonsense Word 6', response: '', correct: true },
+              { id: 17, item: 'Nonsense Word 7', response: '', correct: true },
+              { id: 18, item: 'Nonsense Word 8', response: '', correct: true },
+              { id: 19, item: 'Nonsense Word 9', response: '', correct: true },
+              { id: 20, item: 'Nonsense Word 10', response: '', correct: true }
+            ]
+          },
+          {
+            name: 'Word Comprehension',
+            description: 'Understanding of words and includes subtests: Antonyms, Synonyms, Analogies, and Passage Comprehension',
+            subtests: [
+              {
+                name: 'Antonyms',
+                description: 'Provide an opposite word',
+                rawScore: 0,
+                standardScore: 7,
+                ageEquivalent: '3:21',
+                relativeProficiencyIndex: '12/90',
+                percentileRank: 9,
+                descriptiveCategory: 'Very Low',
+                items: [
+                  { id: 21, item: 'Hot - Cold', response: 'cold', correct: true },
+                  { id: 22, item: 'Big - Small', response: 'small', correct: true },
+                  { id: 23, item: 'Fast - Slow', response: 'slow', correct: true },
+                  { id: 24, item: 'Happy - Sad', response: 'sad', correct: true },
+                  { id: 25, item: 'Light - Dark', response: 'dark', correct: true },
+                  { id: 26, item: 'Up - Down', response: 'down', correct: true },
+                  { id: 27, item: 'Good - Bad', response: 'bad', correct: true },
+                  { id: 28, item: 'Hard - Soft', response: 'soft', correct: true },
+                  { id: 29, item: 'Old - New', response: 'new', correct: true },
+                  { id: 30, item: 'In - Out', response: 'out', correct: true }
+                ]
+              },
+              {
+                name: 'Synonyms',
+                description: 'Provide a word with a similar meaning',
+                rawScore: 0,
+                standardScore: 48,
+                ageEquivalent: '8:4',
+                relativeProficiencyIndex: '28/90',
+                percentileRank: 49,
+                descriptiveCategory: 'Average',
+                items: [
+                  { id: 31, item: 'Happy - Joyful', response: 'joyful', correct: true },
+                  { id: 32, item: 'Fast - Quick', response: 'quick', correct: true },
+                  { id: 33, item: 'Big - Large', response: 'large', correct: true },
+                  { id: 34, item: 'Beautiful - Pretty', response: 'pretty', correct: true },
+                  { id: 35, item: 'Smart - Intelligent', response: 'intelligent', correct: true },
+                  { id: 36, item: 'Strong - Weak', response: 'weak', correct: true },
+                  { id: 37, item: 'Brave - Cowardly', response: 'cowardly', correct: true },
+                  { id: 38, item: 'Rich - Poor', response: 'poor', correct: true },
+                  { id: 39, item: 'Clean - Dirty', response: 'dirty', correct: true },
+                  { id: 40, item: 'Kind - Cruel', response: 'cruel', correct: true }
+                ]
+              },
+              {
+                name: 'Analogies',
+                description: 'Compare a pair of words and use their relationship to create another pair',
+                rawScore: 0,
+                standardScore: 50,
+                ageEquivalent: '10:11',
+                relativeProficiencyIndex: '51/90',
+                percentileRank: 51,
+                descriptiveCategory: 'Average',
+                items: [
+                  { id: 41, item: 'Dog is to puppy as cat is to kitten', response: 'kitten', correct: true },
+                  { id: 42, item: 'Hand is to glove as foot is to sock', response: 'sock', correct: true },
+                  { id: 43, item: 'Hot is to cold as up is to down', response: 'down', correct: true },
+                  { id: 44, item: 'Big is to small as tall is to short', response: 'short', correct: true },
+                  { id: 45, item: 'Day is to night as light is to dark', response: 'dark', correct: true },
+                  { id: 46, item: 'Happy is to sad as smile is to frown', response: 'frown', correct: true },
+                  { id: 47, item: 'Fast is to slow as run is to walk', response: 'walk', correct: true },
+                  { id: 48, item: 'Old is to new as ancient is to modern', response: 'modern', correct: true },
+                  { id: 49, item: 'Good is to bad as angel is to devil', response: 'devil', correct: true },
+                  { id: 50, item: 'Hard is to soft as rock is to feather', response: 'feather', correct: true }
+                ]
+              },
+              {
+                name: 'Passage Comprehension',
+                description: 'Read a short passage and provide the missing word',
+                rawScore: 0,
+                standardScore: 51,
+                ageEquivalent: '10:11',
+                relativeProficiencyIndex: '52/90',
+                percentileRank: 52,
+                descriptiveCategory: 'Average',
+                items: [
+                  { id: 51, item: 'Passage 1 - Missing Word', response: '', correct: true },
+                  { id: 52, item: 'Passage 2 - Missing Word', response: '', correct: true },
+                  { id: 53, item: 'Passage 3 - Missing Word', response: '', correct: true },
+                  { id: 54, item: 'Passage 4 - Missing Word', response: '', correct: true },
+                  { id: 55, item: 'Passage 5 - Missing Word', response: '', correct: true },
+                  { id: 56, item: 'Passage 6 - Missing Word', response: '', correct: true },
+                  { id: 57, item: 'Passage 7 - Missing Word', response: '', correct: true },
+                  { id: 58, item: 'Passage 8 - Missing Word', response: '', correct: true },
+                  { id: 59, item: 'Passage 9 - Missing Word', response: '', correct: true },
+                  { id: 60, item: 'Passage 10 - Missing Word', response: '', correct: true }
+                ]
+              }
+            ]
+          },
+          {
+            name: 'Oral Reading Fluency',
+            description: 'Measures the ability to read fluently and integrate reading abilities such as decoding, expression, and phrasing',
+            rawScore: 0,
+            standardScore: 95,
+            ageEquivalent: '11:10',
+            relativeProficiencyIndex: '95/90',
+            percentileRank: 101,
+            descriptiveCategory: 'Very High',
+            items: [
+              { id: 61, item: 'Fluency Passage 1 - Time: 30 seconds', response: '', correct: true, timeTaken: 30 },
+              { id: 62, item: 'Fluency Passage 2 - Time: 25 seconds', response: '', correct: true, timeTaken: 25 },
+              { id: 63, item: 'Fluency Passage 3 - Time: 35 seconds', response: '', correct: true, timeTaken: 35 },
+              { id: 64, item: 'Fluency Passage 4 - Time: 28 seconds', response: '', correct: true, timeTaken: 28 },
+              { id: 65, item: 'Fluency Passage 5 - Time: 32 seconds', response: '', correct: true, timeTaken: 32 },
+              { id: 66, item: 'Fluency Passage 6 - Time: 29 seconds', response: '', correct: true, timeTaken: 29 },
+              { id: 67, item: 'Fluency Passage 7 - Time: 31 seconds', response: '', correct: true, timeTaken: 31 },
+              { id: 68, item: 'Fluency Passage 8 - Time: 27 seconds', response: '', correct: true, timeTaken: 27 },
+              { id: 69, item: 'Fluency Passage 9 - Time: 33 seconds', response: '', correct: true, timeTaken: 33 },
+              { id: 70, item: 'Fluency Passage 10 - Time: 26 seconds', response: '', correct: true, timeTaken: 26 }
+            ]
+          },
+          {
+            name: 'Listening Comprehension',
+            description: 'Measures the ability to listen to short passages and verbally respond to questions about their content',
+            rawScore: 0,
+            standardScore: 101,
+            ageEquivalent: '11:10',
+            relativeProficiencyIndex: '123/90',
+            percentileRank: 11,
+            descriptiveCategory: 'Very High',
+            items: [
+              { id: 71, item: 'Listening Passage 1 - Question 1', response: '', correct: true },
+              { id: 72, item: 'Listening Passage 1 - Question 2', response: '', correct: true },
+              { id: 73, item: 'Listening Passage 1 - Question 3', response: '', correct: true },
+              { id: 74, item: 'Listening Passage 1 - Question 4', response: '', correct: true },
+              { id: 75, item: 'Listening Passage 1 - Question 5', response: '', correct: true },
+              { id: 76, item: 'Listening Passage 2 - Question 1', response: '', correct: true },
+              { id: 77, item: 'Listening Passage 2 - Question 2', response: '', correct: true },
+              { id: 78, item: 'Listening Passage 2 - Question 3', response: '', correct: true },
+              { id: 79, item: 'Listening Passage 2 - Question 4', response: '', correct: true },
+              { id: 80, item: 'Listening Passage 2 - Question 5', response: '', correct: true },
+              { id: 81, item: 'Listening Passage 3 - Question 1', response: '', correct: true },
+              { id: 82, item: 'Listening Passage 3 - Question 2', response: '', correct: true },
+              { id: 83, item: 'Listening Passage 3 - Question 3', response: '', correct: true },
+              { id: 84, item: 'Listening Passage 3 - Question 4', response: '', correct: true },
+              { id: 85, item: 'Listening Passage 3 - Question 5', response: '', correct: true }
+            ]
+          }
+        ],
+
+        totalTestPerformance: {
+          standardScore: 95,
+          ageEquivalent: '11:10',
+          relativeProficiencyIndex: '99/90',
+          percentileRank: 101,
+          descriptiveCategory: 'Very High'
+        },
+
+        interpretation: '',
+        conclusions: '',
+        recommendations: ''
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 23,
+      name: 'DIAGNOSTIC ASSESSMENT REPORT',
+      type: 'Diagnostic Report',
+      description: 'Comprehensive diagnostic assessment report based on DSM-5 criteria and standardized test results.',
+      template_data: {
+        type: 'Diagnostic Report',
+        name: 'DIAGNOSTIC ASSESSMENT REPORT',
+        studentName: '',
+        examinerName: '',
+        testDate: new Date().toISOString().split('T')[0],
+        age: '',
+        grade: '',
+        description: `Comprehensive diagnostic assessment report based on DSM-5 criteria and standardized test results. This report includes diagnostic impression, recommendations, and accommodations for educational planning.`,
+        
+        diagnosticImpression: {
+          criteria: 'According to Diagnostic and Statistical Manual of Mental Disorders 5th Edition (DSM-5)',
+          diagnosis: 'Autism Spectrum Disorder',
+          supportLevel: 'with substantial support',
+          deficits: [
+            'deficits in social social communication',
+            'restricted and repetitive patterns of behaviour'
+          ],
+          assessmentBasis: 'standard scores obtained during assessment'
+        },
+
+        recommendations: [
+          {
+            category: 'Daily Structure',
+            items: [
+              'Provide ABC with a daily schedule that is easily accessible',
+              'Give him 5-minute prompts before a transition to ease his anxiety around this area of difficulty for him'
+            ]
+          },
+          {
+            category: 'Therapeutic Interventions',
+            items: [
+              'Continue to provide ABC with Occupational Therapy sessions',
+              'Provide him with Speech and language therapy to help him build his communication skills',
+              'He needs to undergo Remedial sessions for him to cope with his academics',
+              'ABC should start with Occupational Therapy at the earliest'
+            ]
+          },
+          {
+            category: 'Visual and Behavioral Strategies',
+            items: [
+              'Use visual strategies to help student focus, understand a change in routine, and help with repetitive behaviour',
+              'Use the \'power card\' strategy to teach target behaviour',
+              'Use \'circumscribed interests\' (CI\'s) to increase desirable behaviour and academic engagement'
+            ]
+          },
+          {
+            category: 'Educational Strategies',
+            items: [
+              'ABC can attend a Regular school, if accompanied by a shadow teacher',
+              'Use a multisensory approach to instructions',
+              'Use differentiated instructions',
+              'Use strategies like role-play, and video-modelling to help him develop social skills',
+              'Reinforce positive behaviour and celebrate strengths'
+            ]
+          }
+        ],
+
+        accommodations: [
+          {
+            category: 'Assessment Accommodations',
+            items: [
+              'Extended time of 50% in all in-class assessments to complete tasks, as well as during examinations',
+              'Modified question papers',
+              'Oral examination can be considered in place of written examination',
+              'Provide a writer and reader',
+              'Provide a shadow teacher',
+              'Supervised rest breaks',
+              'Separate room for examinations',
+              'Use of calculator',
+              'Exemption from Second and Third Languages',
+              'Exempted from having to write answers in detail during exams'
+            ]
+          }
+        ],
+
+        disclaimer: 'The above recommended accommodations are based on the standard scores obtained during assessment. However, school will remain best judge of all accommodations that this student needs.',
+
+        interpretation: '',
+        conclusions: '',
+        additionalNotes: ''
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
   ];
 
@@ -2431,6 +3217,14 @@ She showed some difficulty with verbal expression of meaning of words presented 
         return <FiFileText className="w-5 h-5 text-green-500" />;
       case 'WJ-Cog':
         return <FiFileText className="w-5 h-5 text-orange-500" />;
+      case 'WJ-Ach':
+        return <FiFileText className="w-5 h-5 text-red-500" />;
+      case 'WRAT-5':
+        return <FiFileText className="w-5 h-5 text-yellow-500" />;
+      case 'WRMT-II':
+        return <FiFileText className="w-5 h-5 text-purple-500" />;
+      case 'Diagnostic Report':
+        return <FiFileText className="w-5 h-5 text-indigo-500" />;
       case 'EACA-Autism':
         return <FiFileText className="w-5 h-5 text-purple-500" />;
       default:
@@ -2487,6 +3281,18 @@ She showed some difficulty with verbal expression of meaning of words presented 
     if (type === 'WJ-Cog' || templateName?.toLowerCase().includes('wjs-cog') || (templateName?.toLowerCase().includes('woodcock') && templateName?.toLowerCase().includes('cognitive'))) {
       return 'bg-orange-100 text-orange-800';
     }
+    if (type === 'WJ-Ach' || templateName?.toLowerCase().includes('wjs-ach') || (templateName?.toLowerCase().includes('woodcock') && templateName?.toLowerCase().includes('achievement'))) {
+      return 'bg-red-100 text-red-800';
+    }
+    if (type === 'WRAT-5' || templateName?.toLowerCase().includes('wrat') || templateName?.toLowerCase().includes('wide range')) {
+      return 'bg-yellow-100 text-yellow-800';
+    }
+    if (type === 'WRMT-II' || templateName?.toLowerCase().includes('wrmt') || templateName?.toLowerCase().includes('woodcock reading mastery')) {
+      return 'bg-purple-100 text-purple-800';
+    }
+    if (type === 'Diagnostic Report' || templateName?.toLowerCase().includes('diagnostic') || templateName?.toLowerCase().includes('assessment report')) {
+      return 'bg-indigo-100 text-indigo-800';
+    }
     switch (type) {
       case 'ADHDT2':
         return 'bg-blue-100 text-blue-800';
@@ -2537,7 +3343,15 @@ She showed some difficulty with verbal expression of meaning of words presented 
                          selectedTemplate?.name?.toLowerCase().includes('wj-iii') || selectedTemplate?.name?.toLowerCase().includes('woodcock') ? 'WJ-3' :
                          selectedTemplate?.template_data?.name?.toLowerCase().includes('wj-iii') || selectedTemplate?.template_data?.name?.toLowerCase().includes('woodcock') ? 'WJ-3' :
                          selectedTemplate?.name?.toLowerCase().includes('wjs-cog') || (selectedTemplate?.name?.toLowerCase().includes('woodcock') && selectedTemplate?.name?.toLowerCase().includes('cognitive')) ? 'WJ-Cog' :
-                         selectedTemplate?.template_data?.name?.toLowerCase().includes('wjs-cog') || (selectedTemplate?.template_data?.name?.toLowerCase().includes('woodcock') && selectedTemplate?.template_data?.name?.toLowerCase().includes('cognitive')) ? 'WJ-Cog' : 'ADHDT2');
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('wjs-cog') || (selectedTemplate?.template_data?.name?.toLowerCase().includes('woodcock') && selectedTemplate?.template_data?.name?.toLowerCase().includes('cognitive')) ? 'WJ-Cog' :
+                         selectedTemplate?.name?.toLowerCase().includes('wjs-ach') || (selectedTemplate?.name?.toLowerCase().includes('woodcock') && selectedTemplate?.name?.toLowerCase().includes('achievement')) ? 'WJ-Ach' :
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('wjs-ach') || (selectedTemplate?.template_data?.name?.toLowerCase().includes('woodcock') && selectedTemplate?.template_data?.name?.toLowerCase().includes('achievement')) ? 'WJ-Ach' :
+                         selectedTemplate?.name?.toLowerCase().includes('wrat') || selectedTemplate?.name?.toLowerCase().includes('wide range') ? 'WRAT-5' :
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('wrat') || selectedTemplate?.template_data?.name?.toLowerCase().includes('wide range') ? 'WRAT-5' :
+                         selectedTemplate?.name?.toLowerCase().includes('wrmt') || selectedTemplate?.name?.toLowerCase().includes('woodcock reading mastery') ? 'WRMT-II' :
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('wrmt') || selectedTemplate?.template_data?.name?.toLowerCase().includes('woodcock reading mastery') ? 'WRMT-II' :
+                         selectedTemplate?.name?.toLowerCase().includes('diagnostic') || selectedTemplate?.name?.toLowerCase().includes('assessment report') ? 'Diagnostic Report' :
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('diagnostic') || selectedTemplate?.template_data?.name?.toLowerCase().includes('assessment report') ? 'Diagnostic Report' : 'ADHDT2');
     
     if (templateType === 'RIPA-Primary') {
       return (
@@ -2707,6 +3521,50 @@ She showed some difficulty with verbal expression of meaning of words presented 
     if (templateType === 'WJ-Cog') {
       return (
         <WJCogTemplate
+          onSave={handleTemplateSave}
+          onCancel={handleTemplateCancel}
+          studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
+          examinerName={selectedTemplate?.template_data?.examinerName || 'Dr. Smith'}
+        />
+      );
+    }
+
+    if (templateType === 'WJ-Ach') {
+      return (
+        <WJAchTemplate
+          onSave={handleTemplateSave}
+          onCancel={handleTemplateCancel}
+          studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
+          examinerName={selectedTemplate?.template_data?.examinerName || 'Dr. Smith'}
+        />
+      );
+    }
+
+    if (templateType === 'WRAT-5') {
+      return (
+        <WRAT5Template
+          onSave={handleTemplateSave}
+          onCancel={handleTemplateCancel}
+          studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
+          examinerName={selectedTemplate?.template_data?.examinerName || 'Dr. Smith'}
+        />
+      );
+    }
+
+    if (templateType === 'WRMT-II') {
+      return (
+        <WRMT2Template
+          onSave={handleTemplateSave}
+          onCancel={handleTemplateCancel}
+          studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
+          examinerName={selectedTemplate?.template_data?.examinerName || 'Dr. Smith'}
+        />
+      );
+    }
+
+    if (templateType === 'Diagnostic Report') {
+      return (
+        <DiagnosticReportTemplate
           onSave={handleTemplateSave}
           onCancel={handleTemplateCancel}
           studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
