@@ -68,7 +68,6 @@ import SessionList from './components/SessionList';
 import PlansList from './components/PlansList';
 import AdminSessionsList from './components/AdminSessionsList';
 import TemplateManager from './components/TemplateManager';
-import AssessmentTemplateSelector from './components/AssessmentTemplateSelector';
 
 function App() {
   const dispatch = useDispatch();
@@ -987,31 +986,6 @@ ${service.target_age_group || 'Not specified'}
 
     // Handle template-based encounter creation
     if (currentView === 'template-based-encounter') {
-      // Special handling for assessment templates
-      if (selectedTemplate?.isAssessmentTemplate && selectedTemplate?.component) {
-        const AssessmentComponent = selectedTemplate.component;
-        return (
-          <AssessmentComponent
-            onSave={(templateData) => {
-              console.log('Assessment template saved:', templateData);
-              alert('Assessment report created successfully!');
-              setSelectedTemplate(null);
-              setSelectedPatient(null);
-              setCurrentView('encounters-list');
-              setActiveItem('encounters-list');
-            }}
-            onCancel={() => {
-              setSelectedTemplate(null);
-              setSelectedPatient(null);
-              setCurrentView('encounters-list');
-              setActiveItem('encounters-list');
-            }}
-            studentName={selectedPatient?.name || 'ABC'}
-            examinerName="Dr. Smith"
-          />
-        );
-      }
-      
       return (
         <TemplateBasedEncounter
           template={selectedTemplate}
@@ -1025,10 +999,10 @@ ${service.target_age_group || 'Not specified'}
     // Handle template selection
     if (currentView === 'template-selector') {
       return (
-        <AssessmentTemplateSelector
+        <TemplateSelector
           onSelectTemplate={handleSelectTemplate}
           onCancel={handleCancelTemplateSelection}
-          studentName={selectedPatient?.name || 'ABC'}
+          patientData={selectedPatient}
         />
       );
     }
@@ -1150,21 +1124,6 @@ ${service.target_age_group || 'Not specified'}
       
       case 'admin-sessions':
         return <AdminSessionsList />;
-      
-      case 'template-manager':
-        return (
-          <AssessmentTemplateSelector
-            onSelectTemplate={(template) => {
-              setSelectedTemplate(template);
-              setCurrentView('template-based-encounter');
-            }}
-            onCancel={() => {
-              setCurrentView('dashboard');
-              setActiveItem('dashboard');
-            }}
-            studentName="ABC"
-          />
-        );
       
       default:
         // Other menu items

@@ -5,6 +5,168 @@ import { useDispatch } from 'react-redux';
 import { createAssessment } from '../store/slices/assessmentSlice';
 import { useToast } from './Toast';
 
+/* ═══════════════════════════════════════════════════════════
+   ASSESSMENT TEMPLATES
+═══════════════════════════════════════════════════════════ */
+
+// Available Assessment Templates
+const ASSESSMENT_TEMPLATES = [
+  {
+    id: 'RIPA-Primary',
+    name: 'ROSS INFORMATION PROCESSING ASSESSMENT (RIPA)-PRIMARY',
+    description: 'The RIPA-A quantifies & describes cognitive-linguistic deficits in individuals between the ages of 5-0 and 12-11 who face difficulties in attention, memory, orientation, language and communication, problem solving and abstract reasoning.',
+    category: 'Cognitive',
+    icon: '🧠'
+  },
+  {
+    id: 'ADHT-BSM',
+    name: 'ADHD-DSM5 Checklist',
+    description: 'DSM-5 ADHD Checklist with checkbox-based criteria selection for inattention and hyperactivity',
+    category: 'ADHD',
+    icon: '📋'
+  },
+  {
+    id: 'Aston-Index',
+    name: 'Aston Index Assessment',
+    description: 'Comprehensive battery of tests for diagnosing language difficulties in children',
+    category: 'Language',
+    icon: '🗣️'
+  },
+  {
+    id: 'ADHDT2',
+    name: 'EACA AUTISM ASSESSMENT',
+    description: 'Attention-Deficit/Hyperactivity Disorder Test-Second Edition with comprehensive scoring',
+    category: 'ADHD',
+    icon: '📝'
+  },
+  {
+    id: 'BKT',
+    name: 'Bender Gestalt Test (BKT)',
+    description: 'Motor coordination and kinesthetic perception assessment',
+    category: 'Motor',
+    icon: '✏️'
+  },
+  {
+    id: 'Ravens-CPM',
+    name: 'Raven\'s Coloured Progressive Matrices',
+    description: 'Non-verbal assessment of eductive ability and problem-solving skills',
+    category: 'Cognitive',
+    icon: '🧩'
+  },
+  {
+    id: 'GARS-3',
+    name: 'Gilliam Autism Rating Scale - 3',
+    description: 'Comprehensive assessment tool for identifying autism spectrum disorders',
+    category: 'Autism',
+    icon: '🧩'
+  },
+  {
+    id: 'Brown-EF-A',
+    name: 'Brown Executive Function/Attention Scales',
+    description: 'Comprehensive assessment of executive function and attention processes',
+    category: 'Executive',
+    icon: '🧠'
+  },
+  {
+    id: 'EACA',
+    name: 'Early Academic Competency Assessment',
+    description: 'Comprehensive screening tool for early academic skills and school readiness',
+    category: 'Academic',
+    icon: '📚'
+  },
+  {
+    id: 'EACA-Autism',
+    name: 'Educational Assessment of Children with Autism (EACA)',
+    description: 'Comprehensive assessment of children with autism focusing on the triad of impairments across 7 domains',
+    category: 'Autism',
+    icon: '🧩'
+  },
+  {
+    id: 'Nelson-Denny',
+    name: 'Nelson-Denny Reading Test',
+    description: 'Comprehensive assessment of reading comprehension, vocabulary, and reading rate',
+    category: 'Reading',
+    icon: '📖'
+  },
+  {
+    id: 'TAPS-3',
+    name: 'TEST OF AUDITORY PROCESSING SKILLS-TAPS-3',
+    description: 'Comprehensive auditory processing assessment for phonological skills, memory abilities, and auditory cohesion',
+    category: 'Auditory',
+    icon: '👂'
+  },
+  {
+    id: 'TOWL-4',
+    name: 'TEST OF WRITTEN LANGUAGE (TOWL-4)',
+    description: 'The TOWL-4 is a norm-referenced, reliable, and valid test of written language measuring seven skill areas and three composite scores.',
+    category: 'Writing',
+    icon: '✍️'
+  },
+  {
+    id: 'VABS-3',
+    name: 'VINELAND ADAPTIVE BEHAVIOUR SCALES-VABS-3',
+    description: 'Individual assessment of adaptive behaviour measuring day-to-day activities necessary for self-care and social interaction.',
+    category: 'Behavior',
+    icon: '👥'
+  },
+  {
+    id: 'WISC-4',
+    name: 'WECHSLER\'S INTELLIGENCE SCALE FOR CHILDREN -WISC-IV India',
+    description: 'Norm-referenced, individually administered test of intelligence for children with verbal and performance subtests.',
+    category: 'Intelligence',
+    icon: '🧠'
+  },
+  {
+    id: 'WJ-3',
+    name: 'WJ-III - TESTS OF ACHIEVEMENT FORM C/ BRIEF BATTERY',
+    description: 'Norm-referenced individually administered tests measuring academic achievement across reading, math, and writing.',
+    category: 'Achievement',
+    icon: '📊'
+  },
+  {
+    id: 'WJ-Cog',
+    name: 'WOODCOCK-JOHNSON TESTS OF COGNITIVE ABILITIES IV (WJ-Cog)',
+    description: '18 tests measuring different aspects of cognitive ability based on CHC theory, with cluster scores for interpretative purposes.',
+    category: 'Cognitive',
+    icon: '🧠'
+  },
+  {
+    id: 'WJ-Ach',
+    name: 'WOODCOCK JOHNSON IV TESTS OF ACHIEVEMENT (WJ-Ach)',
+    description: 'Comprehensive set of individually administered tests to measure educational achievement in reading, mathematics, written language, and academic skills.',
+    category: 'Achievement',
+    icon: '📚'
+  },
+  {
+    id: 'WRAT5',
+    name: 'WIDE RANGE ACHIEVEMENT TEST- WRAT-5 (ENGLISH)',
+    description: 'Norm-referenced test measuring basic academic skills of word reading, sentence comprehension, spelling, and math computation.',
+    category: 'Achievement',
+    icon: '📝'
+  },
+  {
+    id: 'WRMT2',
+    name: 'WOODCOCK READING MASTERY TESTS-II (WRMT-II)',
+    description: 'Individually administered, timed tests measuring Basic Skills, Reading Comprehension, Oral Reading Fluency and Listening Comprehension.',
+    category: 'Reading',
+    icon: '📖'
+  },
+  {
+    id: 'DiagnosticReport',
+    name: 'DIAGNOSTIC ASSESSMENT REPORT',
+    description: 'Comprehensive diagnostic assessment report based on DSM-5 criteria and standardized test results.',
+    category: 'Diagnostic',
+    icon: '🧠'
+  },
+  {
+    id: 'EvaluationSummary',
+    name: 'SUMMARY OF EVALUATION',
+    description: 'Comprehensive summary of evaluation results across multiple assessment instruments including WJ-IV COG, WJ-IV ACH, and Brown\'s EF/A Scale.',
+    category: 'Summary',
+    icon: '📊'
+  }
+];
+
 const AssignAssessmentModal = ({ isOpen, onClose, examineeId, examineeName }) => {
   const toast = useToast();
   const dispatch = useDispatch();
@@ -26,15 +188,7 @@ const AssignAssessmentModal = ({ isOpen, onClose, examineeId, examineeName }) =>
 
   const [errors, setErrors] = useState({});
 
-  const [assessmentTypes, setAssessmentTypes] = useState([
-    { id: 'WRAT5', name: 'WRAT5 - Wide Range Achievement Test' },
-    { id: 'WIAT', name: 'WIAT - Wechsler Individual Achievement Test' },
-    { id: 'WISC', name: 'WISC - Wechsler Intelligence Scale for Children' },
-    { id: 'BASC', name: 'BASC - Behavior Assessment System for Children' },
-    { id: 'Conners', name: 'Conners Rating Scales' },
-    { id: 'Vineland', name: 'Vineland Adaptive Behavior Scales' },
-    { id: 'Custom', name: 'Custom Assessment' }
-  ]);
+  const [assessmentTypes, setAssessmentTypes] = useState(ASSESSMENT_TEMPLATES);
 
   const deliveryMethods = [
     'Online',

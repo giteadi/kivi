@@ -82,6 +82,168 @@ const BLANK_SCORES = () => {
 };
 
 /* ═══════════════════════════════════════════════════════════
+   ASSESSMENT TEMPLATES
+═══════════════════════════════════════════════════════════ */
+
+// Available Assessment Templates
+const ASSESSMENT_TEMPLATES = [
+  {
+    id: 'RIPA-Primary',
+    name: 'ROSS INFORMATION PROCESSING ASSESSMENT (RIPA)-PRIMARY',
+    description: 'The RIPA-A quantifies & describes cognitive-linguistic deficits in individuals between the ages of 5-0 and 12-11 who face difficulties in attention, memory, orientation, language and communication, problem solving and abstract reasoning.',
+    category: 'Cognitive',
+    icon: '🧠'
+  },
+  {
+    id: 'ADHT-BSM',
+    name: 'ADHD-DSM5 Checklist',
+    description: 'DSM-5 ADHD Checklist with checkbox-based criteria selection for inattention and hyperactivity',
+    category: 'ADHD',
+    icon: '📋'
+  },
+  {
+    id: 'Aston-Index',
+    name: 'Aston Index Assessment',
+    description: 'Comprehensive battery of tests for diagnosing language difficulties in children',
+    category: 'Language',
+    icon: '🗣️'
+  },
+  {
+    id: 'ADHDT2',
+    name: 'EACA AUTISM ASSESSMENT',
+    description: 'Attention-Deficit/Hyperactivity Disorder Test-Second Edition with comprehensive scoring',
+    category: 'ADHD',
+    icon: '📝'
+  },
+  {
+    id: 'BKT',
+    name: 'Bender Gestalt Test (BKT)',
+    description: 'Motor coordination and kinesthetic perception assessment',
+    category: 'Motor',
+    icon: '✏️'
+  },
+  {
+    id: 'Ravens-CPM',
+    name: 'Raven\'s Coloured Progressive Matrices',
+    description: 'Non-verbal assessment of eductive ability and problem-solving skills',
+    category: 'Cognitive',
+    icon: '🧩'
+  },
+  {
+    id: 'GARS-3',
+    name: 'Gilliam Autism Rating Scale - 3',
+    description: 'Comprehensive assessment tool for identifying autism spectrum disorders',
+    category: 'Autism',
+    icon: '🧩'
+  },
+  {
+    id: 'Brown-EF-A',
+    name: 'Brown Executive Function/Attention Scales',
+    description: 'Comprehensive assessment of executive function and attention processes',
+    category: 'Executive',
+    icon: '🧠'
+  },
+  {
+    id: 'EACA',
+    name: 'Early Academic Competency Assessment',
+    description: 'Comprehensive screening tool for early academic skills and school readiness',
+    category: 'Academic',
+    icon: '📚'
+  },
+  {
+    id: 'EACA-Autism',
+    name: 'Educational Assessment of Children with Autism (EACA)',
+    description: 'Comprehensive assessment of children with autism focusing on the triad of impairments across 7 domains',
+    category: 'Autism',
+    icon: '🧩'
+  },
+  {
+    id: 'Nelson-Denny',
+    name: 'Nelson-Denny Reading Test',
+    description: 'Comprehensive assessment of reading comprehension, vocabulary, and reading rate',
+    category: 'Reading',
+    icon: '📖'
+  },
+  {
+    id: 'TAPS-3',
+    name: 'TEST OF AUDITORY PROCESSING SKILLS-TAPS-3',
+    description: 'Comprehensive auditory processing assessment for phonological skills, memory abilities, and auditory cohesion',
+    category: 'Auditory',
+    icon: '👂'
+  },
+  {
+    id: 'TOWL-4',
+    name: 'TEST OF WRITTEN LANGUAGE (TOWL-4)',
+    description: 'The TOWL-4 is a norm-referenced, reliable, and valid test of written language measuring seven skill areas and three composite scores.',
+    category: 'Writing',
+    icon: '✍️'
+  },
+  {
+    id: 'VABS-3',
+    name: 'VINELAND ADAPTIVE BEHAVIOUR SCALES-VABS-3',
+    description: 'Individual assessment of adaptive behaviour measuring day-to-day activities necessary for self-care and social interaction.',
+    category: 'Behavior',
+    icon: '👥'
+  },
+  {
+    id: 'WISC-4',
+    name: 'WECHSLER\'S INTELLIGENCE SCALE FOR CHILDREN -WISC-IV India',
+    description: 'Norm-referenced, individually administered test of intelligence for children with verbal and performance subtests.',
+    category: 'Intelligence',
+    icon: '🧠'
+  },
+  {
+    id: 'WJ-3',
+    name: 'WJ-III - TESTS OF ACHIEVEMENT FORM C/ BRIEF BATTERY',
+    description: 'Norm-referenced individually administered tests measuring academic achievement across reading, math, and writing.',
+    category: 'Achievement',
+    icon: '📊'
+  },
+  {
+    id: 'WJ-Cog',
+    name: 'WOODCOCK-JOHNSON TESTS OF COGNITIVE ABILITIES IV (WJ-Cog)',
+    description: '18 tests measuring different aspects of cognitive ability based on CHC theory, with cluster scores for interpretative purposes.',
+    category: 'Cognitive',
+    icon: '🧠'
+  },
+  {
+    id: 'WJ-Ach',
+    name: 'WOODCOCK JOHNSON IV TESTS OF ACHIEVEMENT (WJ-Ach)',
+    description: 'Comprehensive set of individually administered tests to measure educational achievement in reading, mathematics, written language, and academic skills.',
+    category: 'Achievement',
+    icon: '📚'
+  },
+  {
+    id: 'WRAT5',
+    name: 'WIDE RANGE ACHIEVEMENT TEST- WRAT-5 (ENGLISH)',
+    description: 'Norm-referenced test measuring basic academic skills of word reading, sentence comprehension, spelling, and math computation.',
+    category: 'Achievement',
+    icon: '📝'
+  },
+  {
+    id: 'WRMT2',
+    name: 'WOODCOCK READING MASTERY TESTS-II (WRMT-II)',
+    description: 'Individually administered, timed tests measuring Basic Skills, Reading Comprehension, Oral Reading Fluency and Listening Comprehension.',
+    category: 'Reading',
+    icon: '📖'
+  },
+  {
+    id: 'DiagnosticReport',
+    name: 'DIAGNOSTIC ASSESSMENT REPORT',
+    description: 'Comprehensive diagnostic assessment report based on DSM-5 criteria and standardized test results.',
+    category: 'Diagnostic',
+    icon: '🧠'
+  },
+  {
+    id: 'EvaluationSummary',
+    name: 'SUMMARY OF EVALUATION',
+    description: 'Comprehensive summary of evaluation results across multiple assessment instruments including WJ-IV COG, WJ-IV ACH, and Brown\'s EF/A Scale.',
+    category: 'Summary',
+    icon: '�'
+  }
+];
+
+/* ═══════════════════════════════════════════════════════════
    INJECTED CSS
 ═══════════════════════════════════════════════════════════ */
 const STYLES = `
@@ -702,58 +864,36 @@ const Step2 = ({assess,setAssess,scores,setScores,errors,selectedExaminee,select
         </div>
       )}
 
-      {/* Template Selection */}
-      {templates && templates.length > 0 && (
-        <div style={{marginBottom:20,padding:'12px 16px',background:useTemplate?'#e3f2fd':'#f8f9fa',border:'1px solid #2196f3',borderRadius:4,display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}}>
-          <div style={{display:'flex',alignItems:'center',gap:10}}>
-            <div style={{fontSize:20}}>📋</div>
-            <div>
-              <div style={{fontWeight:700,fontSize:13.5,color:'#1976d2'}}>Use Template for Report</div>
-              <div style={{fontSize:12.5,color:'#666'}}>
-                {useTemplate ? (
-                  <>Using template: {selectedTemplate?.template_data?.name || 'Selected template'}</>
-                ) : (
-                  <>{templates.length} template(s) available — generate report using a template</>
-                )}
-              </div>
-            </div>
-          </div>
-          <div style={{display:'flex',gap:8,alignItems:'center'}}>
-            {useTemplate && (
-              <select 
-                className="grm-in grm-sel" 
-                value={selectedTemplate?.id || ''} 
-                onChange={(e) => {
-                  const template = templates.find(t => t.id === parseInt(e.target.value));
-                  setSelectedTemplate(template);
-                }}
-                style={{width:200,fontSize:12.5}}
-              >
-                <option value="">Select Template</option>
-                {templates.map(template => (
-                  <option key={template.id} value={template.id}>
-                    {template.template_data?.name || 'Untitled Template'}
-                  </option>
-                ))}
-              </select>
-            )}
-            <button 
-              className="grm-ghost" 
-              style={{fontSize:13,padding:'6px 12px'}}
-              onClick={() => {
-                if (useTemplate) {
-                  setUseTemplate(false);
-                  setSelectedTemplate(null);
-                } else {
-                  setUseTemplate(true);
-                }
+      {/* Assessment Template Selection */}
+      <div style={{marginBottom:20,padding:'12px 16px',background:'#fff',border:'1px solid #d0d8e4',borderRadius:4}}>
+        <div style={{fontWeight:700,fontSize:15,color:'#1e3a5f',marginBottom:14}}>Select Assessment Template</div>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <div style={{flex:1}}>
+            <select 
+              className="grm-in grm-sel" 
+              value={selectedTemplate?.id || ''} 
+              onChange={(e) => {
+                const template = templates.find(t => t.id === e.target.value);
+                setSelectedTemplate(template);
+                setUseTemplate(true);
               }}
+              style={{width:'100%',fontSize:13.5}}
             >
-              {useTemplate ? 'Clear Template' : 'Use Template'}
-            </button>
+              <option value="">Select Assessment Template...</option>
+              {templates && templates.map(template => (
+                <option key={template.id} value={template.id}>
+                  {template.icon} {template.name}
+                </option>
+              ))}
+            </select>
+            {selectedTemplate && (
+              <div style={{fontSize:12,color:'#666',marginTop:6}}>
+                {selectedTemplate.description}
+              </div>
+            )}
           </div>
         </div>
-      )}
+      </div>
 
       {/* Administration Settings */}
       <div style={{fontWeight:700,fontSize:15,color:'#1e3a5f',marginBottom:14}}>Administration Settings</div>
@@ -1020,20 +1160,10 @@ const GenerateReportModal = ({ isOpen, onClose, examineeData }) => {
   // Fetch templates when modal opens
   useEffect(() => {
     if (isOpen) {
-      fetchTemplates();
+      // Use local ASSESSMENT_TEMPLATES instead of API call
+      setTemplates(ASSESSMENT_TEMPLATES);
     }
   }, [isOpen]);
-
-  const fetchTemplates = async () => {
-    try {
-      const response = await api.getTemplates();
-      if (response.success) {
-        setTemplates(response.data);
-      }
-    } catch (error) {
-      console.error('Error fetching templates:', error);
-    }
-  };
 
   // Step 2 state
   const [selectedAssessment, setSelectedAssessment] = useState(null);
@@ -1152,15 +1282,18 @@ const GenerateReportModal = ({ isOpen, onClose, examineeData }) => {
       let reportData;
 
       if (useTemplate && selectedTemplate) {
-        // Generate report using template
-        console.log('📄 Generating report using template:', selectedTemplate.template_data?.name);
+        // Generate report using selected assessment template
+        console.log('📄 Generating report using template:', selectedTemplate.name);
+        
+        // Get template data based on selected template
+        const templateData = getTemplateData(selectedTemplate.id, activeEx, assess);
         
         const customData = {
           testDate: assess.testDate,
           examiner: assess.examiner,
           // Add any other assessment data that should override template
         };
-
+        
         const result = await api.generateReportFromTemplate(selectedTemplate.id, examineeId, customData);
         
         if (result.success) {
@@ -1229,6 +1362,578 @@ const GenerateReportModal = ({ isOpen, onClose, examineeData }) => {
       setIsGenerating(false);
     }
   };
+
+// Get template data based on template type and examinee data
+const getTemplateData = (templateId, examinee, assessment) => {
+  const template = ASSESSMENT_TEMPLATES.find(t => t.id === templateId);
+  
+  if (!template) {
+    console.error('Template not found:', templateId);
+    return null;
+  }
+
+  switch (template.id) {
+    case 'RIPA-Primary':
+      return {
+        type: 'RIPA-Primary',
+        name: 'ROSS INFORMATION PROCESSING ASSESSMENT (RIPA)-PRIMARY',
+        studentName: examinee.firstName,
+        examinerName: assessment.examiner,
+        testDate: assessment.testDate,
+        scores: {
+          memoryQuotient: assessment.scores?.memoryQuotient || 85,
+          compositeScore: assessment.scores?.compositeScore || 78,
+          tScore: assessment.scores?.tScore || 42,
+          interpretation: assessment.scores?.interpretation || 'Below Average'
+        }
+      };
+    
+    case 'ADHT-BSM':
+      return {
+        type: 'ADHT-BSM',
+        name: 'ADHD-DSM5 Checklist',
+        studentName: examinee.firstName,
+        examinerName: assessment.examiner,
+        testDate: assessment.testDate,
+        scores: {
+          inattention: assessment.scores?.inattention || 0,
+          hyperactivity: assessment.scores?.hyperactivity || 0,
+          totalScore: assessment.scores?.totalScore || 0,
+          interpretation: assessment.scores?.interpretation || 'No ADHD symptoms detected'
+        }
+      };
+    
+    case 'Aston-Index':
+      return {
+        type: 'Aston-Index',
+        name: 'Aston Index Assessment',
+        studentName: examinee.firstName,
+        examinerName: assessment.examiner,
+        testDate: assessment.testDate,
+        scores: {
+          languageIndex: assessment.scores?.languageIndex || 85,
+          comprehensionScore: assessment.scores?.comprehensionScore || 78,
+          expressionScore: assessment.scores?.expressionScore || 82
+        }
+      };
+    
+    case 'ADHDT2':
+      return {
+        type: 'ADHDT2',
+        name: 'EACA AUTISM ASSESSMENT',
+        studentName: examinee.firstName,
+        examinerName: assessment.examiner,
+        testDate: assessment.testDate,
+        scores: {
+          inattention: assessment.scores?.inattention || 0,
+          hyperactivity: assessment.scores?.hyperactivity || 0,
+          adhdIndex: assessment.scores?.adhdIndex || 0,
+          interpretation: assessment.scores?.interpretation || 'Normal range'
+        }
+      };
+    
+    case 'BKT':
+      return {
+        type: 'BKT',
+        name: 'Bender Gestalt Test (BKT)',
+        studentName: examinee.firstName,
+        examinerName: assessment.examiner,
+        testDate: assessment.testDate,
+        scores: {
+          motorScore: assessment.scores?.motorScore || 85,
+          perceptionScore: assessment.scores?.perceptionScore || 78,
+          developmentalAge: assessment.scores?.developmentalAge || '8 years'
+        }
+      };
+    
+    case 'Ravens-CPM':
+      return {
+        type: 'Ravens-CPM',
+        name: 'Raven\'s Coloured Progressive Matrices',
+        studentName: examinee.firstName,
+        examinerName: assessment.examiner,
+        testDate: assessment.testDate,
+        scores: {
+          rawScore: assessment.scores?.rawScore || 25,
+          percentileRank: assessment.scores?.percentileRank || 50,
+          intellectualAbility: assessment.scores?.intellectualAbility || 'Average'
+        }
+      };
+    
+    case 'GARS-3':
+      return {
+        type: 'GARS-3',
+        name: 'Gilliam Autism Rating Scale - 3',
+        studentName: examinee.firstName,
+        examinerName: assessment.examiner,
+        testDate: assessment.testDate,
+        scores: {
+          autismIndex: assessment.scores?.autismIndex || 85,
+          stereotypedBehaviors: assessment.scores?.stereotypedBehaviors || 78,
+          communication: assessment.scores?.communication || 82,
+          socialInteraction: assessment.scores?.socialInteraction || 80
+        }
+      };
+    
+    case 'Brown-EF-A':
+      return {
+        type: 'Brown-EF-A',
+        name: 'Brown Executive Function/Attention Scales',
+        studentName: examinee.firstName,
+        examinerName: assessment.examiner,
+        testDate: assessment.testDate,
+        scores: {
+          activation: assessment.scores?.activation || 85,
+          focus: assessment.scores?.focus || 78,
+          effort: assessment.scores?.effort || 82,
+          emotion: assessment.scores?.emotion || 80,
+          memory: assessment.scores?.memory || 85,
+          action: assessment.scores?.action || 78
+        }
+      };
+    
+    case 'EACA':
+      return {
+        type: 'EACA',
+        name: 'Early Academic Competency Assessment',
+        studentName: examinee.firstName,
+        examinerName: assessment.examiner,
+        testDate: assessment.testDate,
+        scores: {
+          readingReadiness: assessment.scores?.readingReadiness || 85,
+          mathReadiness: assessment.scores?.mathReadiness || 78,
+          writingReadiness: assessment.scores?.writingReadiness || 82,
+          socialSkills: assessment.scores?.socialSkills || 80
+        }
+      };
+    
+    case 'EACA-Autism':
+      return {
+        type: 'EACA-Autism',
+        name: 'Educational Assessment of Children with Autism (EACA)',
+        studentName: examinee.firstName,
+        examinerName: assessment.examiner,
+        testDate: assessment.testDate,
+        scores: {
+          socialImpairment: assessment.scores?.socialImpairment || 85,
+          communicationImpairment: assessment.scores?.communicationImpairment || 78,
+          imaginationImpairment: assessment.scores?.imaginationImpairment || 82,
+          behavioralImpairment: assessment.scores?.behavioralImpairment || 80
+        }
+      };
+    
+    case 'Nelson-Denny':
+      return {
+        type: 'Nelson-Denny',
+        name: 'Nelson-Denny Reading Test',
+        studentName: examinee.firstName,
+        examinerName: assessment.examiner,
+        testDate: assessment.testDate,
+        scores: {
+          vocabularyScore: assessment.scores?.vocabularyScore || 85,
+          comprehensionScore: assessment.scores?.comprehensionScore || 78,
+          readingRateScore: assessment.scores?.readingRateScore || 82,
+          overallReadingLevel: assessment.scores?.overallReadingLevel || 'Grade 10',
+          gradeEquivalent: assessment.scores?.gradeEquivalent || '10.5'
+        }
+      };
+    
+    case 'TAPS-3':
+      return {
+        type: 'TAPS-3',
+        name: 'TEST OF AUDITORY PROCESSING SKILLS-TAPS-3',
+        studentName: examinee.firstName,
+        examinerName: assessment.examiner,
+        testDate: assessment.testDate,
+        scores: {
+          phonologicalIndex: assessment.scores?.phonologicalIndex || 85,
+          memoryIndex: assessment.scores?.memoryIndex || 78,
+          cohesionIndex: assessment.scores?.cohesionIndex || 82,
+          overallIndex: assessment.scores?.overallIndex || 80,
+          performanceRange: assessment.scores?.performanceRange || 'Average'
+        }
+      };
+    
+    case 'TOWL-4':
+      return {
+        type: 'TOWL-4',
+        name: 'TEST OF WRITTEN LANGUAGE (TOWL-4)',
+        studentName: examinee.firstName,
+        examinerName: assessment.examiner,
+        testDate: assessment.testDate,
+        scores: {
+          contractionsInWriting: assessment.scores?.contractionsInWriting || 85,
+          capitalizationInWriting: assessment.scores?.capitalizationInWriting || 78,
+          punctuationInWriting: assessment.scores?.punctuationInWriting || 82,
+          spellingInWriting: assessment.scores?.spellingInWriting || 80,
+          vocabularyInWriting: assessment.scores?.vocabularyInWriting || 85,
+          sentenceCombining: assessment.scores?.sentenceCombining || 78,
+          logicalSentences: assessment.scores?.logicalSentences || 82,
+          overallWriting: assessment.scores?.overallWriting || 80
+        }
+      };
+    
+    case 'VABS-3':
+      return {
+        type: 'VABS-3',
+        name: 'VINELAND ADAPTIVE BEHAVIOUR SCALES-VABS-3',
+        studentName: examinee.firstName,
+        examinerName: assessment.examiner,
+        testDate: assessment.testDate,
+        scores: {
+          communication: assessment.scores?.communication || 85,
+          dailyLivingSkills: assessment.scores?.dailyLivingSkills || 78,
+          socialization: assessment.scores?.socialization || 82,
+          motorSkills: assessment.scores?.motorSkills || 80,
+          adaptiveBehaviorComposite: assessment.scores?.adaptiveBehaviorComposite || 81
+        }
+      };
+    
+    case 'WISC-4':
+      return {
+        type: 'WISC-4',
+        name: 'WECHSLER\'S INTELLIGENCE SCALE FOR CHILDREN -WISC-IV India',
+        studentName: examinee.firstName,
+        examinerName: assessment.examiner,
+        testDate: assessment.testDate,
+        scores: {
+          verbalComprehension: assessment.scores?.verbalComprehension || 105,
+          perceptualReasoning: assessment.scores?.perceptualReasoning || 110,
+          workingMemory: assessment.scores?.workingMemory || 95,
+          processingSpeed: assessment.scores?.processingSpeed || 100,
+          fullScaleIQ: assessment.scores?.fullScaleIQ || 103
+        }
+      };
+    
+    case 'WJ-3':
+      return {
+        type: 'WJ-3',
+        name: 'WJ-III - TESTS OF ACHIEVEMENT FORM C/ BRIEF BATTERY',
+        studentName: examinee.firstName,
+        examinerName: assessment.examiner,
+        testDate: assessment.testDate,
+        scores: {
+          reading: assessment.scores?.reading || 95,
+          math: assessment.scores?.math || 98,
+          writing: assessment.scores?.writing || 92,
+          briefAchievement: assessment.scores?.briefAchievement || 95
+        }
+      };
+    
+    case 'WJ-Cog':
+      return {
+        type: 'WJ-Cog',
+        name: 'WOODCOCK-JOHNSON TESTS OF COGNITIVE ABILITIES IV (WJ-Cog)',
+        studentName: examinee.firstName,
+        examinerName: assessment.examiner,
+        testDate: assessment.testDate,
+        clusters: []
+      };
+    
+    case 'WJ-Ach':
+      return {
+        type: 'WJ-Ach',
+        name: 'WOODCOCK JOHNSON IV TESTS OF ACHIEVEMENT (WJ-Ach)',
+        studentName: examinee.firstName,
+        examinerName: assessment.examiner,
+        testDate: assessment.testDate,
+        clusters: []
+      };
+    
+    case 'WRAT5':
+      return {
+        type: 'WRAT-5',
+        name: 'WIDE RANGE ACHIEVEMENT TEST- WRAT-5 (ENGLISH)',
+        studentName: examinee.firstName,
+        examinerName: assessment.examiner,
+        testDate: assessment.testDate,
+        scores: {
+          mathRaw: assessment.scores?.mathRaw || '',
+          mathStd: assessment.scores?.mathStd || '',
+          mathCI: assessment.scores?.mathCI || '',
+          mathPct: assessment.scores?.mathPct || '',
+          mathCat: assessment.scores?.mathCat || '',
+          mathAge: assessment.scores?.mathAge || '',
+          mathGSV: assessment.scores?.mathGSV || '',
+          spellingRaw: assessment.scores?.spellingRaw || '',
+          spellingStd: assessment.scores?.spellingStd || '',
+          spellingCI: assessment.scores?.spellingCI || '',
+          spellingPct: assessment.scores?.spellingPct || '',
+          spellingCat: assessment.scores?.spellingCat || '',
+          spellingAge: assessment.scores?.spellingAge || '',
+          spellingGSV: assessment.scores?.spellingGSV || '',
+          wordReadingRaw: assessment.scores?.wordReadingRaw || '',
+          wordReadingStd: assessment.scores?.wordReadingStd || '',
+          wordReadingCI: assessment.scores?.wordReadingCI || '',
+          wordReadingPct: assessment.scores?.wordReadingPct || '',
+          wordReadingCat: assessment.scores?.wordReadingCat || '',
+          wordReadingAge: assessment.scores?.wordReadingAge || '',
+          wordReadingGSV: assessment.scores?.wordReadingGSV || '',
+          sentenceRaw: assessment.scores?.sentenceRaw || '',
+          sentenceStd: assessment.scores?.sentenceStd || '',
+          sentenceCI: assessment.scores?.sentenceCI || '',
+          sentencePct: assessment.scores?.sentencePct || '',
+          sentenceCat: assessment.scores?.sentenceCat || '',
+          sentenceAge: assessment.scores?.sentenceAge || '',
+          sentenceGSV: assessment.scores?.sentenceGSV || '',
+          compositeRaw: assessment.scores?.compositeRaw || '',
+          compositeStd: assessment.scores?.compositeStd || '',
+          compositeCI: assessment.scores?.compositeCI || '',
+          compositePct: assessment.scores?.compositePct || '',
+          compositeCat: assessment.scores?.compositeCat || '',
+          diff_wr_sp: assessment.scores?.diff_wr_sp || '',
+          sig_wr_sp: assessment.scores?.sig_wr_sp || '',
+          base_wr_sp: assessment.scores?.base_wr_sp || '',
+          diff_wr_mc: assessment.scores?.diff_wr_mc || '',
+          sig_wr_mc: assessment.scores?.sig_wr_mc || '',
+          base_wr_mc: assessment.scores?.base_wr_mc || '',
+          diff_wr_sc: assessment.scores?.diff_wr_sc || '',
+          sig_wr_sc: assessment.scores?.sig_wr_sc || '',
+          base_wr_sc: assessment.scores?.base_wr_sc || '',
+          diff_sp_mc: assessment.scores?.diff_sp_mc || '',
+          sig_sp_mc: assessment.scores?.sig_sp_mc || '',
+          base_sp_mc: assessment.scores?.base_sp_mc || '',
+          diff_sp_sc: assessment.scores?.diff_sp_sc || '',
+          sig_sp_sc: assessment.scores?.sig_sp_sc || '',
+          base_sp_sc: assessment.scores?.base_sp_sc || '',
+          diff_mc_sc: assessment.scores?.diff_mc_sc || '',
+          sig_mc_sc: assessment.scores?.sig_mc_sc || '',
+          base_mc_sc: assessment.scores?.base_mc_sc || ''
+        }
+      };
+    
+    case 'WRMT2':
+      return {
+        type: 'WRMT-II',
+        name: 'WOODCOCK READING MASTERY TESTS-II (WRMT-II)',
+        studentName: examinee.firstName,
+        examinerName: assessment.examiner,
+        testDate: assessment.testDate,
+        scores: {
+          // Basic Skills
+          wordIdentification: assessment.scores?.wordIdentification || { raw: 0, standard: 88, ageEquivalent: '9:3', rpi: '48/90', percentileRank: 7, descriptor: 'Average' },
+          wordAttack: assessment.scores?.wordAttack || { raw: 0, standard: 71, ageEquivalent: '7:3', rpi: '21/90', percentileRank: 7, descriptor: 'Average' },
+          
+          // Reading Comprehension
+          antonyms: assessment.scores?.antonyms || { raw: 0, standard: 7, ageEquivalent: '3:21', rpi: '12/90', percentileRank: 9, descriptor: 'Very Low' },
+          synonyms: assessment.scores?.synonyms || { raw: 0, standard: 48, ageEquivalent: '8:4', rpi: '28/90', percentileRank: 49, descriptor: 'Average' },
+          analogies: assessment.scores?.analogies || { raw: 0, standard: 50, ageEquivalent: '10:11', rpi: '51/90', percentileRank: 51, descriptor: 'Average' },
+          passageComprehension: assessment.scores?.passageComprehension || { raw: 0, standard: 51, ageEquivalent: '10:11', rpi: '52/90', percentileRank: 52, descriptor: 'Average' },
+          
+          // Oral Reading Fluency
+          oralReadingFluency: assessment.scores?.oralReadingFluency || { raw: 0, standard: 95, ageEquivalent: '11:10', rpi: '95/90', percentileRank: 101, descriptor: 'Very High' },
+          
+          // Listening Comprehension
+          listeningComprehension: assessment.scores?.listeningComprehension || { raw: 0, standard: 101, ageEquivalent: '11:10', rpi: '123/90', percentileRank: 11, descriptor: 'Very High' }
+        }
+      };
+    
+    case 'DiagnosticReport':
+      return {
+        type: 'Diagnostic Report',
+        name: 'DIAGNOSTIC ASSESSMENT REPORT',
+        studentName: examinee.firstName,
+        examinerName: assessment.examiner,
+        testDate: assessment.testDate,
+        diagnosticImpression: {
+          criteria: 'According to Diagnostic and Statistical Manual of Mental Disorders 5th Edition (DSM-5)',
+          diagnosis: 'Autism Spectrum Disorder',
+          supportLevel: 'with substantial support',
+          deficits: [
+            'deficits in social social communication',
+            'restricted and repetitive patterns of behaviour'
+          ],
+          assessmentBasis: 'standard scores obtained during assessment'
+        },
+        recommendations: [
+          {
+            category: 'Daily Structure',
+            items: [
+              'Provide ABC with a daily schedule that is easily accessible',
+              'Give him 5-minute prompts before a transition to ease his anxiety around this area of difficulty for him'
+            ]
+          },
+          {
+            category: 'Therapeutic Interventions',
+            items: [
+              'Continue to provide ABC with Occupational Therapy sessions',
+              'Provide him with Speech and language therapy to help him build his communication skills',
+              'He needs to undergo Remedial sessions for him to cope with his academics',
+              'ABC should start with Occupational Therapy at the earliest'
+            ]
+          },
+          {
+            category: 'Visual and Behavioral Strategies',
+            items: [
+              'Use visual strategies to help student focus, understand a change in routine, and help with repetitive behaviour',
+              'Use \'power card\' strategy to teach target behaviour',
+              'Use \'circumscribed interests\' (CI\'s) to increase desirable behaviour and academic engagement'
+            ]
+          },
+          {
+            category: 'Educational Strategies',
+            items: [
+              'ABC can attend a Regular school, if accompanied by a shadow teacher',
+              'Use a multisensory approach to instructions',
+              'Use differentiated instructions',
+              'Use strategies like role-play, and video-modelling to help him develop social skills',
+              'Reinforce positive behaviour and celebrate strengths'
+            ]
+          }
+        ],
+        accommodations: [
+          {
+            category: 'Assessment Accommodations',
+            items: [
+              'Extended time of 50% in all in-class assessments to complete tasks, as well as during examinations',
+              'Modified question papers',
+              'Oral examination can be considered in place of written examination',
+              'Provide a writer and reader',
+              'Provide a shadow teacher',
+              'Supervised rest breaks',
+              'Separate room for examinations',
+              'Use of calculator',
+              'Exemption from Second and Third Languages',
+              'Exempted from having to write answers in detail during exams'
+            ]
+          }
+        ],
+        disclaimer: 'The above recommended accommodations are based on standard scores obtained during assessment. However, school will remain best judge of all accommodations that this student needs.'
+      };
+    
+    case 'EvaluationSummary':
+      return {
+        type: 'Evaluation Summary',
+        name: 'SUMMARY OF EVALUATION',
+        studentName: examinee.firstName,
+        examinerName: assessment.examiner,
+        testDate: assessment.testDate,
+        generalIntellectualAbility: {
+          score: 106,
+          descriptor: 'Average',
+          interpretation: 'Overall cognitive functioning within normal range'
+        },
+        gfGcComposite: {
+          score: 105,
+          descriptor: 'Average',
+          fluidIntelligence: 'Fluid Intelligence (Gf)',
+          crystallizedIntelligence: 'Crystallized Intelligence (Gc)'
+        },
+        wjCognitiveMeasures: [
+          {
+            area: 'Fluid Reasoning (Gf)',
+            score: null,
+            descriptor: 'Superior',
+            interpretation: 'Strong ability in novel problem-solving and pattern recognition'
+          },
+          {
+            area: 'Short-Term Working Memory (GWM)',
+            score: null,
+            descriptor: 'Superior',
+            interpretation: 'Excellent ability to hold and manipulate information'
+          },
+          {
+            area: 'Cognitive Efficiency',
+            score: null,
+            descriptor: 'Average',
+            interpretation: 'Processing speed and accuracy within normal limits'
+          },
+          {
+            area: 'Comprehension Knowledge (Gc)',
+            score: null,
+            descriptor: 'Low Average',
+            interpretation: 'Difficulty with acquired knowledge and verbal concepts'
+          },
+          {
+            area: 'Letter-Pattern Matching',
+            score: null,
+            descriptor: 'Limited',
+            rpi: '28/90',
+            interpretation: 'Significant difficulty with visual pattern recognition'
+          }
+        ],
+        wjAchievementMeasures: [
+          {
+            area: 'Brief Achievement',
+            score: 118,
+            descriptor: 'High Average',
+            interpretation: 'Strong overall academic performance'
+          },
+          {
+            area: 'Broad Achievement',
+            score: 106,
+            descriptor: 'Average',
+            interpretation: 'Overall academic achievement within normal range'
+          },
+          {
+            area: 'Basic Reading Skills',
+            score: null,
+            descriptor: 'High Average',
+            interpretation: 'Strong fundamental reading abilities'
+          },
+          {
+            area: 'Mathematics',
+            score: null,
+            descriptor: 'High Average',
+            interpretation: 'Strong mathematical computation skills'
+          },
+          {
+            area: 'Broad Mathematics',
+            score: null,
+            descriptor: 'High Average',
+            interpretation: 'Comprehensive math skills are well-developed'
+          },
+          {
+            area: 'Academic Fluency',
+            score: null,
+            descriptor: 'Average',
+            interpretation: 'Academic processing speed is adequate'
+          },
+          {
+            area: 'Academic Applications',
+            score: null,
+            descriptor: 'Average',
+            interpretation: 'Application of academic skills is appropriate'
+          }
+        ],
+        brownEfaScale: {
+          overallIndicator: 'somewhat atypical',
+          significance: 'unlikely significant problem',
+          interpretation: 'Executive functioning shows some atypical patterns but not indicative of major dysfunction',
+          difficulties: [
+            'Difficulty in clusters of Activation',
+            'Difficulty in clusters of Focus',
+            'Difficulty in clusters of Effort'
+          ]
+        }
+      };
+    
+    case 'WJCog':
+      return {
+        type: 'WJ-Cog',
+        name: 'WOODCOCK-JOHNSON IV TESTS OF COGNITIVE ABILITIES (WJ-IV COG)',
+        studentName: examinee.firstName,
+        examinerName: assessment.examiner,
+        testDate: assessment.testDate,
+        // WJ-Cog specific data structure would go here
+        clusters: []
+      };
+    
+    case 'WJAch':
+      return {
+        type: 'WJ-Ach',
+        name: 'WOODCOCK-JOHNSON IV TESTS OF ACHIEVEMENT (WJ-IV ACH)',
+        studentName: examinee.firstName,
+        examinerName: assessment.examiner,
+        testDate: assessment.testDate,
+        // WJ-Ach specific data structure would go here
+        clusters: []
+      };
+    
+    default:
+      return null;
+  }
+};
 
   const close = () => {
     setStep(1);
@@ -1439,7 +2144,7 @@ const GenerateReportModal = ({ isOpen, onClose, examineeData }) => {
                   selectedExaminee={selectedExaminee}
                   selectedAssessment={selectedAssessment} setSelectedAssessment={setSelectedAssessment}
                   isPrefilled={isPrefilled} setIsPrefilled={setIsPrefilled}
-                  templates={templates}
+                  templates={ASSESSMENT_TEMPLATES}
                   selectedTemplate={selectedTemplate} setSelectedTemplate={setSelectedTemplate}
                   useTemplate={useTemplate} setUseTemplate={setUseTemplate}
                 />
