@@ -24,6 +24,7 @@ import WJAchTemplate from './WJAchTemplate';
 import WRAT5Template from './WRAT5Template';
 import WRMT2Template from './WRMT2Template';
 import DiagnosticReportTemplate from './DiagnosticReportTemplate';
+import EvaluationSummaryTemplate from './EvaluationSummaryTemplate';
 import AssessmentReportGenerator from './AssessmentReportGenerator';
 import TemplateTypeSelector from './TemplateTypeSelector';
 
@@ -3068,6 +3069,179 @@ She showed some difficulty with verbal expression of meaning of words presented 
       },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
+    },
+    {
+      id: 24,
+      name: 'SUMMARY OF EVALUATION',
+      type: 'Evaluation Summary',
+      description: 'Comprehensive summary of evaluation results across multiple assessment instruments including WJ-IV COG, WJ-IV ACH, and Brown\'s EF/A Scale.',
+      template_data: {
+        type: 'Evaluation Summary',
+        name: 'SUMMARY OF EVALUATION',
+        studentName: '',
+        examinerName: '',
+        testDate: new Date().toISOString().split('T')[0],
+        age: '',
+        grade: '',
+        description: `Comprehensive summary of evaluation results across multiple assessment instruments including WJ-IV COG, WJ-IV ACH, and Brown's EF/A Scale. This report provides an integrated analysis of cognitive abilities, academic achievement, and executive functioning.`,
+        
+        generalIntellectualAbility: {
+          score: 106,
+          descriptor: 'Average',
+          interpretation: 'Overall cognitive functioning within normal range'
+        },
+
+        gfGcComposite: {
+          score: 105,
+          descriptor: 'Average',
+          fluidIntelligence: 'Fluid Intelligence (Gf)',
+          crystallizedIntelligence: 'Crystallized Intelligence (Gc)'
+        },
+
+        wjCognitiveMeasures: [
+          {
+            area: 'Fluid Reasoning (Gf)',
+            score: null,
+            descriptor: 'Superior',
+            interpretation: 'Strong ability in novel problem-solving and pattern recognition'
+          },
+          {
+            area: 'Short-Term Working Memory (GWM)',
+            score: null,
+            descriptor: 'Superior',
+            interpretation: 'Excellent ability to hold and manipulate information'
+          },
+          {
+            area: 'Cognitive Efficiency',
+            score: null,
+            descriptor: 'Average',
+            interpretation: 'Processing speed and accuracy within normal limits'
+          },
+          {
+            area: 'Comprehension Knowledge (Gc)',
+            score: null,
+            descriptor: 'Low Average',
+            interpretation: 'Difficulty with acquired knowledge and verbal concepts'
+          },
+          {
+            area: 'Letter-Pattern Matching',
+            score: null,
+            descriptor: 'Limited',
+            rpi: '28/90',
+            interpretation: 'Significant difficulty with visual pattern recognition'
+          }
+        ],
+
+        wjAchievementMeasures: [
+          {
+            area: 'Brief Achievement',
+            score: 118,
+            descriptor: 'High Average',
+            interpretation: 'Strong overall academic performance'
+          },
+          {
+            area: 'Broad Achievement',
+            score: 106,
+            descriptor: 'Average',
+            interpretation: 'Overall academic achievement within normal range'
+          },
+          {
+            area: 'Basic Reading Skills',
+            score: null,
+            descriptor: 'High Average',
+            interpretation: 'Strong fundamental reading abilities'
+          },
+          {
+            area: 'Mathematics',
+            score: null,
+            descriptor: 'High Average',
+            interpretation: 'Strong mathematical computation skills'
+          },
+          {
+            area: 'Broad Mathematics',
+            score: null,
+            descriptor: 'High Average',
+            interpretation: 'Comprehensive math skills are well-developed'
+          },
+          {
+            area: 'Academic Skills',
+            score: null,
+            descriptor: 'High Average',
+            interpretation: 'Strong overall academic competencies'
+          },
+          {
+            area: 'Reading',
+            score: null,
+            descriptor: 'Average',
+            interpretation: 'Reading abilities within normal range'
+          },
+          {
+            area: 'Broad Reading',
+            score: null,
+            descriptor: 'Average',
+            interpretation: 'Comprehensive reading skills are age-appropriate'
+          },
+          {
+            area: 'Reading Fluency',
+            score: null,
+            descriptor: 'Average',
+            interpretation: 'Reading speed and accuracy are adequate'
+          },
+          {
+            area: 'Math Calculation Skills',
+            score: null,
+            descriptor: 'High Average',
+            interpretation: 'Strong mathematical computation abilities'
+          },
+          {
+            area: 'Written Language',
+            score: null,
+            descriptor: 'Average',
+            interpretation: 'Written expression skills are developing appropriately'
+          },
+          {
+            area: 'Broad Written Language',
+            score: null,
+            descriptor: 'Average',
+            interpretation: 'Overall written language abilities are adequate'
+          },
+          {
+            area: 'Written Expression',
+            score: null,
+            descriptor: 'Average',
+            interpretation: 'Written communication skills are age-appropriate'
+          },
+          {
+            area: 'Academic Fluency',
+            score: null,
+            descriptor: 'Average',
+            interpretation: 'Academic processing speed is adequate'
+          },
+          {
+            area: 'Academic Applications',
+            score: null,
+            descriptor: 'Average',
+            interpretation: 'Application of academic skills is appropriate'
+          }
+        ],
+
+        brownEfaScale: {
+          overallIndicator: 'somewhat atypical',
+          significance: 'unlikely significant problem',
+          interpretation: 'Executive functioning shows some atypical patterns but not indicative of major dysfunction',
+          difficulties: [
+            'Difficulty in clusters of Activation',
+            'Difficulty in clusters of Focus',
+            'Difficulty in clusters of Effort'
+          ]
+        },
+
+        overallSummary: '',
+        conclusions: '',
+        recommendations: ''
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
   ];
 
@@ -3225,6 +3399,8 @@ She showed some difficulty with verbal expression of meaning of words presented 
         return <FiFileText className="w-5 h-5 text-purple-500" />;
       case 'Diagnostic Report':
         return <FiFileText className="w-5 h-5 text-indigo-500" />;
+      case 'Evaluation Summary':
+        return <FiFileText className="w-5 h-5 text-pink-500" />;
       case 'EACA-Autism':
         return <FiFileText className="w-5 h-5 text-purple-500" />;
       default:
@@ -3293,6 +3469,9 @@ She showed some difficulty with verbal expression of meaning of words presented 
     if (type === 'Diagnostic Report' || templateName?.toLowerCase().includes('diagnostic') || templateName?.toLowerCase().includes('assessment report')) {
       return 'bg-indigo-100 text-indigo-800';
     }
+    if (type === 'Evaluation Summary' || templateName?.toLowerCase().includes('summary') || templateName?.toLowerCase().includes('evaluation')) {
+      return 'bg-pink-100 text-pink-800';
+    }
     switch (type) {
       case 'ADHDT2':
         return 'bg-blue-100 text-blue-800';
@@ -3351,7 +3530,9 @@ She showed some difficulty with verbal expression of meaning of words presented 
                          selectedTemplate?.name?.toLowerCase().includes('wrmt') || selectedTemplate?.name?.toLowerCase().includes('woodcock reading mastery') ? 'WRMT-II' :
                          selectedTemplate?.template_data?.name?.toLowerCase().includes('wrmt') || selectedTemplate?.template_data?.name?.toLowerCase().includes('woodcock reading mastery') ? 'WRMT-II' :
                          selectedTemplate?.name?.toLowerCase().includes('diagnostic') || selectedTemplate?.name?.toLowerCase().includes('assessment report') ? 'Diagnostic Report' :
-                         selectedTemplate?.template_data?.name?.toLowerCase().includes('diagnostic') || selectedTemplate?.template_data?.name?.toLowerCase().includes('assessment report') ? 'Diagnostic Report' : 'ADHDT2');
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('diagnostic') || selectedTemplate?.template_data?.name?.toLowerCase().includes('assessment report') ? 'Diagnostic Report' :
+                         selectedTemplate?.name?.toLowerCase().includes('summary') || selectedTemplate?.name?.toLowerCase().includes('evaluation') ? 'Evaluation Summary' :
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('summary') || selectedTemplate?.template_data?.name?.toLowerCase().includes('evaluation') ? 'Evaluation Summary' : 'ADHDT2');
     
     if (templateType === 'RIPA-Primary') {
       return (
@@ -3565,6 +3746,17 @@ She showed some difficulty with verbal expression of meaning of words presented 
     if (templateType === 'Diagnostic Report') {
       return (
         <DiagnosticReportTemplate
+          onSave={handleTemplateSave}
+          onCancel={handleTemplateCancel}
+          studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
+          examinerName={selectedTemplate?.template_data?.examinerName || 'Dr. Smith'}
+        />
+      );
+    }
+
+    if (templateType === 'Evaluation Summary') {
+      return (
+        <EvaluationSummaryTemplate
           onSave={handleTemplateSave}
           onCancel={handleTemplateCancel}
           studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
