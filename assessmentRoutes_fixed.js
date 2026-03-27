@@ -5,16 +5,10 @@ const AssessmentController = require('../controllers/assessmentController');
 // Create assessment controller instance
 const assessmentController = new AssessmentController();
 
-// Test route
-router.get('/test', (req, res) => {
-  res.json({ success: true, message: 'Assessment routes working!' });
-});
-
 // Routes
 router.get('/students/:studentId/assessments', assessmentController.getAssessments.bind(assessmentController));
 router.post('/assessments', assessmentController.createAssessment.bind(assessmentController));
 router.put('/assessments/:id', assessmentController.updateAssessment.bind(assessmentController));
-router.post('/assessments/:id', assessmentController.updateAssessment.bind(assessmentController)); // Temporary POST route for update
 router.delete('/assessments/:id', assessmentController.deleteAssessment.bind(assessmentController));
 router.post('/assessments/generate-report', assessmentController.generateReport.bind(assessmentController));
 

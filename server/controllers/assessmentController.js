@@ -110,6 +110,60 @@ class AssessmentController {
     }
   }
 
+  // Update assessment
+  async updateAssessment(req, res) {
+    try {
+      const { id } = req.params;
+      console.log('Updating assessment:', id, req.body);
+      
+      // Map camelCase to snake_case for database
+      const assessmentData = {
+        assessment_type: req.body.assessment_type,
+        delivery_method: req.body.delivery_method,
+        scheduled_date: req.body.scheduled_date,
+        scheduled_time: req.body.scheduled_time,
+        duration: req.body.duration,
+        examiner: req.body.examiner,
+        room: req.body.room,
+        materials: req.body.materials,
+        notes: req.body.notes,
+        status: req.body.status,
+        updated_at: new Date()
+      };
+
+      console.log('Assessment data to update:', assessmentData);
+      const updateSuccess = await this.assessmentModel.update(id, assessmentData);
+      console.log('Update success result:', updateSuccess);
+      
+      if (updateSuccess) {
+        console.log('Fetching updated assessment...');
+        // Fetch updated assessment to return to frontend
+        const updatedAssessment = await this.assessmentModel.getAssessment(id);
+        console.log('Updated assessment fetched:', updatedAssessment);
+        
+        console.log('Sending success response...');
+        res.json({
+          success: true,
+          data: updatedAssessment,
+          message: 'Assessment updated successfully'
+        });
+      } else {
+        console.log('Update failed, sending 404...');
+        res.status(404).json({
+          success: false,
+          message: 'Assessment not found or no changes made'
+        });
+      }
+    } catch (error) {
+      console.error('Update assessment error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Database error'
+      });
+    }
+  }
+
   // Generate assessment report
   async generateReport(req, res) {
     try {

@@ -336,7 +336,7 @@ sshpass -p Bazeer@12345 scp kivi_updated.sql root@195.35.45.17:/root/dashboard/
 sshpass -p Bazeer@12345 ssh root@195.35.45.17 "mysql -u root -pTiger@123 kivi < /root/dashboard/kivi_updated.sql"
 ```
 
-## 📞 Support
+## � Support
 
 ### Emergency Contacts
 - **Developer:** Aditya Sharma

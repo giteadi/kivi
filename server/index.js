@@ -52,6 +52,19 @@ const startServer = async () => {
     app.use('/api/programmes', require('./routes/programmeRoutes'));
     app.use('/api/reports', require('./routes/reportRoutes'));
     app.use('/api/examinees', require('./routes/examineeRoutes'));
+    app.use('/api/assessments', require('./routes/assessmentRoutes')); // Added assessment routes
+    
+    // Direct assessment routes (temporary fix)
+    app.post('/api/assessments/:id', async (req, res) => {
+      try {
+        const AssessmentController = require('./controllers/assessmentController');
+        const controller = new AssessmentController();
+        await controller.updateAssessment(req, res);
+      } catch (error) {
+        console.error('Direct route error:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+      }
+    });
     
     // Legacy routes for backward compatibility (if needed)
     app.use('/api/appointments', require('./routes/appointmentRoutes'));

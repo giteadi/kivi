@@ -312,7 +312,7 @@ const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDo
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredDoctors.map((doctor, index) => (
                     <motion.tr
-                      key={doctor.id}
+                      key={`${doctor.id}-${index}`}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: index * 0.05 }}

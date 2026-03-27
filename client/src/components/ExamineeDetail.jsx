@@ -3,10 +3,11 @@ import { FiArrowLeft, FiPlus, FiTrash2, FiFileText, FiUser, FiPhone, FiMail, FiM
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchPatient } from '../store/slices/patientSlice';
-import { fetchAssessments, toggleAssessmentSelection, clearSelection, selectAllAssessments, createAssessment, deleteAssessment, generateAssessmentReport } from '../store/slices/assessmentSlice';
+import { fetchAssessments, toggleAssessmentSelection, clearSelection, selectAllAssessments, createAssessment, deleteAssessment, generateAssessmentReport, updateAssessment } from '../store/slices/assessmentSlice';
 import { useToast } from './Toast';
 import AssignAssessmentModal from './AssignAssessmentModal';
 import GenerateReportModal from './GenerateReportModal';
+import EditAssessmentModal from './EditAssessmentModal';
 import api from '../services/api';
 
 const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
@@ -20,6 +21,8 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   const [documentToEdit, setDocumentToEdit] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [viewingDocument, setViewingDocument] = useState(null);
+  const [selectedAssessmentToEdit, setSelectedAssessmentToEdit] = useState(null);
+  const [isEditAssessmentModalOpen, setIsEditAssessmentModalOpen] = useState(false);
 
   useEffect(() => {
     if (examineeId) {
@@ -106,10 +109,25 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       .then(() => {
         toast.success(`${selectedAssessments.length} assessment(s) deleted successfully!`);
         dispatch(clearSelection());
+        // Refresh assessments after deletion
+        dispatch(fetchAssessments(examineeId));
       })
-      .catch((error) => {
-        toast.error('Failed to delete assessments: ' + error);
+      .catch(() => {
+        toast.error('Failed to delete assessments');
       });
+  };
+
+  const handleEditAssessment = (assessment) => {
+    setSelectedAssessmentToEdit(assessment);
+    setIsEditAssessmentModalOpen(true);
+  };
+
+  const handleAssessmentUpdated = () => {
+    setIsEditAssessmentModalOpen(false);
+    setSelectedAssessmentToEdit(null);
+    // Refresh assessments after update
+    dispatch(fetchAssessments(examineeId));
+    toast.success('Assessment updated successfully!');
   };
 
   const handleGenerateReport = () => {
@@ -695,15 +713,20 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: index * 0.05 }}
-                    whileHover={{ backgroundColor: '#f9fafb' }}
-                    className="hover:bg-gray-50 transition-colors"
+                    whileHover={{ backgroundColor: '#f3f4f6' }}
+                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => handleEditAssessment(assessment)}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <input 
                         type="checkbox" 
                         className="rounded"
                         checked={selectedAssessments.includes(assessment.id)}
-                        onChange={() => handleAssessmentSelection(assessment.id)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          handleAssessmentSelection(assessment.id);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
                       />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -892,6 +915,16 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
           </motion.div>
         </div>
       )}
+
+      {/* Edit Assessment Modal */}
+      <EditAssessmentModal
+        isOpen={isEditAssessmentModalOpen}
+        onClose={() => setIsEditAssessmentModalOpen(false)}
+        assessment={selectedAssessmentToEdit}
+        examineeId={examineeId}
+        examineeName={examineeData?.name || 'Unknown Examinee'}
+        onSuccess={handleAssessmentUpdated}
+      />
     </div>
   );
 };

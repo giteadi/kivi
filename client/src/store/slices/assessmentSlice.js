@@ -49,6 +49,29 @@ export const deleteAssessment = createAsyncThunk(
   }
 );
 
+export const updateAssessment = createAsyncThunk(
+  'assessments/updateAssessment',
+  async ({ id, assessmentData }, { rejectWithValue }) => {
+    try {
+      console.log('🔍 Debug: updateAssessment called with:', { id, assessmentData });
+      const endpoint = `/assessments/${id}`;
+      console.log('🔍 Debug: API endpoint:', endpoint);
+      
+      const response = await api.request(endpoint, {
+        method: 'POST', // Changed from PUT to POST
+        body: JSON.stringify(assessmentData),
+      });
+      console.log('🔍 Debug: API response:', response);
+      return response;
+    } catch (error) {
+      console.log('🔍 Debug: API error:', error);
+      return rejectWithValue(
+        error.response?.data?.message || 'Failed to update assessment'
+      );
+    }
+  }
+);
+
 export const generateAssessmentReport = createAsyncThunk(
   'assessments/generateReport',
   async (assessmentData, { rejectWithValue }) => {
@@ -140,6 +163,23 @@ const assessmentSlice = createSlice({
         );
       })
       .addCase(deleteAssessment.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+      // Update Assessment
+      .addCase(updateAssessment.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(updateAssessment.fulfilled, (state, action) => {
+        state.isLoading = false;
+        const index = state.assessments.findIndex(
+          assessment => assessment.id === action.payload.data.id
+        );
+        if (index !== -1) {
+          state.assessments[index] = action.payload.data;
+        }
+      })
+      .addCase(updateAssessment.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
       })

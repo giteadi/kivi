@@ -65,8 +65,11 @@ const initializeDatabase = async () => {
         socketPath: '/var/run/mysqld/mysqld.sock',
         multipleStatements: true,
         connectionLimit: 10,
-        acquireTimeout: 60000,
-        timeout: 60000
+        waitForConnections: true,
+        queueLimit: 0,
+        connectTimeout: 60000,
+        enableKeepAlive: true,
+        keepAliveInitialDelay: 0
       });
 
       console.log('✅ Connected to MySQL database with connection pool');
