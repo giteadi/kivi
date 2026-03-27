@@ -528,6 +528,35 @@ async deletePlan(id) {
   async getTherapistsByCentre(centreId) {
     return this.request(`/programmes/therapists/${centreId}`);
   }
+
+  // Templates API methods
+  async getTemplates() {
+    return this.request('/templates');
+  }
+
+  async getTemplate(id) {
+    return this.request(`/templates/${id}`);
+  }
+
+  async createTemplate(templateData) {
+    return this.request('/templates', {
+      method: 'POST',
+      body: JSON.stringify(templateData),
+    });
+  }
+
+  async updateTemplate(id, templateData) {
+    return this.request(`/templates/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(templateData),
+    });
+  }
+
+  async deleteTemplate(id) {
+    return this.request(`/templates/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export default new ApiService();
