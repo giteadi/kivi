@@ -778,7 +778,8 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       <GenerateReportModal
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
-        selectedAssessments={selectedAssessments}
+        selectedAssessmentIds={selectedAssessments}
+        assessments={assessments}
         examineeData={examineeData}
       />
 
