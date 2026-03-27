@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { FiPlus, FiEdit2, FiTrash2, FiFileText, FiCopy, FiSearch, FiFilter, FiEye } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import api from '../services/api';
+import RIPAPrimaryTemplate from './RIPAPrimaryTemplate';
 import ADHDT2Template from './ADHDT2Template';
 import ADHTBSMTemplate from './ADHTBSMTemplate';
 import AstonIndexTemplate from './AstonIndexTemplate';
@@ -14,6 +15,8 @@ import EACATemplate from './EACATemplate';
 import EACAAutismTemplate from './EACAAutismTemplate';
 import NelsonDennyReadingTestTemplate from './NelsonDennyReadingTestTemplate';
 import TAPS3Template from './TAPS3Template';
+import TOWL4Template from './TOWL4Template';
+import VABS3Template from './VABS3Template';
 import AssessmentReportGenerator from './AssessmentReportGenerator';
 import TemplateTypeSelector from './TemplateTypeSelector';
 
@@ -32,7 +35,99 @@ const TemplateManager = () => {
   const staticTemplates = [
     {
       id: 1,
-      name: 'ADHT-DSM 5 Checklist',
+      name: 'ROSS INFORMATION PROCESSING ASSESSMENT (RIPA)-PRIMARY',
+      type: 'RIPA-Primary',
+      description: 'The RIPA-A quantifies & describes cognitive-linguistic deficits in individuals between the ages of 5-0 and 12-11 who face difficulties in attention, memory, orientation, language and communication, problem solving and abstract reasoning.',
+      template_data: {
+        type: 'RIPA-Primary',
+        name: 'ROSS INFORMATION PROCESSING ASSESSMENT (RIPA)-PRIMARY',
+        studentName: '',
+        examinerName: '',
+        testDate: new Date().toISOString().split('T')[0],
+        description: `The RIPA-A quantifies & describes cognitive-linguistic deficits in individuals between the ages of 5-0 and 12-11 who face difficulties in attention, memory, orientation, language and communication, problem solving and abstract reasoning. It can be used to develop and guide rehabilitation goals and objectives based on individual strengths and weaknesses.`,
+        subtests: [
+          {
+            name: 'Immediate Memory',
+            description: 'In this subtest, the child is required to repeat numbers, words and sentences of increasing length and complexity.',
+            rawScore: 0,
+            standardScore: 0,
+            percentileRank: 0,
+            items: [
+              { id: 1, task: 'Repeat 2-digit number', response: '', maxScore: 2 },
+              { id: 2, task: 'Repeat 3-digit number', response: '', maxScore: 3 },
+              { id: 3, task: 'Repeat 4-digit number', response: '', maxScore: 4 },
+              { id: 4, task: 'Repeat 2-word sequence', response: '', maxScore: 2 },
+              { id: 5, task: 'Repeat 3-word sequence', response: '', maxScore: 3 },
+              { id: 6, task: 'Repeat 4-word sequence', response: '', maxScore: 4 },
+              { id: 7, task: 'Repeat simple sentence', response: '', maxScore: 3 },
+              { id: 8, task: 'Repeat complex sentence', response: '', maxScore: 4 }
+            ]
+          },
+          {
+            name: 'Recent Memory',
+            description: 'In this subtest, the child is required to recall specific newly acquired information relative to his or her environment and daily activity. Each question requires a verbal response which is assessed for accuracy and appropriateness.',
+            rawScore: 0,
+            standardScore: 0,
+            percentileRank: 0,
+            items: [
+              { id: 9, task: 'Recall daily activities', response: '', maxScore: 3 },
+              { id: 10, task: 'Recall recent events', response: '', maxScore: 3 },
+              { id: 11, task: 'Recall personal information', response: '', maxScore: 2 },
+              { id: 12, task: 'Recall environmental details', response: '', maxScore: 3 },
+              { id: 13, task: 'Recall temporal information', response: '', maxScore: 2 },
+              { id: 14, task: 'Recall spatial information', response: '', maxScore: 3 },
+              { id: 15, task: 'Recall functional information', response: '', maxScore: 2 },
+              { id: 16, task: 'Recall social information', response: '', maxScore: 3 }
+            ]
+          },
+          {
+            name: 'Recall of General Information',
+            description: 'This subtest assesses the child\'s ability to recall general information in remote memory.',
+            rawScore: 0,
+            standardScore: 0,
+            percentileRank: 0,
+            items: [
+              { id: 17, task: 'General knowledge question 1', response: '', maxScore: 2 },
+              { id: 18, task: 'General knowledge question 2', response: '', maxScore: 2 },
+              { id: 19, task: 'General knowledge question 3', response: '', maxScore: 2 },
+              { id: 20, task: 'General knowledge question 4', response: '', maxScore: 2 },
+              { id: 21, task: 'General knowledge question 5', response: '', maxScore: 2 },
+              { id: 22, task: 'General knowledge question 6', response: '', maxScore: 2 },
+              { id: 23, task: 'General knowledge question 7', response: '', maxScore: 2 },
+              { id: 24, task: 'General knowledge question 8', response: '', maxScore: 2 }
+            ]
+          },
+          {
+            name: 'Spatial Orientation',
+            description: 'In this subtest, the child answers questions related to spatial concepts and orientation. Elicitation of accurate responses requires recall from both recent and remote memory. Spatial concepts require organization skills, including categorization and sequencing.',
+            rawScore: 0,
+            standardScore: 0,
+            percentileRank: 0,
+            items: [
+              { id: 25, task: 'Identify left/right', response: '', maxScore: 2 },
+              { id: 26, task: 'Identify positions', response: '', maxScore: 2 },
+              { id: 27, task: 'Spatial relationships', response: '', maxScore: 3 },
+              { id: 28, task: 'Directional concepts', response: '', maxScore: 2 },
+              { id: 29, task: 'Object positioning', response: '', maxScore: 3 },
+              { id: 30, task: 'Environmental orientation', response: '', maxScore: 2 },
+              { id: 31, task: 'Body orientation', response: '', maxScore: 2 },
+              { id: 32, task: 'Spatial sequencing', response: '', maxScore: 3 }
+            ]
+          }
+        ],
+        memoryQuotient: 0,
+        compositeScore: 0,
+        tScore: 0,
+        interpretation: '',
+        conclusions: '',
+        recommendations: ''
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 9,
+      name: 'ADHD-DSM5 Checklist',
       type: 'ADHT-BSM',
       description: 'DSM-5 ADHD Checklist with checkbox-based criteria selection for inattention and hyperactivity',
       template_data: {
@@ -69,7 +164,7 @@ const TemplateManager = () => {
       updated_at: new Date().toISOString()
     },
     {
-      id: 2,
+      id: 10,
       name: 'Aston Index Assessment',
       type: 'Aston-Index',
       description: 'Comprehensive battery of tests for diagnosing language difficulties in children',
@@ -115,8 +210,8 @@ She showed some difficulty with verbal expression of meaning of words presented 
       updated_at: new Date().toISOString()
     },
     {
-      id: 3,
-      name: 'ADHDT-2 Assessment',
+      id: 12,
+      name: 'EACA AUTISM ASSESSMENT',
       type: 'ADHDT2',
       description: 'Attention-Deficit/Hyperactivity Disorder Test-Second Edition with comprehensive scoring',
       template_data: {
@@ -137,8 +232,8 @@ She showed some difficulty with verbal expression of meaning of words presented 
       updated_at: new Date().toISOString()
     },
     {
-      id: 4,
-      name: 'Basic Kinesthetic Test',
+      id: 11,
+      name: 'Bender Gestalt Test (BKT)',
       type: 'BKT',
       description: 'Motor coordination and kinesthetic perception assessment',
       template_data: {
@@ -179,7 +274,7 @@ She showed some difficulty with verbal expression of meaning of words presented 
       updated_at: new Date().toISOString()
     },
     {
-      id: 5,
+      id: 6,
       name: 'Raven\'s Coloured Progressive Matrices',
       type: 'Ravens-CPM',
       description: 'Non-verbal assessment of eductive ability and problem-solving skills',
@@ -253,7 +348,7 @@ She showed some difficulty with verbal expression of meaning of words presented 
       updated_at: new Date().toISOString()
     },
     {
-      id: 6,
+      id: 7,
       name: 'Gilliam Autism Rating Scale - 3',
       type: 'GARS-3',
       description: 'Comprehensive assessment tool for identifying autism spectrum disorders',
@@ -354,7 +449,7 @@ She showed some difficulty with verbal expression of meaning of words presented 
       updated_at: new Date().toISOString()
     },
     {
-      id: 7,
+      id: 8,
       name: 'Brown Executive Function/Attention Scales',
       type: 'Brown-EF-A',
       description: 'Comprehensive assessment of executive function and attention processes',
@@ -654,7 +749,7 @@ She showed some difficulty with verbal expression of meaning of words presented 
       updated_at: new Date().toISOString()
     },
     {
-      id: 10,
+      id: 13,
       name: 'Nelson-Denny Reading Test',
       type: 'Nelson-Denny',
       description: 'Comprehensive assessment of reading comprehension, vocabulary, and reading rate',
@@ -725,7 +820,7 @@ She showed some difficulty with verbal expression of meaning of words presented 
       updated_at: new Date().toISOString()
     },
     {
-      id: 11,
+      id: 14,
       name: 'TEST OF AUDITORY PROCESSING SKILLS-TAPS-3',
       type: 'TAPS-3',
       description: 'Comprehensive auditory processing assessment for phonological skills, memory abilities, and auditory cohesion',
@@ -918,6 +1013,362 @@ She showed some difficulty with verbal expression of meaning of words presented 
       },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
+    },
+    {
+      id: 15,
+      name: 'TEST OF WRITTEN LANGUAGE (TOWL-4)',
+      type: 'TOWL-4',
+      description: 'The TOWL-4 is a norm-referenced, reliable, and valid test of written language measuring seven skill areas and three composite scores.',
+      template_data: {
+        type: 'TOWL-4',
+        name: 'TEST OF WRITTEN LANGUAGE (TOWL-4)',
+        studentName: '',
+        examinerName: '',
+        testDate: new Date().toISOString().split('T')[0],
+        description: `The TOWL-4 is a norm-referenced, reliable, and valid test of written language. The Test of Written Language-TOWL-4 is an inclusive assessment measuring seven skill areas, and several components of written language which are later combined to form three composite scores: Contrived Writing, Spontaneous Writing and Overall Writing. The composites are reported as quotients, with average scores ranging from 90-110 with a standard deviation of 15 points. The subtests have an average range of 8-12 with a standard deviation of 3 points.`,
+        subtests: [
+          {
+            name: 'Vocabulary (VO)',
+            description: 'The student writes a sentence that incorporates a stimulus word.',
+            rawScore: 0,
+            scaledScore: 0,
+            percentileRank: 0,
+            maxScore: 30,
+            items: [
+              { id: 1, stimulusWord: 'adventure', studentSentence: '', maxScore: 5 },
+              { id: 2, stimulusWord: 'discovery', studentSentence: '', maxScore: 5 },
+              { id: 3, stimulusWord: 'friendship', studentSentence: '', maxScore: 5 },
+              { id: 4, stimulusWord: 'challenge', studentSentence: '', maxScore: 5 },
+              { id: 5, stimulusWord: 'achievement', studentSentence: '', maxScore: 5 },
+              { id: 6, stimulusWord: 'curiosity', studentSentence: '', maxScore: 5 }
+            ]
+          },
+          {
+            name: 'Spelling (SP)',
+            description: 'The student writes sentences from dictation, taking particular care to make proper use of spelling rules.',
+            rawScore: 0,
+            scaledScore: 0,
+            percentileRank: 0,
+            maxScore: 35,
+            items: [
+              { id: 7, dictatedSentence: 'The beautiful garden flourished in springtime.', studentResponse: '', maxScore: 7 },
+              { id: 8, dictatedSentence: 'Yesterday, the children played enthusiastically in the park.', studentResponse: '', maxScore: 7 },
+              { id: 9, dictatedSentence: 'The scientist discovered an extraordinary phenomenon.', studentResponse: '', maxScore: 7 },
+              { id: 10, dictatedSentence: 'Their determination led to magnificent accomplishments.', studentResponse: '', maxScore: 7 },
+              { id: 11, dictatedSentence: 'The mysterious treasure was hidden beneath ancient ruins.', studentResponse: '', maxScore: 7 }
+            ]
+          },
+          {
+            name: 'Punctuation (PT)',
+            description: 'The student writes sentences from dictation, taking particular care to make proper use of punctuation and capitalization rules.',
+            rawScore: 0,
+            scaledScore: 0,
+            percentileRank: 0,
+            maxScore: 25,
+            items: [
+              { id: 12, dictatedSentence: 'after school we went to the library', studentResponse: '', maxScore: 5 },
+              { id: 13, dictatedSentence: 'my friend sarah loves reading books', studentResponse: '', maxScore: 5 },
+              { id: 14, dictatedSentence: 'the dog barked loudly at the stranger', studentResponse: '', maxScore: 5 },
+              { id: 15, dictatedSentence: 'are you coming to the party tonight', studentResponse: '', maxScore: 5 },
+              { id: 16, dictatedSentence: 'what an amazing performance', studentResponse: '', maxScore: 5 }
+            ]
+          },
+          {
+            name: 'Logical Sentences (LS)',
+            description: 'The student edits an illogical sentence so that it makes better sense.',
+            rawScore: 0,
+            scaledScore: 0,
+            percentileRank: 0,
+            maxScore: 20,
+            items: [
+              { id: 17, illogicalSentence: 'The fish climbed the tree to catch a bird.', correctedSentence: '', maxScore: 4 },
+              { id: 18, illogicalSentence: 'The ice cream was hot and spicy.', correctedSentence: '', maxScore: 4 },
+              { id: 19, illogicalSentence: 'The car flew across the ocean to reach the island.', correctedSentence: '', maxScore: 4 },
+              { id: 20, illogicalSentence: 'The flowers sang beautifully in the garden.', correctedSentence: '', maxScore: 4 },
+              { id: 21, illogicalSentence: 'The rock slept peacefully on the soft pillow.', correctedSentence: '', maxScore: 4 }
+            ]
+          },
+          {
+            name: 'Sentence Combining (SC)',
+            description: 'The student integrates the meaning of several short sentences into one grammatically correct written sentence.',
+            rawScore: 0,
+            scaledScore: 0,
+            percentileRank: 0,
+            maxScore: 25,
+            items: [
+              { id: 22, sentences: ['The boy ran. He was fast. He reached the park.'], combinedSentence: '', maxScore: 5 },
+              { id: 23, sentences: ['The girl studied. She worked hard. She passed the test.'], combinedSentence: '', maxScore: 5 },
+              { id: 24, sentences: ['The dog barked. It was loud. The mailman arrived.'], combinedSentence: '', maxScore: 5 },
+              { id: 25, sentences: ['The sun set. It was beautiful. The sky glowed.'], combinedSentence: '', maxScore: 5 },
+              { id: 26, sentences: ['The rain fell. It was heavy. The streets flooded.'], combinedSentence: '', maxScore: 5 }
+            ]
+          },
+          {
+            name: 'Contextual Conventions (CC)',
+            description: 'The student writes a story in response to a stimulus picture. Points are earned for satisfying specific arbitrary requirements relative to orthographic and grammatic conventions.',
+            rawScore: 0,
+            scaledScore: 0,
+            percentileRank: 0,
+            maxScore: 30,
+            storyPrompt: 'Write a story about the picture shown. Focus on proper spelling, punctuation, and grammar.',
+            studentStory: '',
+            conventions: [
+              { id: 27, convention: 'Capitalization at beginning of sentences', achieved: false, points: 5 },
+              { id: 28, convention: 'End punctuation', achieved: false, points: 5 },
+              { id: 29, convention: 'Correct spelling', achieved: false, points: 10 },
+              { id: 30, convention: 'Proper grammar usage', achieved: false, points: 10 }
+            ]
+          },
+          {
+            name: 'Story Composition (ST)',
+            description: 'The student writes a story in response to a stimulus picture. Points are earned for story elements such as plot, characters, and setting.',
+            rawScore: 0,
+            scaledScore: 0,
+            percentileRank: 0,
+            maxScore: 35,
+            storyPrompt: 'Write a creative story about the picture shown. Include characters, setting, and plot.',
+            studentStory: '',
+            storyElements: [
+              { id: 31, element: 'Character development', achieved: false, points: 10 },
+              { id: 32, element: 'Setting description', achieved: false, points: 8 },
+              { id: 33, element: 'Plot sequence', achieved: false, points: 10 },
+              { id: 34, element: 'Story resolution', achieved: false, points: 7 }
+            ]
+          }
+        ],
+        compositeScores: {
+          contrivedWriting: {
+            quotient: 0,
+            percentileRank: 0,
+            description: 'Measures the smallest units of written discourse including vocabulary, spelling, punctuation, logical sentences and sentence combining.'
+          },
+          spontaneousWriting: {
+            quotient: 0,
+            percentileRank: 0,
+            description: 'Measures functional writing ability as related to an actual passage including contextual conventions and story composition.'
+          },
+          overallWriting: {
+            quotient: 0,
+            percentileRank: 0,
+            description: 'Combines all subtests and provides an overall quotient related to writing achievement.'
+          }
+        },
+        interpretation: '',
+        conclusions: '',
+        recommendations: ''
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 16,
+      name: 'VINELAND ADAPTIVE BEHAVIOUR SCALES-VABS-3',
+      type: 'VABS-3',
+      description: 'Individual assessment of adaptive behaviour measuring day-to-day activities necessary for self-care and social interaction.',
+      template_data: {
+        type: 'VABS-3',
+        name: 'VINELAND ADAPTIVE BEHAVIOUR SCALES-VABS-3',
+        studentName: '',
+        examinerName: '',
+        testDate: new Date().toISOString().split('T')[0],
+        description: `The Vineland Adaptive Behaviour Scales are an individual assessment of adaptive behaviour. Adaptive behaviour is defined as performance of the day-to-day activities necessary to take care of oneself and get along with others. Adaptive behaviour is age-based and is defined by the expectations and standards of others. Adaptive behaviour represents the typical performance rather than the ability of the individual - what a person does as opposed to what a person is capable of doing.`,
+        
+        raters: [
+          {
+            type: 'Parent Form',
+            name: '',
+            relationship: 'Parent/Guardian',
+            dateCompleted: new Date().toISOString().split('T')[0]
+          },
+          {
+            type: 'Teacher Form',
+            name: '',
+            relationship: 'Teacher/Educator',
+            dateCompleted: new Date().toISOString().split('T')[0]
+          }
+        ],
+
+        domains: [
+          {
+            name: 'Communication Skills',
+            description: 'Assesses receptive, expressive, and written communication skills',
+            subdomains: [
+              {
+                name: 'Receptive',
+                description: 'How individual listens, understands, and responds to verbal communication',
+                items: [
+                  { id: 1, item: 'Follows simple one-step commands', score: 0, maxScore: 2 },
+                  { id: 2, item: 'Follows two-step commands', score: 0, maxScore: 2 },
+                  { id: 3, item: 'Understands complex sentences', score: 0, maxScore: 2 },
+                  { id: 4, item: 'Understands questions about past events', score: 0, maxScore: 2 },
+                  { id: 5, item: 'Understands stories and conversations', score: 0, maxScore: 2 }
+                ]
+              },
+              {
+                name: 'Expressive',
+                description: 'How individual expresses needs, thoughts, and ideas verbally',
+                items: [
+                  { id: 6, item: 'Uses single words', score: 0, maxScore: 2 },
+                  { id: 7, item: 'Uses two-word phrases', score: 0, maxScore: 2 },
+                  { id: 8, item: 'Uses complete sentences', score: 0, maxScore: 2 },
+                  { id: 9, item: 'Tells stories about events', score: 0, maxScore: 2 },
+                  { id: 10, item: 'Engages in conversations', score: 0, maxScore: 2 }
+                ]
+              },
+              {
+                name: 'Written',
+                description: 'How individual reads and writes',
+                items: [
+                  { id: 11, item: 'Recognizes letters', score: 0, maxScore: 2 },
+                  { id: 12, item: 'Reads simple words', score: 0, maxScore: 2 },
+                  { id: 13, item: 'Writes name', score: 0, maxScore: 2 },
+                  { id: 14, item: 'Writes simple sentences', score: 0, maxScore: 2 },
+                  { id: 15, item: 'Reads and understands text', score: 0, maxScore: 2 }
+                ]
+              }
+            ]
+          },
+          {
+            name: 'Daily Living Skills',
+            description: 'Assesses personal, domestic, and community living skills',
+            subdomains: [
+              {
+                name: 'Personal',
+                description: 'How individual takes care of personal needs and hygiene',
+                items: [
+                  { id: 16, item: 'Eats independently', score: 0, maxScore: 2 },
+                  { id: 17, item: 'Dresses independently', score: 0, maxScore: 2 },
+                  { id: 18, item: 'Manages personal hygiene', score: 0, maxScore: 2 },
+                  { id: 19, item: 'Uses toilet independently', score: 0, maxScore: 2 },
+                  { id: 20, item: 'Manages personal care routines', score: 0, maxScore: 2 }
+                ]
+              },
+              {
+                name: 'Domestic',
+                description: 'How individual helps with household tasks',
+                items: [
+                  { id: 21, item: 'Puts away toys', score: 0, maxScore: 2 },
+                  { id: 22, item: 'Helps with simple chores', score: 0, maxScore: 2 },
+                  { id: 23, item: 'Prepares simple snacks', score: 0, maxScore: 2 },
+                  { id: 24, item: 'Helps with meal preparation', score: 0, maxScore: 2 },
+                  { id: 25, item: 'Manages household responsibilities', score: 0, maxScore: 2 }
+                ]
+              },
+              {
+                name: 'Community',
+                description: 'How individual functions in community settings',
+                items: [
+                  { id: 26, item: 'Uses money for purchases', score: 0, maxScore: 2 },
+                  { id: 27, item: 'Uses telephone', score: 0, maxScore: 2 },
+                  { id: 28, item: 'Navigates familiar places', score: 0, maxScore: 2 },
+                  { id: 29, item: 'Uses public transportation', score: 0, maxScore: 2 },
+                  { id: 30, item: 'Manages time and schedules', score: 0, maxScore: 2 }
+                ]
+              }
+            ]
+          },
+          {
+            name: 'Socialization',
+            description: 'Assesses interpersonal relationships and social skills',
+            subdomains: [
+              {
+                name: 'Interpersonal Relationships',
+                description: 'How individual interacts with others',
+                items: [
+                  { id: 31, item: 'Shows affection to family', score: 0, maxScore: 2 },
+                  { id: 32, item: 'Plays alongside peers', score: 0, maxScore: 2 },
+                  { id: 33, item: 'Shares toys and materials', score: 0, maxScore: 2 },
+                  { id: 34, item: 'Makes friends', score: 0, maxScore: 2 },
+                  { id: 35, item: 'Maintains friendships', score: 0, maxScore: 2 }
+                ]
+              },
+              {
+                name: 'Play and Leisure Time',
+                description: 'How individual engages in recreational activities',
+                items: [
+                  { id: 36, item: 'Engages in solitary play', score: 0, maxScore: 2 },
+                  { id: 37, item: 'Participates in group games', score: 0, maxScore: 2 },
+                  { id: 38, item: 'Uses imagination in play', score: 0, maxScore: 2 },
+                  { id: 39, item: 'Follows game rules', score: 0, maxScore: 2 },
+                  { id: 40, item: 'Pursues hobbies and interests', score: 0, maxScore: 2 }
+                ]
+              },
+              {
+                name: 'Coping Skills',
+                description: 'How individual handles emotions and stress',
+                items: [
+                  { id: 41, item: 'Manages frustration', score: 0, maxScore: 2 },
+                  { id: 42, item: 'Accepts changes in routine', score: 0, maxScore: 2 },
+                  { id: 43, item: 'Copes with disappointment', score: 0, maxScore: 2 },
+                  { id: 44, item: 'Handles criticism', score: 0, maxScore: 2 },
+                  { id: 45, item: 'Manages stress appropriately', score: 0, maxScore: 2 }
+                ]
+              }
+            ]
+          },
+          {
+            name: 'Motor Skills',
+            description: 'Assesses fine and gross motor skills',
+            subdomains: [
+              {
+                name: 'Gross Motor',
+                description: 'How individual uses large muscles for movement',
+                items: [
+                  { id: 46, item: 'Walks independently', score: 0, maxScore: 2 },
+                  { id: 47, item: 'Runs and jumps', score: 0, maxScore: 2 },
+                  { id: 48, item: 'Climbs stairs', score: 0, maxScore: 2 },
+                  { id: 49, item: 'Throws and catches balls', score: 0, maxScore: 2 },
+                  { id: 50, item: 'Participates in sports', score: 0, maxScore: 2 }
+                ]
+              },
+              {
+                name: 'Fine Motor',
+                description: 'How individual uses hands for precise movements',
+                items: [
+                  { id: 51, item: 'Grasps objects', score: 0, maxScore: 2 },
+                  { id: 52, item: 'Uses utensils for eating', score: 0, maxScore: 2 },
+                  { id: 53, item: 'Buttons and zips clothing', score: 0, maxScore: 2 },
+                  { id: 54, item: 'Uses scissors', score: 0, maxScore: 2 },
+                  { id: 55, item: 'Writes and draws', score: 0, maxScore: 2 }
+                ]
+              }
+            ]
+          }
+        ],
+
+        scores: {
+          parent: {
+            communication: { standardScore: 0, percentileRank: 0, level: '' },
+            dailyLiving: { standardScore: 0, percentileRank: 0, level: '' },
+            socialization: { standardScore: 0, percentileRank: 0, level: '' },
+            motorSkills: { standardScore: 0, percentileRank: 0, level: '' },
+            adaptiveBehaviourComposite: { standardScore: 0, percentileRank: 0, level: '' }
+          },
+          teacher: {
+            communication: { standardScore: 0, percentileRank: 0, level: '' },
+            dailyLiving: { standardScore: 0, percentileRank: 0, level: '' },
+            socialization: { standardScore: 0, percentileRank: 0, level: '' },
+            motorSkills: { standardScore: 0, percentileRank: 0, level: '' },
+            adaptiveBehaviourComposite: { standardScore: 0, percentileRank: 0, level: '' }
+          }
+        },
+
+        adaptiveLevels: [
+          { value: 'Very Low', range: 'Below 70', color: 'red' },
+          { value: 'Moderately Low', range: '70-84', color: 'orange' },
+          { value: 'Low Average', range: '85-94', color: 'yellow' },
+          { value: 'Average', range: '95-104', color: 'green' },
+          { value: 'High Average', range: '105-114', color: 'blue' },
+          { value: 'Moderately High', range: '115-129', color: 'purple' },
+          { value: 'Very High', range: '130 and above', color: 'indigo' }
+        ],
+
+        interpretation: '',
+        conclusions: '',
+        recommendations: ''
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
   ];
 
@@ -1039,8 +1490,10 @@ She showed some difficulty with verbal expression of meaning of words presented 
 
   const getTypeIcon = (type) => {
     switch (type) {
-      case 'ADHDT2':
-        return <FiFileText className="w-5 h-5 text-blue-500" />;
+      case 'RIPA-Primary':
+        return <FiFileText className="w-5 h-5 text-emerald-500" />;
+      case 'ADHT-BSM':
+        return <FiFileText className="w-5 h-5 text-green-500" />;
       case 'BKT':
         return <FiFileText className="w-5 h-5 text-orange-500" />;
       case 'Ravens-CPM':
@@ -1055,6 +1508,10 @@ She showed some difficulty with verbal expression of meaning of words presented 
         return <FiFileText className="w-5 h-5 text-cyan-500" />;
       case 'TAPS-3':
         return <FiFileText className="w-5 h-5 text-teal-500" />;
+      case 'TOWL-4':
+        return <FiFileText className="w-5 h-5 text-indigo-500" />;
+      case 'VABS-3':
+        return <FiFileText className="w-5 h-5 text-purple-500" />;
       case 'EACA-Autism':
         return <FiFileText className="w-5 h-5 text-purple-500" />;
       default:
@@ -1063,6 +1520,9 @@ She showed some difficulty with verbal expression of meaning of words presented 
   };
 
   const getTypeColor = (type, templateName) => {
+    if (type === 'RIPA-Primary' || templateName?.toLowerCase().includes('ripa')) {
+      return 'bg-emerald-100 text-emerald-800';
+    }
     if (type === 'ADHT-BSM' || templateName?.toLowerCase().includes('dsm')) {
       return 'bg-green-100 text-green-800';
     }
@@ -1092,6 +1552,12 @@ She showed some difficulty with verbal expression of meaning of words presented 
     }
     if (type === 'TAPS-3' || templateName?.toLowerCase().includes('taps')) {
       return 'bg-teal-100 text-teal-800';
+    }
+    if (type === 'TOWL-4' || templateName?.toLowerCase().includes('towl')) {
+      return 'bg-indigo-100 text-indigo-800';
+    }
+    if (type === 'VABS-3' || templateName?.toLowerCase().includes('vineland')) {
+      return 'bg-purple-100 text-purple-800';
     }
     switch (type) {
       case 'ADHDT2':
@@ -1131,8 +1597,25 @@ She showed some difficulty with verbal expression of meaning of words presented 
                          selectedTemplate?.name?.toLowerCase().includes('nelson') ? 'Nelson-Denny' :
                          selectedTemplate?.template_data?.name?.toLowerCase().includes('nelson') ? 'Nelson-Denny' :
                          selectedTemplate?.name?.toLowerCase().includes('taps') ? 'TAPS-3' :
-                         selectedTemplate?.template_data?.name?.toLowerCase().includes('taps') ? 'TAPS-3' : 'ADHDT2');
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('taps') ? 'TAPS-3' :
+                         selectedTemplate?.name?.toLowerCase().includes('ripa') ? 'RIPA-Primary' :
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('ripa') ? 'RIPA-Primary' :
+                         selectedTemplate?.name?.toLowerCase().includes('towl') ? 'TOWL-4' :
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('towl') ? 'TOWL-4' :
+                         selectedTemplate?.name?.toLowerCase().includes('vineland') ? 'VABS-3' :
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('vineland') ? 'VABS-3' : 'ADHDT2');
     
+    if (templateType === 'RIPA-Primary') {
+      return (
+        <RIPAPrimaryTemplate
+          onSave={handleTemplateSave}
+          onCancel={handleTemplateCancel}
+          studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
+          examinerName={selectedTemplate?.template_data?.examinerName || 'Dr. Smith'}
+        />
+      );
+    }
+
     if (templateType === 'ADHT-BSM') {
       return (
         <ADHTBSMTemplate
@@ -1235,6 +1718,28 @@ She showed some difficulty with verbal expression of meaning of words presented 
     if (templateType === 'TAPS-3') {
       return (
         <TAPS3Template
+          onSave={handleTemplateSave}
+          onCancel={handleTemplateCancel}
+          studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
+          examinerName={selectedTemplate?.template_data?.examinerName || 'Dr. Smith'}
+        />
+      );
+    }
+
+    if (templateType === 'TOWL-4') {
+      return (
+        <TOWL4Template
+          onSave={handleTemplateSave}
+          onCancel={handleTemplateCancel}
+          studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
+          examinerName={selectedTemplate?.template_data?.examinerName || 'Dr. Smith'}
+        />
+      );
+    }
+
+    if (templateType === 'VABS-3') {
+      return (
+        <VABS3Template
           onSave={handleTemplateSave}
           onCancel={handleTemplateCancel}
           studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
