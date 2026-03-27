@@ -59,7 +59,7 @@ export const deletePatient = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       await api.deletePatient(id);
-      return id;
+      return id; // Return the ID for Redux state update
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || 'Failed to delete patient'

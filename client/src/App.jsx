@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { setCredentials } from './store/slices/authSlice';
 import { fetchDoctors } from './store/slices/doctorSlice';
 import { fetchServices } from './store/slices/serviceSlice';
+import { deletePatient, fetchPatients } from './store/slices/patientSlice';
 import api from './services/api';
 import ErrorBoundary from './components/ErrorBoundary';
 import ErrorToast from './components/ErrorToast';
@@ -579,9 +580,16 @@ setActiveItem('doctors');
   };
 
   // Delete handlers
-  const handleDeletePatient = (patientId) => {
+  const handleDeletePatient = async (patientId) => {
     if (window.confirm('Are you sure you want to delete this examinee?')) {
-      toast.success(`Examinee ${patientId} deleted successfully!`);
+      try {
+        await dispatch(deletePatient(patientId.replace('#', '')));
+        // Refresh the patients list to show updated data
+        await dispatch(fetchPatients());
+        toast.success('Examinee deleted successfully!');
+      } catch (error) {
+        toast.error('Failed to delete examinee: ' + error.message);
+      }
     }
   };
 
