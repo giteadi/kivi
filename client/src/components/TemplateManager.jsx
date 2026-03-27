@@ -17,6 +17,8 @@ import NelsonDennyReadingTestTemplate from './NelsonDennyReadingTestTemplate';
 import TAPS3Template from './TAPS3Template';
 import TOWL4Template from './TOWL4Template';
 import VABS3Template from './VABS3Template';
+import WISC4Template from './WISC4Template';
+import WJ3Template from './WJ3Template';
 import AssessmentReportGenerator from './AssessmentReportGenerator';
 import TemplateTypeSelector from './TemplateTypeSelector';
 
@@ -1369,6 +1371,742 @@ She showed some difficulty with verbal expression of meaning of words presented 
       },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
+    },
+    {
+      id: 17,
+      name: 'WECHSLER\'S INTELLIGENCE SCALE FOR CHILDREN -WISC-IV India',
+      type: 'WISC-4',
+      description: 'Norm-referenced, individually administered test of intelligence for children with verbal and performance subtests.',
+      template_data: {
+        type: 'WISC-4',
+        name: 'WECHSLER\'S INTELLIGENCE SCALE FOR CHILDREN -WISC-IV India',
+        studentName: '',
+        examinerName: '',
+        testDate: new Date().toISOString().split('T')[0],
+        age: '',
+        grade: '',
+        description: `The WISC-IV is a norm-referenced, individually administered test of intelligence. Ability levels were assessed using the WISC-IV as a basis for intellectual evaluation along with the administration of additional assessments to evaluate specific areas in greater depth. It provides a measure of general intelligence as well as more specific measures of verbal comprehension, perceptual reasoning, working memory, and processing speed.`,
+        
+        subtests: [
+          // Verbal Comprehension Index (VCI) Subtests
+          {
+            name: 'Similarities',
+            index: 'VCI',
+            description: 'Abstract verbal reasoning - conceptual thinking and verbal reasoning',
+            rawScore: 0,
+            scaledScore: 0,
+            maxRawScore: 33,
+            items: [
+              { id: 1, item: 'How are apple and orange alike?', response: '', score: 0 },
+              { id: 2, item: 'How are dog and cat alike?', response: '', score: 0 },
+              { id: 3, item: 'How are poem and statue alike?', response: '', score: 0 },
+              { id: 4, item: 'How are praise and punishment alike?', response: '', score: 0 },
+              { id: 5, item: 'How are fly and read alike?', response: '', score: 0 }
+            ]
+          },
+          {
+            name: 'Vocabulary',
+            index: 'VCI',
+            description: 'Word knowledge and verbal concept formation',
+            rawScore: 0,
+            scaledScore: 0,
+            maxRawScore: 36,
+            items: [
+              { id: 6, item: 'What does "umbrella" mean?', response: '', score: 0 },
+              { id: 7, item: 'What does "compassionate" mean?', response: '', score: 0 },
+              { id: 8, item: 'What does "democracy" mean?', response: '', score: 0 },
+              { id: 9, item: 'What does "hypothesis" mean?', response: '', score: 0 },
+              { id: 10, item: 'What does "paradox" mean?', response: '', score: 0 }
+            ]
+          },
+          {
+            name: 'Comprehension',
+            index: 'VCI',
+            description: 'Social judgment and practical knowledge',
+            rawScore: 0,
+            scaledScore: 0,
+            maxRawScore: 33,
+            items: [
+              { id: 11, item: 'Why should we pay taxes?', response: '', score: 0 },
+              { id: 12, item: 'Why do we have laws?', response: '', score: 0 },
+              { id: 13, item: 'What should you do if you find a lost wallet?', response: '', score: 0 },
+              { id: 14, item: 'Why is it important to vote?', response: '', score: 0 },
+              { id: 15, item: 'What is the purpose of newspapers?', response: '', score: 0 }
+            ]
+          },
+          
+          // Perceptual Reasoning Index (PRI) Subtests
+          {
+            name: 'Block Design',
+            index: 'PRI',
+            description: 'Spatial analysis, visual-motor coordination, and abstract reasoning',
+            rawScore: 0,
+            scaledScore: 0,
+            maxRawScore: 68,
+            items: [
+              { id: 16, item: 'Block Design Item 1', timeBonus: 0, score: 0 },
+              { id: 17, item: 'Block Design Item 2', timeBonus: 0, score: 0 },
+              { id: 18, item: 'Block Design Item 3', timeBonus: 0, score: 0 },
+              { id: 19, item: 'Block Design Item 4', timeBonus: 0, score: 0 },
+              { id: 20, item: 'Block Design Item 5', timeBonus: 0, score: 0 }
+            ]
+          },
+          {
+            name: 'Picture Concepts',
+            index: 'PRI',
+            description: 'Categorical and abstract reasoning',
+            rawScore: 0,
+            scaledScore: 0,
+            maxRawScore: 28,
+            items: [
+              { id: 21, item: 'Picture Concepts Item 1', response: '', score: 0 },
+              { id: 22, item: 'Picture Concepts Item 2', response: '', score: 0 },
+              { id: 23, item: 'Picture Concepts Item 3', response: '', score: 0 },
+              { id: 24, item: 'Picture Concepts Item 4', response: '', score: 0 },
+              { id: 25, item: 'Picture Concepts Item 5', response: '', score: 0 }
+            ]
+          },
+          {
+            name: 'Matrix Reasoning',
+            index: 'PRI',
+            description: 'Fluid reasoning, visual information processing, and abstract reasoning',
+            rawScore: 0,
+            scaledScore: 0,
+            maxRawScore: 35,
+            items: [
+              { id: 26, item: 'Matrix Reasoning Item 1', response: '', score: 0 },
+              { id: 27, item: 'Matrix Reasoning Item 2', response: '', score: 0 },
+              { id: 28, item: 'Matrix Reasoning Item 3', response: '', score: 0 },
+              { id: 29, item: 'Matrix Reasoning Item 4', response: '', score: 0 },
+              { id: 30, item: 'Matrix Reasoning Item 5', response: '', score: 0 }
+            ]
+          },
+          {
+            name: 'Picture Completion',
+            index: 'PRI',
+            description: 'Visual perception and organization, visual scanning',
+            rawScore: 0,
+            scaledScore: 0,
+            maxRawScore: 38,
+            items: [
+              { id: 31, item: 'Picture Completion Item 1', response: '', score: 0 },
+              { id: 32, item: 'Picture Completion Item 2', response: '', score: 0 },
+              { id: 33, item: 'Picture Completion Item 3', response: '', score: 0 },
+              { id: 34, item: 'Picture Completion Item 4', response: '', score: 0 },
+              { id: 35, item: 'Picture Completion Item 5', response: '', score: 0 }
+            ]
+          },
+          
+          // Working Memory Index (WMI) Subtests
+          {
+            name: 'Digit Span',
+            index: 'WMI',
+            description: 'Auditory short-term memory, attention, and concentration',
+            rawScore: 0,
+            scaledScore: 0,
+            maxRawScore: 30,
+            items: [
+              { id: 36, item: 'Digits Forward - 2 digits', sequence: '', score: 0 },
+              { id: 37, item: 'Digits Forward - 3 digits', sequence: '', score: 0 },
+              { id: 38, item: 'Digits Forward - 4 digits', sequence: '', score: 0 },
+              { id: 39, item: 'Digits Backward - 2 digits', sequence: '', score: 0 },
+              { id: 40, item: 'Digits Backward - 3 digits', sequence: '', score: 0 }
+            ]
+          },
+          {
+            name: 'Letter-Number Sequencing',
+            index: 'WMI',
+            description: 'Auditory short-term memory, working memory, attention, and sequencing',
+            rawScore: 0,
+            scaledScore: 0,
+            maxRawScore: 30,
+            items: [
+              { id: 41, item: 'L-N Sequence Item 1', sequence: '', score: 0 },
+              { id: 42, item: 'L-N Sequence Item 2', sequence: '', score: 0 },
+              { id: 43, item: 'L-N Sequence Item 3', sequence: '', score: 0 },
+              { id: 44, item: 'L-N Sequence Item 4', sequence: '', score: 0 },
+              { id: 45, item: 'L-N Sequence Item 5', sequence: '', score: 0 }
+            ]
+          },
+          {
+            name: 'Arithmetic',
+            index: 'WMI',
+            description: 'Attention, concentration, and mental manipulation',
+            rawScore: 0,
+            scaledScore: 0,
+            maxRawScore: 34,
+            items: [
+              { id: 46, item: '2 + 3 = ?', response: '', score: 0 },
+              { id: 47, item: '7 - 4 = ?', response: '', score: 0 },
+              { id: 48, item: '3 × 4 = ?', response: '', score: 0 },
+              { id: 49, item: '15 ÷ 3 = ?', response: '', score: 0 },
+              { id: 50, item: 'If 5 apples cost $10, how much do 3 apples cost?', response: '', score: 0 }
+            ]
+          },
+          
+          // Processing Speed Index (PSI) Subtests
+          {
+            name: 'Coding',
+            index: 'PSI',
+            description: 'Visual-motor coordination, speed, and short-term memory',
+            rawScore: 0,
+            scaledScore: 0,
+            maxRawScore: 135,
+            timeLimit: 120,
+            items: [
+              { id: 51, item: 'Coding Item 1', response: '', correct: true, timeTaken: 0 },
+              { id: 52, item: 'Coding Item 2', response: '', correct: true, timeTaken: 0 },
+              { id: 53, item: 'Coding Item 3', response: '', correct: true, timeTaken: 0 },
+              { id: 54, item: 'Coding Item 4', response: '', correct: true, timeTaken: 0 },
+              { id: 55, item: 'Coding Item 5', response: '', correct: true, timeTaken: 0 }
+            ]
+          },
+          {
+            name: 'Symbol Search',
+            index: 'PSI',
+            description: 'Visual-motor quickness, short-term visual memory, visual discrimination',
+            rawScore: 0,
+            scaledScore: 0,
+            maxRawScore: 60,
+            timeLimit: 120,
+            items: [
+              { id: 56, item: 'Symbol Search Item 1', response: '', correct: true, timeTaken: 0 },
+              { id: 57, item: 'Symbol Search Item 2', response: '', correct: true, timeTaken: 0 },
+              { id: 58, item: 'Symbol Search Item 3', response: '', correct: true, timeTaken: 0 },
+              { id: 59, item: 'Symbol Search Item 4', response: '', correct: true, timeTaken: 0 },
+              { id: 60, item: 'Symbol Search Item 5', response: '', correct: true, timeTaken: 0 }
+            ]
+          },
+          {
+            name: 'Cancellation',
+            index: 'PSI',
+            description: 'Visual selective attention, processing speed',
+            rawScore: 0,
+            scaledScore: 0,
+            maxRawScore: 48,
+            timeLimit: 120,
+            items: [
+              { id: 61, item: 'Cancellation Item 1', response: '', correct: true, timeTaken: 0 },
+              { id: 62, item: 'Cancellation Item 2', response: '', correct: true, timeTaken: 0 },
+              { id: 63, item: 'Cancellation Item 3', response: '', correct: true, timeTaken: 0 },
+              { id: 64, item: 'Cancellation Item 4', response: '', correct: true, timeTaken: 0 },
+              { id: 65, item: 'Cancellation Item 5', response: '', correct: true, timeTaken: 0 }
+            ]
+          }
+        ],
+
+        indexScores: {
+          verbalComprehension: {
+            sumOfScaledScores: 49,
+            compositeScore: 138,
+            percentileRank: 99,
+            confidenceInterval: '129-142',
+            description: 'Verbal comprehension, verbal concept formation, reasoning, and knowledge acquired from one\'s environment.'
+          },
+          perceptualReasoning: {
+            sumOfScaledScores: 36,
+            compositeScore: 111,
+            percentileRank: 73,
+            confidenceInterval: '102-118',
+            description: 'Perceptual organization and reasoning, visual-motor integration, and nonverbal problem solving.'
+          },
+          workingMemory: {
+            sumOfScaledScores: 21,
+            compositeScore: 103,
+            percentileRank: 58,
+            confidenceInterval: '95-110',
+            description: 'Working memory, short-term memory, concentration, and attention.'
+          },
+          processingSpeed: {
+            sumOfScaledScores: 15,
+            compositeScore: 86,
+            percentileRank: 18,
+            confidenceInterval: '79-97',
+            description: 'Processing speed, visual-motor coordination, and short-term visual memory.'
+          },
+          fullScaleIQ: {
+            compositeScore: 0,
+            percentileRank: 0,
+            confidenceInterval: '',
+            description: 'Overall intellectual functioning.'
+          }
+        },
+
+        discrepancyAnalysis: [
+          {
+            comparison: 'VCI-PRI',
+            index1: 'Verbal Comprehension',
+            score1: 138,
+            index2: 'Perceptual Reasoning',
+            score2: 111,
+            difference: 27,
+            criticalValue: 10.18,
+            significant: true
+          },
+          {
+            comparison: 'VCI-WMI',
+            index1: 'Verbal Comprehension',
+            score1: 138,
+            index2: 'Working Memory',
+            score2: 103,
+            difference: 35,
+            criticalValue: 10.99,
+            significant: true
+          },
+          {
+            comparison: 'VCI-PSI',
+            index1: 'Verbal Comprehension',
+            score1: 138,
+            index2: 'Processing Speed',
+            score2: 86,
+            difference: 52,
+            criticalValue: 13.15,
+            significant: true
+          },
+          {
+            comparison: 'PRI-WMI',
+            index1: 'Perceptual Reasoning',
+            score1: 111,
+            index2: 'Working Memory',
+            score2: 103,
+            difference: 12,
+            criticalValue: 9.29,
+            significant: false
+          },
+          {
+            comparison: 'PRI-PSI',
+            index1: 'Perceptual Reasoning',
+            score1: 111,
+            index2: 'Processing Speed',
+            score2: 86,
+            difference: 10,
+            criticalValue: 11.77,
+            significant: false
+          },
+          {
+            comparison: 'WMI-PSI',
+            index1: 'Working Memory',
+            score1: 103,
+            index2: 'Processing Speed',
+            score2: 86,
+            difference: 11,
+            criticalValue: 10.58,
+            significant: true
+          }
+        ],
+
+        interpretation: '',
+        conclusions: '',
+        recommendations: ''
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 18,
+      name: 'WJ-III - TESTS OF ACHIEVEMENT FORM C/ BRIEF BATTERY',
+      type: 'WJ-3',
+      description: 'Norm-referenced individually administered tests measuring academic achievement across reading, math, and writing.',
+      template_data: {
+        type: 'WJ-3',
+        name: 'WJ-III - TESTS OF ACHIEVEMENT FORM C/ BRIEF BATTERY',
+        studentName: '',
+        examinerName: '',
+        testDate: new Date().toISOString().split('T')[0],
+        age: '',
+        grade: '',
+        description: `The Woodcock-Johnson III Tests of Achievement (WJ-III, ACH) contains a set of norm-referenced tests that are administered individually. It is used to measure academic achievement. It is made up of 13 clusters, to help identify performance levels, determines educational progress, and identifies individual strengths and weaknesses.`,
+        
+        standardScoreDescriptors: [
+          { range: '>130', descriptor: 'Very Superior', percentileRank: '>97th' },
+          { range: '121-130', descriptor: 'Superior', percentileRank: '91st-97th' },
+          { range: '111-120', descriptor: 'High Average', percentileRank: '75th-91st' },
+          { range: '90-110', descriptor: 'Average', percentileRank: '25th-75th' },
+          { range: '80-89', descriptor: 'Low Average', percentileRank: '9th-23rd' },
+          { range: '70-79', descriptor: 'Poor', percentileRank: '2nd-8th' },
+          { range: '<69', descriptor: 'Very Poor', percentileRank: '<2nd' }
+        ],
+
+        clusters: [
+          {
+            name: 'Brief Reading',
+            description: 'Basic reading skills assessment',
+            subtests: [
+              {
+                name: 'Letter-Word Identification',
+                description: 'Ability to identify letters and words',
+                rawScore: 0,
+                standardScore: 99,
+                percentileRank: 47,
+                relativeProficiencyIndex: 88,
+                descriptor: 'Average',
+                items: [
+                  { id: 1, item: 'Letter Recognition A', response: '', correct: true },
+                  { id: 2, item: 'Letter Recognition B', response: '', correct: true },
+                  { id: 3, item: 'Word Recognition: cat', response: '', correct: true },
+                  { id: 4, item: 'Word Recognition: dog', response: '', correct: true },
+                  { id: 5, item: 'Word Recognition: house', response: '', correct: true }
+                ]
+              },
+              {
+                name: 'Passage Comprehension',
+                description: 'Ability to understand written text',
+                rawScore: 0,
+                standardScore: 102,
+                percentileRank: 61,
+                relativeProficiencyIndex: 94,
+                descriptor: 'Average',
+                items: [
+                  { id: 6, item: 'Simple Sentence 1', response: '', correct: true },
+                  { id: 7, item: 'Simple Sentence 2', response: '', correct: true },
+                  { id: 8, item: 'Short Paragraph 1', response: '', correct: true },
+                  { id: 9, item: 'Short Paragraph 2', response: '', correct: true },
+                  { id: 10, item: 'Story Passage 1', response: '', correct: true }
+                ]
+              }
+            ],
+            clusterScore: 100,
+            clusterPercentile: 50,
+            clusterDescriptor: 'Average'
+          },
+          {
+            name: 'Broad Reading',
+            description: 'Comprehensive reading assessment',
+            subtests: [
+              {
+                name: 'Letter-Word Identification',
+                description: 'Ability to identify letters and words',
+                rawScore: 0,
+                standardScore: 94,
+                percentileRank: 34,
+                relativeProficiencyIndex: 89,
+                descriptor: 'Average',
+                items: [
+                  { id: 11, item: 'Advanced Word Recognition 1', response: '', correct: true },
+                  { id: 12, item: 'Advanced Word Recognition 2', response: '', correct: true },
+                  { id: 13, item: 'Advanced Word Recognition 3', response: '', correct: true },
+                  { id: 14, item: 'Advanced Word Recognition 4', response: '', correct: true },
+                  { id: 15, item: 'Advanced Word Recognition 5', response: '', correct: true }
+                ]
+              },
+              {
+                name: 'Passage Comprehension',
+                description: 'Ability to understand written text',
+                rawScore: 0,
+                standardScore: 103,
+                percentileRank: 58,
+                relativeProficiencyIndex: 94,
+                descriptor: 'Average',
+                items: [
+                  { id: 16, item: 'Complex Paragraph 1', response: '', correct: true },
+                  { id: 17, item: 'Complex Paragraph 2', response: '', correct: true },
+                  { id: 18, item: 'Complex Paragraph 3', response: '', correct: true },
+                  { id: 19, item: 'Complex Paragraph 4', response: '', correct: true },
+                  { id: 20, item: 'Complex Paragraph 5', response: '', correct: true }
+                ]
+              },
+              {
+                name: 'Reading Fluency',
+                description: 'Reading speed and accuracy',
+                rawScore: 0,
+                standardScore: 102,
+                percentileRank: 61,
+                relativeProficiencyIndex: 94,
+                descriptor: 'Average',
+                timeLimit: 180,
+                items: [
+                  { id: 21, item: 'Fluency Passage 1', response: '', correct: true, timeTaken: 0 },
+                  { id: 22, item: 'Fluency Passage 2', response: '', correct: true, timeTaken: 0 },
+                  { id: 23, item: 'Fluency Passage 3', response: '', correct: true, timeTaken: 0 }
+                ]
+              }
+            ],
+            clusterScore: 97,
+            clusterPercentile: 42,
+            clusterDescriptor: 'Average'
+          },
+          {
+            name: 'Brief Mathematics',
+            description: 'Basic math skills assessment',
+            subtests: [
+              {
+                name: 'Applied Problems',
+                description: 'Mathematical problem solving',
+                rawScore: 0,
+                standardScore: 119,
+                percentileRank: 89,
+                relativeProficiencyIndex: 98,
+                descriptor: 'High Average',
+                items: [
+                  { id: 24, item: 'Basic Addition: 2+3', response: '5', correct: true },
+                  { id: 25, item: 'Basic Subtraction: 8-5', response: '3', correct: true },
+                  { id: 26, item: 'Word Problem 1', response: '', correct: true },
+                  { id: 27, item: 'Word Problem 2', response: '', correct: true },
+                  { id: 28, item: 'Word Problem 3', response: '', correct: true }
+                ]
+              },
+              {
+                name: 'Calculation',
+                description: 'Mathematical computation skills',
+                rawScore: 0,
+                standardScore: 116,
+                percentileRank: 86,
+                relativeProficiencyIndex: 97,
+                descriptor: 'High Average',
+                items: [
+                  { id: 29, item: 'Addition: 45+23', response: '68', correct: true },
+                  { id: 30, item: 'Subtraction: 87-34', response: '53', correct: true },
+                  { id: 31, item: 'Multiplication: 6×7', response: '42', correct: true },
+                  { id: 32, item: 'Division: 72÷8', response: '9', correct: true },
+                  { id: 33, item: 'Mixed Operations 1', response: '', correct: true }
+                ]
+              }
+            ],
+            clusterScore: 117,
+            clusterPercentile: 87,
+            clusterDescriptor: 'High Average'
+          },
+          {
+            name: 'Broad Mathematics',
+            description: 'Comprehensive math assessment',
+            subtests: [
+              {
+                name: 'Applied Problems',
+                description: 'Mathematical problem solving',
+                rawScore: 0,
+                standardScore: 114,
+                percentileRank: 82,
+                relativeProficiencyIndex: 97,
+                descriptor: 'High Average',
+                items: [
+                  { id: 34, item: 'Advanced Word Problem 1', response: '', correct: true },
+                  { id: 35, item: 'Advanced Word Problem 2', response: '', correct: true },
+                  { id: 36, item: 'Advanced Word Problem 3', response: '', correct: true },
+                  { id: 37, item: 'Advanced Word Problem 4', response: '', correct: true },
+                  { id: 38, item: 'Advanced Word Problem 5', response: '', correct: true }
+                ]
+              },
+              {
+                name: 'Calculation',
+                description: 'Mathematical computation skills',
+                rawScore: 0,
+                standardScore: 116,
+                percentileRank: 86,
+                relativeProficiencyIndex: 97,
+                descriptor: 'High Average',
+                items: [
+                  { id: 39, item: 'Advanced Calculation 1', response: '', correct: true },
+                  { id: 40, item: 'Advanced Calculation 2', response: '', correct: true },
+                  { id: 41, item: 'Advanced Calculation 3', response: '', correct: true },
+                  { id: 42, item: 'Advanced Calculation 4', response: '', correct: true },
+                  { id: 43, item: 'Advanced Calculation 5', response: '', correct: true }
+                ]
+              },
+              {
+                name: 'Math Fluency',
+                description: 'Math calculation speed and accuracy',
+                rawScore: 0,
+                standardScore: 114,
+                percentileRank: 82,
+                relativeProficiencyIndex: 97,
+                descriptor: 'High Average',
+                timeLimit: 180,
+                items: [
+                  { id: 44, item: 'Math Fluency 1', response: '', correct: true, timeTaken: 0 },
+                  { id: 45, item: 'Math Fluency 2', response: '', correct: true, timeTaken: 0 },
+                  { id: 46, item: 'Math Fluency 3', response: '', correct: true, timeTaken: 0 }
+                ]
+              }
+            ],
+            clusterScore: 115,
+            clusterPercentile: 84,
+            clusterDescriptor: 'High Average'
+          },
+          {
+            name: 'Math Calculation Skills',
+            description: 'Math computation abilities',
+            subtests: [
+              {
+                name: 'Calculation',
+                description: 'Mathematical computation skills',
+                rawScore: 0,
+                standardScore: 103,
+                percentileRank: 58,
+                relativeProficiencyIndex: 97,
+                descriptor: 'Average',
+                items: [
+                  { id: 47, item: 'Complex Calculation 1', response: '', correct: true },
+                  { id: 48, item: 'Complex Calculation 2', response: '', correct: true },
+                  { id: 49, item: 'Complex Calculation 3', response: '', correct: true },
+                  { id: 50, item: 'Complex Calculation 4', response: '', correct: true },
+                  { id: 51, item: 'Complex Calculation 5', response: '', correct: true }
+                ]
+              },
+              {
+                name: 'Math Fluency',
+                description: 'Math calculation speed and accuracy',
+                rawScore: 0,
+                standardScore: 112,
+                percentileRank: 79,
+                relativeProficiencyIndex: 97,
+                descriptor: 'High Average',
+                timeLimit: 180,
+                items: [
+                  { id: 52, item: 'Fluency Math 1', response: '', correct: true, timeTaken: 0 },
+                  { id: 53, item: 'Fluency Math 2', response: '', correct: true, timeTaken: 0 },
+                  { id: 54, item: 'Fluency Math 3', response: '', correct: true, timeTaken: 0 }
+                ]
+              }
+            ],
+            clusterScore: 114,
+            clusterPercentile: 82,
+            clusterDescriptor: 'High Average'
+          },
+          {
+            name: 'Brief Writing',
+            description: 'Basic writing skills assessment',
+            subtests: [
+              {
+                name: 'Spelling',
+                description: 'Spelling ability',
+                rawScore: 0,
+                standardScore: 103,
+                percentileRank: 58,
+                relativeProficiencyIndex: 91,
+                descriptor: 'Average',
+                items: [
+                  { id: 55, item: 'Spell: cat', response: 'cat', correct: true },
+                  { id: 56, item: 'Spell: house', response: 'house', correct: true },
+                  { id: 57, item: 'Spell: because', response: 'because', correct: true },
+                  { id: 58, item: 'Spell: beautiful', response: 'beautiful', correct: true },
+                  { id: 59, item: 'Spell: necessary', response: 'necessary', correct: true }
+                ]
+              },
+              {
+                name: 'Writing Samples',
+                description: 'Writing ability and quality',
+                rawScore: 0,
+                standardScore: 89,
+                percentileRank: 23,
+                relativeProficiencyIndex: 60,
+                descriptor: 'Low Average',
+                items: [
+                  { id: 60, item: 'Write a simple sentence', response: '', score: 0 },
+                  { id: 61, item: 'Write about your favorite animal', response: '', score: 0 },
+                  { id: 62, item: 'Write a short paragraph', response: '', score: 0 },
+                  { id: 63, item: 'Write a story prompt', response: '', score: 0 },
+                  { id: 64, item: 'Write an opinion piece', response: '', score: 0 }
+                ]
+              }
+            ],
+            clusterScore: 97,
+            clusterPercentile: 42,
+            clusterDescriptor: 'Average'
+          },
+          {
+            name: 'Broad Written Language',
+            description: 'Comprehensive writing assessment',
+            subtests: [
+              {
+                name: 'Spelling',
+                description: 'Spelling ability',
+                rawScore: 0,
+                standardScore: 84,
+                percentileRank: 14,
+                relativeProficiencyIndex: 31,
+                descriptor: 'Low Average',
+                items: [
+                  { id: 65, item: 'Advanced Spelling 1', response: '', correct: true },
+                  { id: 66, item: 'Advanced Spelling 2', response: '', correct: true },
+                  { id: 67, item: 'Advanced Spelling 3', response: '', correct: true },
+                  { id: 68, item: 'Advanced Spelling 4', response: '', correct: true },
+                  { id: 69, item: 'Advanced Spelling 5', response: '', correct: true }
+                ]
+              },
+              {
+                name: 'Writing Samples',
+                description: 'Writing ability and quality',
+                rawScore: 0,
+                standardScore: 97,
+                percentileRank: 42,
+                relativeProficiencyIndex: 84,
+                descriptor: 'Average',
+                items: [
+                  { id: 70, item: 'Complex Writing Task 1', response: '', score: 0 },
+                  { id: 71, item: 'Complex Writing Task 2', response: '', score: 0 },
+                  { id: 72, item: 'Complex Writing Task 3', response: '', score: 0 },
+                  { id: 73, item: 'Complex Writing Task 4', response: '', score: 0 },
+                  { id: 74, item: 'Complex Writing Task 5', response: '', score: 0 }
+                ]
+              },
+              {
+                name: 'Writing Fluency',
+                description: 'Writing speed and quality',
+                rawScore: 0,
+                standardScore: 84,
+                percentileRank: 14,
+                relativeProficiencyIndex: 31,
+                descriptor: 'Low Average',
+                timeLimit: 420,
+                items: [
+                  { id: 75, item: 'Fluency Writing 1', response: '', correct: true, timeTaken: 0 },
+                  { id: 76, item: 'Fluency Writing 2', response: '', correct: true, timeTaken: 0 },
+                  { id: 77, item: 'Fluency Writing 3', response: '', correct: true, timeTaken: 0 }
+                ]
+              }
+            ],
+            clusterScore: 88,
+            clusterPercentile: 21,
+            clusterDescriptor: 'Low Average'
+          },
+          {
+            name: 'Written Expression',
+            description: 'Writing expression abilities',
+            subtests: [
+              {
+                name: 'Writing Samples',
+                description: 'Writing ability and quality',
+                rawScore: 0,
+                standardScore: 97,
+                percentileRank: 42,
+                relativeProficiencyIndex: 84,
+                descriptor: 'Average',
+                items: [
+                  { id: 78, item: 'Expression Writing 1', response: '', score: 0 },
+                  { id: 79, item: 'Expression Writing 2', response: '', score: 0 },
+                  { id: 80, item: 'Expression Writing 3', response: '', score: 0 },
+                  { id: 81, item: 'Expression Writing 4', response: '', score: 0 },
+                  { id: 82, item: 'Expression Writing 5', response: '', score: 0 }
+                ]
+              },
+              {
+                name: 'Writing Fluency',
+                description: 'Writing speed and quality',
+                rawScore: 0,
+                standardScore: 98,
+                percentileRank: 45,
+                relativeProficiencyIndex: 88,
+                descriptor: 'Average',
+                timeLimit: 420,
+                items: [
+                  { id: 83, item: 'Expression Fluency 1', response: '', correct: true, timeTaken: 0 },
+                  { id: 84, item: 'Expression Fluency 2', response: '', correct: true, timeTaken: 0 },
+                  { id: 85, item: 'Expression Fluency 3', response: '', correct: true, timeTaken: 0 }
+                ]
+              }
+            ],
+            clusterScore: 97,
+            clusterPercentile: 42,
+            clusterDescriptor: 'Average'
+          }
+        ],
+
+        interpretation: '',
+        conclusions: '',
+        recommendations: ''
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
   ];
 
@@ -1512,6 +2250,10 @@ She showed some difficulty with verbal expression of meaning of words presented 
         return <FiFileText className="w-5 h-5 text-indigo-500" />;
       case 'VABS-3':
         return <FiFileText className="w-5 h-5 text-purple-500" />;
+      case 'WISC-4':
+        return <FiFileText className="w-5 h-5 text-blue-500" />;
+      case 'WJ-3':
+        return <FiFileText className="w-5 h-5 text-green-500" />;
       case 'EACA-Autism':
         return <FiFileText className="w-5 h-5 text-purple-500" />;
       default:
@@ -1559,6 +2301,12 @@ She showed some difficulty with verbal expression of meaning of words presented 
     if (type === 'VABS-3' || templateName?.toLowerCase().includes('vineland')) {
       return 'bg-purple-100 text-purple-800';
     }
+    if (type === 'WISC-4' || templateName?.toLowerCase().includes('wisc')) {
+      return 'bg-blue-100 text-blue-800';
+    }
+    if (type === 'WJ-3' || templateName?.toLowerCase().includes('wj-iii') || templateName?.toLowerCase().includes('woodcock')) {
+      return 'bg-green-100 text-green-800';
+    }
     switch (type) {
       case 'ADHDT2':
         return 'bg-blue-100 text-blue-800';
@@ -1603,7 +2351,11 @@ She showed some difficulty with verbal expression of meaning of words presented 
                          selectedTemplate?.name?.toLowerCase().includes('towl') ? 'TOWL-4' :
                          selectedTemplate?.template_data?.name?.toLowerCase().includes('towl') ? 'TOWL-4' :
                          selectedTemplate?.name?.toLowerCase().includes('vineland') ? 'VABS-3' :
-                         selectedTemplate?.template_data?.name?.toLowerCase().includes('vineland') ? 'VABS-3' : 'ADHDT2');
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('vineland') ? 'VABS-3' :
+                         selectedTemplate?.name?.toLowerCase().includes('wisc') ? 'WISC-4' :
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('wisc') ? 'WISC-4' :
+                         selectedTemplate?.name?.toLowerCase().includes('wj-iii') || selectedTemplate?.name?.toLowerCase().includes('woodcock') ? 'WJ-3' :
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('wj-iii') || selectedTemplate?.template_data?.name?.toLowerCase().includes('woodcock') ? 'WJ-3' : 'ADHDT2');
     
     if (templateType === 'RIPA-Primary') {
       return (
@@ -1740,6 +2492,28 @@ She showed some difficulty with verbal expression of meaning of words presented 
     if (templateType === 'VABS-3') {
       return (
         <VABS3Template
+          onSave={handleTemplateSave}
+          onCancel={handleTemplateCancel}
+          studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
+          examinerName={selectedTemplate?.template_data?.examinerName || 'Dr. Smith'}
+        />
+      );
+    }
+
+    if (templateType === 'WISC-4') {
+      return (
+        <WISC4Template
+          onSave={handleTemplateSave}
+          onCancel={handleTemplateCancel}
+          studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
+          examinerName={selectedTemplate?.template_data?.examinerName || 'Dr. Smith'}
+        />
+      );
+    }
+
+    if (templateType === 'WJ-3') {
+      return (
+        <WJ3Template
           onSave={handleTemplateSave}
           onCancel={handleTemplateCancel}
           studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
