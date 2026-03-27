@@ -43,11 +43,6 @@ import ReceptionistProfile from './components/ReceptionistProfile';
 import ReceptionistEditForm from './components/ReceptionistEditForm';
 import EncounterDetail from './components/EncounterDetail';
 import EncountersList from './components/EncountersList';
-import EncounterTemplates from './components/EncounterTemplates';
-import TemplateBuilder from './components/TemplateBuilder';
-import TemplateViewer from './components/TemplateViewer';
-import TemplateSelector from './components/TemplateSelector';
-import TemplateBasedEncounter from './components/TemplateBasedEncounter';
 import MobileMenu from './components/MobileMenu';
 import ClinicRevenue from './components/ClinicRevenue';
 import DoctorRevenue from './components/DoctorRevenue';
@@ -68,7 +63,6 @@ import SessionEditForm from './components/SessionEditForm';
 import SessionList from './components/SessionList';
 import PlansList from './components/PlansList';
 import AdminSessionsList from './components/AdminSessionsList';
-import TemplateManager from './components/TemplateManager';
 
 function App() {
   const dispatch = useDispatch();
@@ -79,13 +73,11 @@ function App() {
   // All useState hooks at the top level
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
-  const [showHomepage, setShowHomepage] = useState(true); // Show homepage by default
+  const [showHomepage, setShowHomepage] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [isInitialized, setIsInitialized] = useState(false);
   const [activeItem, setActiveItem] = useState('dashboard');
   const [currentView, setCurrentView] = useState('dashboard');
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [selectedPatientId, setSelectedPatientId] = useState(null);
   const [selectedExamineeId, setSelectedExamineeId] = useState(null);
@@ -100,6 +92,7 @@ function App() {
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [navigationHistory, setNavigationHistory] = useState(['dashboard']);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Check authentication on app load
   useEffect(() => {
@@ -319,86 +312,21 @@ function App() {
     setCurrentView('encounters-list');
   };
 
-  const handleCreateTemplate = () => {
-    setSelectedTemplate(null);
-    setCurrentView('template-builder');
-  };
-
-  const handleEditTemplate = (template) => {
-    setSelectedTemplate(template);
-    setCurrentView('template-builder');
-  };
-
-  const handleViewTemplate = (template) => {
-    setSelectedTemplate(template);
-    setCurrentView('template-viewer');
-  };
-
-  const handleDuplicateTemplate = (template) => {
-    const duplicatedTemplate = {
-      ...template,
-      id: Date.now(),
-      name: `${template.name} (Copy)`,
-      usageCount: 0,
-      createdDate: new Date().toISOString().split('T')[0]
-    };
-    setSelectedTemplate(duplicatedTemplate);
-    setCurrentView('template-builder');
-  };
-
-  const handleDeleteTemplate = (template) => {
-    if (window.confirm(`Are you sure you want to delete "${template.name}"?`)) {
-      // In a real app, this would delete from backend
-      alert('Template deleted successfully!');
-      handleBackToTemplates();
-    }
-  };
-
-  const handleSaveTemplate = (templateData) => {
-    // In a real app, this would save to backend
-    console.log('Saving template:', templateData);
-    alert('Template saved successfully!');
-    handleBackToTemplates();
-  };
-
-  const handleCancelTemplate = () => {
-    handleBackToTemplates();
-  };
-
-  const handleBackToTemplates = () => {
-    setSelectedTemplate(null);
-    setCurrentView('encounter-templates');
-    setActiveItem('encounter-templates');
-  };
-
   const handleCreateNewEncounter = (patientData = null) => {
     // Open session creation modal instead of template selector
     setIsSessionCreateModalOpen(true);
   };
 
-  const handleSelectTemplate = (template) => {
-    setSelectedTemplate(template);
-    setCurrentView('template-based-encounter');
-  };
-
-  const handleCancelTemplateSelection = () => {
-    setSelectedPatient(null);
-    setCurrentView('encounters-list');
+  const handleCreateNewAppointment = () => {
+    // Navigate directly to appointment creation
+    setSelectedPatient({
+      id: 'P001',
+      name: 'Examinee',
+      age: '12',
+      gender: 'Male'
+    });
+    setCurrentView('session-create');
     setActiveItem('encounters-list');
-  };
-
-  const handleSaveEncounter = (encounterData) => {
-    // In a real app, this would save to backend
-    console.log('Saving encounter:', encounterData);
-    alert('Encounter report created successfully!');
-    setSelectedTemplate(null);
-    setSelectedPatient(null);
-    setCurrentView('encounters-list');
-    setActiveItem('encounters-list');
-  };
-
-  const handleCancelEncounter = () => {
-    setCurrentView('template-selector');
   };
 
   const handleViewPatient = (patientId) => {
@@ -654,19 +582,8 @@ setActiveItem('doctors');
   };
 
   const handleCreateNewClinic = () => {
-    alert('Create new centre functionality - Form coming soon');
-  };
-
-  const handleCreateNewAppointment = () => {
-    // Navigate to template selector for appointment-based session creation
-    setSelectedPatient({
-      id: 'P001',
-      name: 'Examinee',
-      age: '12',
-      gender: 'Male'
-    });
-    setCurrentView('template-selector');
-    setActiveItem('encounters-list');
+    setCurrentView('clinic-create');
+    setActiveItem('clinics');
   };
 
   const handleSaveSession = (sessionData) => {
@@ -992,51 +909,10 @@ ${service.target_age_group || 'Not specified'}
       );
     }
 
-    // Handle template-based encounter creation
-    if (currentView === 'template-based-encounter') {
-      return (
-        <TemplateBasedEncounter
-          template={selectedTemplate}
-          patientData={selectedPatient}
-          onSave={handleSaveEncounter}
-          onCancel={handleCancelEncounter}
-        />
-      );
-    }
-
-    // Handle template selection
+    // Handle template selection (removed - using Redux now)
     if (currentView === 'template-selector') {
-      return (
-        <TemplateSelector
-          onSelectTemplate={handleSelectTemplate}
-          onCancel={handleCancelTemplateSelection}
-          patientData={selectedPatient}
-        />
-      );
-    }
-
-    // Handle template viewer
-    if (currentView === 'template-viewer') {
-      return (
-        <TemplateViewer
-          template={selectedTemplate}
-          onBack={handleBackToTemplates}
-          onEdit={handleEditTemplate}
-          onDuplicate={handleDuplicateTemplate}
-          onDelete={handleDeleteTemplate}
-        />
-      );
-    }
-
-    // Handle template builder view
-    if (currentView === 'template-builder') {
-      return (
-        <TemplateBuilder
-          template={selectedTemplate}
-          onSave={handleSaveTemplate}
-          onCancel={handleCancelTemplate}
-        />
-      );
+      // Redirect to session creation instead
+      return <SessionCreateForm onSave={handleSaveSession} onCancel={() => setIsSessionCreateModalOpen(false)} />;
     }
 
     // Handle encounter detail view
@@ -1098,25 +974,11 @@ ${service.target_age_group || 'Not specified'}
         if (currentView === 'appointments-list') {
           return <AppointmentsList onViewAppointment={handleAppointmentClick} onEditAppointment={handleEditAppointment} onDeleteAppointment={handleDeleteAppointment} onCreateNewAppointment={handleCreateNewAppointment} />;
         }
-        // Show PlansList for Sessions List
+        // Show PlansList for sessions
         return <PlansList />;
-      
-      case 'encounter-templates':
-        return (
-          <EncounterTemplates 
-            onCreateTemplate={handleCreateTemplate}
-            onEditTemplate={handleEditTemplate}
-            onViewTemplate={handleViewTemplate}
-            onDuplicateTemplate={handleDuplicateTemplate}
-            onDeleteTemplate={handleDeleteTemplate}
-          />
-        );
       
       case 'sessions':
         return <PlansList />;
-      
-      case 'template-manager':
-        return <TemplateManager />;
       
       case 'clinic-revenue':
         return <ClinicRevenue />;
@@ -1161,7 +1023,7 @@ ${service.target_age_group || 'Not specified'}
           <Sidebar 
             activeItem={activeItem} 
             setActiveItem={handleSetActiveItem} 
-            shouldExpandEncounters={activeItem === 'encounters-list' || activeItem === 'encounter-templates'}
+            shouldExpandEncounters={activeItem === 'encounters-list'}
             sidebarCollapsed={sidebarCollapsed}
             setSidebarCollapsed={setSidebarCollapsed}
           />

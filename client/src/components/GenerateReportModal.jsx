@@ -1,6 +1,4 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { fetchExaminees, createExaminee, createAssessmentWithScores, setSelectedExaminee, clearSelectedExaminee } from '../store/slices/examineeSlice';
 import api from '../services/api';
 
 /* ═══════════════════════════════════════════════════════════
@@ -38,8 +36,48 @@ const BLANK_SCORES = () => {
 };
 
 const GenerateReportModal = ({ isOpen, onClose }) => {
-  const dispatch = useDispatch();
-  const { examinees, examineeData, selectedExaminee } = useSelector(state => state.examinees);
+  // Local state for data
+  const [examinees, setExaminees] = useState([]);
+  const [selectedExaminee, setSelectedExaminee] = useState(null);
+  const [templates, setTemplates] = useState([]);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  
+  // Fetch data on component mount
+  useEffect(() => {
+    if (isOpen) {
+      fetchTemplates();
+      fetchExaminees();
+    }
+  }, [isOpen]);
+
+  const fetchTemplates = async () => {
+    try {
+      setTemplatesLoading(true);
+      const response = await api.getTemplates();
+      if (response.success) {
+        setTemplates(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+    } finally {
+      setTemplatesLoading(false);
+    }
+  };
+
+  const fetchExaminees = async () => {
+    try {
+      setLoading(true);
+      const response = await api.request('/examinees');
+      if (response.success) {
+        setExaminees(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching examinees:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   // Step 1 state
   const [step, setStep] = useState(1);
@@ -50,9 +88,15 @@ const GenerateReportModal = ({ isOpen, onClose }) => {
   const [errors, setErrors] = useState({});
 
   // Template state
-  const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [useTemplate, setUseTemplate] = useState(false);
+
+  // Fetch templates when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchTemplates();
+    }
+  }, [isOpen]);
 
   // Step 2 state
   const [selectedAssessment, setSelectedAssessment] = useState(null);
@@ -70,6 +114,10 @@ const GenerateReportModal = ({ isOpen, onClose }) => {
     confidenceLevel:'95%', comparisonGroup:'Age group', includeDiscrepancy:false,
   });
 
+  const [generatedReport, setGeneratedReport] = useState(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+
   // When an existing examinee is selected, populate examinee form too
   const handleSelectExaminee = (ex) => {
     setSelectedExaminee(ex);
@@ -83,7 +131,6 @@ const GenerateReportModal = ({ isOpen, onClose }) => {
   };
   const handleClearSelected = () => {
     setSelectedExaminee(null);
-    clearSelectedExaminee();
     setExaminee({
       firstName:'', middleName:'', lastName:'', examineeId:'', gender:'Male', dob:'',
       email:'', comment:'', custom1:'', custom2:'', custom3:'', custom4:'',
@@ -118,13 +165,15 @@ const GenerateReportModal = ({ isOpen, onClose }) => {
     // If on step 1 and user created a new examinee, save it first
     if (step===1 && !selectedExaminee) {
       try {
-        const result = await dispatch(createExaminee(examinee));
-        if (result.error) {
-          alert('Failed to create examinee: ' + result.error.message);
+        const result = await api.request('/examinees', {
+          method: 'POST',
+          body: JSON.stringify(examinee)
+        });
+        if (!result.success) {
+          alert('Failed to create examinee: ' + result.message);
           return;
         }
-        // Set the newly created examinee as selected
-        setSelectedExaminee(result.payload);
+        setSelectedExaminee(result.data);
       } catch (error) {
         alert('Failed to create examinee: ' + error.message);
         return;
@@ -135,10 +184,6 @@ const GenerateReportModal = ({ isOpen, onClose }) => {
   };
 
   const prev = () => setStep(step-1);
-
-  const [generatedReport, setGeneratedReport] = useState(null);
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
 
   // Get template data based on template type and examinee data (now uses API-loaded templates)
   const getTemplateData = (templateId, examinee, assessment, templates) => {
@@ -254,59 +299,10 @@ const GenerateReportModal = ({ isOpen, onClose }) => {
     }
   };
 
-  // Fetch templates when modal opens
-  useEffect(() => {
-    const loadTemplates = async () => {
-      try {
-        const response = await api.getTemplates();
-        if (response.success) {
-          // Transform database data to match frontend format
-          const transformedTemplates = response.data.map(template => ({
-            id: template.type,
-            name: template.name,
-            description: template.description,
-            category: template.category,
-            icon: template.icon,
-            // Include additional data for calculations
-            templateData: template.template_data,
-            formulaConfig: template.formula_config,
-            scoringRules: template.scoring_rules,
-            ageRange: template.age_range,
-            languages: template.languages
-          }));
-          setTemplates(transformedTemplates);
-          console.log('✅ Templates loaded from API in GenerateReportModal:', transformedTemplates.length);
-        }
-      } catch (error) {
-        console.error('❌ Failed to load templates in GenerateReportModal:', error);
-        // Fallback to empty array if API fails
-        setTemplates([]);
-      }
-    };
-
-    if (isOpen) {
-      loadTemplates();
-    }
-  }, [isOpen]);
-
   // Load examinees on mount
   useEffect(() => {
-    dispatch(fetchExaminees());
-  }, [dispatch]);
-
-  // Auto-populate examinee form when examineeData changes (from URL params)
-  useEffect(() => {
-    if (examineeData) {
-      setExaminee({
-        firstName:examineeData.firstName||'', middleName:examineeData.middleName||'', lastName:examineeData.lastName||'',
-        examineeId:examineeData.examineeId||'', gender:examineeData.gender||'Male', dob:examineeData.dob||'',
-        email:examineeData.email||'', comment:examineeData.comment||'',
-        custom1:examineeData.custom1||'', custom2:examineeData.custom2||'', custom3:examineeData.custom3||'', custom4:examineeData.custom4||'',
-      });
-      // Automatically move to Step 2
-      setStep(2);
-    }
-  }, [isOpen, examineeData, examinees]);
+    fetchExaminees();
+  }, []);
 
   if (!isOpen) return null;
 
@@ -344,6 +340,7 @@ const GenerateReportModal = ({ isOpen, onClose }) => {
                 selectedAssessment={selectedAssessment} setSelectedAssessment={setSelectedAssessment}
                 isPrefilled={isPrefilled} setIsPrefilled={setIsPrefilled}
                 templates={templates}
+                templatesLoading={templatesLoading}
                 selectedTemplate={selectedTemplate} setSelectedTemplate={setSelectedTemplate}
                 useTemplate={useTemplate} setUseTemplate={setUseTemplate}
               />
@@ -505,7 +502,7 @@ const Step1 = ({ examinee, setExaminee, errors, selectedExaminee, onSelectExamin
   </div>
 );
 
-const Step2 = ({ assess, setAssess, scores, setScores, errors, templates, selectedTemplate, setSelectedTemplate, useTemplate, setUseTemplate }) => (
+const Step2 = ({ assess, setAssess, scores, setScores, errors, templates, templatesLoading, selectedTemplate, setSelectedTemplate, useTemplate, setUseTemplate }) => (
   <div>
     <h3 style={{marginBottom:24}}>Assessment Details</h3>
     
@@ -522,21 +519,29 @@ const Step2 = ({ assess, setAssess, scores, setScores, errors, templates, select
       </label>
       
       {useTemplate && (
-        <select
-          value={selectedTemplate?.id || ''}
-          onChange={(e) => {
-            const template = templates.find(t => t.id === e.target.value);
-            setSelectedTemplate(template);
-          }}
-          style={{width:'100%',padding:12,border:'1px solid #d1d5db',borderRadius:6,fontSize:14,marginTop:8}}
-        >
-          <option value="">-- Select Template --</option>
-          {templates.map(template => (
-            <option key={template.id} value={template.id}>
-              {template.icon} {template.name}
-            </option>
-          ))}
-        </select>
+        <div>
+          {templatesLoading ? (
+            <div style={{padding:12,background:'#f3f4f6',borderRadius:6,color:'#6b7280',fontSize:14}}>
+              Loading templates...
+            </div>
+          ) : (
+            <select
+              value={selectedTemplate?.id || ''}
+              onChange={(e) => {
+                const template = templates.find(t => t.id === e.target.value);
+                setSelectedTemplate(template);
+              }}
+              style={{width:'100%',padding:12,border:'1px solid #d1d5db',borderRadius:6,fontSize:14,marginTop:8}}
+            >
+              <option value="">-- Select Template --</option>
+              {templates.map(template => (
+                <option key={template.id} value={template.id}>
+                  {template.icon} {template.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
       )}
     </div>
 

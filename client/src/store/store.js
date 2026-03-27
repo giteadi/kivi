@@ -12,6 +12,7 @@ import bookingSlice from './slices/bookingSlice';
 import sessionSlice from './slices/sessionSlice';
 import assessmentSlice from './slices/assessmentSlice';
 import examineeSlice from './slices/examineeSlice';
+import templateSlice from './slices/templateSlice';
 
 export const store = configureStore({
   reducer: {

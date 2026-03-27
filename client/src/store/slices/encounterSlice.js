@@ -13,23 +13,9 @@ export const fetchEncounters = createAsyncThunk(
   }
 );
 
-export const fetchTemplates = createAsyncThunk(
-  'encounters/fetchTemplates',
-  async (filters = {}, { rejectWithValue }) => {
-    try {
-      const queryParams = new URLSearchParams(filters);
-      return await api.request(`/templates?${queryParams}`);
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch templates');
-    }
-  }
-);
-
 const initialState = {
   encounters: [],
-  templates: [],
   currentEncounter: null,
-  currentTemplate: null,
   isLoading: false,
   error: null,
   totalCount: 0,
@@ -65,10 +51,6 @@ const encounterSlice = createSlice({
       .addCase(fetchEncounters.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
-      })
-      .addCase(fetchTemplates.fulfilled, (state, action) => {
-        const templatesData = action.payload?.data || action.payload || [];
-        state.templates = Array.isArray(templatesData) ? templatesData : [];
       });
   },
 });

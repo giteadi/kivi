@@ -96,7 +96,7 @@ const initializeDatabase = async () => {
 
 const checkTablesExist = async () => {
   try {
-    const requiredTables = ['kivi_users', 'kivi_centres', 'kivi_therapists', 'kivi_students', 'kivi_sessions', 'kivi_encounters', 'kivi_plans'];
+    const requiredTables = ['kivi_users', 'kivi_centres', 'kivi_therapists', 'kivi_students', 'kivi_sessions', 'kivi_encounters', 'kivi_plans', 'kivi_assessments', 'kivi_templates'];
     
     for (const table of requiredTables) {
       const result = await new Promise((resolve, reject) => {
@@ -121,6 +121,7 @@ const checkTablesExist = async () => {
 
 const createTables = async () => {
   try {
+    // First create the main tables
     const sqlFile = path.join(__dirname, 'config', 'new_database.sql');
     const sqlContent = fs.readFileSync(sqlFile, 'utf8');
     
@@ -152,6 +153,65 @@ const createTables = async () => {
           });
         });
       }
+    }
+    
+    // Now create additional tables
+    try {
+      console.log('🔄 Creating assessments table...');
+      const assessmentsSql = fs.readFileSync(path.join(__dirname, 'config', 'create_assessments_table.sql'), 'utf8');
+      await new Promise((resolve, reject) => {
+        dbPool.query(assessmentsSql, (err, results) => {
+          if (err) {
+            console.log('Assessments table may already exist or error occurred:', err.message);
+            resolve();
+          } else {
+            console.log('✅ Assessments table created successfully');
+            resolve(results);
+          }
+        });
+      });
+    } catch (error) {
+      console.log('Error creating assessments table:', error.message);
+    }
+    
+    // Create templates table if needed
+    try {
+      console.log('🔄 Checking/Creating templates table...');
+      const templatesCheck = await new Promise((resolve, reject) => {
+        dbPool.query('SHOW TABLES LIKE ?', ['kivi_templates'], (err, results) => {
+          if (err) reject(err);
+          else resolve(results.length > 0);
+        });
+      });
+      
+      if (!templatesCheck) {
+        const templatesSql = `
+          CREATE TABLE kivi_templates (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            type VARCHAR(100) NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            description TEXT,
+            category VARCHAR(100),
+            icon VARCHAR(100),
+            template_data JSON,
+            formula_config JSON,
+            scoring_rules JSON,
+            age_range JSON,
+            languages JSON,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+          );
+        `;
+        await new Promise((resolve, reject) => {
+          dbPool.query(templatesSql, (err, results) => {
+            if (err) reject(err);
+            else resolve(results);
+          });
+        });
+        console.log('✅ Templates table created successfully');
+      }
+    } catch (error) {
+      console.log('Error creating templates table:', error.message);
     }
     
     console.log('✅ Tables and data created successfully');

@@ -244,10 +244,9 @@ class ApiService {
     });
   }
 
-  // Templates endpoints
-  async getTemplates(filters = {}) {
-    const queryParams = new URLSearchParams(filters);
-    return this.request(`/templates?${queryParams}`);
+  // Templates API methods
+  async getTemplates() {
+    return this.request('/templates');
   }
 
   async getTemplate(id) {
@@ -274,11 +273,11 @@ class ApiService {
     });
   }
 
-  async generateReportFromTemplate(templateId, studentId, customData = {}) {
+  async generateReportFromTemplate(templateId, examineeId, customData = {}) {
     return this.request(`/templates/${templateId}/generate-report`, {
       method: 'POST',
       body: JSON.stringify({
-        studentId,
+        examineeId,
         customData
       }),
     });

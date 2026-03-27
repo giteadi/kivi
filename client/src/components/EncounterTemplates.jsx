@@ -12,10 +12,10 @@ const EncounterTemplates = ({ onCreateTemplate, onEditTemplate, onViewTemplate, 
   const [templateToDelete, setTemplateToDelete] = useState(null);
 
   useEffect(() => {
-    fetchTemplates();
+    fetchEncounterTemplates();
   }, []);
 
-  const fetchTemplates = async () => {
+  const fetchEncounterTemplates = async () => {
     try {
       setLoading(true);
       console.log('🔍 Fetching encounter templates...');

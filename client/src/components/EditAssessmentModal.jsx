@@ -1,8 +1,6 @@
 import { motion } from 'framer-motion';
 import { FiX, FiSave, FiCalendar, FiFileText, FiUser, FiClock, FiEdit3, FiChevronDown } from 'react-icons/fi';
 import { useState, useRef, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { updateAssessment } from '../store/slices/assessmentSlice';
 import { useToast } from './Toast';
 import api from '../services/api';
 
@@ -24,52 +22,32 @@ import api from '../services/api';
 
 const EditAssessmentModal = ({ isOpen, onClose, assessment, examineeId, examineeName, onSuccess }) => {
   const toast = useToast();
-  const dispatch = useDispatch();
   
-  // State for templates loaded from API
+  // Local state for templates
   const [assessmentTemplates, setAssessmentTemplates] = useState([]);
   const [templatesLoading, setTemplatesLoading] = useState(false);
   
-  // Custom dropdown refs
-  const assessmentDropdownRef = useRef(null);
-  const deliveryDropdownRef = useRef(null);
-  
-  // Load templates from API on component mount
+  // Fetch templates on component mount
   useEffect(() => {
-    const loadTemplates = async () => {
-      try {
-        setTemplatesLoading(true);
-        const response = await api.getTemplates();
-        if (response.success) {
-          // Transform database data to match frontend format
-          const transformedTemplates = response.data.map(template => ({
-            id: template.type,
-            name: template.name,
-            description: template.description,
-            category: template.category,
-            icon: template.icon,
-            // Include additional data for calculations
-            templateData: template.template_data,
-            formulaConfig: template.formula_config,
-            scoringRules: template.scoring_rules,
-            ageRange: template.age_range,
-            languages: template.languages
-          }));
-          setAssessmentTemplates(transformedTemplates);
-          console.log('✅ Templates loaded from API:', transformedTemplates.length);
-        }
-      } catch (error) {
-        console.error('❌ Failed to load templates:', error);
-        toast.error('Failed to load assessment templates');
-      } finally {
-        setTemplatesLoading(false);
-      }
-    };
-
     if (isOpen) {
-      loadTemplates();
+      fetchTemplates();
     }
-  }, [isOpen, toast]);
+  }, [isOpen]);
+
+  const fetchTemplates = async () => {
+    try {
+      setTemplatesLoading(true);
+      const response = await api.getTemplates();
+      if (response.success) {
+        setAssessmentTemplates(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+      toast.error('Failed to fetch templates');
+    } finally {
+      setTemplatesLoading(false);
+    }
+  };
   
   const [formData, setFormData] = useState({
     assessmentType: assessment?.assessment_type || 'WRAT5',
@@ -148,29 +126,35 @@ const EditAssessmentModal = ({ isOpen, onClose, assessment, examineeId, examinee
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 px-3 py-2">
                 Assessment Templates ({assessmentTemplates.length})
               </div>
-              {assessmentTemplates.map((template) => (
-                <button
-                  key={template.id}
-                  type="button"
-                  onClick={() => {
-                    onChange('assessmentType', template.id);
-                    setIsOpen(false);
-                  }}
-                  className="w-full px-3 py-3 text-left hover:bg-blue-50 transition-colors duration-150 rounded-md flex items-center space-x-3 group"
-                >
-                  <span className="text-lg group-hover:scale-110 transition-transform duration-150">
-                    {template.icon}
-                  </span>
-                  <div>
-                    <div className="font-medium text-gray-900 group-hover:text-blue-600">
-                      {template.name}
+              {templatesLoading ? (
+                <div className="px-3 py-4 text-sm text-gray-500">
+                  Loading templates...
+                </div>
+              ) : (
+                assessmentTemplates.map((template) => (
+                  <button
+                    key={template.id}
+                    type="button"
+                    onClick={() => {
+                      onChange('assessmentType', template.type);
+                      setIsOpen(false);
+                    }}
+                    className="w-full px-3 py-3 text-left hover:bg-blue-50 transition-colors duration-150 rounded-md flex items-center space-x-3 group"
+                  >
+                    <span className="text-lg group-hover:scale-110 transition-transform duration-150">
+                      {template.icon}
+                    </span>
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900 group-hover:text-blue-600">
+                        {template.name}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {template.category}
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500">
-                      {template.category} • {template.ageRange}
-                    </div>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                ))
+              )}
             </div>
           </div>
         )}
