@@ -14,6 +14,26 @@ const AssessmentReportGenerator = ({
   // Generate report based on template type
   const generateReport = () => {
     switch (template.type) {
+      case 'WRAT-5':
+        return generateWRAT5Report(template);
+      case 'WRMT-II':
+        return generateWRMT2Report(template);
+      case 'Diagnostic Report':
+        return generateDiagnosticReport(template);
+      case 'Evaluation Summary':
+        return generateEvaluationSummary(template);
+      case 'WJ-Cog':
+        return generateWJCogReport(template);
+      case 'WJ-Ach':
+        return generateWJAchReport(template);
+      case 'WISC-4':
+        return generateWISC4Report(template);
+      case 'WJ-3':
+        return generateWJ3Report(template);
+      case 'TOWL-4':
+        return generateTOWL4Report(template);
+      case 'VABS-3':
+        return generateVABS3Report(template);
       case 'ADHDT2':
         return generateADHDT2Report(template);
       case 'ADHT-BSM':
@@ -30,6 +50,8 @@ const AssessmentReportGenerator = ({
         return generateBrownEFAScaleReport(template);
       case 'EACA':
         return generateEACAReport(template);
+      case 'EACA-Autism':
+        return generateEACAAutismReport(template);
       case 'Nelson-Denny':
         return generateNelsonDennyReport(template);
       case 'TAPS-3':
@@ -978,5 +1000,132 @@ Interpretation: ${template.studentName || 'ABC'}'s RIPA-P scores imply '${interp
     </div>
   );
 };
+
+  // WRAT-5 Report Generation
+  const generateWRAT5Report = (template) => {
+    const scores = template.scores || {};
+    return {
+      title: template.name,
+      studentName: template.studentName,
+      examinerName: template.examinerName,
+      testDate: template.testDate,
+      scores: {
+        mathComputation: {
+          raw: scores.mathRaw || '',
+          standard: scores.mathStd || '',
+          percentile: scores.mathPct || '',
+          category: scores.mathCat || ''
+        },
+        spelling: {
+          raw: scores.spellingRaw || '',
+          standard: scores.spellingStd || '',
+          percentile: scores.spellingPct || '',
+          category: scores.spellingCat || ''
+        },
+        wordReading: {
+          raw: scores.wordReadingRaw || '',
+          standard: scores.wordReadingStd || '',
+          percentile: scores.wordReadingPct || '',
+          category: scores.wordReadingCat || ''
+        },
+        sentenceComprehension: {
+          raw: scores.sentenceRaw || '',
+          standard: scores.sentenceStd || '',
+          percentile: scores.sentencePct || '',
+          category: scores.sentenceCat || ''
+        }
+      },
+      interpretation: `The WRAT-5 assessment provides a comprehensive evaluation of basic academic skills. Performance across subtests indicates ${scores.mathCat === 'Average' ? 'average' : 'below average'} mathematical abilities, ${scores.spellingCat === 'Average' ? 'average' : 'below average'} spelling skills, and ${scores.wordReadingCat === 'Average' ? 'average' : 'below average'} word reading proficiency.`
+    };
+  };
+
+  // WRMT-II Report Generation  
+  const generateWRMT2Report = (template) => {
+    const scores = template.scores || {};
+    return {
+      title: template.name,
+      studentName: template.studentName,
+      examinerName: template.examinerName,
+      testDate: template.testDate,
+      scores: {
+        basicSkills: {
+          wordIdentification: scores.wordIdentification || {},
+          wordAttack: scores.wordAttack || {}
+        },
+        readingComprehension: scores.readingComprehension || {},
+        oralReadingFluency: scores.oralReadingFluency || {},
+        listeningComprehension: scores.listeningComprehension || {}
+      },
+      interpretation: `The WRMT-II assessment reveals specific reading strengths and weaknesses. Basic skills performance indicates ${scores.wordIdentification?.descriptor || 'average'} word recognition abilities.`
+    };
+  };
+
+  // Diagnostic Report Generation
+  const generateDiagnosticReport = (template) => {
+    return {
+      title: template.name,
+      studentName: template.studentName,
+      examinerName: template.examinerName,
+      testDate: template.testDate,
+      diagnosticImpression: template.diagnosticImpression || {},
+      recommendations: template.recommendations || [],
+      interpretation: `Based on comprehensive assessment, the following diagnostic impressions are formulated. Recommendations are provided based on DSM-5 criteria and standardized test results.`
+    };
+  };
+
+  // Evaluation Summary Generation
+  const generateEvaluationSummary = (template) => {
+    return {
+      title: template.name,
+      studentName: template.studentName,
+      examinerName: template.examinerName,
+      testDate: template.testDate,
+      generalIntellectualAbility: template.generalIntellectualAbility || {},
+      interpretation: `Comprehensive evaluation summary across multiple assessment instruments including cognitive and achievement measures.`
+    };
+  };
+
+  // Placeholder functions for other templates
+  const generateWJCogReport = (template) => ({
+    title: template.name,
+    studentName: template.studentName,
+    interpretation: `Woodcock-Johnson Cognitive Abilities assessment completed.`
+  });
+
+  const generateWJAchReport = (template) => ({
+    title: template.name,
+    studentName: template.studentName,
+    interpretation: `Woodcock-Johnson Achievement assessment completed.`
+  });
+
+  const generateWISC4Report = (template) => ({
+    title: template.name,
+    studentName: template.studentName,
+    interpretation: `Wechsler Intelligence Scale for Children assessment completed.`
+  });
+
+  const generateWJ3Report = (template) => ({
+    title: template.name,
+    studentName: template.studentName,
+    interpretation: `WJ-III Achievement assessment completed.`
+  });
+
+  const generateTOWL4Report = (template) => ({
+    title: template.name,
+    studentName: template.studentName,
+    interpretation: `Test of Written Language assessment completed.`
+  });
+
+  const generateVABS3Report = (template) => ({
+    title: template.name,
+    studentName: template.studentName,
+    interpretation: `Vineland Adaptive Behavior Scales assessment completed.`
+  });
+
+  const generateEACAAutismReport = (template) => ({
+    title: template.name,
+    studentName: template.studentName,
+    interpretation: `Educational Assessment of Children with Autism completed.`
+  });
 
 export default AssessmentReportGenerator;
