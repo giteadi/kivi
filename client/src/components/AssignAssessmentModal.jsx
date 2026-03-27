@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
-import { FiX, FiSave, FiCalendar, FiFileText, FiUser, FiClock, FiPlus } from 'react-icons/fi';
-import { useState } from 'react';
+import { FiX, FiSave, FiCalendar, FiFileText, FiUser, FiClock, FiPlus, FiChevronDown } from 'react-icons/fi';
+import { useState, useRef, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { createAssessment } from '../store/slices/assessmentSlice';
 import { useToast } from './Toast';
@@ -171,6 +171,10 @@ const AssignAssessmentModal = ({ isOpen, onClose, examineeId, examineeName }) =>
   const toast = useToast();
   const dispatch = useDispatch();
   
+  // Custom dropdown refs
+  const assessmentDropdownRef = useRef(null);
+  const deliveryDropdownRef = useRef(null);
+  
   const [formData, setFormData] = useState({
     assessmentType: 'WRAT5',
     deliveryMethod: 'Online',
@@ -187,6 +191,10 @@ const AssignAssessmentModal = ({ isOpen, onClose, examineeId, examineeName }) =>
   const [newAssessmentType, setNewAssessmentType] = useState('');
 
   const [errors, setErrors] = useState({});
+  
+  // Custom dropdown states
+  const [isAssessmentDropdownOpen, setIsAssessmentDropdownOpen] = useState(false);
+  const [isDeliveryDropdownOpen, setIsDeliveryDropdownOpen] = useState(false);
 
   const [assessmentTypes, setAssessmentTypes] = useState(ASSESSMENT_TEMPLATES);
 
@@ -194,6 +202,23 @@ const AssignAssessmentModal = ({ isOpen, onClose, examineeId, examineeName }) =>
     'Online',
     'Offline'
   ];
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (assessmentDropdownRef.current && !assessmentDropdownRef.current.contains(event.target)) {
+        setIsAssessmentDropdownOpen(false);
+      }
+      if (deliveryDropdownRef.current && !deliveryDropdownRef.current.contains(event.target)) {
+        setIsDeliveryDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -291,12 +316,13 @@ const AssignAssessmentModal = ({ isOpen, onClose, examineeId, examineeName }) =>
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70]">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-visible"
+        style={{ zIndex: 71 }}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -318,7 +344,7 @@ const AssignAssessmentModal = ({ isOpen, onClose, examineeId, examineeName }) =>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[calc(90vh-120px)] overflow-y-auto">
           {/* Assessment Details */}
           <div>
             <h3 className="text-lg font-medium text-gray-800 mb-4">Assessment Details</h3>
@@ -328,17 +354,42 @@ const AssignAssessmentModal = ({ isOpen, onClose, examineeId, examineeName }) =>
                   Assessment Type
                 </label>
                 <div className="flex space-x-2">
-                  <select
-                    value={formData.assessmentType}
-                    onChange={(e) => handleInputChange('assessmentType', e.target.value)}
-                    className="w-48 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    {assessmentTypes.map(type => (
-                      <option key={type.id} value={type.id}>
-                        {type.name}
-                      </option>
-                    ))}
-                  </select>
+                  {/* Custom Assessment Type Dropdown */}
+                  <div ref={assessmentDropdownRef} className="relative w-48">
+                    <button
+                      type="button"
+                      onClick={() => setIsAssessmentDropdownOpen(!isAssessmentDropdownOpen)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-left flex items-center justify-between"
+                    >
+                      <span className="truncate">
+                        {assessmentTypes.find(type => type.id === formData.assessmentType)?.name || 'Select Assessment Type'}
+                      </span>
+                      <FiChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isAssessmentDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                    
+                    {isAssessmentDropdownOpen && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        <div className="py-1">
+                          {assessmentTypes.map(type => (
+                            <button
+                              key={type.id}
+                              type="button"
+                              onClick={() => {
+                                handleInputChange('assessmentType', type.id);
+                                setIsAssessmentDropdownOpen(false);
+                              }}
+                              className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center space-x-2 ${
+                                formData.assessmentType === type.id ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                              }`}
+                            >
+                              <span className="flex-shrink-0">{type.icon}</span>
+                              <span className="truncate">{type.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   <button
                     type="button"
                     onClick={() => setShowAddAssessmentType(!showAddAssessmentType)}
@@ -385,17 +436,39 @@ const AssignAssessmentModal = ({ isOpen, onClose, examineeId, examineeName }) =>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Delivery Method
                 </label>
-                <select
-                  value={formData.deliveryMethod}
-                  onChange={(e) => handleInputChange('deliveryMethod', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {deliveryMethods.map(method => (
-                    <option key={method} value={method}>
-                      {method}
-                    </option>
-                  ))}
-                </select>
+                {/* Custom Delivery Method Dropdown */}
+                <div ref={deliveryDropdownRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsDeliveryDropdownOpen(!isDeliveryDropdownOpen)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-left flex items-center justify-between"
+                  >
+                    <span>{formData.deliveryMethod}</span>
+                    <FiChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isDeliveryDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  {isDeliveryDropdownOpen && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+                      <div className="py-1">
+                        {deliveryMethods.map(method => (
+                          <button
+                            key={method}
+                            type="button"
+                            onClick={() => {
+                              handleInputChange('deliveryMethod', method);
+                              setIsDeliveryDropdownOpen(false);
+                            }}
+                            className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-100 ${
+                              formData.deliveryMethod === method ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                            }`}
+                          >
+                            {method}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
