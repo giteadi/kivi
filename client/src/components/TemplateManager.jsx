@@ -19,6 +19,7 @@ import TOWL4Template from './TOWL4Template';
 import VABS3Template from './VABS3Template';
 import WISC4Template from './WISC4Template';
 import WJ3Template from './WJ3Template';
+import WJCogTemplate from './WJCogTemplate';
 import AssessmentReportGenerator from './AssessmentReportGenerator';
 import TemplateTypeSelector from './TemplateTypeSelector';
 
@@ -2107,6 +2108,180 @@ She showed some difficulty with verbal expression of meaning of words presented 
       },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
+    },
+    {
+      id: 19,
+      name: 'WOODCOCK-JOHNSON TESTS OF COGNITIVE ABILITIES IV (WJ-Cog)',
+      type: 'WJ-Cog',
+      description: '18 tests measuring different aspects of cognitive ability based on CHC theory, with cluster scores for interpretative purposes.',
+      template_data: {
+        type: 'WJ-Cog',
+        name: 'WOODCOCK-JOHNSON TESTS OF COGNITIVE ABILITIES IV (WJ-Cog)',
+        studentName: '',
+        examinerName: '',
+        testDate: new Date().toISOString().split('T')[0],
+        age: '',
+        grade: '',
+        description: `The Woodcock-Johnson IV Tests of Cognitive Abilities (WJ IV COG) contains 18 tests each measuring a different aspect of cognitive ability. The tests combine to form a variety of clusters. Cluster scores are the primary basis for interpretative purposes. Both subtests and cluster scores are distributed with a mean of 100 and a standard deviation of 15. The tests are designed for administration to individuals aged two through adulthood. Definitions of the measured abilities are based primarily on the Cattell-Horn-Carroll (CHC) theory of cognitive abilities, of individually administered, norm-referenced tests to measure cognitive ability.`,
+        
+        standardScoreDescriptors: [
+          { range: '>130', descriptor: 'Very Superior', percentileRank: '>97th' },
+          { range: '121-130', descriptor: 'Superior', percentileRank: '91st-97th' },
+          { range: '111-120', descriptor: 'High Average', percentileRank: '75th-91st' },
+          { range: '90-110', descriptor: 'Average', percentileRank: '25th-75th' },
+          { range: '80-89', descriptor: 'Low Average', percentileRank: '9th-23rd' },
+          { range: '70-79', descriptor: 'Poor', percentileRank: '2nd-8th' },
+          { range: '<69', descriptor: 'Very Poor', percentileRank: '<2nd' }
+        ],
+
+        clusters: [
+          {
+            name: 'COMPREHENSION KNOWLEDGE',
+            description: 'Crystallized Intelligence (Gc) is the breadth and depth of a person\'s acquired knowledge of a culture and the effective application of this knowledge. Crystallized Intelligence is correlated with reading, writing, and math academic skills.',
+            subtests: [
+              {
+                name: 'Oral Vocabulary',
+                description: 'Providing a synonym or antonym for a given word',
+                rawScore: 0,
+                standardScore: 82,
+                percentileRank: 12,
+                relativeProficiencyIndex: 52,
+                descriptor: 'Low Average',
+                items: [
+                  { id: 1, item: 'Synonym for "happy"', response: 'joyful', correct: true },
+                  { id: 2, item: 'Antonym for "large"', response: 'small', correct: true },
+                  { id: 3, item: 'Synonym for "rapid"', response: 'fast', correct: true },
+                  { id: 4, item: 'Antonym for "ancient"', response: 'modern', correct: true },
+                  { id: 5, item: 'Synonym for "brave"', response: 'courageous', correct: true }
+                ]
+              },
+              {
+                name: 'General Information',
+                description: 'General knowledge questions across various domains',
+                rawScore: 0,
+                standardScore: 99,
+                percentileRank: 47,
+                relativeProficiencyIndex: 89,
+                descriptor: 'Average',
+                items: [
+                  { id: 6, item: 'Capital of France', response: 'Paris', correct: true },
+                  { id: 7, item: 'Largest planet', response: 'Jupiter', correct: true },
+                  { id: 8, item: 'Author of Romeo and Juliet', response: 'Shakespeare', correct: true },
+                  { id: 9, item: 'Chemical symbol for gold', response: 'Au', correct: true },
+                  { id: 10, item: 'Number of continents', response: '7', correct: true }
+                ]
+              }
+            ],
+            clusterScore: 93,
+            clusterPercentile: 32,
+            clusterDescriptor: 'Average'
+          },
+          {
+            name: 'FLUID REASONING (EXT)',
+            description: 'Fluid reasoning involves the ability to solve novel problems by identifying patterns and relationships, drawing inferences, and forming and modifying concepts.',
+            subtests: [
+              {
+                name: 'Number Series',
+                description: 'Identifying patterns in number sequences',
+                rawScore: 0,
+                standardScore: 108,
+                percentileRank: 70,
+                relativeProficiencyIndex: 95,
+                descriptor: 'Average',
+                items: [
+                  { id: 11, item: '2, 4, 6, 8, ?', response: '10', correct: true },
+                  { id: 12, item: '1, 4, 9, 16, ?', response: '25', correct: true },
+                  { id: 13, item: '3, 6, 9, 12, ?', response: '15', correct: true },
+                  { id: 14, item: '5, 10, 15, 20, ?', response: '25', correct: true },
+                  { id: 15, item: '1, 3, 6, 10, ?', response: '15', correct: true }
+                ]
+              },
+              {
+                name: 'Concept Formation',
+                description: 'Forming concepts by identifying rules and patterns',
+                rawScore: 0,
+                standardScore: 85,
+                percentileRank: 16,
+                relativeProficiencyIndex: 79,
+                descriptor: 'Low Average',
+                items: [
+                  { id: 16, item: 'Concept Pattern 1', response: '', correct: true },
+                  { id: 17, item: 'Concept Pattern 2', response: '', correct: true },
+                  { id: 18, item: 'Concept Pattern 3', response: '', correct: true },
+                  { id: 19, item: 'Concept Pattern 4', response: '', correct: true },
+                  { id: 20, item: 'Concept Pattern 5', response: '', correct: true }
+                ]
+              },
+              {
+                name: 'Analysis Synthesis',
+                description: 'Analyzing and synthesizing information to solve problems',
+                rawScore: 0,
+                standardScore: 96,
+                percentileRank: 39,
+                relativeProficiencyIndex: 85,
+                descriptor: 'Average',
+                items: [
+                  { id: 21, item: 'Analysis Synthesis 1', response: '', correct: true },
+                  { id: 22, item: 'Analysis Synthesis 2', response: '', correct: true },
+                  { id: 23, item: 'Analysis Synthesis 3', response: '', correct: true },
+                  { id: 24, item: 'Analysis Synthesis 4', response: '', correct: true },
+                  { id: 25, item: 'Analysis Synthesis 5', response: '', correct: true }
+                ]
+              }
+            ],
+            clusterScore: 95,
+            clusterPercentile: 37,
+            clusterDescriptor: 'Average'
+          },
+          {
+            name: 'SHORT-TERM WORKING MEMORY (EXT)',
+            description: 'Short-term working memory involves the ability to hold and manipulate information in immediate awareness while performing other mental operations.',
+            subtests: [
+              {
+                name: 'Verbal Attention',
+                description: 'Remembering and repeating sequences of numbers and words',
+                rawScore: 0,
+                standardScore: 92,
+                percentileRank: 30,
+                relativeProficiencyIndex: 82,
+                descriptor: 'Average',
+                items: [
+                  { id: 26, item: 'Numbers: 3-7-2', response: '3-7-2', correct: true },
+                  { id: 27, item: 'Words: cat-dog-bird', response: 'cat-dog-bird', correct: true },
+                  { id: 28, item: 'Mixed: 5-cat-8', response: '5-cat-8', correct: true },
+                  { id: 29, item: 'Numbers: 9-4-1-6', response: '9-4-1-6', correct: true },
+                  { id: 30, item: 'Words: apple-orange-banana', response: 'apple-orange-banana', correct: true }
+                ]
+              },
+              {
+                name: 'Numbers Reversed',
+                description: 'Repeating sequences of numbers in reverse order',
+                rawScore: 0,
+                standardScore: 108,
+                percentileRank: 70,
+                relativeProficiencyIndex: 99,
+                descriptor: 'Average',
+                items: [
+                  { id: 31, item: 'Forward: 2-5-8, Reverse: ?', response: '8-5-2', correct: true },
+                  { id: 32, item: 'Forward: 3-7-1-9, Reverse: ?', response: '9-1-7-3', correct: true },
+                  { id: 33, item: 'Forward: 4-2-6-1-8, Reverse: ?', response: '8-1-6-2-4', correct: true },
+                  { id: 34, item: 'Forward: 5-9-3-7, Reverse: ?', response: '7-3-9-5', correct: true },
+                  { id: 35, item: 'Forward: 1-4-8-2-6, Reverse: ?', response: '6-2-8-4-1', correct: true }
+                ]
+              }
+            ],
+            clusterScore: 103,
+            clusterPercentile: 58,
+            clusterDescriptor: 'Average'
+          }
+        ],
+
+        interpretation: '',
+        conclusions: '',
+        recommendations: ''
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
   ];
 
@@ -2254,6 +2429,8 @@ She showed some difficulty with verbal expression of meaning of words presented 
         return <FiFileText className="w-5 h-5 text-blue-500" />;
       case 'WJ-3':
         return <FiFileText className="w-5 h-5 text-green-500" />;
+      case 'WJ-Cog':
+        return <FiFileText className="w-5 h-5 text-orange-500" />;
       case 'EACA-Autism':
         return <FiFileText className="w-5 h-5 text-purple-500" />;
       default:
@@ -2307,6 +2484,9 @@ She showed some difficulty with verbal expression of meaning of words presented 
     if (type === 'WJ-3' || templateName?.toLowerCase().includes('wj-iii') || templateName?.toLowerCase().includes('woodcock')) {
       return 'bg-green-100 text-green-800';
     }
+    if (type === 'WJ-Cog' || templateName?.toLowerCase().includes('wjs-cog') || (templateName?.toLowerCase().includes('woodcock') && templateName?.toLowerCase().includes('cognitive'))) {
+      return 'bg-orange-100 text-orange-800';
+    }
     switch (type) {
       case 'ADHDT2':
         return 'bg-blue-100 text-blue-800';
@@ -2355,7 +2535,9 @@ She showed some difficulty with verbal expression of meaning of words presented 
                          selectedTemplate?.name?.toLowerCase().includes('wisc') ? 'WISC-4' :
                          selectedTemplate?.template_data?.name?.toLowerCase().includes('wisc') ? 'WISC-4' :
                          selectedTemplate?.name?.toLowerCase().includes('wj-iii') || selectedTemplate?.name?.toLowerCase().includes('woodcock') ? 'WJ-3' :
-                         selectedTemplate?.template_data?.name?.toLowerCase().includes('wj-iii') || selectedTemplate?.template_data?.name?.toLowerCase().includes('woodcock') ? 'WJ-3' : 'ADHDT2');
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('wj-iii') || selectedTemplate?.template_data?.name?.toLowerCase().includes('woodcock') ? 'WJ-3' :
+                         selectedTemplate?.name?.toLowerCase().includes('wjs-cog') || (selectedTemplate?.name?.toLowerCase().includes('woodcock') && selectedTemplate?.name?.toLowerCase().includes('cognitive')) ? 'WJ-Cog' :
+                         selectedTemplate?.template_data?.name?.toLowerCase().includes('wjs-cog') || (selectedTemplate?.template_data?.name?.toLowerCase().includes('woodcock') && selectedTemplate?.template_data?.name?.toLowerCase().includes('cognitive')) ? 'WJ-Cog' : 'ADHDT2');
     
     if (templateType === 'RIPA-Primary') {
       return (
@@ -2514,6 +2696,17 @@ She showed some difficulty with verbal expression of meaning of words presented 
     if (templateType === 'WJ-3') {
       return (
         <WJ3Template
+          onSave={handleTemplateSave}
+          onCancel={handleTemplateCancel}
+          studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
+          examinerName={selectedTemplate?.template_data?.examinerName || 'Dr. Smith'}
+        />
+      );
+    }
+
+    if (templateType === 'WJ-Cog') {
+      return (
+        <WJCogTemplate
           onSave={handleTemplateSave}
           onCancel={handleTemplateCancel}
           studentName={selectedTemplate?.template_data?.studentName || 'ABC'}
