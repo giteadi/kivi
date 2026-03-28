@@ -91,13 +91,15 @@ const EditAssessmentModal = ({ isOpen, onClose, assessment, examineeId, examinee
 
   // Helper function to get assessment name
   const getAssessmentName = (assessmentType) => {
-    const template = assessmentTemplates.find(t => t.id === assessmentType);
+    console.log('🔍 getAssessmentName called with:', assessmentType, 'type:', typeof assessmentType);
+    const template = assessmentTemplates.find(t => String(t.id) === String(assessmentType));
+    console.log('🔍 Found template:', template);
     return template ? template.name : assessmentType;
   };
 
   // Helper function to get assessment icon
   const getAssessmentIcon = (assessmentType) => {
-    const template = assessmentTemplates.find(t => t.id === assessmentType);
+    const template = assessmentTemplates.find(t => String(t.id) === String(assessmentType));
     return template ? template.icon : '📋';
   };
 
@@ -105,6 +107,12 @@ const EditAssessmentModal = ({ isOpen, onClose, assessment, examineeId, examinee
   const CustomAssessmentDropdown = ({ value, onChange, disabled }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
+
+    console.log('🔽 CustomAssessmentDropdown RENDER:');
+    console.log('   - value (assessmentType):', value, 'type:', typeof value);
+    console.log('   - assessmentTemplates count:', assessmentTemplates.length);
+    console.log('   - templatesLoading:', templatesLoading);
+    console.log('   - disabled:', disabled);
 
     useEffect(() => {
       const handleClickOutside = (event) => {
@@ -119,13 +127,18 @@ const EditAssessmentModal = ({ isOpen, onClose, assessment, examineeId, examinee
       };
     }, []);
 
-    const selectedTemplate = assessmentTemplates.find(t => t.id === value);
+    const selectedTemplate = assessmentTemplates.find(t => String(t.id) === String(value));
+    console.log('   - selectedTemplate found:', selectedTemplate);
+    console.log('   - Template search: looking for id="' + value + '" in', assessmentTemplates.map(t => ({ id: t.id, type: typeof t.id })));
 
     return (
       <div className="relative" ref={dropdownRef}>
         <button
           type="button"
-          onClick={() => !disabled && setIsOpen(!isOpen)}
+          onClick={() => {
+            console.log('🔘 Dropdown button clicked! isOpen:', !isOpen);
+            !disabled && setIsOpen(!isOpen);
+          }}
           disabled={disabled || templatesLoading}
           className={`w-full px-4 py-3 text-left border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
             disabled 
@@ -160,6 +173,7 @@ const EditAssessmentModal = ({ isOpen, onClose, assessment, examineeId, examinee
                     key={template.id}
                     type="button"
                     onClick={() => {
+                      console.log('✅ Template selected:', template.id, template.name);
                       onChange('assessmentType', template.id);
                       setIsOpen(false);
                     }}
