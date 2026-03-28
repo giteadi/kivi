@@ -174,21 +174,24 @@ class TemplateController {
     console.log(`📄 BODY:`, req.body);
     
     try {
-      const templateId = req.params.id; // Direct access instead of destructuring
-      const { studentId, customData } = req.body || {};
+      const templateId = req.params.id;
+      const { studentId, examineeId, customData } = req.body || {};
+      
+      // Use studentId or examineeId (whichever is provided)
+      const actualStudentId = studentId || examineeId;
       
       // Parse templateId to integer
       const parsedTemplateId = parseInt(templateId);
-      const parsedStudentId = parseInt(studentId);
+      const parsedStudentId = parseInt(actualStudentId);
       
       console.log(`📄 GENERATE REPORT: Using template ${parsedTemplateId} for student ${parsedStudentId}`);
-      console.log(`📄 ORIGINAL PARAMS: templateId=${templateId} (type: ${typeof templateId}), studentId=${studentId} (type: ${typeof studentId})`);
+      console.log(`📄 ORIGINAL PARAMS: templateId=${templateId}, studentId=${studentId}, examineeId=${examineeId}`);
       console.log(`📄 PARSED PARAMS: templateId=${parsedTemplateId}, studentId=${parsedStudentId}`);
       
-      if (!parsedStudentId) {
+      if (!parsedStudentId || isNaN(parsedStudentId)) {
         return res.status(400).json({
           success: false,
-          message: 'Student ID is required'
+          message: 'Student ID is required and must be a valid number'
         });
       }
       
@@ -240,7 +243,7 @@ class TemplateController {
         ...customData
       };
 
-      console.log(`✅ GENERATE REPORT SUCCESS: Report generated for student ${studentId}`);
+      console.log(`✅ GENERATE REPORT SUCCESS: Report generated for student ${parsedStudentId}`);
       res.json({
         success: true,
         data: reportData,

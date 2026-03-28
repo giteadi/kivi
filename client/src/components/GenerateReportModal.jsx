@@ -402,7 +402,7 @@ const GenerateReportModal = ({ isOpen, onClose, selectedAssessmentIds, assessmen
         console.log('📝 Scores being sent to template:', scores);
         console.log('📊 Custom data for report:', customData);
         
-        const result = await api.generateReportFromTemplate(selectedTemplate.id, activeEx.examineeId, customData);
+        const result = await api.generateReportFromTemplate(selectedTemplate.id, activeEx.id, customData);
         
         if (result.success) {
           console.log('✅ Report generated successfully:', result);
