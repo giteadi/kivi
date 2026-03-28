@@ -333,8 +333,14 @@ const GenerateReportModal = ({ isOpen, onClose, selectedAssessmentIds, assessmen
 
   const generate = async () => {
     const activeEx = selectedExaminee || examinee;
+    console.log('🔍 Debug - activeEx:', activeEx);
+    console.log('🔍 Debug - activeEx.examineeId:', activeEx?.examineeId);
     if (!activeEx || !assess.testDate) {
       alert('Missing required information');
+      return;
+    }
+    if (!activeEx.examineeId) {
+      alert('Student ID is required. Please enter examinee ID in Step 1.');
       return;
     }
 
@@ -342,29 +348,65 @@ const GenerateReportModal = ({ isOpen, onClose, selectedAssessmentIds, assessmen
     try {
       let reportData;
 
-      if (useTemplate && selectedTemplate) {
-        // Generate report using selected assessment template
-        console.log('📄 Generating report using template:', selectedTemplate.name);
+      console.log('🔍 Debug - useTemplate:', useTemplate);
+      console.log('🔍 Debug - selectedTemplate:', selectedTemplate);
+      console.log('🔍 Debug - available templates:', templates.map(t => ({ id: t.id, name: t.name })));
+
+      if (selectedTemplate) {
+        // Generate report using selected assessment template (auto-selected from assessment or manually selected)
+        console.log('📄 Generating report using template:', selectedTemplate.name, 'ID:', selectedTemplate.id);
         
         // Get template data based on selected template (now using API-loaded templates)
         const templateData = getTemplateData(selectedTemplate.id, activeEx, assess, templates);
+        console.log('🔍 Debug - templateData:', templateData);
         
-        const customData = {
-          testDate: assess.testDate,
-          examiner: assess.examiner,
-          language: assess.language,
-          gradeLevel: assess.gradeLevel,
-          scores: scores, // ⭐ ADDED: Pass entered scores to template
-          // Add any other assessment data that should override template
+        // Calculate Standard Score Comparisons
+        const mathStd = parseFloat(scores.mathStd) || 0;
+        const spellingStd = parseFloat(scores.spellingStd) || 0;
+        const wordReadingStd = parseFloat(scores.wordReadingStd) || 0;
+        const sentenceStd = parseFloat(scores.sentenceStd) || 0;
+        
+        const comparisons = {
+          // Differences
+          diff_wr_sp: (wordReadingStd - spellingStd).toFixed(1),
+          diff_wr_mc: (wordReadingStd - mathStd).toFixed(1),
+          diff_wr_sc: (wordReadingStd - sentenceStd).toFixed(1),
+          diff_sp_mc: (spellingStd - mathStd).toFixed(1),
+          diff_sp_sc: (spellingStd - sentenceStd).toFixed(1),
+          diff_mc_sc: (mathStd - sentenceStd).toFixed(1),
+          
+          // Significance (p < .05 if difference >= 15 points typically)
+          sig_wr_sp: Math.abs(wordReadingStd - spellingStd) >= 15 ? '*' : '',
+          sig_wr_mc: Math.abs(wordReadingStd - mathStd) >= 15 ? '*' : '',
+          sig_wr_sc: Math.abs(wordReadingStd - sentenceStd) >= 15 ? '*' : '',
+          sig_sp_mc: Math.abs(spellingStd - mathStd) >= 15 ? '*' : '',
+          sig_sp_sc: Math.abs(spellingStd - sentenceStd) >= 15 ? '*' : '',
+          sig_mc_sc: Math.abs(mathStd - sentenceStd) >= 15 ? '*' : '',
+          
+          // Base rates (abnormal if diff > 20, uncommon if > 15)
+          base_wr_sp: Math.abs(wordReadingStd - spellingStd) > 20 ? '<1%' : (Math.abs(wordReadingStd - spellingStd) > 15 ? '2%' : '10%'),
+          base_wr_mc: Math.abs(wordReadingStd - mathStd) > 20 ? '<1%' : (Math.abs(wordReadingStd - mathStd) > 15 ? '2%' : '10%'),
+          base_wr_sc: Math.abs(wordReadingStd - sentenceStd) > 20 ? '<1%' : (Math.abs(wordReadingStd - sentenceStd) > 15 ? '2%' : '10%'),
+          base_sp_mc: Math.abs(spellingStd - mathStd) > 20 ? '<1%' : (Math.abs(spellingStd - mathStd) > 15 ? '2%' : '10%'),
+          base_sp_sc: Math.abs(spellingStd - sentenceStd) > 20 ? '<1%' : (Math.abs(spellingStd - sentenceStd) > 15 ? '2%' : '10%'),
+          base_mc_sc: Math.abs(mathStd - sentenceStd) > 20 ? '<1%' : (Math.abs(mathStd - sentenceStd) > 15 ? '2%' : '10%'),
         };
         
+        const customData = {
+          examinee: activeEx,
+          assessment: assess,
+          scores: {...scores, ...comparisons},
+          ...templateData
+        };
+
         console.log('📝 Scores being sent to template:', scores);
         console.log('📊 Custom data for report:', customData);
         
-        const result = await api.generateReportFromTemplate(selectedTemplate.id, examineeId, customData);
+        const result = await api.generateReportFromTemplate(selectedTemplate.id, activeEx.examineeId, customData);
         
         if (result.success) {
-          reportData = result.data;
+          console.log('✅ Report generated successfully:', result);
+          reportData = result.report || result.data;
         } else {
           throw new Error(result.message || 'Failed to generate report from template');
         }
@@ -623,7 +665,10 @@ const Step2 = ({ assess, setAssess, scores, setScores, errors, templates, templa
             <select
               value={selectedTemplate?.id || ''}
               onChange={(e) => {
-                const template = templates.find(t => t.id === e.target.value);
+                const selectedId = e.target.value;
+                console.log('🔍 Template dropdown selected ID:', selectedId, 'type:', typeof selectedId);
+                const template = templates.find(t => String(t.id) === String(selectedId));
+                console.log('🔍 Found template:', template);
                 setSelectedTemplate(template);
               }}
               style={{width:'100%',padding:12,border:'1px solid #d1d5db',borderRadius:6,fontSize:14,marginTop:8}}
@@ -681,11 +726,47 @@ const Step2 = ({ assess, setAssess, scores, setScores, errors, templates, templa
     <div style={{marginTop:24}}>
       <h4 style={{fontSize:16,fontWeight:600,color:'#1f2937',marginBottom:16,borderBottom:'2px solid #1e40af',paddingBottom:8}}>Enter Scores</h4>
       
+      {/* Common Age Field - Only once for all tests */}
+      <div style={{marginBottom:20,padding:16,background:'#f0f9ff',borderRadius:8,border:'1px solid #bae6fd'}}>
+        <h5 style={{fontSize:14,fontWeight:600,color:'#0369a1',marginBottom:12}}>Student Age (Common for All Tests)</h5>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:12}}>
+          <div>
+            <label style={{display:'block',fontSize:11,marginBottom:4,color:'#6b7280'}}>Age (Years)</label>
+            <input
+              type="number"
+              value={scores.studentAge || ''}
+              onChange={(e) => setScores({...scores, studentAge:e.target.value})}
+              style={{width:'100%',padding:8,border:'1px solid #d1d5db',borderRadius:4,fontSize:12}}
+              placeholder="e.g., 8"
+            />
+          </div>
+          <div>
+            <label style={{display:'block',fontSize:11,marginBottom:4,color:'#6b7280'}}>Age (Months)</label>
+            <input
+              type="number"
+              value={scores.studentAgeMonths || ''}
+              onChange={(e) => setScores({...scores, studentAgeMonths:e.target.value})}
+              style={{width:'100%',padding:8,border:'1px solid #d1d5db',borderRadius:4,fontSize:12}}
+              placeholder="e.g., 3"
+            />
+          </div>
+          <div>
+            <label style={{display:'block',fontSize:11,marginBottom:4,color:'#6b7280'}}>Full Age</label>
+            <input
+              type="text"
+              value={scores.studentAge ? `${scores.studentAge || 0} years ${scores.studentAgeMonths || 0} months` : ''}
+              readOnly
+              style={{width:'100%',padding:8,border:'1px solid #d1d5db',borderRadius:4,fontSize:12,background:'#f3f4f6'}}
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Math Computation */}
       <div style={{marginBottom:20}}>
         <h5 style={{fontSize:14,fontWeight:600,color:'#374151',marginBottom:12}}>Math Computation</h5>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(120px, 1fr))',gap:12}}>
-          {['Raw','Std','CI','Pct','Cat','Age','GSV'].map(field => (
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(100px, 1fr))',gap:12}}>
+          {['Raw','Std','CI','Pct','Cat','GSV'].map(field => (
             <div key={`math${field}`}>
               <label style={{display:'block',fontSize:11,marginBottom:4,color:'#6b7280'}}>{field}</label>
               <input
@@ -703,8 +784,8 @@ const Step2 = ({ assess, setAssess, scores, setScores, errors, templates, templa
       {/* Spelling */}
       <div style={{marginBottom:20}}>
         <h5 style={{fontSize:14,fontWeight:600,color:'#374151',marginBottom:12}}>Spelling</h5>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(120px, 1fr))',gap:12}}>
-          {['Raw','Std','CI','Pct','Cat','Age','GSV'].map(field => (
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(100px, 1fr))',gap:12}}>
+          {['Raw','Std','CI','Pct','Cat','GSV'].map(field => (
             <div key={`spelling${field}`}>
               <label style={{display:'block',fontSize:11,marginBottom:4,color:'#6b7280'}}>{field}</label>
               <input
@@ -722,8 +803,8 @@ const Step2 = ({ assess, setAssess, scores, setScores, errors, templates, templa
       {/* Word Reading */}
       <div style={{marginBottom:20}}>
         <h5 style={{fontSize:14,fontWeight:600,color:'#374151',marginBottom:12}}>Word Reading</h5>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(120px, 1fr))',gap:12}}>
-          {['Raw','Std','CI','Pct','Cat','Age','GSV'].map(field => (
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(100px, 1fr))',gap:12}}>
+          {['Raw','Std','CI','Pct','Cat','GSV'].map(field => (
             <div key={`wordReading${field}`}>
               <label style={{display:'block',fontSize:11,marginBottom:4,color:'#6b7280'}}>{field}</label>
               <input
@@ -741,8 +822,8 @@ const Step2 = ({ assess, setAssess, scores, setScores, errors, templates, templa
       {/* Sentence Comprehension */}
       <div style={{marginBottom:20}}>
         <h5 style={{fontSize:14,fontWeight:600,color:'#374151',marginBottom:12}}>Sentence Comprehension</h5>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(120px, 1fr))',gap:12}}>
-          {['Raw','Std','CI','Pct','Cat','Age','GSV'].map(field => (
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(100px, 1fr))',gap:12}}>
+          {['Raw','Std','CI','Pct','Cat','GSV'].map(field => (
             <div key={`sentence${field}`}>
               <label style={{display:'block',fontSize:11,marginBottom:4,color:'#6b7280'}}>{field}</label>
               <input

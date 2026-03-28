@@ -277,7 +277,7 @@ class ApiService {
     return this.request(`/templates/${templateId}/generate-report`, {
       method: 'POST',
       body: JSON.stringify({
-        examineeId,
+        studentId: examineeId,
         customData
       }),
     });

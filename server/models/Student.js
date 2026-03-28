@@ -151,6 +151,12 @@ class Student extends BaseModel {
     console.log('🔍 Student.getStudent called with ID:', id);
     return await this.findById(id);
   }
+
+  // Get student by examinee ID (alias for getStudentWithSessions for compatibility)
+  async getStudentByExamineeId(examineeId) {
+    console.log('🔍 Student.getStudentByExamineeId called with ID:', examineeId);
+    return await this.getStudentWithSessions(examineeId);
+  }
 }
 
 module.exports = Student;
