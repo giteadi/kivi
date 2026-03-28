@@ -114,9 +114,15 @@ class AssessmentController {
   async updateAssessment(req, res) {
     try {
       const { id } = req.params;
-      console.log('Updating assessment:', id, req.body);
+      console.log('========================================');
+      console.log('📝 UPDATE ASSESSMENT REQUEST');
+      console.log('📌 Assessment ID:', id);
+      console.log('📦 Request Body:', JSON.stringify(req.body, null, 2));
+      console.log('🔍 Raw req.body:', req.body);
+      console.log('========================================');
       
       // Map camelCase to snake_case for database
+      // Only include fields that exist in the database schema
       const assessmentData = {
         assessment_type: req.body.assessment_type,
         delivery_method: req.body.delivery_method,
@@ -130,6 +136,13 @@ class AssessmentController {
         status: req.body.status,
         updated_at: new Date()
       };
+
+      // Remove undefined/null values to avoid database errors
+      Object.keys(assessmentData).forEach(key => {
+        if (assessmentData[key] === undefined || assessmentData[key] === null) {
+          delete assessmentData[key];
+        }
+      });
 
       console.log('Assessment data to update:', assessmentData);
       const updateSuccess = await this.assessmentModel.update(id, assessmentData);

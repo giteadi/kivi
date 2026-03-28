@@ -352,8 +352,14 @@ const GenerateReportModal = ({ isOpen, onClose, selectedAssessmentIds, assessmen
         const customData = {
           testDate: assess.testDate,
           examiner: assess.examiner,
+          language: assess.language,
+          gradeLevel: assess.gradeLevel,
+          scores: scores, // ⭐ ADDED: Pass entered scores to template
           // Add any other assessment data that should override template
         };
+        
+        console.log('📝 Scores being sent to template:', scores);
+        console.log('📊 Custom data for report:', customData);
         
         const result = await api.generateReportFromTemplate(selectedTemplate.id, examineeId, customData);
         
@@ -948,6 +954,55 @@ const ReportPreview = ({ reportData, onClose }) => {
           </div>
           
           <div class="section">
+            <h2>STANDARD SCORE PROFILE</h2>
+            <div style="margin: 20px 0;">
+              <!-- Bell Curve SVG -->
+              <svg width="600" height="250" viewBox="0 0 600 250" style="margin: 0 auto; display: block;">
+                <!-- Background gradient -->
+                <defs>
+                  <linearGradient id="curveGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#1e40af;stop-opacity:0.3" />
+                    <stop offset="100%" style="stop-color:#1e40af;stop-opacity:0.05" />
+                  </linearGradient>
+                </defs>
+                
+                <!-- Bell Curve Path -->
+                <path d="M 50 200 Q 150 200 200 150 Q 250 80 300 50 Q 350 80 400 150 Q 450 200 550 200" 
+                      fill="url(#curveGradient)" stroke="#1e40af" stroke-width="2" />
+                
+                <!-- Score Labels -->
+                <text x="50" y="230" text-anchor="middle" font-size="12" fill="#666">55</text>
+                <text x="150" y="230" text-anchor="middle" font-size="12" fill="#666">70</text>
+                <text x="200" y="230" text-anchor="middle" font-size="12" fill="#666">85</text>
+                <text x="300" y="230" text-anchor="middle" font-size="12" fill="#666">100</text>
+                <text x="400" y="230" text-anchor="middle" font-size="12" fill="#666">115</text>
+                <text x="450" y="230" text-anchor="middle" font-size="12" fill="#666">130</text>
+                <text x="550" y="230" text-anchor="middle" font-size="12" fill="#666">145</text>
+                
+                <!-- Category Labels -->
+                <text x="100" y="245" text-anchor="middle" font-size="10" fill="#666">Extremely Low</text>
+                <text x="175" y="245" text-anchor="middle" font-size="10" fill="#666">Very Low</text>
+                <text x="250" y="245" text-anchor="middle" font-size="10" fill="#666">Low Average</text>
+                <text x="300" y="245" text-anchor="middle" font-size="10" fill="#666">Average</text>
+                <text x="375" y="245" text-anchor="middle" font-size="10" fill="#666">High Average</text>
+                <text x="425" y="245" text-anchor="middle" font-size="10" fill="#666">Very High</text>
+                <text x="500" y="245" text-anchor="middle" font-size="10" fill="#666">Extremely High</text>
+                
+                <!-- Score Markers -->
+                ${subtests.map((s, i) => {
+                  const stdScore = parseInt(s.std) || 100;
+                  const x = 50 + ((stdScore - 55) / 90) * 500;
+                  const y = 80 + (i * 25);
+                  return `<line x1="${x}" y1="${y}" x2="${x}" y2="180" stroke="#ef4444" stroke-width="2" />
+                          <circle cx="${x}" cy="${y}" r="4" fill="#ef4444" />
+                          <text x="${x + 8}" y="${y + 4}" font-size="11" fill="#374151">${s.name} (${s.std})</text>`;
+                }).join('')}
+              </svg>
+              <p class="note">Note: Confidence Interval is based on a 95% confidence level.</p>
+            </div>
+          </div>
+          
+          <div class="section">
             <h2>ASSESSMENT DETAILS</h2>
             <table>
               <tbody>
@@ -1073,6 +1128,67 @@ const ReportPreview = ({ reportData, onClose }) => {
                 </tbody>
               </table>
               <p style={{fontSize:10,color:'#666',marginTop:10,fontStyle:'italic'}}>Note: A negative difference indicates that the second subtest has a higher score than the first subtest listed.</p>
+            </div>
+            
+            {/* Standard Score Profile Chart */}
+            <div style={{marginBottom:40}}>
+              <h2 style={{fontSize:16,color:'#1e40af',borderBottom:'1px solid #1e40af',paddingBottom:8,marginBottom:20,fontWeight:600}}>STANDARD SCORE PROFILE</h2>
+              <div style={{display:'flex',justifyContent:'center',margin:20}}>
+                <svg width="600" height="280" viewBox="0 0 600 280">
+                  <defs>
+                    <linearGradient id="bellGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" style={{stopColor:'#1e40af',stopOpacity:0.3}} />
+                      <stop offset="100%" style={{stopColor:'#1e40af',stopOpacity:0.05}} />
+                    </linearGradient>
+                  </defs>
+                  
+                  {/* Bell Curve */}
+                  <path 
+                    d="M 50 220 Q 150 220 200 170 Q 250 100 300 70 Q 350 100 400 170 Q 450 220 550 220" 
+                    fill="url(#bellGradient)" 
+                    stroke="#1e40af" 
+                    strokeWidth="2"
+                  />
+                  
+                  {/* Base line */}
+                  <line x1="50" y1="220" x2="550" y2="220" stroke="#ddd" strokeWidth="1" />
+                  
+                  {/* Score markers on X axis */}
+                  {[55, 70, 85, 100, 115, 130, 145].map((score, i) => {
+                    const x = 50 + (i * 75);
+                    return (
+                      <g key={score}>
+                        <line x1={x} y1="220" x2={x} y2="225" stroke="#666" strokeWidth="1" />
+                        <text x={x} y="240" textAnchor="middle" fontSize="12" fill="#666">{score}</text>
+                      </g>
+                    );
+                  })}
+                  
+                  {/* Category labels */}
+                  <text x="87" y="255" textAnchor="middle" fontSize="10" fill="#666">Extremely Low</text>
+                  <text x="162" y="255" textAnchor="middle" fontSize="10" fill="#666">Very Low</text>
+                  <text x="237" y="255" textAnchor="middle" fontSize="10" fill="#666">Low Average</text>
+                  <text x="312" y="255" textAnchor="middle" fontSize="10" fill="#666">Average</text>
+                  <text x="387" y="255" textAnchor="middle" fontSize="10" fill="#666">High Average</text>
+                  <text x="462" y="255" textAnchor="middle" fontSize="10" fill="#666">Very High</text>
+                  <text x="537" y="255" textAnchor="middle" fontSize="10" fill="#666">Extremely High</text>
+                  
+                  {/* Subtest score markers */}
+                  {subtests.map((s, i) => {
+                    const stdScore = parseInt(s.std) || 100;
+                    const x = 50 + ((stdScore - 55) / 90) * 500;
+                    const y = 60 + (i * 30);
+                    return (
+                      <g key={s.name}>
+                        <line x1={x} y1={y} x2={x} y2="200" stroke="#ef4444" strokeWidth="2" strokeDasharray="4,2" />
+                        <circle cx={x} cy={y} r="5" fill="#ef4444" />
+                        <text x={x + 10} y={y + 4} fontSize="11" fill="#374151" fontWeight="500">{s.name} ({s.std})</text>
+                      </g>
+                    );
+                  })}
+                </svg>
+              </div>
+              <p style={{fontSize:10,color:'#666',marginTop:10,fontStyle:'italic',textAlign:'center'}}>Note: Confidence Interval is based on a 95% confidence level.</p>
             </div>
             
             {/* Assessment Details */}

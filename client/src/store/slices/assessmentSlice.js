@@ -51,15 +51,16 @@ export const deleteAssessment = createAsyncThunk(
 
 export const updateAssessment = createAsyncThunk(
   'assessments/updateAssessment',
-  async ({ id, assessmentData }, { rejectWithValue }) => {
+  async (assessmentData, { rejectWithValue }) => {
     try {
-      console.log('🔍 Debug: updateAssessment called with:', { id, assessmentData });
+      const { id, ...data } = assessmentData;
+      console.log('🔍 Debug: updateAssessment called with:', { id, data });
       const endpoint = `/assessments/${id}`;
       console.log('🔍 Debug: API endpoint:', endpoint);
       
       const response = await api.request(endpoint, {
-        method: 'POST', // Changed from PUT to POST
-        body: JSON.stringify(assessmentData),
+        method: 'POST',
+        body: JSON.stringify(data),
       });
       console.log('🔍 Debug: API response:', response);
       return response;

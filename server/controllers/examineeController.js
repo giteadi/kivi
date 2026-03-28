@@ -30,7 +30,14 @@ class ExamineeController {
           custom2: student.customField2 || '',
           custom3: student.customField3 || '',
           custom4: student.customField4 || '',
-          documents: student.documents ? JSON.parse(student.documents) : [],
+          documents: (() => {
+            try {
+              return student.documents ? JSON.parse(student.documents) : [];
+            } catch (e) {
+              console.warn('Failed to parse documents for student', student.id, ':', student.documents);
+              return [];
+            }
+          })(),
           assessments: assessments.map(assessment => ({
             id: assessment.id,
             name: assessment.assessment_name,
@@ -104,10 +111,12 @@ class ExamineeController {
         data: examinees
       });
     } catch (error) {
-      console.error('Get examinees error:', error);
+      console.error('❌ Get examinees error:', error);
+      console.error('❌ Error stack:', error.stack);
       res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: error.message || 'Internal server error',
+        error: error.toString()
       });
     }
   }

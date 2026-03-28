@@ -1,8 +1,10 @@
 import { motion } from 'framer-motion';
 import { FiX, FiSave, FiCalendar, FiFileText, FiUser, FiClock, FiEdit3, FiChevronDown } from 'react-icons/fi';
 import { useState, useRef, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { useToast } from './Toast';
 import api from '../services/api';
+import { updateAssessment } from '../store/slices/assessmentSlice';
 
 /* ═══════════════════════════════════════════════════════════
    ASSESSMENT TEMPLATES - NOW LOADED FROM API
@@ -22,6 +24,7 @@ import api from '../services/api';
 
 const EditAssessmentModal = ({ isOpen, onClose, assessment, examineeId, examineeName, onSuccess }) => {
   const toast = useToast();
+  const dispatch = useDispatch();
   
   // Local state for templates
   const [assessmentTemplates, setAssessmentTemplates] = useState([]);
@@ -64,6 +67,27 @@ const EditAssessmentModal = ({ isOpen, onClose, assessment, examineeId, examinee
     interpretation: assessment?.interpretation || '',
     recommendations: assessment?.recommendations || ''
   });
+
+  // Update formData when assessment prop changes
+  useEffect(() => {
+    if (assessment) {
+      setFormData({
+        assessmentType: assessment.assessment_type || 'WRAT5',
+        deliveryMethod: assessment.delivery_method || 'Online',
+        scheduledDate: assessment.scheduled_date ? new Date(assessment.scheduled_date).toISOString().split('T')[0] : '',
+        scheduledTime: assessment.scheduled_time || '',
+        duration: assessment.duration || 1,
+        notes: assessment.notes || '',
+        examiner: assessment.examiner || '',
+        room: assessment.room || 'MindSaid Learning',
+        materials: assessment.materials || '',
+        subscales: assessment.subscales || [],
+        customScores: assessment.custom_scores || {},
+        interpretation: assessment.interpretation || '',
+        recommendations: assessment.recommendations || ''
+      });
+    }
+  }, [assessment]);
 
   // Helper function to get assessment name
   const getAssessmentName = (assessmentType) => {
@@ -136,7 +160,7 @@ const EditAssessmentModal = ({ isOpen, onClose, assessment, examineeId, examinee
                     key={template.id}
                     type="button"
                     onClick={() => {
-                      onChange('assessmentType', template.type);
+                      onChange('assessmentType', template.id);
                       setIsOpen(false);
                     }}
                     className="w-full px-3 py-3 text-left hover:bg-blue-50 transition-colors duration-150 rounded-md flex items-center space-x-3 group"
@@ -192,14 +216,15 @@ const EditAssessmentModal = ({ isOpen, onClose, assessment, examineeId, examinee
       if (assessment && assessment.id) {
         assessmentData.id = assessment.id;
         await dispatch(updateAssessment(assessmentData));
-        toast.success('Assessment updated successfully!');
+        // Toast shown by parent component (ExamineeDetail)
+        onSuccess(); // ⭐ Notify parent that update is complete
       } else {
         // Create new assessment - you might need to add this to your assessment slice
         console.log('Creating new assessment:', assessmentData);
         toast.success('Assessment scheduled successfully!');
+        onSuccess(); // ⭐ Notify parent that creation is complete
       }
 
-      onSuccess();
       onClose();
     } catch (error) {
       console.error('Error saving assessment:', error);
