@@ -175,7 +175,7 @@ const SimpleADHT2Template = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="lg:ml-64 min-h-screen bg-gray-100">
       {/* Header */}
       <div className="bg-white shadow-sm border-b sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">

@@ -59,6 +59,8 @@ import ExamineeCreateForm from './components/ExamineeCreateForm';
 import ExamineeDetail from './components/ExamineeDetail';
 import AssessmentTemplateSelector from './components/AssessmentTemplateSelector';
 import SimpleADHT2Template from './components/SimpleADHT2Template';
+import SimpleADHDDSM5Template from './components/SimpleADHDDSM5Template';
+import ADHT2CardView from './components/ADHT2CardView';
 // import TherapistCreateForm from './components/TherapistCreateForm'; // Temporarily disabled
 import SessionCreateForm from './components/SessionCreateForm';
 import SessionEditForm from './components/SessionEditForm';
@@ -95,6 +97,7 @@ function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [navigationHistory, setNavigationHistory] = useState(['dashboard']);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(null);
 
   // Check authentication on app load
   useEffect(() => {
@@ -911,10 +914,27 @@ ${service.target_age_group || 'Not specified'}
       );
     }
 
-    // Handle template selection - Simple ADHT2 Template only
+    // Handle template selection - Card View first, then Template on click
     if (currentView === 'template-selector' || currentView === 'template-manager') {
+      // If a template is selected, show the appropriate template
+      if (selectedTemplateId === 'ADHT-2') {
+        return (
+          <SimpleADHT2Template 
+            onBack={() => setSelectedTemplateId(null)}
+          />
+        );
+      }
+      if (selectedTemplateId === 'ADHD-DSM5') {
+        return (
+          <SimpleADHDDSM5Template 
+            onBack={() => setSelectedTemplateId(null)}
+          />
+        );
+      }
+      // Otherwise show card view
       return (
-        <SimpleADHT2Template 
+        <ADHT2CardView 
+          onOpenTemplate={(templateId) => setSelectedTemplateId(templateId)}
           onBack={() => setCurrentView('dashboard')}
         />
       );
