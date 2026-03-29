@@ -366,8 +366,14 @@ const GenerateReportModal = ({ isOpen, onClose, selectedAssessmentIds, assessmen
         const wordReadingStd = parseFloat(scores.wordReadingStd) || 0;
         const sentenceStd = parseFloat(scores.sentenceStd) || 0;
         
+        console.log('📊 [DYNAMIC CALCULATION] === Standard Score Comparisons ===');
+        console.log('📊 [USER INPUT - STATIC] Math Std:', mathStd);
+        console.log('📊 [USER INPUT - STATIC] Spelling Std:', spellingStd);
+        console.log('📊 [USER INPUT - STATIC] Word Reading Std:', wordReadingStd);
+        console.log('📊 [USER INPUT - STATIC] Sentence Std:', sentenceStd);
+        
         const comparisons = {
-          // Differences
+          // Differences (DYNAMIC - calculated from user inputs)
           diff_wr_sp: (wordReadingStd - spellingStd).toFixed(1),
           diff_wr_mc: (wordReadingStd - mathStd).toFixed(1),
           diff_wr_sc: (wordReadingStd - sentenceStd).toFixed(1),
@@ -375,7 +381,7 @@ const GenerateReportModal = ({ isOpen, onClose, selectedAssessmentIds, assessmen
           diff_sp_sc: (spellingStd - sentenceStd).toFixed(1),
           diff_mc_sc: (mathStd - sentenceStd).toFixed(1),
           
-          // Significance (p < .05 if difference >= 15 points typically)
+          // Significance (DYNAMIC - calculated based on threshold)
           sig_wr_sp: Math.abs(wordReadingStd - spellingStd) >= 15 ? '*' : '',
           sig_wr_mc: Math.abs(wordReadingStd - mathStd) >= 15 ? '*' : '',
           sig_wr_sc: Math.abs(wordReadingStd - sentenceStd) >= 15 ? '*' : '',
@@ -383,7 +389,7 @@ const GenerateReportModal = ({ isOpen, onClose, selectedAssessmentIds, assessmen
           sig_sp_sc: Math.abs(spellingStd - sentenceStd) >= 15 ? '*' : '',
           sig_mc_sc: Math.abs(mathStd - sentenceStd) >= 15 ? '*' : '',
           
-          // Base rates (abnormal if diff > 20, uncommon if > 15)
+          // Base rates (DYNAMIC - calculated based on difference magnitude)
           base_wr_sp: Math.abs(wordReadingStd - spellingStd) > 20 ? '<1%' : (Math.abs(wordReadingStd - spellingStd) > 15 ? '2%' : '10%'),
           base_wr_mc: Math.abs(wordReadingStd - mathStd) > 20 ? '<1%' : (Math.abs(wordReadingStd - mathStd) > 15 ? '2%' : '10%'),
           base_wr_sc: Math.abs(wordReadingStd - sentenceStd) > 20 ? '<1%' : (Math.abs(wordReadingStd - sentenceStd) > 15 ? '2%' : '10%'),
@@ -391,6 +397,20 @@ const GenerateReportModal = ({ isOpen, onClose, selectedAssessmentIds, assessmen
           base_sp_sc: Math.abs(spellingStd - sentenceStd) > 20 ? '<1%' : (Math.abs(spellingStd - sentenceStd) > 15 ? '2%' : '10%'),
           base_mc_sc: Math.abs(mathStd - sentenceStd) > 20 ? '<1%' : (Math.abs(mathStd - sentenceStd) > 15 ? '2%' : '10%'),
         };
+        
+        console.log('📊 [DYNAMIC RESULT] Calculated Differences:', {
+          'Word Reading vs Spelling': comparisons.diff_wr_sp,
+          'Word Reading vs Math': comparisons.diff_wr_mc,
+          'Word Reading vs Sentence': comparisons.diff_wr_sc
+        });
+        console.log('📊 [DYNAMIC RESULT] Calculated Significance (* if diff >= 15):', {
+          'Word Reading vs Spelling': comparisons.sig_wr_sp || 'ns',
+          'Word Reading vs Math': comparisons.sig_wr_mc || 'ns'
+        });
+        console.log('📊 [DYNAMIC RESULT] Calculated Base Rates:', {
+          'Word Reading vs Spelling': comparisons.base_wr_sp,
+          'Word Reading vs Math': comparisons.base_wr_mc
+        });
         
         const customData = {
           examinee: activeEx,
@@ -907,6 +927,9 @@ const ReportPreview = ({ reportData, onClose }) => {
   const examinee = reportData.examinee || {};
   const assessment = reportData.assessment || {};
   
+  console.log('📄 [REPORT PREVIEW] === Report Data Analysis ===');
+  console.log('📄 [REPORT PREVIEW] Examinee:', examinee.firstName, examinee.lastName, '| ID:', examinee.examineeId);
+  
   // Calculate derived scores
   const subtests = [
     { name: 'Math Computation', raw: scores.mathRaw || '-', std: scores.mathStd || '-', ci: scores.mathCI || '-', pct: scores.mathPct || '-', cat: scores.mathCat || '-', age: scores.mathAge || '-', gsv: scores.mathGSV || '-' },
@@ -915,9 +938,15 @@ const ReportPreview = ({ reportData, onClose }) => {
     { name: 'Sentence Comprehension', raw: scores.sentenceRaw || '-', std: scores.sentenceStd || '-', ci: scores.sentenceCI || '-', pct: scores.sentencePct || '-', cat: scores.sentenceCat || '-', age: scores.sentenceAge || '-', gsv: scores.sentenceGSV || '-' },
   ];
   
+  console.log('📄 [REPORT PREVIEW] === Score Summary (USER INPUT - STATIC) ===');
+  subtests.forEach(s => {
+    console.log(`📄 [STATIC] ${s.name}: Raw=${s.raw}, Std=${s.std}, CI=${s.ci}, Pct=${s.pct}`);
+  });
+  
   // Calculate Reading Composite
+  const readingCompRaw = parseInt(scores.wordReadingRaw || 0) + parseInt(scores.sentenceRaw || 0);
   const readingComp = {
-    raw: parseInt(scores.wordReadingRaw || 0) + parseInt(scores.sentenceRaw || 0),
+    raw: readingCompRaw,
     std: scores.compositeStd || '-',
     ci: scores.compositeCI || '-',
     pct: scores.compositePct || '-',
@@ -925,6 +954,10 @@ const ReportPreview = ({ reportData, onClose }) => {
     age: '-',
     gsv: '-'
   };
+  
+  console.log('📄 [REPORT PREVIEW] === Reading Composite (DYNAMIC CALCULATION) ===');
+  console.log(`📄 [DYNAMIC] Reading Composite Raw = Word Reading Raw (${scores.wordReadingRaw || 0}) + Sentence Raw (${scores.sentenceRaw || 0}) = ${readingCompRaw}`);
+  console.log(`📄 [DYNAMIC] Reading Composite Std = ${readingComp.std} (user entered)`);
   
   // Standard Score Comparisons
   const comparisons = [
@@ -935,6 +968,15 @@ const ReportPreview = ({ reportData, onClose }) => {
     { comp: 'Spelling vs. Sentence Comprehension', diff: scores.diff_sp_sc || '-', sig: scores.sig_sp_sc || '-', base: scores.base_sp_sc || '-' },
     { comp: 'Math Computation vs. Sentence Comprehension', diff: scores.diff_mc_sc || '-', sig: scores.sig_mc_sc || '-', base: scores.base_mc_sc || '-' },
   ];
+  
+  console.log('📄 [REPORT PREVIEW] === Standard Score Comparisons (DYNAMIC) ===');
+  comparisons.forEach(c => {
+    console.log(`📄 [DYNAMIC] ${c.comp}: Diff=${c.diff}, Sig=${c.sig || 'ns'}, Base=${c.base}`);
+  });
+  
+  console.log('📄 [REPORT PREVIEW] === Summary ===');
+  console.log('✅ STATIC (User Input): All subtest raw scores, standard scores, CI, percentile, category');
+  console.log('✅ DYNAMIC (Calculated): Reading Composite Raw, All Comparisons (diff, sig, base rate)');
   
   // Generate PDF
   const generatePDF = () => {
