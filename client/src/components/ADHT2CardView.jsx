@@ -18,6 +18,22 @@ const ADHT2CardView = ({ onOpenTemplate, onBack }) => {
       category: 'ADHD Diagnostic',
       icon: '📋',
       color: 'blue'
+    },
+    {
+      id: 'ASTON-INDEX',
+      name: 'Aston Index',
+      fullName: 'Comprehensive Battery of Testing and Diagnosing Language Difficulties',
+      category: 'Language Assessment',
+      icon: '📊',
+      color: 'green'
+    },
+    {
+      id: 'BKT',
+      name: 'Binet Kamath Test',
+      fullName: 'Binet Kamath Test of Intelligence (BKT)',
+      category: 'Intelligence Assessment',
+      icon: '🧮',
+      color: 'purple'
     }
   ];
 
@@ -25,6 +41,8 @@ const ADHT2CardView = ({ onOpenTemplate, onBack }) => {
     const colors = {
       orange: 'border-orange-200 hover:border-orange-400 bg-orange-50',
       blue: 'border-blue-200 hover:border-blue-400 bg-blue-50',
+      green: 'border-green-200 hover:border-green-400 bg-green-50',
+      purple: 'border-purple-200 hover:border-purple-400 bg-purple-50',
     };
     return colors[color] || 'border-gray-200 hover:border-gray-400 bg-gray-50';
   };
@@ -33,6 +51,8 @@ const ADHT2CardView = ({ onOpenTemplate, onBack }) => {
     const colors = {
       orange: 'bg-orange-100 group-hover:bg-orange-200',
       blue: 'bg-blue-100 group-hover:bg-blue-200',
+      green: 'bg-green-100 group-hover:bg-green-200',
+      purple: 'bg-purple-100 group-hover:bg-purple-200',
     };
     return colors[color] || 'bg-gray-100 group-hover:bg-gray-200';
   };
@@ -41,6 +61,8 @@ const ADHT2CardView = ({ onOpenTemplate, onBack }) => {
     const colors = {
       orange: 'bg-orange-100 text-orange-800 border-orange-200',
       blue: 'bg-blue-100 text-blue-800 border-blue-200',
+      green: 'bg-green-100 text-green-800 border-green-200',
+      purple: 'bg-purple-100 text-purple-800 border-purple-200',
     };
     return colors[color] || 'bg-gray-100 text-gray-800 border-gray-200';
   };

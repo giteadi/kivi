@@ -60,6 +60,8 @@ import ExamineeDetail from './components/ExamineeDetail';
 import AssessmentTemplateSelector from './components/AssessmentTemplateSelector';
 import SimpleADHT2Template from './components/SimpleADHT2Template';
 import SimpleADHDDSM5Template from './components/SimpleADHDDSM5Template';
+import SimpleAstonIndexTemplate from './components/SimpleAstonIndexTemplate';
+import SimpleBKTTemplate from './components/SimpleBKTTemplate';
 import ADHT2CardView from './components/ADHT2CardView';
 // import TherapistCreateForm from './components/TherapistCreateForm'; // Temporarily disabled
 import SessionCreateForm from './components/SessionCreateForm';
@@ -927,6 +929,20 @@ ${service.target_age_group || 'Not specified'}
       if (selectedTemplateId === 'ADHD-DSM5') {
         return (
           <SimpleADHDDSM5Template 
+            onBack={() => setSelectedTemplateId(null)}
+          />
+        );
+      }
+      if (selectedTemplateId === 'ASTON-INDEX') {
+        return (
+          <SimpleAstonIndexTemplate 
+            onBack={() => setSelectedTemplateId(null)}
+          />
+        );
+      }
+      if (selectedTemplateId === 'BKT') {
+        return (
+          <SimpleBKTTemplate 
             onBack={() => setSelectedTemplateId(null)}
           />
         );
