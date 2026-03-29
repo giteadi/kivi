@@ -84,7 +84,7 @@ const SIMPLE_TEMPLATES = [
   }
 ];
 
-const GenerateReportModal = ({ isOpen, onClose }) => {
+const SimpleGenerateReportModal = ({ isOpen, onClose }) => {
   const [step, setStep] = useState(1);
   const [examinees, setExaminees] = useState([]);
   const [selectedExaminee, setSelectedExaminee] = useState(null);
@@ -408,4 +408,4 @@ const GenerateReportModal = ({ isOpen, onClose }) => {
   );
 };
 
-export default GenerateReportModal;
+export default SimpleGenerateReportModal;

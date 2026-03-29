@@ -1,0 +1,1354 @@
+import { useState, useMemo, useRef, useEffect } from 'react';
+import api from '../services/api';
+import ADHD2Template from './templates/ADHD2Template';
+
+/* ═══════════════════════════════════════════════════════════
+   ASSESSMENT TEMPLATES - NOW LOADED FROM API
+═══════════════════════════════════════════════════════════ */
+
+// Commented out hardcoded array - now using API
+// const ASSESSMENT_TEMPLATES = [
+//   {
+//     id: 'RIPA-Primary',
+//     name: 'ROSS INFORMATION PROCESSING ASSESSMENT (RIPA)-PRIMARY',
+//     description: 'The RIPA-A quantifies & describes cognitive-linguistic deficits in individuals between the ages of 5-0 and 12-11 who face difficulties in attention, memory, orientation, language and communication, problem solving and abstract reasoning.',
+//     category: 'Cognitive',
+//     icon: '🧠'
+//   },
+//   ... (rest of the array is now loaded from database API)
+// ];
+
+/* ═══════════════════════════════════════════════════════════
+   BLANK SCORES TEMPLATE
+═══════════════════════════════════════════════════════════ */
+const BLANK_SCORES = () => {
+  const s = {};
+  ['testDate','examiner','language','gradeLevel','reasonForReferral','medications','testingSite',
+   'mathRaw','mathStd','mathCI','mathPct','mathCat','mathAge','mathGSV',
+   'spellingRaw','spellingStd','spellingCI','spellingPct','spellingCat','spellingAge','spellingGSV',
+   'wordReadingRaw','wordReadingStd','wordReadingCI','wordReadingPct','wordReadingCat','wordReadingAge','wordReadingGSV',
+   'sentenceRaw','sentenceStd','sentenceCI','sentencePct','sentenceCat','sentenceAge','sentenceGSV',
+   'compositeRaw','compositeStd','compositeCI','compositePct','compositeCat',
+   'diff_wr_sp','sig_wr_sp','base_wr_sp','diff_wr_mc','sig_wr_mc','base_wr_mc',
+   'diff_wr_sc','sig_wr_sc','base_wr_sc','diff_sp_mc','sig_sp_mc','base_sp_mc',
+   'diff_sp_sc','sig_sp_sc','base_sp_sc','diff_mc_sc','sig_mc_sc','base_mc_sc',
+  ].forEach(k => { s[k] = ''; });
+  return s;
+};
+
+const GenerateReportModal = ({ isOpen, onClose, selectedAssessmentIds, assessments, examineeData }) => {
+  // Local state for data
+  const [examinees, setExaminees] = useState([]);
+  const [selectedExaminee, setSelectedExaminee] = useState(null);
+  const [templates, setTemplates] = useState([]);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  
+  // Get selected assessments data
+  const selectedAssessmentsData = useMemo(() => {
+    if (!assessments || !selectedAssessmentIds) return [];
+    return assessments.filter(a => selectedAssessmentIds.includes(a.id));
+  }, [assessments, selectedAssessmentIds]);
+
+  // Auto-select template when templates load
+  useEffect(() => {
+    if (isOpen && templates.length > 0 && selectedAssessmentsData.length > 0) {
+      const firstAssessment = selectedAssessmentsData[0];
+      if (firstAssessment.template_id) {
+        const template = templates.find(t => t.id === firstAssessment.template_id);
+        if (template) {
+          setSelectedTemplate(template);
+          setUseTemplate(true);
+        }
+      }
+    }
+  }, [isOpen, templates, selectedAssessmentsData]);
+
+  // Fetch templates when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchTemplates();
+      fetchExaminees();
+    }
+  }, [isOpen]);
+
+  // Auto-select examinee when examineeData is provided
+  useEffect(() => {
+    if (isOpen && examineeData) {
+      setSelectedExaminee(examineeData);
+      setExaminee({
+        firstName: examineeData.firstName || examineeData.first_name || (examineeData.name ? examineeData.name.split(' ')[0] : ''),
+        middleName: examineeData.middleName || examineeData.middle_name || '',
+        lastName: examineeData.lastName || examineeData.last_name || (examineeData.name ? examineeData.name.split(' ').slice(1).join(' ') : ''),
+        examineeId: examineeData.examineeId || examineeData.student_id || '',
+        gender: examineeData.gender || '',
+        dob: examineeData.dob || examineeData.date_of_birth || examineeData.birthDate || '',
+        email: examineeData.email || '',
+        comment: examineeData.comment || examineeData.learning_needs || '',
+        custom1: examineeData.custom1 || '',
+        custom2: examineeData.custom2 || '',
+        custom3: examineeData.custom3 || '',
+        custom4: examineeData.custom4 || '',
+      });
+      // Skip to Step 2 if examinee data is already provided
+      setStep(2);
+    }
+  }, [isOpen, examineeData]);
+
+  const fetchTemplates = async () => {
+    try {
+      setTemplatesLoading(true);
+      const response = await api.getTemplates();
+      if (response.success) {
+        setTemplates(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+    } finally {
+      setTemplatesLoading(false);
+    }
+  };
+
+  const fetchExaminees = async () => {
+    try {
+      setLoading(true);
+      const response = await api.request('/examinees');
+      if (response.success) {
+        setExaminees(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching examinees:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Step 1 state
+  const [step, setStep] = useState(1);
+  const [examinee, setExaminee] = useState({
+    firstName:'', middleName:'', lastName:'', examineeId:'', gender:'', dob:'',
+    email:'', comment:'', custom1:'', custom2:'', custom3:'', custom4:'',
+  });
+  const [errors, setErrors] = useState({});
+
+  // Template state
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [useTemplate, setUseTemplate] = useState(false);
+
+  // Fetch templates when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchTemplates();
+    }
+  }, [isOpen]);
+
+  // Step 2 state
+  const [selectedAssessment, setSelectedAssessment] = useState(null);
+  const [isPrefilled, setIsPrefilled] = useState(false);
+  const [assess, setAssess] = useState({
+    deliveryMethod:'Manual Entry', testDate:'', examiner:'',
+    language:'English', gradeLevel:'Please select...', reasonForReferral:'Please select...',
+    medications:'', testingSite:'',
+  });
+  const [scores, setScores] = useState(BLANK_SCORES());
+
+  // Auto-populate from selected assessments when modal opens
+  useEffect(() => {
+    if (isOpen && selectedAssessmentsData.length > 0) {
+      const firstAssessment = selectedAssessmentsData[0];
+      
+      // Format date from ISO to DD/MM/YYYY
+      const formatDate = (dateString) => {
+        if (!dateString) return '';
+        try {
+          const date = new Date(dateString);
+          if (isNaN(date.getTime())) return '';
+          const day = date.getDate().toString().padStart(2, '0');
+          const month = (date.getMonth() + 1).toString().padStart(2, '0');
+          const year = date.getFullYear();
+          return `${day}/${month}/${year}`;
+        } catch (e) {
+          return '';
+        }
+      };
+      
+      // Auto-populate assessment details
+      setAssess({
+        deliveryMethod: firstAssessment.delivery_method || 'Manual Entry',
+        testDate: formatDate(firstAssessment.test_date) || formatDate(firstAssessment.scheduled_date) || '',
+        examiner: firstAssessment.examiner_name || firstAssessment.examiner || '',
+        language: firstAssessment.language || 'English',
+        gradeLevel: firstAssessment.grade_level || '',
+        reasonForReferral: firstAssessment.reason_for_referral || '',
+        medications: firstAssessment.medications || '',
+        testingSite: firstAssessment.testing_site || '',
+      });
+      
+      // Auto-populate scores if available
+      if (firstAssessment.scores) {
+        setScores(prev => ({
+          ...prev,
+          ...firstAssessment.scores
+        }));
+      }
+      
+      // Auto-select template if assessment has template_id
+      if (firstAssessment.template_id) {
+        setUseTemplate(true);
+      }
+    }
+  }, [isOpen, selectedAssessmentsData]);
+
+  // Step 3 state
+  const [opts, setOpts] = useState({
+    includeExamineeName:true, scoreSummaryCol:'GSV',
+    confidenceLevel:'95%', comparisonGroup:'Age group', includeDiscrepancy:false,
+  });
+
+  const [generatedReport, setGeneratedReport] = useState(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // When an existing examinee is selected, populate examinee form too
+  const handleSelectExaminee = (ex) => {
+    setSelectedExaminee(ex);
+    setExaminee({
+      firstName:ex.firstName, middleName:ex.middleName||'', lastName:ex.lastName,
+      examineeId:ex.examineeId, gender:ex.gender, dob:ex.dob,
+      email:ex.email||'', comment:ex.comment||'',
+      custom1:ex.custom1||'', custom2:ex.custom2||'', custom3:ex.custom3||'', custom4:ex.custom4||'',
+    });
+    setErrors({});
+  };
+  const handleClearSelected = () => {
+    setSelectedExaminee(null);
+    setExaminee({
+      firstName:'', middleName:'', lastName:'', examineeId:'', gender:'', dob:'',
+      email:'', comment:'', custom1:'', custom2:'', custom3:'', custom4:'',
+    });
+    setErrors({});
+  };
+
+  const validate1 = () => {
+    const e={};
+    if (!examinee.firstName.trim()) e.firstName='First name is required';
+    if (!examinee.lastName.trim()) e.lastName='Last name is required';
+    if (!examinee.examineeId.trim()) e.examineeId='Examinee ID is required';
+    if (!examinee.gender) e.gender='Gender is required';
+    if (!examinee.dob.trim()) e.dob='Date of birth is required';
+    else if (!/^\d{2}\/\d{2}\/\d{4}$/.test(examinee.dob)) e.dob='Format: DD/MM/YYYY';
+    setErrors(e); return !Object.keys(e).length;
+  };
+  
+  const validate2 = () => {
+    const e={};
+    if (!assess.testDate.trim()) e.testDate='Test Date is required';
+    else if (!/^\d{2}\/\d{2}\/\d{4}$/.test(assess.testDate)) e.testDate='Format: DD/MM/YYYY';
+    setErrors(e); return !Object.keys(e).length;
+  };
+
+  const next = async () => {
+    if (step===1 && !validate1()) return;
+    if (step===2 && !validate2()) return;
+    
+    setErrors({});
+    
+    // If on step 1 and user created a new examinee, save it first
+    if (step===1 && !selectedExaminee) {
+      try {
+        const result = await api.request('/examinees', {
+          method: 'POST',
+          body: JSON.stringify(examinee)
+        });
+        if (!result.success) {
+          alert('Failed to create examinee: ' + result.message);
+          return;
+        }
+        setSelectedExaminee(result.data);
+      } catch (error) {
+        alert('Failed to create examinee: ' + error.message);
+        return;
+      }
+    }
+    
+    setStep(step+1);
+  };
+
+  const prev = () => setStep(step-1);
+
+  // Get template data based on template type and examinee data (now uses API-loaded templates)
+  const getTemplateData = (templateId, examinee, assessment, templates) => {
+    const template = templates.find(t => t.id === templateId);
+    
+    if (!template) {
+      console.error('Template not found:', templateId);
+      return null;
+    }
+
+    switch (template.id) {
+      case 'RIPA-Primary':
+        return {
+          type: 'RIPA-Primary',
+          name: 'ROSS INFORMATION PROCESSING ASSESSMENT (RIPA)-PRIMARY',
+          examinee: examinee,
+          assessment: assessment,
+          templateData: template.templateData,
+          formulaConfig: template.formulaConfig,
+          scoringRules: template.scoringRules
+        };
+      
+      case 'WRAT5':
+        return {
+          type: 'WRAT5',
+          name: 'WIDE RANGE ACHIEVEMENT TEST- WRAT-5 (ENGLISH)',
+          examinee: examinee,
+          assessment: assessment,
+          templateData: template.templateData,
+          formulaConfig: template.formulaConfig,
+          scoringRules: template.scoringRules
+        };
+      
+      case 'WISC-4':
+        return {
+          type: 'WISC-4',
+          name: 'WECHSLER\'S INTELLIGENCE SCALE FOR CHILDREN -WISC-IV India',
+          examinee: examinee,
+          assessment: assessment,
+          templateData: template.templateData,
+          formulaConfig: template.formulaConfig,
+          scoringRules: template.scoringRules
+        };
+      
+      default:
+        return {
+          type: template.id,
+          name: template.name,
+          examinee: examinee,
+          assessment: assessment,
+          templateData: template.templateData,
+          formulaConfig: template.formulaConfig,
+          scoringRules: template.scoringRules
+        };
+    }
+  };
+
+  const generate = async () => {
+    const activeEx = selectedExaminee || examinee;
+    console.log('🔍 Debug - activeEx:', activeEx);
+    console.log('🔍 Debug - activeEx.examineeId:', activeEx?.examineeId);
+    if (!activeEx || !assess.testDate) {
+      alert('Missing required information');
+      return;
+    }
+    if (!activeEx.examineeId) {
+      alert('Student ID is required. Please enter examinee ID in Step 1.');
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      let reportData;
+
+      console.log('🔍 Debug - useTemplate:', useTemplate);
+      console.log('🔍 Debug - selectedTemplate:', selectedTemplate);
+      console.log('🔍 Debug - available templates:', templates.map(t => ({ id: t.id, name: t.name })));
+
+      if (selectedTemplate) {
+        // Generate report using selected assessment template (auto-selected from assessment or manually selected)
+        console.log('📄 Generating report using template:', selectedTemplate.name, 'ID:', selectedTemplate.id);
+        
+        // Get template data based on selected template (now using API-loaded templates)
+        const templateData = getTemplateData(selectedTemplate.id, activeEx, assess, templates);
+        console.log('🔍 Debug - templateData:', templateData);
+        
+        // Calculate Standard Score Comparisons
+        const mathStd = parseFloat(scores.mathStd) || 0;
+        const spellingStd = parseFloat(scores.spellingStd) || 0;
+        const wordReadingStd = parseFloat(scores.wordReadingStd) || 0;
+        const sentenceStd = parseFloat(scores.sentenceStd) || 0;
+        
+        console.log('📊 [DYNAMIC CALCULATION] === Standard Score Comparisons ===');
+        console.log('📊 [USER INPUT - STATIC] Math Std:', mathStd);
+        console.log('📊 [USER INPUT - STATIC] Spelling Std:', spellingStd);
+        console.log('📊 [USER INPUT - STATIC] Word Reading Std:', wordReadingStd);
+        console.log('📊 [USER INPUT - STATIC] Sentence Std:', sentenceStd);
+        
+        const comparisons = {
+          // Differences (DYNAMIC - calculated from user inputs)
+          diff_wr_sp: (wordReadingStd - spellingStd).toFixed(1),
+          diff_wr_mc: (wordReadingStd - mathStd).toFixed(1),
+          diff_wr_sc: (wordReadingStd - sentenceStd).toFixed(1),
+          diff_sp_mc: (spellingStd - mathStd).toFixed(1),
+          diff_sp_sc: (spellingStd - sentenceStd).toFixed(1),
+          diff_mc_sc: (mathStd - sentenceStd).toFixed(1),
+          
+          // Significance (DYNAMIC - calculated based on threshold)
+          sig_wr_sp: Math.abs(wordReadingStd - spellingStd) >= 15 ? '*' : '',
+          sig_wr_mc: Math.abs(wordReadingStd - mathStd) >= 15 ? '*' : '',
+          sig_wr_sc: Math.abs(wordReadingStd - sentenceStd) >= 15 ? '*' : '',
+          sig_sp_mc: Math.abs(spellingStd - mathStd) >= 15 ? '*' : '',
+          sig_sp_sc: Math.abs(spellingStd - sentenceStd) >= 15 ? '*' : '',
+          sig_mc_sc: Math.abs(mathStd - sentenceStd) >= 15 ? '*' : '',
+          
+          // Base rates (DYNAMIC - calculated based on difference magnitude)
+          base_wr_sp: Math.abs(wordReadingStd - spellingStd) > 20 ? '<1%' : (Math.abs(wordReadingStd - spellingStd) > 15 ? '2%' : '10%'),
+          base_wr_mc: Math.abs(wordReadingStd - mathStd) > 20 ? '<1%' : (Math.abs(wordReadingStd - mathStd) > 15 ? '2%' : '10%'),
+          base_wr_sc: Math.abs(wordReadingStd - sentenceStd) > 20 ? '<1%' : (Math.abs(wordReadingStd - sentenceStd) > 15 ? '2%' : '10%'),
+          base_sp_mc: Math.abs(spellingStd - mathStd) > 20 ? '<1%' : (Math.abs(spellingStd - mathStd) > 15 ? '2%' : '10%'),
+          base_sp_sc: Math.abs(spellingStd - sentenceStd) > 20 ? '<1%' : (Math.abs(spellingStd - sentenceStd) > 15 ? '2%' : '10%'),
+          base_mc_sc: Math.abs(mathStd - sentenceStd) > 20 ? '<1%' : (Math.abs(mathStd - sentenceStd) > 15 ? '2%' : '10%'),
+        };
+        
+        console.log('📊 [DYNAMIC RESULT] Calculated Differences:', {
+          'Word Reading vs Spelling': comparisons.diff_wr_sp,
+          'Word Reading vs Math': comparisons.diff_wr_mc,
+          'Word Reading vs Sentence': comparisons.diff_wr_sc
+        });
+        console.log('📊 [DYNAMIC RESULT] Calculated Significance (* if diff >= 15):', {
+          'Word Reading vs Spelling': comparisons.sig_wr_sp || 'ns',
+          'Word Reading vs Math': comparisons.sig_wr_mc || 'ns'
+        });
+        console.log('📊 [DYNAMIC RESULT] Calculated Base Rates:', {
+          'Word Reading vs Spelling': comparisons.base_wr_sp,
+          'Word Reading vs Math': comparisons.base_wr_mc
+        });
+        
+        const customData = {
+          examinee: activeEx,
+          assessment: assess,
+          scores: {...scores, ...comparisons},
+          ...templateData
+        };
+
+        console.log('📝 Scores being sent to template:', scores);
+        console.log('📊 Custom data for report:', customData);
+        
+        const result = await api.generateReportFromTemplate(selectedTemplate.id, activeEx.id, customData);
+        
+        if (result.success) {
+          console.log('✅ Report generated successfully:', result);
+          reportData = result.report || result.data;
+        } else {
+          throw new Error(result.message || 'Failed to generate report from template');
+        }
+      } else {
+        // Generate custom report
+        reportData = {
+          type: 'Custom',
+          name: 'Custom Assessment Report',
+          examinee: activeEx,
+          assessment: assess,
+          scores: scores,
+          options: opts
+        };
+      }
+
+      // Store the generated report data
+      setGeneratedReport(reportData);
+      
+      // Automatically open preview
+      setTimeout(() => setIsPreviewOpen(true), 300);
+      
+    } catch (error) {
+      console.error('❌ Failed to generate report:', error);
+      console.error('Error details:', error?.message || JSON.stringify(error));
+      alert('Failed to generate report: ' + (error?.message || 'Unknown error. Check console for details.'));
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Load examinees on mount
+  useEffect(() => {
+    fetchExaminees();
+  }, []);
+
+  if (!isOpen) return null;
+
+  return (
+    <div style={{position:'fixed',inset:0,background:'rgba(8,18,38,0.62)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10000,padding:16}}>
+      <div style={{background:'white',borderRadius:12,width:'100%',maxWidth:1200,maxHeight:'90vh',overflow:'hidden',boxShadow:'0 25px 50px -12px rgba(0,0,0,0.25)',position:'relative'}}>
+        {/* HEADER */}
+        <div style={{padding:'24px 32px',borderBottom:'1px solid #e5e7eb',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+          <div>
+            <h2 style={{margin:0,fontSize:'24px',fontWeight:600,color:'#1f2937'}}>Generate Assessment Report</h2>
+            <p style={{margin:'4px 0 0',fontSize:'14px',color:'#6b7280'}}>Create comprehensive assessment reports with templates</p>
+          </div>
+          <button onClick={onClose} style={{background:'none',border:'none',fontSize:'24px',cursor:'pointer',color:'#9ca3af',padding:4}}>×</button>
+        </div>
+
+        <div style={{display:'flex',height:'calc(90vh - 180px)'}}>
+          {/* MAIN CONTENT */}
+          <div style={{flex:1,padding:'32px',overflowY:'auto'}}>
+            {step===1 && (
+              <Step1
+                examinee={examinee} setExaminee={setExaminee}
+                errors={errors}
+                selectedExaminee={selectedExaminee}
+                onSelectExaminee={handleSelectExaminee}
+                onClearSelected={handleClearSelected}
+                examinees={examinees}
+              />
+            )}
+            {step===2 && (
+              <Step2
+                assess={assess} setAssess={setAssess}
+                scores={scores} setScores={setScores}
+                errors={errors}
+                selectedExaminee={selectedExaminee}
+                selectedAssessment={selectedAssessment} setSelectedAssessment={setSelectedAssessment}
+                isPrefilled={isPrefilled} setIsPrefilled={setIsPrefilled}
+                templates={templates}
+                templatesLoading={templatesLoading}
+                selectedTemplate={selectedTemplate} setSelectedTemplate={setSelectedTemplate}
+                useTemplate={useTemplate} setUseTemplate={setUseTemplate}
+                examinee={selectedExaminee || examinee}
+              />
+            )}
+            {step===3 && <Step3 opts={opts} setOpts={setOpts} />}
+          </div>
+        </div>
+
+        {/* FOOTER */}
+        <div style={{padding:'20px 32px',borderTop:'1px solid #e5e7eb',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div style={{fontSize:'14px',color:'#6b7280'}}>
+            Step {step} of 3
+          </div>
+          <div style={{display:'flex',gap:12}}>
+            {step>1 && (
+              <button
+                onClick={prev}
+                style={{padding:'10px 20px',border:'1px solid #d1d5db',background:'white',color:'#374151',borderRadius:6,cursor:'pointer',fontSize:'14px',fontWeight:500}}
+              >
+                Previous
+              </button>
+            )}
+            {step<3 ? (
+              <button
+                onClick={next}
+                style={{padding:'10px 20px',border:'none',background:'#3b82f6',color:'white',borderRadius:6,cursor:'pointer',fontSize:'14px',fontWeight:500}}
+              >
+                Next
+              </button>
+            ) : (
+              <button
+                onClick={generate}
+                disabled={isGenerating}
+                style={{padding:'10px 20px',border:'none',background:'#10b981',color:'white',borderRadius:6,cursor:'pointer',fontSize:'14px',fontWeight:500,opacity:isGenerating?0.7:1}}
+              >
+                {isGenerating ? 'Generating...' : 'Generate Report'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* PREVIEW MODAL */}
+      {isPreviewOpen && generatedReport && (
+        <ReportPreview
+          reportData={generatedReport}
+          onClose={() => setIsPreviewOpen(false)}
+        />
+      )}
+    </div>
+  );
+};
+
+// Step Components (simplified for brevity)
+const Step1 = ({ examinee, setExaminee, errors, selectedExaminee, onSelectExaminee, onClearSelected, examinees }) => (
+  <div>
+    <h3 style={{marginBottom:24}}>Examinee Information</h3>
+    
+    {/* Existing Examinee Selection */}
+    <div style={{marginBottom:24}}>
+      <label style={{display:'block',marginBottom:8,fontWeight:500,color:'#374151'}}>Select Existing Examinee (Optional)</label>
+      <select
+        value={selectedExaminee?.id || ''}
+        onChange={(e) => {
+          const ex = examinees.find(ex => ex.id === parseInt(e.target.value));
+          if (ex) onSelectExaminee(ex);
+        }}
+        style={{width:'100%',padding:12,border:'1px solid #d1d5db',borderRadius:6,fontSize:14}}
+      >
+        <option value="">-- Select Examinee --</option>
+        {examinees.map(ex => (
+          <option key={ex.id} value={ex.id}>
+            {ex.firstName} {ex.lastName} ({ex.examineeId})
+          </option>
+        ))}
+      </select>
+      {selectedExaminee && (
+        <button
+          onClick={onClearSelected}
+          style={{marginTop:8,padding:'6px 12px',background:'#ef4444',color:'white',border:'none',borderRadius:4,fontSize:12,cursor:'pointer'}}
+        >
+          Clear Selection
+        </button>
+      )}
+    </div>
+
+    {/* New Examinee Form */}
+    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(250px, 1fr))',gap:16}}>
+      <div>
+        <label style={{display:'block',marginBottom:4,fontWeight:500,color:'#374151'}}>First Name *</label>
+        <input
+          value={examinee.firstName}
+          onChange={(e) => setExaminee({...examinee, firstName:e.target.value})}
+          style={{width:'100%',padding:10,border:'1px solid #d1d5db',borderRadius:6,fontSize:14}}
+          placeholder="Enter first name"
+        />
+        {errors.firstName && <div style={{color:'#ef4444',fontSize:12,marginTop:4}}>{errors.firstName}</div>}
+      </div>
+      
+      <div>
+        <label style={{display:'block',marginBottom:4,fontWeight:500,color:'#374151'}}>Middle Name</label>
+        <input
+          value={examinee.middleName}
+          onChange={(e) => setExaminee({...examinee, middleName:e.target.value})}
+          style={{width:'100%',padding:10,border:'1px solid #d1d5db',borderRadius:6,fontSize:14}}
+          placeholder="Enter middle name"
+        />
+      </div>
+      
+      <div>
+        <label style={{display:'block',marginBottom:4,fontWeight:500,color:'#374151'}}>Last Name *</label>
+        <input
+          value={examinee.lastName}
+          onChange={(e) => setExaminee({...examinee, lastName:e.target.value})}
+          style={{width:'100%',padding:10,border:'1px solid #d1d5db',borderRadius:6,fontSize:14}}
+          placeholder="Enter last name"
+        />
+        {errors.lastName && <div style={{color:'#ef4444',fontSize:12,marginTop:4}}>{errors.lastName}</div>}
+      </div>
+      
+      <div>
+        <label style={{display:'block',marginBottom:4,fontWeight:500,color:'#374151'}}>Examinee ID *</label>
+        <input
+          value={examinee.examineeId}
+          onChange={(e) => setExaminee({...examinee, examineeId:e.target.value})}
+          style={{width:'100%',padding:10,border:'1px solid #d1d5db',borderRadius:6,fontSize:14}}
+          placeholder="Enter examinee ID"
+        />
+        {errors.examineeId && <div style={{color:'#ef4444',fontSize:12,marginTop:4}}>{errors.examineeId}</div>}
+      </div>
+      
+      <div>
+        <label style={{display:'block',marginBottom:4,fontWeight:500,color:'#374151'}}>Gender *</label>
+        <select
+          value={examinee.gender}
+          onChange={(e) => setExaminee({...examinee, gender:e.target.value})}
+          style={{width:'100%',padding:10,border:'1px solid #d1d5db',borderRadius:6,fontSize:14}}
+        >
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+        {errors.gender && <div style={{color:'#ef4444',fontSize:12,marginTop:4}}>{errors.gender}</div>}
+      </div>
+      
+      <div>
+        <label style={{display:'block',marginBottom:4,fontWeight:500,color:'#374151'}}>Date of Birth *</label>
+        <input
+          type="text"
+          value={examinee.dob}
+          onChange={(e) => setExaminee({...examinee, dob:e.target.value})}
+          style={{width:'100%',padding:10,border:'1px solid #d1d5db',borderRadius:6,fontSize:14}}
+          placeholder="DD/MM/YYYY"
+        />
+        {errors.dob && <div style={{color:'#ef4444',fontSize:12,marginTop:4}}>{errors.dob}</div>}
+      </div>
+    </div>
+  </div>
+);
+
+const Step2 = ({ assess, setAssess, scores, setScores, errors, templates, templatesLoading, selectedTemplate, setSelectedTemplate, useTemplate, setUseTemplate, examinee }) => (
+  <div>
+    <h3 style={{marginBottom:24}}>Assessment Details</h3>
+    
+    {/* Template Selection */}
+    <div style={{marginBottom:24}}>
+      <label style={{display:'flex',alignItems:'center',marginBottom:8,fontWeight:500,color:'#374151'}}>
+        <input
+          type="checkbox"
+          checked={useTemplate}
+          onChange={(e) => setUseTemplate(e.target.checked)}
+          style={{marginRight:8}}
+        />
+        Use Assessment Template
+      </label>
+      
+      {useTemplate && (
+        <div>
+          {templatesLoading ? (
+            <div style={{padding:12,background:'#f3f4f6',borderRadius:6,color:'#6b7280',fontSize:14}}>
+              Loading templates...
+            </div>
+          ) : (
+            <select
+              value={selectedTemplate?.id || ''}
+              onChange={(e) => {
+                const selectedId = e.target.value;
+                console.log('🔍 Template dropdown selected ID:', selectedId, 'type:', typeof selectedId);
+                const template = templates.find(t => String(t.id) === String(selectedId));
+                console.log('🔍 Found template:', template);
+                setSelectedTemplate(template);
+              }}
+              style={{width:'100%',padding:12,border:'1px solid #d1d5db',borderRadius:6,fontSize:14,marginTop:8}}
+            >
+              <option value="">-- Select Template --</option>
+              {templates.map(template => (
+                <option key={template.id} value={template.id}>
+                  {template.icon} {template.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+      )}
+    </div>
+
+    {/* ADHD-2 Simple Template */}
+    {selectedTemplate?.id === 'ADHD-2' && (
+      <ADHD2Template examinee={examinee} />
+    )}
+
+    {/* Default Complex Template Form */}
+    {(!selectedTemplate || selectedTemplate?.id !== 'ADHD-2') && (
+      <>
+        {/* Assessment Form */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(250px, 1fr))',gap:16,marginBottom:24}}>
+          <div>
+            <label style={{display:'block',marginBottom:4,fontWeight:500,color:'#374151'}}>Test Date *</label>
+            <input
+              type="text"
+              value={assess.testDate}
+              onChange={(e) => setAssess({...assess, testDate:e.target.value})}
+              style={{width:'100%',padding:10,border:'1px solid #d1d5db',borderRadius:6,fontSize:14}}
+              placeholder="DD/MM/YYYY"
+            />
+            {errors.testDate && <div style={{color:'#ef4444',fontSize:12,marginTop:4}}>{errors.testDate}</div>}
+          </div>
+          
+          <div>
+            <label style={{display:'block',marginBottom:4,fontWeight:500,color:'#374151'}}>Examiner</label>
+            <input
+              value={assess.examiner}
+              onChange={(e) => setAssess({...assess, examiner:e.target.value})}
+              style={{width:'100%',padding:10,border:'1px solid #d1d5db',borderRadius:6,fontSize:14}}
+              placeholder="Enter examiner name"
+            />
+          </div>
+          
+          <div>
+            <label style={{display:'block',marginBottom:4,fontWeight:500,color:'#374151'}}>Language</label>
+            <select
+              value={assess.language}
+              onChange={(e) => setAssess({...assess, language:e.target.value})}
+              style={{width:'100%',padding:10,border:'1px solid #d1d5db',borderRadius:6,fontSize:14}}
+            >
+              <option value="English">English</option>
+              <option value="Hindi">Hindi</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Scores Section */}
+        <div style={{marginTop:24}}>
+          <h4 style={{fontSize:16,fontWeight:600,color:'#1f2937',marginBottom:16,borderBottom:'2px solid #1e40af',paddingBottom:8}}>Enter Scores</h4>
+          
+          {/* Common Age Field - Only once for all tests */}
+          <div style={{marginBottom:20,padding:16,background:'#f0f9ff',borderRadius:8,border:'1px solid #bae6fd'}}>
+            <h5 style={{fontSize:14,fontWeight:600,color:'#0369a1',marginBottom:12}}>Student Age (Common for All Tests)</h5>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:12}}>
+              <div>
+                <label style={{display:'block',fontSize:11,marginBottom:4,color:'#6b7280'}}>Age (Years)</label>
+                <input
+                  type="number"
+                  value={scores.studentAge || ''}
+                  onChange={(e) => setScores({...scores, studentAge:e.target.value})}
+                  style={{width:'100%',padding:8,border:'1px solid #d1d5db',borderRadius:4,fontSize:12}}
+                  placeholder="e.g., 8"
+                />
+              </div>
+              <div>
+                <label style={{display:'block',fontSize:11,marginBottom:4,color:'#6b7280'}}>Age (Months)</label>
+                <input
+                  type="number"
+                  value={scores.studentAgeMonths || ''}
+                  onChange={(e) => setScores({...scores, studentAgeMonths:e.target.value})}
+                  style={{width:'100%',padding:8,border:'1px solid #d1d5db',borderRadius:4,fontSize:12}}
+                  placeholder="e.g., 3"
+                />
+              </div>
+              <div>
+                <label style={{display:'block',fontSize:11,marginBottom:4,color:'#6b7280'}}>Full Age</label>
+                <input
+                  type="text"
+                  value={scores.studentAge ? `${scores.studentAge || 0} years ${scores.studentAgeMonths || 0} months` : ''}
+                  readOnly
+                  style={{width:'100%',padding:8,border:'1px solid #d1d5db',borderRadius:4,fontSize:12,background:'#f3f4f6'}}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Math Computation */}
+          <div style={{marginBottom:20}}>
+            <h5 style={{fontSize:14,fontWeight:600,color:'#374151',marginBottom:12}}>Math Computation</h5>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(100px, 1fr))',gap:12}}>
+              {['Raw','Std','CI','Pct','Cat','GSV'].map(field => (
+                <div key={`math${field}`}>
+                  <label style={{display:'block',fontSize:11,marginBottom:4,color:'#6b7280'}}>{field}</label>
+                  <input
+                    type="text"
+                    value={scores[`math${field}`] || ''}
+                    onChange={(e) => setScores({...scores, [`math${field}`]:e.target.value})}
+                    style={{width:'100%',padding:8,border:'1px solid #d1d5db',borderRadius:4,fontSize:12}}
+                    placeholder="-"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Spelling */}
+          <div style={{marginBottom:20}}>
+            <h5 style={{fontSize:14,fontWeight:600,color:'#374151',marginBottom:12}}>Spelling</h5>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(100px, 1fr))',gap:12}}>
+              {['Raw','Std','CI','Pct','Cat','GSV'].map(field => (
+                <div key={`spelling${field}`}>
+                  <label style={{display:'block',fontSize:11,marginBottom:4,color:'#6b7280'}}>{field}</label>
+                  <input
+                    type="text"
+                    value={scores[`spelling${field}`] || ''}
+                    onChange={(e) => setScores({...scores, [`spelling${field}`]:e.target.value})}
+                    style={{width:'100%',padding:8,border:'1px solid #d1d5db',borderRadius:4,fontSize:12}}
+                    placeholder="-"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Word Reading */}
+          <div style={{marginBottom:20}}>
+            <h5 style={{fontSize:14,fontWeight:600,color:'#374151',marginBottom:12}}>Word Reading</h5>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(100px, 1fr))',gap:12}}>
+              {['Raw','Std','CI','Pct','Cat','GSV'].map(field => (
+                <div key={`wordReading${field}`}>
+                  <label style={{display:'block',fontSize:11,marginBottom:4,color:'#6b7280'}}>{field}</label>
+                  <input
+                    type="text"
+                    value={scores[`wordReading${field}`] || ''}
+                    onChange={(e) => setScores({...scores, [`wordReading${field}`]:e.target.value})}
+                    style={{width:'100%',padding:8,border:'1px solid #d1d5db',borderRadius:4,fontSize:12}}
+                    placeholder="-"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Sentence Comprehension */}
+          <div style={{marginBottom:20}}>
+            <h5 style={{fontSize:14,fontWeight:600,color:'#374151',marginBottom:12}}>Sentence Comprehension</h5>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(100px, 1fr))',gap:12}}>
+              {['Raw','Std','CI','Pct','Cat','GSV'].map(field => (
+                <div key={`sentence${field}`}>
+                  <label style={{display:'block',fontSize:11,marginBottom:4,color:'#6b7280'}}>{field}</label>
+                  <input
+                    type="text"
+                    value={scores[`sentence${field}`] || ''}
+                    onChange={(e) => setScores({...scores, [`sentence${field}`]:e.target.value})}
+                    style={{width:'100%',padding:8,border:'1px solid #d1d5db',borderRadius:4,fontSize:12}}
+                    placeholder="-"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Reading Composite */}
+          <div style={{marginBottom:20,background:'#dbeafe',padding:16,borderRadius:8}}>
+            <h5 style={{fontSize:14,fontWeight:600,color:'#1e40af',marginBottom:12}}>Reading Composite (Auto-calculated)</h5>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(120px, 1fr))',gap:12}}>
+              <div>
+                <label style={{display:'block',fontSize:11,marginBottom:4,color:'#6b7280'}}>Raw (WR+SC)</label>
+                <input
+                  type="text"
+                  value={(parseInt(scores.wordReadingRaw||0) + parseInt(scores.sentenceRaw||0)) || ''}
+                  readOnly
+                  style={{width:'100%',padding:8,border:'1px solid #93c5fd',borderRadius:4,fontSize:12,background:'#eff6ff'}}
+                />
+              </div>
+              {['Std','CI','Pct','Cat'].map(field => (
+                <div key={`composite${field}`}>
+                  <label style={{display:'block',fontSize:11,marginBottom:4,color:'#6b7280'}}>{field}</label>
+                  <input
+                    type="text"
+                    value={scores[`composite${field}`] || ''}
+                    onChange={(e) => setScores({...scores, [`composite${field}`]:e.target.value})}
+                    style={{width:'100%',padding:8,border:'1px solid #93c5fd',borderRadius:4,fontSize:12}}
+                    placeholder="-"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </>
+    )}
+  </div>
+);
+
+const Step3 = ({ opts, setOpts }) => (
+  <div>
+    <h3 style={{marginBottom:24}}>Report Options</h3>
+    
+    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(300px, 1fr))',gap:20}}>
+      <div>
+        <label style={{display:'flex',alignItems:'center',marginBottom:8,fontWeight:500,color:'#374151'}}>
+          <input
+            type="checkbox"
+            checked={opts.includeExamineeName}
+            onChange={(e) => setOpts({...opts, includeExamineeName:e.target.checked})}
+            style={{marginRight:8}}
+          />
+          Include Examinee Name
+        </label>
+      </div>
+      
+      <div>
+        <label style={{display:'block',marginBottom:4,fontWeight:500,color:'#374151'}}>Score Summary Column</label>
+        <select
+          value={opts.scoreSummaryCol}
+          onChange={(e) => setOpts({...opts, scoreSummaryCol:e.target.value})}
+          style={{width:'100%',padding:10,border:'1px solid #d1d5db',borderRadius:6,fontSize:14}}
+        >
+          <option value="GSV">GSV</option>
+          <option value="Standard Score">Standard Score</option>
+          <option value="Percentile">Percentile</option>
+        </select>
+      </div>
+    </div>
+  </div>
+);
+
+const ReportPreview = ({ reportData, onClose }) => {
+  const scores = reportData.scores || {};
+  const examinee = reportData.examinee || {};
+  const assessment = reportData.assessment || {};
+  
+  console.log('📄 [REPORT PREVIEW] === Report Data Analysis ===');
+  console.log('📄 [REPORT PREVIEW] Examinee:', examinee.firstName, examinee.lastName, '| ID:', examinee.examineeId);
+  
+  // Calculate derived scores
+  const subtests = [
+    { name: 'Math Computation', raw: scores.mathRaw || '-', std: scores.mathStd || '-', ci: scores.mathCI || '-', pct: scores.mathPct || '-', cat: scores.mathCat || '-', age: scores.mathAge || '-', gsv: scores.mathGSV || '-' },
+    { name: 'Spelling', raw: scores.spellingRaw || '-', std: scores.spellingStd || '-', ci: scores.spellingCI || '-', pct: scores.spellingPct || '-', cat: scores.spellingCat || '-', age: scores.spellingAge || '-', gsv: scores.spellingGSV || '-' },
+    { name: 'Word Reading', raw: scores.wordReadingRaw || '-', std: scores.wordReadingStd || '-', ci: scores.wordReadingCI || '-', pct: scores.wordReadingPct || '-', cat: scores.wordReadingCat || '-', age: scores.wordReadingAge || '-', gsv: scores.wordReadingGSV || '-' },
+    { name: 'Sentence Comprehension', raw: scores.sentenceRaw || '-', std: scores.sentenceStd || '-', ci: scores.sentenceCI || '-', pct: scores.sentencePct || '-', cat: scores.sentenceCat || '-', age: scores.sentenceAge || '-', gsv: scores.sentenceGSV || '-' },
+  ];
+  
+  console.log('📄 [REPORT PREVIEW] === Score Summary (USER INPUT - STATIC) ===');
+  subtests.forEach(s => {
+    console.log(`📄 [STATIC] ${s.name}: Raw=${s.raw}, Std=${s.std}, CI=${s.ci}, Pct=${s.pct}`);
+  });
+  
+  // Calculate Reading Composite
+  const readingCompRaw = parseInt(scores.wordReadingRaw || 0) + parseInt(scores.sentenceRaw || 0);
+  const readingComp = {
+    raw: readingCompRaw,
+    std: scores.compositeStd || '-',
+    ci: scores.compositeCI || '-',
+    pct: scores.compositePct || '-',
+    cat: scores.compositeCat || '-',
+    age: '-',
+    gsv: '-'
+  };
+  
+  console.log('📄 [REPORT PREVIEW] === Reading Composite (DYNAMIC CALCULATION) ===');
+  console.log(`📄 [DYNAMIC] Reading Composite Raw = Word Reading Raw (${scores.wordReadingRaw || 0}) + Sentence Raw (${scores.sentenceRaw || 0}) = ${readingCompRaw}`);
+  console.log(`📄 [DYNAMIC] Reading Composite Std = ${readingComp.std} (user entered)`);
+  
+  // Standard Score Comparisons
+  const comparisons = [
+    { comp: 'Word Reading vs. Spelling', diff: scores.diff_wr_sp || '-', sig: scores.sig_wr_sp || '-', base: scores.base_wr_sp || '-' },
+    { comp: 'Word Reading vs. Math Computation', diff: scores.diff_wr_mc || '-', sig: scores.sig_wr_mc || '-', base: scores.base_wr_mc || '-' },
+    { comp: 'Word Reading vs. Sentence Comprehension', diff: scores.diff_wr_sc || '-', sig: scores.sig_wr_sc || '-', base: scores.base_wr_sc || '-' },
+    { comp: 'Spelling vs. Math Computation', diff: scores.diff_sp_mc || '-', sig: scores.sig_sp_mc || '-', base: scores.base_sp_mc || '-' },
+    { comp: 'Spelling vs. Sentence Comprehension', diff: scores.diff_sp_sc || '-', sig: scores.sig_sp_sc || '-', base: scores.base_sp_sc || '-' },
+    { comp: 'Math Computation vs. Sentence Comprehension', diff: scores.diff_mc_sc || '-', sig: scores.sig_mc_sc || '-', base: scores.base_mc_sc || '-' },
+  ];
+  
+  console.log('📄 [REPORT PREVIEW] === Standard Score Comparisons (DYNAMIC) ===');
+  comparisons.forEach(c => {
+    console.log(`📄 [DYNAMIC] ${c.comp}: Diff=${c.diff}, Sig=${c.sig || 'ns'}, Base=${c.base}`);
+  });
+  
+  console.log('📄 [REPORT PREVIEW] === Summary ===');
+  console.log('✅ STATIC (User Input): All subtest raw scores, standard scores, CI, percentile, category');
+  console.log('✅ DYNAMIC (Calculated): Reading Composite Raw, All Comparisons (diff, sig, base rate)');
+  
+  // Generate PDF
+  const generatePDF = () => {
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>${reportData.name || 'Assessment Report'}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 40px; }
+            .header { text-align: center; border-bottom: 2px solid #1e40af; padding-bottom: 10px; margin-bottom: 30px; }
+            .header h1 { color: #1e40af; margin: 0; font-size: 18px; }
+            .header p { margin: 5px 0; font-size: 11px; color: #666; }
+            .section { margin-bottom: 30px; }
+            .section h2 { font-size: 14px; color: #1e40af; border-bottom: 1px solid #1e40af; padding-bottom: 5px; margin-bottom: 15px; }
+            table { width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 15px; }
+            th { background: #1e40af; color: white; padding: 6px; text-align: left; font-weight: bold; }
+            td { padding: 5px; border: 1px solid #ddd; text-align: center; }
+            tr:nth-child(even) { background: #f9fafb; }
+            .composite { background: #dbeafe; font-weight: bold; }
+            .note { font-size: 9px; color: #666; margin-top: 10px; font-style: italic; }
+            .footer { text-align: center; margin-top: 40px; font-size: 10px; color: #666; border-top: 1px solid #ddd; padding-top: 10px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>${reportData.name || 'WRATS - India Blue Form Standard Report'}</h1>
+            <p>Age-Based Norms | ID: ${examinee.examineeId || 'N/A'} | ${new Date().toLocaleDateString()}</p>
+            <p>${examinee.firstName || ''} ${examinee.lastName || ''}</p>
+          </div>
+          
+          <div class="section">
+            <h2>SCORE SUMMARY</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Subtest/Composite</th>
+                  <th>Raw Score</th>
+                  <th>Standard Score</th>
+                  <th>95% Confidence Interval</th>
+                  <th>Percentile Rank</th>
+                  <th>Descriptive Category</th>
+                  <th>Age Equivalent</th>
+                  <th>Growth Scale Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${subtests.map(s => `
+                  <tr>
+                    <td style="text-align:left;font-weight:500">${s.name}</td>
+                    <td>${s.raw}</td>
+                    <td>${s.std}</td>
+                    <td>${s.ci}</td>
+                    <td>${s.pct}</td>
+                    <td>${s.cat}</td>
+                    <td>${s.age}</td>
+                    <td>${s.gsv}</td>
+                  </tr>
+                `).join('')}
+                <tr class="composite">
+                  <td style="text-align:left">Reading Composite</td>
+                  <td>${readingComp.raw}</td>
+                  <td>${readingComp.std}</td>
+                  <td>${readingComp.ci}</td>
+                  <td>${readingComp.pct}</td>
+                  <td>${readingComp.cat}</td>
+                  <td>${readingComp.age}</td>
+                  <td>${readingComp.gsv}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="section">
+            <h2>STANDARD SCORE COMPARISONS</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Comparisons</th>
+                  <th>Difference</th>
+                  <th>Significance Level</th>
+                  <th>Base Rate</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${comparisons.map(c => `
+                  <tr>
+                    <td style="text-align:left">${c.comp}</td>
+                    <td>${c.diff}</td>
+                    <td>${c.sig}</td>
+                    <td>${c.base}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+            <p class="note">Note: A negative difference indicates that the second subtest has a higher score than the first subtest listed in the comparison.</p>
+            <p class="note">Comparisons were made using the age reference group.</p>
+          </div>
+          
+          <div class="section">
+            <h2>STANDARD SCORE PROFILE</h2>
+            <div style="margin: 20px 0;">
+              <!-- Bell Curve SVG -->
+              <svg width="600" height="250" viewBox="0 0 600 250" style="margin: 0 auto; display: block;">
+                <!-- Background gradient -->
+                <defs>
+                  <linearGradient id="curveGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#1e40af;stop-opacity:0.3" />
+                    <stop offset="100%" style="stop-color:#1e40af;stop-opacity:0.05" />
+                  </linearGradient>
+                </defs>
+                
+                <!-- Bell Curve Path -->
+                <path d="M 50 200 Q 150 200 200 150 Q 250 80 300 50 Q 350 80 400 150 Q 450 200 550 200" 
+                      fill="url(#curveGradient)" stroke="#1e40af" stroke-width="2" />
+                
+                <!-- Score Labels -->
+                <text x="50" y="230" text-anchor="middle" font-size="12" fill="#666">55</text>
+                <text x="150" y="230" text-anchor="middle" font-size="12" fill="#666">70</text>
+                <text x="200" y="230" text-anchor="middle" font-size="12" fill="#666">85</text>
+                <text x="300" y="230" text-anchor="middle" font-size="12" fill="#666">100</text>
+                <text x="400" y="230" text-anchor="middle" font-size="12" fill="#666">115</text>
+                <text x="450" y="230" text-anchor="middle" font-size="12" fill="#666">130</text>
+                <text x="550" y="230" text-anchor="middle" font-size="12" fill="#666">145</text>
+                
+                <!-- Category Labels -->
+                <text x="100" y="245" text-anchor="middle" font-size="10" fill="#666">Extremely Low</text>
+                <text x="175" y="245" text-anchor="middle" font-size="10" fill="#666">Very Low</text>
+                <text x="250" y="245" text-anchor="middle" font-size="10" fill="#666">Low Average</text>
+                <text x="300" y="245" text-anchor="middle" font-size="10" fill="#666">Average</text>
+                <text x="375" y="245" text-anchor="middle" font-size="10" fill="#666">High Average</text>
+                <text x="425" y="245" text-anchor="middle" font-size="10" fill="#666">Very High</text>
+                <text x="500" y="245" text-anchor="middle" font-size="10" fill="#666">Extremely High</text>
+                
+                <!-- Score Markers -->
+                ${subtests.map((s, i) => {
+                  const stdScore = parseInt(s.std) || 100;
+                  const x = 50 + ((stdScore - 55) / 90) * 500;
+                  const y = 80 + (i * 25);
+                  return `<line x1="${x}" y1="${y}" x2="${x}" y2="180" stroke="#ef4444" stroke-width="2" />
+                          <circle cx="${x}" cy="${y}" r="4" fill="#ef4444" />
+                          <text x="${x + 8}" y="${y + 4}" font-size="11" fill="#374151">${s.name} (${s.std})</text>`;
+                }).join('')}
+              </svg>
+              <p class="note">Note: Confidence Interval is based on a 95% confidence level.</p>
+            </div>
+          </div>
+          
+          <div class="section">
+            <h2>ASSESSMENT DETAILS</h2>
+            <table>
+              <tbody>
+                <tr><td style="text-align:left;width:30%"><strong>Test Date:</strong></td><td style="text-align:left">${assessment.testDate || 'N/A'}</td></tr>
+                <tr><td style="text-align:left"><strong>Examiner:</strong></td><td style="text-align:left">${assessment.examiner || 'N/A'}</td></tr>
+                <tr><td style="text-align:left"><strong>Language:</strong></td><td style="text-align:left">${assessment.language || 'N/A'}</td></tr>
+                <tr><td style="text-align:left"><strong>Grade Level:</strong></td><td style="text-align:left">${assessment.gradeLevel || 'N/A'}</td></tr>
+                <tr><td style="text-align:left"><strong>Testing Site:</strong></td><td style="text-align:left">${assessment.testingSite || 'N/A'}</td></tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="footer">
+            <p>This report was generated on ${new Date().toLocaleDateString()} | Page 2 of 3</p>
+          </div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+  
+  return (
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10001}}>
+      <div style={{background:'white',borderRadius:8,width:'95%',maxWidth:1200,height:'95%',maxHeight:900,overflow:'hidden'}}>
+        {/* Header */}
+        <div style={{padding:'20px 30px',borderBottom:'1px solid #e5e7eb',display:'flex',justifyContent:'space-between',alignItems:'center',background:'#1e40af',color:'white'}}>
+          <div>
+            <h3 style={{margin:0,fontSize:'20px',fontWeight:600}}>Report Preview</h3>
+            <p style={{margin:'5px 0 0',fontSize:'13px',opacity:0.9}}>WRATS - India Blue Form Standard Report</p>
+          </div>
+          <div style={{display:'flex',gap:12}}>
+            <button 
+              onClick={generatePDF}
+              style={{background:'#10b981',border:'none',padding:'10px 20px',borderRadius:6,color:'white',fontSize:'14px',fontWeight:500,cursor:'pointer'}}
+            >
+              Download PDF
+            </button>
+            <button 
+              onClick={onClose} 
+              style={{background:'white',border:'none',padding:'10px 20px',borderRadius:6,color:'#1f2937',fontSize:'14px',fontWeight:500,cursor:'pointer'}}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+        
+        {/* Content */}
+        <div style={{padding:30,height:'calc(100% - 90px)',overflow:'auto',background:'#f9fafb'}}>
+          <div style={{background:'white',padding:40,borderRadius:8,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}}>
+            
+            {/* Report Header */}
+            <div style={{textAlign:'center',borderBottom:'2px solid #1e40af',paddingBottom:20,marginBottom:30}}>
+              <h1 style={{margin:0,fontSize:24,color:'#1e40af',fontWeight:'bold'}}>{reportData.name || 'WRATS - India Blue Form Standard Report'}</h1>
+              <p style={{margin:'8px 0',fontSize:12,color:'#666'}}>Age-Based Norms | ID: {examinee.examineeId || 'N/A'} | {new Date().toLocaleDateString()}</p>
+              <p style={{margin:0,fontSize:14,fontWeight:500}}>{examinee.firstName || ''} {examinee.lastName || ''}</p>
+            </div>
+            
+            {/* Score Summary */}
+            <div style={{marginBottom:40}}>
+              <h2 style={{fontSize:16,color:'#1e40af',borderBottom:'1px solid #1e40af',paddingBottom:8,marginBottom:20,fontWeight:600}}>SCORE SUMMARY</h2>
+              <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
+                <thead>
+                  <tr style={{background:'#1e40af',color:'white'}}>
+                    <th style={{padding:8,textAlign:'left',fontWeight:'bold',border:'1px solid #1e40af'}}>Subtest/Composite</th>
+                    <th style={{padding:8,fontWeight:'bold',border:'1px solid #1e40af'}}>Raw Score</th>
+                    <th style={{padding:8,fontWeight:'bold',border:'1px solid #1e40af'}}>Standard Score</th>
+                    <th style={{padding:8,fontWeight:'bold',border:'1px solid #1e40af'}}>95% CI</th>
+                    <th style={{padding:8,fontWeight:'bold',border:'1px solid #1e40af'}}>Percentile</th>
+                    <th style={{padding:8,fontWeight:'bold',border:'1px solid #1e40af'}}>Category</th>
+                    <th style={{padding:8,fontWeight:'bold',border:'1px solid #1e40af'}}>Age Equiv.</th>
+                    <th style={{padding:8,fontWeight:'bold',border:'1px solid #1e40af'}}>GS Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {subtests.map((s, idx) => (
+                    <tr key={idx} style={{background:idx % 2 === 0 ? '#fff' : '#f9fafb'}}>
+                      <td style={{padding:6,border:'1px solid #ddd',textAlign:'left',fontWeight:500}}>{s.name}</td>
+                      <td style={{padding:6,border:'1px solid #ddd',textAlign:'center'}}>{s.raw}</td>
+                      <td style={{padding:6,border:'1px solid #ddd',textAlign:'center'}}>{s.std}</td>
+                      <td style={{padding:6,border:'1px solid #ddd',textAlign:'center'}}>{s.ci}</td>
+                      <td style={{padding:6,border:'1px solid #ddd',textAlign:'center'}}>{s.pct}</td>
+                      <td style={{padding:6,border:'1px solid #ddd',textAlign:'center'}}>{s.cat}</td>
+                      <td style={{padding:6,border:'1px solid #ddd',textAlign:'center'}}>{s.age}</td>
+                      <td style={{padding:6,border:'1px solid #ddd',textAlign:'center'}}>{s.gsv}</td>
+                    </tr>
+                  ))}
+                  <tr style={{background:'#dbeafe',fontWeight:'bold'}}>
+                    <td style={{padding:6,border:'1px solid #1e40af',textAlign:'left'}}>Reading Composite</td>
+                    <td style={{padding:6,border:'1px solid #1e40af',textAlign:'center'}}>{readingComp.raw}</td>
+                    <td style={{padding:6,border:'1px solid #1e40af',textAlign:'center'}}>{readingComp.std}</td>
+                    <td style={{padding:6,border:'1px solid #1e40af',textAlign:'center'}}>{readingComp.ci}</td>
+                    <td style={{padding:6,border:'1px solid #1e40af',textAlign:'center'}}>{readingComp.pct}</td>
+                    <td style={{padding:6,border:'1px solid #1e40af',textAlign:'center'}}>{readingComp.cat}</td>
+                    <td style={{padding:6,border:'1px solid #1e40af',textAlign:'center'}}>{readingComp.age}</td>
+                    <td style={{padding:6,border:'1px solid #1e40af',textAlign:'center'}}>{readingComp.gsv}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Standard Score Comparisons */}
+            <div style={{marginBottom:40}}>
+              <h2 style={{fontSize:16,color:'#1e40af',borderBottom:'1px solid #1e40af',paddingBottom:8,marginBottom:20,fontWeight:600}}>STANDARD SCORE COMPARISONS</h2>
+              <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
+                <thead>
+                  <tr style={{background:'#1e40af',color:'white'}}>
+                    <th style={{padding:8,textAlign:'left',fontWeight:'bold',border:'1px solid #1e40af'}}>Comparisons</th>
+                    <th style={{padding:8,fontWeight:'bold',border:'1px solid #1e40af'}}>Difference</th>
+                    <th style={{padding:8,fontWeight:'bold',border:'1px solid #1e40af'}}>Significance</th>
+                    <th style={{padding:8,fontWeight:'bold',border:'1px solid #1e40af'}}>Base Rate</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {comparisons.map((c, idx) => (
+                    <tr key={idx} style={{background:idx % 2 === 0 ? '#fff' : '#f9fafb'}}>
+                      <td style={{padding:6,border:'1px solid #ddd',textAlign:'left'}}>{c.comp}</td>
+                      <td style={{padding:6,border:'1px solid #ddd',textAlign:'center'}}>{c.diff}</td>
+                      <td style={{padding:6,border:'1px solid #ddd',textAlign:'center'}}>{c.sig}</td>
+                      <td style={{padding:6,border:'1px solid #ddd',textAlign:'center'}}>{c.base}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p style={{fontSize:10,color:'#666',marginTop:10,fontStyle:'italic'}}>Note: A negative difference indicates that the second subtest has a higher score than the first subtest listed.</p>
+            </div>
+            
+            {/* Standard Score Profile Chart */}
+            <div style={{marginBottom:40}}>
+              <h2 style={{fontSize:16,color:'#1e40af',borderBottom:'1px solid #1e40af',paddingBottom:8,marginBottom:20,fontWeight:600}}>STANDARD SCORE PROFILE</h2>
+              <div style={{display:'flex',justifyContent:'center',margin:20}}>
+                <svg width="600" height="280" viewBox="0 0 600 280">
+                  <defs>
+                    <linearGradient id="bellGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" style={{stopColor:'#1e40af',stopOpacity:0.3}} />
+                      <stop offset="100%" style={{stopColor:'#1e40af',stopOpacity:0.05}} />
+                    </linearGradient>
+                  </defs>
+                  
+                  {/* Bell Curve */}
+                  <path 
+                    d="M 50 220 Q 150 220 200 170 Q 250 100 300 70 Q 350 100 400 170 Q 450 220 550 220" 
+                    fill="url(#bellGradient)" 
+                    stroke="#1e40af" 
+                    strokeWidth="2"
+                  />
+                  
+                  {/* Base line */}
+                  <line x1="50" y1="220" x2="550" y2="220" stroke="#ddd" strokeWidth="1" />
+                  
+                  {/* Score markers on X axis */}
+                  {[55, 70, 85, 100, 115, 130, 145].map((score, i) => {
+                    const x = 50 + (i * 75);
+                    return (
+                      <g key={score}>
+                        <line x1={x} y1="220" x2={x} y2="225" stroke="#666" strokeWidth="1" />
+                        <text x={x} y="240" textAnchor="middle" fontSize="12" fill="#666">{score}</text>
+                      </g>
+                    );
+                  })}
+                  
+                  {/* Category labels */}
+                  <text x="87" y="255" textAnchor="middle" fontSize="10" fill="#666">Extremely Low</text>
+                  <text x="162" y="255" textAnchor="middle" fontSize="10" fill="#666">Very Low</text>
+                  <text x="237" y="255" textAnchor="middle" fontSize="10" fill="#666">Low Average</text>
+                  <text x="312" y="255" textAnchor="middle" fontSize="10" fill="#666">Average</text>
+                  <text x="387" y="255" textAnchor="middle" fontSize="10" fill="#666">High Average</text>
+                  <text x="462" y="255" textAnchor="middle" fontSize="10" fill="#666">Very High</text>
+                  <text x="537" y="255" textAnchor="middle" fontSize="10" fill="#666">Extremely High</text>
+                  
+                  {/* Subtest score markers */}
+                  {subtests.map((s, i) => {
+                    const stdScore = parseInt(s.std) || 100;
+                    const x = 50 + ((stdScore - 55) / 90) * 500;
+                    const y = 60 + (i * 30);
+                    return (
+                      <g key={s.name}>
+                        <line x1={x} y1={y} x2={x} y2="200" stroke="#ef4444" strokeWidth="2" strokeDasharray="4,2" />
+                        <circle cx={x} cy={y} r="5" fill="#ef4444" />
+                        <text x={x + 10} y={y + 4} fontSize="11" fill="#374151" fontWeight="500">{s.name} ({s.std})</text>
+                      </g>
+                    );
+                  })}
+                </svg>
+              </div>
+              <p style={{fontSize:10,color:'#666',marginTop:10,fontStyle:'italic',textAlign:'center'}}>Note: Confidence Interval is based on a 95% confidence level.</p>
+            </div>
+            
+            {/* Assessment Details */}
+            <div style={{marginBottom:30}}>
+              <h2 style={{fontSize:16,color:'#1e40af',borderBottom:'1px solid #1e40af',paddingBottom:8,marginBottom:20,fontWeight:600}}>ASSESSMENT DETAILS</h2>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:15,fontSize:12}}>
+                <div><strong>Test Date:</strong> {assessment.testDate || 'N/A'}</div>
+                <div><strong>Examiner:</strong> {assessment.examiner || 'N/A'}</div>
+                <div><strong>Language:</strong> {assessment.language || 'N/A'}</div>
+                <div><strong>Grade Level:</strong> {assessment.gradeLevel || 'N/A'}</div>
+                <div><strong>Testing Site:</strong> {assessment.testingSite || 'N/A'}</div>
+              </div>
+            </div>
+            
+            {/* Footer */}
+            <div style={{textAlign:'center',marginTop:40,fontSize:11,color:'#666',borderTop:'1px solid #ddd',paddingTop:15}}>
+              <p>This report was generated on {new Date().toLocaleDateString()} | Page 2 of 3</p>
+              <p style={{fontSize:9,marginTop:5}}>WRATS - Wide Range Achievement Test | Standard Report with Age-Based Norms</p>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default GenerateReportModal;

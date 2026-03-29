@@ -58,6 +58,7 @@ import ServiceEditForm from './components/ServiceEditForm';
 import ExamineeCreateForm from './components/ExamineeCreateForm';
 import ExamineeDetail from './components/ExamineeDetail';
 import AssessmentTemplateSelector from './components/AssessmentTemplateSelector';
+import SimpleADHT2Template from './components/SimpleADHT2Template';
 // import TherapistCreateForm from './components/TherapistCreateForm'; // Temporarily disabled
 import SessionCreateForm from './components/SessionCreateForm';
 import SessionEditForm from './components/SessionEditForm';
@@ -910,16 +911,11 @@ ${service.target_age_group || 'Not specified'}
       );
     }
 
-    // Handle template selection (now using API data)
+    // Handle template selection - Simple ADHT2 Template only
     if (currentView === 'template-selector' || currentView === 'template-manager') {
       return (
-        <AssessmentTemplateSelector 
-          onSelectTemplate={(template) => {
-            console.log('Template selected:', template);
-            // Handle template selection logic here
-          }}
-          onCancel={() => setCurrentView('dashboard')}
-          studentName="Student"
+        <SimpleADHT2Template 
+          onBack={() => setCurrentView('dashboard')}
         />
       );
     }
