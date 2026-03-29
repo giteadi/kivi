@@ -62,6 +62,12 @@ import SimpleADHT2Template from './components/SimpleADHT2Template';
 import SimpleADHDDSM5Template from './components/SimpleADHDDSM5Template';
 import SimpleAstonIndexTemplate from './components/SimpleAstonIndexTemplate';
 import SimpleBKTTemplate from './components/SimpleBKTTemplate';
+import SimpleBrownEFATemplate from './components/SimpleBrownEFATemplate';
+import SimpleEACATemplate from './components/SimpleEACATemplate';
+import SimpleGARS3Template from './components/SimpleGARS3Template';
+import SimpleNelsonDennyTemplate from './components/SimpleNelsonDennyTemplate';
+import SimpleWRAML2Template from './components/SimpleWRAML2Template';
+import SimpleRavensCPMTemplate from './components/SimpleRavensCPMTemplate';
 import ADHT2CardView from './components/ADHT2CardView';
 // import TherapistCreateForm from './components/TherapistCreateForm'; // Temporarily disabled
 import SessionCreateForm from './components/SessionCreateForm';
@@ -943,6 +949,48 @@ ${service.target_age_group || 'Not specified'}
       if (selectedTemplateId === 'BKT') {
         return (
           <SimpleBKTTemplate 
+            onBack={() => setSelectedTemplateId(null)}
+          />
+        );
+      }
+      if (selectedTemplateId === 'BROWN-EFA') {
+        return (
+          <SimpleBrownEFATemplate 
+            onBack={() => setSelectedTemplateId(null)}
+          />
+        );
+      }
+      if (selectedTemplateId === 'EACA') {
+        return (
+          <SimpleEACATemplate 
+            onBack={() => setSelectedTemplateId(null)}
+          />
+        );
+      }
+      if (selectedTemplateId === 'GARS-3') {
+        return (
+          <SimpleGARS3Template 
+            onBack={() => setSelectedTemplateId(null)}
+          />
+        );
+      }
+      if (selectedTemplateId === 'NELSON-DENNY') {
+        return (
+          <SimpleNelsonDennyTemplate 
+            onBack={() => setSelectedTemplateId(null)}
+          />
+        );
+      }
+      if (selectedTemplateId === 'WRAML-2') {
+        return (
+          <SimpleWRAML2Template 
+            onBack={() => setSelectedTemplateId(null)}
+          />
+        );
+      }
+      if (selectedTemplateId === 'RAVENS-CPM') {
+        return (
+          <SimpleRavensCPMTemplate 
             onBack={() => setSelectedTemplateId(null)}
           />
         );

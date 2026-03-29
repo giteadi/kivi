@@ -34,6 +34,86 @@ const ADHT2CardView = ({ onOpenTemplate, onBack }) => {
       category: 'Intelligence Assessment',
       icon: '🧮',
       color: 'purple'
+    },
+    {
+      id: 'BROWN-EFA',
+      name: 'Brown EF/A Scale',
+      fullName: 'Brown Executive Function/Attention Scales',
+      category: 'Executive Function',
+      icon: '📈',
+      color: 'teal'
+    },
+    {
+      id: 'EACA',
+      name: 'EACA',
+      fullName: 'Educational Assessment of Children with Autism',
+      category: 'Autism Education',
+      icon: '📊',
+      color: 'orange'
+    },
+    {
+      id: 'GARS-3',
+      name: 'GARS-3',
+      fullName: 'Gilliam Autism Rating Scale - Third Edition',
+      category: 'Autism Assessment',
+      icon: '🧩',
+      color: 'pink'
+    },
+    {
+      id: 'NELSON-DENNY',
+      name: 'Nelson Denny',
+      fullName: 'Nelson Denny Reading Test',
+      category: 'Reading Assessment',
+      icon: '📖',
+      color: 'indigo'
+    },
+    {
+      id: 'WRAML-2',
+      name: 'WRAML-2',
+      fullName: 'Wide Range Assessment of Memory and Learning - Second Edition',
+      category: 'Memory Assessment',
+      icon: '🧠',
+      color: 'cyan'
+    },
+    {
+      id: 'RAVENS-CPM',
+      name: "Raven's CPM",
+      fullName: "Raven's Coloured Progressive Matrices",
+      category: 'Non-verbal Intelligence',
+      icon: '🔷',
+      color: 'violet'
+    },
+    {
+      id: 'RIPA',
+      name: 'RIPA',
+      fullName: 'Ross Information Processing Assessment',
+      category: 'Cognitive-Linguistic',
+      icon: '🧠',
+      color: 'rose'
+    },
+    {
+      id: 'TAPS-3',
+      name: 'TAPS-3',
+      fullName: 'Test of Auditory Perceptual Skills - Third Edition',
+      category: 'Auditory Processing',
+      icon: '👂',
+      color: 'amber'
+    },
+    {
+      id: 'TOWL-4',
+      name: 'TOWL-4',
+      fullName: 'Test of Written Language - Fourth Edition',
+      category: 'Writing Assessment',
+      icon: '✍️',
+      color: 'emerald'
+    },
+    {
+      id: 'VABS',
+      name: 'VABS',
+      fullName: 'Vineland Adaptive Behavior Scales',
+      category: 'Adaptive Behavior',
+      icon: '📋',
+      color: 'sky'
     }
   ];
 
@@ -43,6 +123,11 @@ const ADHT2CardView = ({ onOpenTemplate, onBack }) => {
       blue: 'border-blue-200 hover:border-blue-400 bg-blue-50',
       green: 'border-green-200 hover:border-green-400 bg-green-50',
       purple: 'border-purple-200 hover:border-purple-400 bg-purple-50',
+      teal: 'border-teal-200 hover:border-teal-400 bg-teal-50',
+      pink: 'border-pink-200 hover:border-pink-400 bg-pink-50',
+      indigo: 'border-indigo-200 hover:border-indigo-400 bg-indigo-50',
+      cyan: 'border-cyan-200 hover:border-cyan-400 bg-cyan-50',
+      violet: 'border-violet-200 hover:border-violet-400 bg-violet-50',
     };
     return colors[color] || 'border-gray-200 hover:border-gray-400 bg-gray-50';
   };
@@ -53,6 +138,11 @@ const ADHT2CardView = ({ onOpenTemplate, onBack }) => {
       blue: 'bg-blue-100 group-hover:bg-blue-200',
       green: 'bg-green-100 group-hover:bg-green-200',
       purple: 'bg-purple-100 group-hover:bg-purple-200',
+      teal: 'bg-teal-100 group-hover:bg-teal-200',
+      pink: 'bg-pink-100 group-hover:bg-pink-200',
+      indigo: 'bg-indigo-100 group-hover:bg-indigo-200',
+      cyan: 'bg-cyan-100 group-hover:bg-cyan-200',
+      violet: 'bg-violet-100 group-hover:bg-violet-200',
     };
     return colors[color] || 'bg-gray-100 group-hover:bg-gray-200';
   };
@@ -63,6 +153,11 @@ const ADHT2CardView = ({ onOpenTemplate, onBack }) => {
       blue: 'bg-blue-100 text-blue-800 border-blue-200',
       green: 'bg-green-100 text-green-800 border-green-200',
       purple: 'bg-purple-100 text-purple-800 border-purple-200',
+      teal: 'bg-teal-100 text-teal-800 border-teal-200',
+      pink: 'bg-pink-100 text-pink-800 border-pink-200',
+      indigo: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+      cyan: 'bg-cyan-100 text-cyan-800 border-cyan-200',
+      violet: 'bg-violet-100 text-violet-800 border-violet-200',
     };
     return colors[color] || 'bg-gray-100 text-gray-800 border-gray-200';
   };
