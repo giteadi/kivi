@@ -1,79 +1,38 @@
 import { useState, useRef } from 'react';
 import { FiPrinter, FiArrowLeft } from 'react-icons/fi';
 
-// Raven's Coloured Progressive Matrices (CPM) Template
+// Raven's Coloured Progressive Matrices (CPM) Template - Matches Excel
 const SimpleRavensCPMTemplate = ({ onBack }) => {
   const [formData, setFormData] = useState({
     // Header
-    title: "RAVEN'S COLOURED PROGRESSIVE MATRICES (CPM)",
+    title: "RAVEN'S COLOURED PROGRESSIVE MATRICES",
     
     // Description
-    description: "Raven's Coloured Progressive Matrices (CPM) is a non-verbal test of reasoning ability. It is designed for children aged 5 through 11 years, elderly individuals, and those with learning difficulties or speech and language difficulties. The test measures the ability to form perceptual relations and to reason by analogy, independent of language and schooling.",
+    description: "Raven's CPM measures clear-thinking ability and is designed for young children ages 5:0-11:0 years. The test consists of 36 items in 3 sets (A, Ab, B), with 12 items per set. It has no time limit. The three sets of 12 items are arranged to assess the chief cognitive processes of which children under 11 years of age are usually capable. The CPM items are arranged to assess cognitive development up to the stage when a person is sufficiently able to reason by analogy and adopt this way of thinking as a consistent method of inference.\n\nA child's total score provides an index of his intellectual capacity, whatever his nationality or education.",
     
-    // Examinee Info
-    examineeName: "ABC",
-    chronologicalAge: "16 years 2 months",
+    // Test Results Header
+    testResultsHeader: "Test Results",
     
-    // Classification Table
-    classificationHeader: "CLASSIFICATION",
-    classificationData: [
-      { percentile: "95 and above", level: "Intellectually Superior" },
-      { percentile: "90-94", level: "Definitely Above Average" },
-      { percentile: "75-89", level: "Above Average" },
-      { percentile: "25-74", level: "Average" },
-      { percentile: "10-24", level: "Below Average" },
-      { percentile: "5-9", level: "Definitely Below Average" },
-      { percentile: "Below 5", level: "Intellectually Impaired" }
-    ],
-    
-    // Score Summary
-    scoreSummaryHeader: "SCORE SUMMARY",
-    
-    // Test Results
+    // Test Results Table
     testResults: {
-      rawScore: "28",
-      percentileRank: "75",
-      gradeEquivalent: "A",
-      ageEquivalent: "12 years 6 months",
-      classification: "Above Average"
+      totalScore: "11",
+      grade: "III-",
+      classification: "Intellectually average"
     },
     
     // Interpretation
-    interpretation: "ABC obtained a raw score of 28 on the Raven's CPM, which corresponds to the 75th percentile. This places ABC in the 'Above Average' range of intellectual functioning. The age equivalent score of 12 years 6 months suggests that ABC's non-verbal reasoning ability is comparable to that of an average 12.5-year-old. The results indicate that ABC has good ability in pattern recognition, perceptual reasoning, and analogical thinking. These skills are important for problem-solving and visual-spatial processing."
+    interpretation: "Interpretation: 'Intellectually Average.'",
+    
+    // Table Headers
+    totalScoreHeader: "Total Score",
+    gradeHeader: "Grade",
+    classificationHeader: "Classification"
   });
 
   const printRef = useRef();
 
-  const handleTitleChange = (value) => {
-    setFormData(prev => ({ ...prev, title: value }));
-  };
-
-  const handleDescriptionChange = (value) => {
-    setFormData(prev => ({ ...prev, description: value }));
-  };
-
-  const handleExamineeNameChange = (value) => {
-    setFormData(prev => ({ ...prev, examineeName: value }));
-  };
-
-  const handleChronologicalAgeChange = (value) => {
-    setFormData(prev => ({ ...prev, chronologicalAge: value }));
-  };
-
-  const handleClassificationHeaderChange = (value) => {
-    setFormData(prev => ({ ...prev, classificationHeader: value }));
-  };
-
-  const handleClassificationChange = (index, field, value) => {
-    setFormData(prev => {
-      const newData = [...prev.classificationData];
-      newData[index] = { ...newData[index], [field]: value };
-      return { ...prev, classificationData: newData };
-    });
-  };
-
-  const handleScoreSummaryHeaderChange = (value) => {
-    setFormData(prev => ({ ...prev, scoreSummaryHeader: value }));
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleTestResultChange = (field, value) => {
@@ -81,10 +40,6 @@ const SimpleRavensCPMTemplate = ({ onBack }) => {
       ...prev,
       testResults: { ...prev.testResults, [field]: value }
     }));
-  };
-
-  const handleInterpretationChange = (value) => {
-    setFormData(prev => ({ ...prev, interpretation: value }));
   };
 
   const handlePrint = () => {
@@ -104,115 +59,75 @@ const SimpleRavensCPMTemplate = ({ onBack }) => {
               padding: 20px;
               color: #000;
             }
+            .report-box {
+              border: 1px solid #000;
+              padding: 20px;
+              max-width: 700px;
+            }
             .report-title {
               font-size: 11pt;
               font-weight: bold;
               text-align: left;
               margin-bottom: 10px;
+              text-decoration: underline;
             }
             .description {
               font-size: 10pt;
               text-align: justify;
-              margin-bottom: 10px;
-            }
-            .examinee-info {
-              font-size: 10pt;
-              margin-bottom: 15px;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin: 10px 0;
-              font-size: 9pt;
-            }
-            th, td {
-              border: 1px solid #000;
-              padding: 4px 6px;
-              text-align: center;
-            }
-            th {
-              background-color: #e8e8e8;
-              font-weight: bold;
-            }
-            .classification-table th {
-              text-align: center;
-            }
-            .classification-table td:first-child {
-              text-align: center;
-              font-weight: bold;
-            }
-            .summary-table {
-              width: 80%;
-              margin: 15px auto;
-            }
-            .summary-table td:first-child {
-              font-weight: bold;
-              text-align: left;
-            }
-            .summary-table td:nth-child(2) {
-              text-align: center;
-            }
-            .interpretation {
-              margin-top: 15px;
-              text-align: justify;
+              margin-bottom: 20px;
+              line-height: 1.4;
             }
             .section-header {
               font-size: 10pt;
               font-weight: bold;
+              text-align: left;
+              margin: 20px 0 10px 0;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 10px 0 20px 0;
+              font-size: 10pt;
+            }
+            th, td {
+              border: 1px solid #000;
+              padding: 8px 10px;
               text-align: center;
-              margin: 15px 0 10px 0;
+            }
+            th {
+              font-weight: bold;
+              background-color: #fff;
+            }
+            td:first-child {
+              font-weight: bold;
+            }
+            .interpretation {
+              margin-top: 15px;
+              font-size: 10pt;
+              text-align: left;
             }
           </style>
         </head>
         <body>
-          <div style="font-family: 'Times New Roman', Times, serif;">
-            <div style="font-size: 11pt; font-weight: bold; text-align: left; margin-bottom: 10px;">${formData.title}</div>
-            <div style="font-size: 10pt; text-align: justify; margin-bottom: 10px;">${formData.description}</div>
+          <div class="report-box" style="font-family: 'Times New Roman', Times, serif;">
+            <div class="report-title">${formData.title}</div>
+            <div class="description">${formData.description.replace(/\n/g, '<br/>')}</div>
             
-            <div style="font-size: 10pt; margin-bottom: 15px;">
-              <strong>Examinee Name:</strong> ${formData.examineeName} | 
-              <strong>Chronological Age:</strong> ${formData.chronologicalAge}
-            </div>
-            
-            <div style="font-size: 10pt; font-weight: bold; text-align: center; margin: 15px 0 10px 0;">${formData.classificationHeader}</div>
-            <table class="classification-table" style="width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 9pt;">
-              <tr style="background-color: #e8e8e8;">
-                <th style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-weight: bold;">Percentile</th>
-                <th style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-weight: bold;">Classification Level</th>
-              </tr>
-              ${formData.classificationData.map(row => `
-                <tr>
-                  <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-weight: bold;">${row.percentile}</td>
-                  <td style="border: 1px solid #000; padding: 4px 6px; text-align: left;">${row.level}</td>
-                </tr>
-              `).join('')}
-            </table>
-            
-            <div style="font-size: 10pt; font-weight: bold; text-align: center; margin: 15px 0 10px 0;">${formData.scoreSummaryHeader}</div>
-            <table class="summary-table" style="width: 80%; margin: 15px auto; border-collapse: collapse;">
+            <div class="section-header">${formData.testResultsHeader}</div>
+            <table>
               <tr>
-                <td style="border: 1px solid #000; padding: 6px 8px; font-weight: bold;">Raw Score</td>
-                <td style="border: 1px solid #000; padding: 6px 8px; text-align: center;">${formData.testResults.rawScore}</td>
+                <th>${formData.totalScoreHeader}</th>
+                <th>${formData.gradeHeader}</th>
+                <th>${formData.classificationHeader}</th>
               </tr>
               <tr>
-                <td style="border: 1px solid #000; padding: 6px 8px; font-weight: bold;">Percentile Rank</td>
-                <td style="border: 1px solid #000; padding: 6px 8px; text-align: center;">${formData.testResults.percentileRank}</td>
-              </tr>
-              <tr>
-                <td style="border: 1px solid #000; padding: 6px 8px; font-weight: bold;">Grade Equivalent</td>
-                <td style="border: 1px solid #000; padding: 6px 8px; text-align: center;">${formData.testResults.gradeEquivalent}</td>
-              </tr>
-              <tr>
-                <td style="border: 1px solid #000; padding: 6px 8px; font-weight: bold;">Age Equivalent</td>
-                <td style="border: 1px solid #000; padding: 6px 8px; text-align: center;">${formData.testResults.ageEquivalent}</td>
-              </tr>
-              <tr>
-                <td style="border: 1px solid #000; padding: 6px 8px; font-weight: bold;">Classification</td>
-                <td style="border: 1px solid #000; padding: 6px 8px; text-align: center;">${formData.testResults.classification}</td>
+                <td>${formData.testResults.totalScore}</td>
+                <td>${formData.testResults.grade}</td>
+                <td>${formData.testResults.classification}</td>
               </tr>
             </table>
             
-            <div style="margin-top: 15px; text-align: justify;">${formData.interpretation}</div>
+            <div class="interpretation">${formData.interpretation}</div>
           </div>
           <div style="margin-top: 30px; font-size: 8pt; color: #666; text-align: right;">
             Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}
@@ -258,191 +173,130 @@ const SimpleRavensCPMTemplate = ({ onBack }) => {
         <div className="bg-white shadow-lg rounded-lg overflow-hidden">
           {/* Report Preview */}
           <div ref={printRef} className="p-8" style={{ fontFamily: 'Times New Roman, Times, serif' }}>
-            {/* Title */}
-            <div className="mb-4">
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => handleTitleChange(e.target.value)}
-                className="w-full font-bold bg-transparent focus:outline-none focus:bg-blue-50"
-                style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '11pt' }}
-              />
-            </div>
+            {/* Outer Box Border */}
+            <div style={{ 
+              border: '1px solid #000', 
+              padding: '20px',
+              maxWidth: '700px'
+            }}>
+              {/* Title - Underlined */}
+              <div className="mb-4">
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => handleChange('title', e.target.value)}
+                  className="w-full font-bold bg-transparent focus:outline-none focus:bg-blue-50"
+                  style={{ 
+                    fontFamily: 'Times New Roman, Times, serif', 
+                    fontSize: '11pt',
+                    textDecoration: 'underline'
+                  }}
+                />
+              </div>
 
-            {/* Description */}
-            <div className="mb-4">
-              <textarea
-                value={formData.description}
-                onChange={(e) => handleDescriptionChange(e.target.value)}
-                className="w-full bg-transparent focus:outline-none focus:bg-blue-50 resize-none text-justify"
-                style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '10pt', lineHeight: '1.3' }}
-                rows={4}
-              />
-            </div>
+              {/* Description */}
+              <div className="mb-4">
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => handleChange('description', e.target.value)}
+                  className="w-full bg-transparent focus:outline-none focus:bg-blue-50 resize-none text-justify"
+                  style={{ 
+                    fontFamily: 'Times New Roman, Times, serif', 
+                    fontSize: '10pt', 
+                    lineHeight: '1.4' 
+                  }}
+                  rows={8}
+                />
+              </div>
 
-            {/* Examinee Info */}
-            <div className="mb-4" style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '10pt' }}>
-              <span className="font-bold">Examinee Name: </span>
-              <input
-                type="text"
-                value={formData.examineeName}
-                onChange={(e) => handleExamineeNameChange(e.target.value)}
-                className="bg-transparent focus:outline-none focus:bg-blue-50"
-                style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '10pt' }}
-              />
-              <span className="mx-2">|</span>
-              <span className="font-bold">Chronological Age: </span>
-              <input
-                type="text"
-                value={formData.chronologicalAge}
-                onChange={(e) => handleChronologicalAgeChange(e.target.value)}
-                className="bg-transparent focus:outline-none focus:bg-blue-50"
-                style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '10pt' }}
-              />
-            </div>
+              {/* Test Results Header */}
+              <div className="mb-2">
+                <input
+                  type="text"
+                  value={formData.testResultsHeader}
+                  onChange={(e) => handleChange('testResultsHeader', e.target.value)}
+                  className="w-full font-bold bg-transparent focus:outline-none focus:bg-blue-50"
+                  style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '10pt' }}
+                />
+              </div>
 
-            {/* Classification Table */}
-            <div className="mb-2 text-center">
-              <input
-                type="text"
-                value={formData.classificationHeader}
-                onChange={(e) => handleClassificationHeaderChange(e.target.value)}
-                className="w-full text-center font-bold bg-transparent focus:outline-none focus:bg-blue-50"
-                style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '10pt' }}
-              />
-            </div>
-            <table className="w-full border-collapse border border-black mb-4">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="border border-black px-3 py-2 text-center font-bold text-xs w-1/3">
-                    Percentile
-                  </th>
-                  <th className="border border-black px-3 py-2 text-center font-bold text-xs">
-                    Classification Level
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {formData.classificationData.map((row, index) => (
-                  <tr key={index}>
-                    <td className="border border-black px-3 py-2 text-center font-bold text-xs">
+              {/* Test Results Table */}
+              <table className="w-full border-collapse border border-black mb-4">
+                <thead>
+                  <tr>
+                    <th className="border border-black px-3 py-2 text-center font-bold text-xs w-1/3">
                       <input
                         type="text"
-                        value={row.percentile}
-                        onChange={(e) => handleClassificationChange(index, 'percentile', e.target.value)}
-                        className="w-full text-center bg-transparent font-bold focus:outline-none focus:bg-blue-50"
-                        style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '9pt' }}
+                        value={formData.totalScoreHeader}
+                        onChange={(e) => handleChange('totalScoreHeader', e.target.value)}
+                        className="w-full text-center bg-transparent font-bold focus:outline-none"
+                        style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '10pt' }}
+                      />
+                    </th>
+                    <th className="border border-black px-3 py-2 text-center font-bold text-xs w-1/3">
+                      <input
+                        type="text"
+                        value={formData.gradeHeader}
+                        onChange={(e) => handleChange('gradeHeader', e.target.value)}
+                        className="w-full text-center bg-transparent font-bold focus:outline-none"
+                        style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '10pt' }}
+                      />
+                    </th>
+                    <th className="border border-black px-3 py-2 text-center font-bold text-xs w-1/3">
+                      <input
+                        type="text"
+                        value={formData.classificationHeader}
+                        onChange={(e) => handleChange('classificationHeader', e.target.value)}
+                        className="w-full text-center bg-transparent font-bold focus:outline-none"
+                        style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '10pt' }}
+                      />
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border border-black px-3 py-2 text-center text-xs font-bold">
+                      <input
+                        type="text"
+                        value={formData.testResults.totalScore}
+                        onChange={(e) => handleTestResultChange('totalScore', e.target.value)}
+                        className="w-full text-center bg-transparent focus:outline-none focus:bg-blue-50 font-bold"
+                        style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '10pt' }}
                       />
                     </td>
-                    <td className="border border-black px-3 py-2 text-xs">
+                    <td className="border border-black px-3 py-2 text-center text-xs font-bold">
                       <input
                         type="text"
-                        value={row.level}
-                        onChange={(e) => handleClassificationChange(index, 'level', e.target.value)}
-                        className="w-full bg-transparent focus:outline-none focus:bg-blue-50"
-                        style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '9pt' }}
+                        value={formData.testResults.grade}
+                        onChange={(e) => handleTestResultChange('grade', e.target.value)}
+                        className="w-full text-center bg-transparent focus:outline-none focus:bg-blue-50 font-bold"
+                        style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '10pt' }}
+                      />
+                    </td>
+                    <td className="border border-black px-3 py-2 text-center text-xs font-bold">
+                      <input
+                        type="text"
+                        value={formData.testResults.classification}
+                        onChange={(e) => handleTestResultChange('classification', e.target.value)}
+                        className="w-full text-center bg-transparent focus:outline-none focus:bg-blue-50 font-bold"
+                        style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '10pt' }}
                       />
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </tbody>
+              </table>
 
-            {/* Score Summary */}
-            <div className="mb-2 text-center">
-              <input
-                type="text"
-                value={formData.scoreSummaryHeader}
-                onChange={(e) => handleScoreSummaryHeaderChange(e.target.value)}
-                className="w-full text-center font-bold bg-transparent focus:outline-none focus:bg-blue-50"
-                style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '10pt' }}
-              />
-            </div>
-            <table className="w-4/5 mx-auto border-collapse border border-black mb-4">
-              <tbody>
-                <tr>
-                  <td className="border border-black px-3 py-2 font-bold text-xs w-1/2">
-                    Raw Score
-                  </td>
-                  <td className="border border-black px-3 py-2 text-center text-xs w-1/2">
-                    <input
-                      type="text"
-                      value={formData.testResults.rawScore}
-                      onChange={(e) => handleTestResultChange('rawScore', e.target.value)}
-                      className="w-full text-center bg-transparent focus:outline-none focus:bg-blue-50"
-                      style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '9pt' }}
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-black px-3 py-2 font-bold text-xs">
-                    Percentile Rank
-                  </td>
-                  <td className="border border-black px-3 py-2 text-center text-xs">
-                    <input
-                      type="text"
-                      value={formData.testResults.percentileRank}
-                      onChange={(e) => handleTestResultChange('percentileRank', e.target.value)}
-                      className="w-full text-center bg-transparent focus:outline-none focus:bg-blue-50"
-                      style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '9pt' }}
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-black px-3 py-2 font-bold text-xs">
-                    Grade Equivalent
-                  </td>
-                  <td className="border border-black px-3 py-2 text-center text-xs">
-                    <input
-                      type="text"
-                      value={formData.testResults.gradeEquivalent}
-                      onChange={(e) => handleTestResultChange('gradeEquivalent', e.target.value)}
-                      className="w-full text-center bg-transparent focus:outline-none focus:bg-blue-50"
-                      style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '9pt' }}
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-black px-3 py-2 font-bold text-xs">
-                    Age Equivalent
-                  </td>
-                  <td className="border border-black px-3 py-2 text-center text-xs">
-                    <input
-                      type="text"
-                      value={formData.testResults.ageEquivalent}
-                      onChange={(e) => handleTestResultChange('ageEquivalent', e.target.value)}
-                      className="w-full text-center bg-transparent focus:outline-none focus:bg-blue-50"
-                      style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '9pt' }}
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-black px-3 py-2 font-bold text-xs">
-                    Classification
-                  </td>
-                  <td className="border border-black px-3 py-2 text-center text-xs">
-                    <input
-                      type="text"
-                      value={formData.testResults.classification}
-                      onChange={(e) => handleTestResultChange('classification', e.target.value)}
-                      className="w-full text-center bg-transparent focus:outline-none focus:bg-blue-50"
-                      style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '9pt' }}
-                    />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-
-            {/* Interpretation */}
-            <div>
-              <textarea
-                value={formData.interpretation}
-                onChange={(e) => handleInterpretationChange(e.target.value)}
-                className="w-full bg-transparent focus:outline-none focus:bg-blue-50 resize-none text-justify"
-                style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '10pt', lineHeight: '1.3' }}
-                rows={5}
-              />
-            </div>
+              {/* Interpretation */}
+              <div>
+                <input
+                  type="text"
+                  value={formData.interpretation}
+                  onChange={(e) => handleChange('interpretation', e.target.value)}
+                  className="w-full bg-transparent focus:outline-none focus:bg-blue-50"
+                  style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '10pt' }}
+                />
+              </div>
+            </div> {/* End of outer box border */}
           </div>
 
           {/* Instructions */}

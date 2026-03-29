@@ -173,11 +173,11 @@ const AssessmentTemplateSelector = ({ onSelectTemplate, onCancel, studentName = 
     console.log('Selected template:', template);
     setSelectedTemplate(template);
     
-    // Only ADHD-2 is ready - others show coming soon
-    if (template.id === 'ADHD-2') {
+    // Only ADHD-2 and RIPA are ready - others show coming soon
+    if (template.id === 'ADHD-2' || template.id === 'RIPA') {
       setShowGenerateModal(true);
     } else {
-      alert(`${template.name} template is coming soon! Please select ADHD-2 for testing.`);
+      alert(`${template.name} template is coming soon! Please select ADHD-2 or RIPA for testing.`);
     }
     
     if (onSelectTemplate) {

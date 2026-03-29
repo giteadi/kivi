@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import ADHD2Template from './templates/ADHD2Template';
+import SimpleRIPATemplate from './SimpleRIPATemplate';
 
 // Simple Template List - No database, just hardcoded for now
 const SIMPLE_TEMPLATES = [
@@ -62,7 +63,7 @@ const SIMPLE_TEMPLATES = [
     id: 'RIPA',
     name: 'RIPA: Ross Information Processing Assessment',
     icon: '💭',
-    component: null
+    component: 'SimpleRIPATemplate'
   },
   {
     id: 'TAPS-3',
@@ -295,6 +296,8 @@ const GenerateReportModal = ({ isOpen, onClose }) => {
             <div>
               {selectedTemplate.id === 'ADHD-2' ? (
                 <ADHD2Template examinee={selectedExaminee} />
+              ) : selectedTemplate.id === 'RIPA' ? (
+                <SimpleRIPATemplate onBack={() => setStep(2)} />
               ) : (
                 <div style={{
                   textAlign: 'center',

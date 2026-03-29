@@ -24,10 +24,10 @@ const SimpleNelsonDennyTemplate = ({ onBack }) => {
     
     // First Table - Subtests
     subtestsTableHeader: "SUBTEST",
-    rawScoreHeader: "RAW SCORE",
-    percentileRankHeader: "PERCENTILE RANK",
-    standardScoreHeader: "STANDARD SCORE",
-    descriptiveTermHeader: "DESCRIPTIVE TERM",
+    rawScoreHeader: "RAW\nSCORE",
+    percentileRankHeader: "PERCENTILE\nRANK",
+    standardScoreHeader: "STANDARD\nSCORE",
+    descriptiveTermHeader: "DESCRIPTIVE\nTERM",
     
     subtests: [
       { name: "Vocabulary", rawScore: "28", percentileRank: "47", standardScore: "99", descriptiveTerm: "Average" },
@@ -36,11 +36,11 @@ const SimpleNelsonDennyTemplate = ({ onBack }) => {
     ],
     
     // Second Table - Summary
-    sumCoreIndexHeader: "SUM OF CORE INDEX SCORES",
-    summaryPercentileHeader: "PERCENTILE RANK",
-    generalReadingAbilityHeader: "GENERAL READING ABILITY",
-    confidenceIntervalHeader: "95% CONFIDENCE INTERVAL",
-    summaryDescriptiveTermHeader: "DESCRIPTIVE TERM",
+    sumCoreIndexHeader: "SUM OF CORE\nINDEX SCORES",
+    summaryPercentileHeader: "PERCENTILE\nRANK",
+    generalReadingAbilityHeader: "GENERAL READING\nABILITY",
+    confidenceIntervalHeader: "95%\nCONFIDENCE\nINTERVAL",
+    summaryDescriptiveTermHeader: "DESCRIPTIVE\nTERM",
     
     summaryRow: {
       sumCoreIndex: "214",
@@ -49,6 +49,9 @@ const SimpleNelsonDennyTemplate = ({ onBack }) => {
       confidenceInterval: "101 to 114",
       descriptiveTerm: "Average"
     },
+    
+    // Border box style flag
+    useBoxBorder: true,
     
     // Annexure note
     annexureNote: "Note: Attach this report as Annexure."
@@ -120,6 +123,11 @@ const SimpleNelsonDennyTemplate = ({ onBack }) => {
               padding: 20px;
               color: #000;
             }
+            .report-box {
+              border: 1px solid #000;
+              padding: 20px;
+              max-width: 700px;
+            }
             .report-title {
               font-size: 11pt;
               font-weight: bold;
@@ -176,7 +184,7 @@ const SimpleNelsonDennyTemplate = ({ onBack }) => {
           </style>
         </head>
         <body>
-          <div style="font-family: 'Times New Roman', Times, serif;">
+          <div class="report-box" style="font-family: 'Times New Roman', Times, serif;">
             <div style="font-size: 11pt; font-weight: bold; text-align: left; margin-bottom: 10px;">${formData.title}</div>
             <div style="font-size: 10pt; text-align: justify; margin-bottom: 10px;">${formData.description}</div>
             
@@ -190,10 +198,10 @@ const SimpleNelsonDennyTemplate = ({ onBack }) => {
             <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 9pt;">
               <tr style="background-color: #f5f5f5;">
                 <th style="border: 1px solid #000; padding: 6px 8px; text-align: left; font-weight: bold; font-size: 8pt;">SUBTEST</th>
-                <th style="border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold; font-size: 8pt;">RAW SCORE</th>
-                <th style="border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold; font-size: 8pt;">PERCENTILE RANK</th>
-                <th style="border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold; font-size: 8pt;">STANDARD SCORE</th>
-                <th style="border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold; font-size: 8pt;">DESCRIPTIVE TERM</th>
+                <th style="border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold; font-size: 8pt;">RAW<br/>SCORE</th>
+                <th style="border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold; font-size: 8pt;">PERCENTILE<br/>RANK</th>
+                <th style="border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold; font-size: 8pt;">STANDARD<br/>SCORE</th>
+                <th style="border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold; font-size: 8pt;">DESCRIPTIVE<br/>TERM</th>
               </tr>
               ${formData.subtests.map(item => `
                 <tr>
@@ -267,8 +275,14 @@ const SimpleNelsonDennyTemplate = ({ onBack }) => {
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-4 py-8">
         <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-          {/* Report Preview */}
+          {/* Report Preview - With Box Border */}
           <div ref={printRef} className="p-8" style={{ fontFamily: 'Times New Roman, Times, serif' }}>
+            {/* Outer Box Border */}
+            <div style={{ 
+              border: '1px solid #000', 
+              padding: '20px',
+              maxWidth: '700px'
+            }}>
             {/* Title */}
             <div className="mb-4">
               <input
@@ -550,6 +564,7 @@ const SimpleNelsonDennyTemplate = ({ onBack }) => {
                 style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '9pt' }}
               />
             </div>
+            </div> {/* End of outer box border */}
           </div>
 
           {/* Instructions */}

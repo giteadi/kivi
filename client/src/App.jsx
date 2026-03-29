@@ -68,6 +68,7 @@ import SimpleGARS3Template from './components/SimpleGARS3Template';
 import SimpleNelsonDennyTemplate from './components/SimpleNelsonDennyTemplate';
 import SimpleWRAML2Template from './components/SimpleWRAML2Template';
 import SimpleRavensCPMTemplate from './components/SimpleRavensCPMTemplate';
+import SimpleRIPATemplate from './components/SimpleRIPATemplate';
 import ADHT2CardView from './components/ADHT2CardView';
 // import TherapistCreateForm from './components/TherapistCreateForm'; // Temporarily disabled
 import SessionCreateForm from './components/SessionCreateForm';
@@ -991,6 +992,13 @@ ${service.target_age_group || 'Not specified'}
       if (selectedTemplateId === 'RAVENS-CPM') {
         return (
           <SimpleRavensCPMTemplate 
+            onBack={() => setSelectedTemplateId(null)}
+          />
+        );
+      }
+      if (selectedTemplateId === 'RIPA') {
+        return (
+          <SimpleRIPATemplate 
             onBack={() => setSelectedTemplateId(null)}
           />
         );
