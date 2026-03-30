@@ -114,6 +114,86 @@ const ADHT2CardView = ({ onOpenTemplate, onBack }) => {
       category: 'Adaptive Behavior',
       icon: '📋',
       color: 'sky'
+    },
+    {
+      id: 'WISC-IV',
+      name: 'WISC-IV',
+      fullName: 'Wechsler Intelligence Scale for Children',
+      category: 'Intelligence Assessment',
+      icon: '🧠',
+      color: 'purple'
+    },
+    {
+      id: 'WJ-III',
+      name: 'WJ-III',
+      fullName: 'Woodcock-Johnson Tests of Achievement',
+      category: 'Academic Assessment',
+      icon: '📚',
+      color: 'blue'
+    },
+    {
+      id: 'WJ-IV-Cog-Std',
+      name: 'WJ-IV COG Std',
+      fullName: 'WJ-IV Tests of Cognitive Abilities - Standard Battery',
+      category: 'Cognitive Assessment',
+      icon: '🎯',
+      color: 'indigo'
+    },
+    {
+      id: 'WJ-IV-Cog-Ext',
+      name: 'WJ-IV COG Ext',
+      fullName: 'WJ-IV Tests of Cognitive Abilities - Extended Battery',
+      category: 'Cognitive Assessment',
+      icon: '🎯',
+      color: 'violet'
+    },
+    {
+      id: 'WJ-IV-Ach',
+      name: 'WJ-IV ACH',
+      fullName: 'WJ-IV Tests of Achievement',
+      category: 'Academic Assessment',
+      icon: '📝',
+      color: 'emerald'
+    },
+    {
+      id: 'WRAT-5-English',
+      name: 'WRAT-5 English',
+      fullName: 'Wide Range Achievement Test (English)',
+      category: 'Academic Assessment',
+      icon: '🇬🇧',
+      color: 'blue'
+    },
+    {
+      id: 'WRAT-5-Hindi',
+      name: 'WRAT-5 Hindi',
+      fullName: 'Wide Range Achievement Test (Hindi)',
+      category: 'Academic Assessment',
+      icon: '🇮🇳',
+      color: 'orange'
+    },
+    {
+      id: 'WRMT-III',
+      name: 'WRMT-III',
+      fullName: 'Woodcock Reading Mastery Tests - Third Edition',
+      category: 'Reading Assessment',
+      icon: '📖',
+      color: 'green'
+    },
+    {
+      id: 'Diagnostic-Report',
+      name: 'Diagnostic Report',
+      fullName: 'Diagnostic Impression, Recommendations & Accommodations',
+      category: 'Summary Report',
+      icon: '📋',
+      color: 'cyan'
+    },
+    {
+      id: 'Summary-Evaluation',
+      name: 'Summary Evaluation',
+      fullName: 'Comprehensive Summary of All Assessment Results',
+      category: 'Summary Report',
+      icon: '📊',
+      color: 'teal'
     }
   ];
 
@@ -128,6 +208,10 @@ const ADHT2CardView = ({ onOpenTemplate, onBack }) => {
       indigo: 'border-indigo-200 hover:border-indigo-400 bg-indigo-50',
       cyan: 'border-cyan-200 hover:border-cyan-400 bg-cyan-50',
       violet: 'border-violet-200 hover:border-violet-400 bg-violet-50',
+      amber: 'border-amber-200 hover:border-amber-400 bg-amber-50',
+      rose: 'border-rose-200 hover:border-rose-400 bg-rose-50',
+      sky: 'border-sky-200 hover:border-sky-400 bg-sky-50',
+      emerald: 'border-emerald-200 hover:border-emerald-400 bg-emerald-50'
     };
     return colors[color] || 'border-gray-200 hover:border-gray-400 bg-gray-50';
   };
@@ -143,6 +227,10 @@ const ADHT2CardView = ({ onOpenTemplate, onBack }) => {
       indigo: 'bg-indigo-100 group-hover:bg-indigo-200',
       cyan: 'bg-cyan-100 group-hover:bg-cyan-200',
       violet: 'bg-violet-100 group-hover:bg-violet-200',
+      amber: 'bg-amber-100 group-hover:bg-amber-200',
+      rose: 'bg-rose-100 group-hover:bg-rose-200',
+      sky: 'bg-sky-100 group-hover:bg-sky-200',
+      emerald: 'bg-emerald-100 group-hover:bg-emerald-200'
     };
     return colors[color] || 'bg-gray-100 group-hover:bg-gray-200';
   };
@@ -158,6 +246,10 @@ const ADHT2CardView = ({ onOpenTemplate, onBack }) => {
       indigo: 'bg-indigo-100 text-indigo-800 border-indigo-200',
       cyan: 'bg-cyan-100 text-cyan-800 border-cyan-200',
       violet: 'bg-violet-100 text-violet-800 border-violet-200',
+      amber: 'bg-amber-100 text-amber-800 border-amber-200',
+      rose: 'bg-rose-100 text-rose-800 border-rose-200',
+      sky: 'bg-sky-100 text-sky-800 border-sky-200',
+      emerald: 'bg-emerald-100 text-emerald-800 border-emerald-200'
     };
     return colors[color] || 'bg-gray-100 text-gray-800 border-gray-200';
   };

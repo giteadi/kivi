@@ -134,7 +134,7 @@ const SIMPLE_TEMPLATES = [
     color: 'purple',
     usageCount: 0,
     estimatedTime: '60-90 min',
-    sections: ['Vocabulary', 'Spelling', 'Logical Sentences']
+    sections: ['Vocabulary', 'Spelling', 'Punctuation', 'Logical Sentences', 'Sentence Combining', 'Contextual Conventions', 'Story Composition']
   },
   {
     id: 'VAS',
@@ -146,38 +146,160 @@ const SIMPLE_TEMPLATES = [
     usageCount: 0,
     estimatedTime: '15-25 min',
     sections: ['Visual Attention', 'Visual Processing']
+  },
+  {
+    id: 'Diagnostic-Report',
+    name: 'Diagnostic Report: Diagnosis & Recommendations',
+    description: 'Comprehensive diagnostic impression with recommendations and accommodations for students with special needs.',
+    category: 'Summary',
+    icon: '📋',
+    color: 'cyan',
+    usageCount: 0,
+    estimatedTime: '30-60 min',
+    sections: ['Diagnostic Impression', 'Recommendations', 'Concessions/Accommodations']
+  },
+  {
+    id: 'Summary-Evaluation',
+    name: 'Summary of Evaluation',
+    description: 'Comprehensive summary combining results from multiple assessments including cognitive, achievement, and behavioral measures.',
+    category: 'Summary',
+    icon: '📊',
+    color: 'teal',
+    usageCount: 0,
+    estimatedTime: '30-45 min',
+    sections: ['Cognitive Summary', 'Achievement Summary', 'Behavioral Observations', 'Overall Interpretation']
+  },
+  {
+    id: 'VABS-3',
+    name: 'VABS-3: Vineland Adaptive Behaviour Scales',
+    description: 'Assessment of adaptive behavior and daily living skills.',
+    category: 'Diagnostic',
+    icon: '📊',
+    color: 'cyan',
+    usageCount: 0,
+    estimatedTime: '30-60 min',
+    sections: ['Communication', 'Daily Living', 'Socialization', 'Motor Skills']
+  },
+  {
+    id: 'WISC-IV',
+    name: 'WISC-IV: Wechsler Intelligence Scale for Children',
+    description: 'Comprehensive measure of intellectual ability for children.',
+    category: 'Intelligence',
+    icon: '🧠',
+    color: 'violet',
+    usageCount: 0,
+    estimatedTime: '60-90 min',
+    sections: ['Verbal Comprehension', 'Perceptual Reasoning', 'Working Memory', 'Processing Speed']
+  },
+  {
+    id: 'WJ-III',
+    name: 'WJ-III: Woodcock-Johnson Tests of Achievement',
+    description: 'Comprehensive assessment of academic achievement.',
+    category: 'Academic',
+    icon: '📚',
+    color: 'emerald',
+    usageCount: 0,
+    estimatedTime: '45-90 min',
+    sections: ['Brief Reading', 'Broad Reading', 'Brief Math', 'Broad Math', 'Brief Writing', 'Broad Writing']
+  },
+  {
+    id: 'WJ-IV-Cog-Std',
+    name: 'WJ-IV COG: Standard Battery',
+    description: 'Woodcock-Johnson IV Tests of Cognitive Abilities - Standard Battery.',
+    category: 'Cognitive Assessment',
+    icon: '🎯',
+    color: 'indigo',
+    usageCount: 0,
+    estimatedTime: '45-60 min',
+    sections: ['Comprehension-Knowledge', 'Fluid Reasoning', 'Working Memory', 'Processing Speed']
+  },
+  {
+    id: 'WJ-IV-Cog-Ext',
+    name: 'WJ-IV COG: Standard & Extended Battery',
+    description: 'Woodcock-Johnson IV Tests of Cognitive Abilities - Extended Battery.',
+    category: 'Cognitive Assessment',
+    icon: '🎯',
+    color: 'indigo',
+    usageCount: 0,
+    estimatedTime: '60-90 min',
+    sections: ['Standard Clusters', 'Extended Clusters', 'Executive Functions']
+  },
+  {
+    id: 'WJ-IV-Ach',
+    name: 'WJ-IV ACH: Achievement Battery',
+    description: 'Woodcock-Johnson IV Tests of Achievement.',
+    category: 'Academic',
+    icon: '📝',
+    color: 'emerald',
+    usageCount: 0,
+    estimatedTime: '45-90 min',
+    sections: ['Reading', 'Mathematics', 'Written Language', 'Academic Skills']
+  },
+  {
+    id: 'WRAT-5-English',
+    name: 'WRAT-5: Wide Range Achievement Test (English)',
+    description: 'Quick assessment of reading, spelling, and math skills in English.',
+    category: 'Academic',
+    icon: '🇬🇧',
+    color: 'blue',
+    usageCount: 0,
+    estimatedTime: '30-45 min',
+    sections: ['Word Reading', 'Sentence Comprehension', 'Spelling', 'Math Computation']
+  },
+  {
+    id: 'WRAT-5-Hindi',
+    name: 'WRAT-5: Wide Range Achievement Test (Hindi)',
+    description: 'Quick assessment of reading, spelling, and math skills in Hindi.',
+    category: 'Academic',
+    icon: '🇮🇳',
+    color: 'orange',
+    usageCount: 0,
+    estimatedTime: '30-45 min',
+    sections: ['Word Reading Hindi', 'Sentence Comprehension Hindi', 'Spelling Hindi', 'Math Hindi']
+  },
+  {
+    id: 'WRMT-III',
+    name: 'WRMT-III: Woodcock Reading Mastery Tests',
+    description: 'Comprehensive assessment of reading skills.',
+    category: 'Reading Assessment',
+    icon: '📖',
+    color: 'green',
+    usageCount: 0,
+    estimatedTime: '45-75 min',
+    sections: ['Word Attack', 'Word Identification', 'Passage Comprehension', 'Oral Reading']
   }
 ];
 
 const AssessmentTemplateSelector = ({ onSelectTemplate, onCancel, studentName = 'Student' }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
 
-  // Get unique categories
-  const categories = ['all', ...new Set(SIMPLE_TEMPLATES.map(t => t.category))];
-
-  // Filter templates
+  // Filter templates - only search, no category filter
   const filteredTemplates = SIMPLE_TEMPLATES.filter(template => {
     const matchesSearch = !searchTerm || 
       template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       template.description.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory;
-    
-    return matchesSearch && matchesCategory;
+    return matchesSearch;
   });
 
   const handleTemplateSelect = (template) => {
     console.log('Selected template:', template);
     setSelectedTemplate(template);
     
-    // Only ADHD-2 and RIPA are ready - others show coming soon
-    if (template.id === 'ADHD-2' || template.id === 'RIPA') {
+    // Enable all ready templates
+    const readyTemplates = [
+      'ADHD-2', 'RIPA', 'TAPS-3', 'TOWL-4', 'VABS-3', 'WISC-IV',
+      'WJ-III', 'WJ-IV-Cog-Std', 'WJ-IV-Cog-Ext', 'WJ-IV-Ach',
+      'WRAT-5-English', 'WRAT-5-Hindi', 'WRMT-III', 
+      'Diagnostic-Report', 'Summary-Evaluation'
+    ];
+    
+    if (readyTemplates.includes(template.id)) {
       setShowGenerateModal(true);
     } else {
-      alert(`${template.name} template is coming soon! Please select ADHD-2 or RIPA for testing.`);
+      alert(`${template.name} template is coming soon! Please select a template marked as READY for testing.`);
     }
     
     if (onSelectTemplate) {
@@ -265,7 +387,7 @@ const AssessmentTemplateSelector = ({ onSelectTemplate, onCancel, studentName = 
 
           {/* Filters */}
           <div className="bg-white rounded-xl p-6 shadow-sm border mb-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               {/* Search */}
               <div className="relative">
                 <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -277,19 +399,6 @@ const AssessmentTemplateSelector = ({ onSelectTemplate, onCancel, studentName = 
                   className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
-
-              {/* Category Filter */}
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                {categories.map(category => (
-                  <option key={category} value={category}>
-                    {category === 'all' ? 'All Categories' : category}
-                  </option>
-                ))}
-              </select>
             </div>
           </div>
 

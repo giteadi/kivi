@@ -2,6 +2,19 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import ADHD2Template from './templates/ADHD2Template';
 import SimpleRIPATemplate from './SimpleRIPATemplate';
+import SimpleTAPS3Template from './SimpleTAPS3Template';
+import SimpleTOWL4Template from './SimpleTOWL4Template';
+import SimpleVABSTemplate from './SimpleVABSTemplate';
+import SimpleWISC4Template from './SimpleWISC4Template';
+import SimpleWJIIITemplate from './SimpleWJIIITemplate';
+import SimpleWJIVCogStdTemplate from './SimpleWJIVCogStdTemplate';
+import SimpleWJIVCogExtTemplate from './SimpleWJIVCogExtTemplate';
+import SimpleWJIVAchTemplate from './SimpleWJIVAchTemplate';
+import SimpleWRAT5EngTemplate from './SimpleWRAT5EngTemplate';
+import SimpleWRAT5HindiTemplate from './SimpleWRAT5HindiTemplate';
+import SimpleWRMT3Template from './SimpleWRMT3Template';
+import SimpleDiagnosticReportTemplate from './SimpleDiagnosticReportTemplate';
+import SimpleSummaryEvaluationTemplate from './SimpleSummaryEvaluationTemplate';
 
 // Simple Template List - No database, just hardcoded for now
 const SIMPLE_TEMPLATES = [
@@ -42,6 +55,66 @@ const SIMPLE_TEMPLATES = [
     component: null
   },
   {
+    id: 'WISC-IV',
+    name: 'WISC-IV: Wechsler Intelligence Scale for Children',
+    icon: '🧠',
+    component: 'SimpleWISC4Template'
+  },
+  {
+    id: 'WJ-III',
+    name: 'WJ-III: Woodcock-Johnson Tests of Achievement',
+    icon: '📚',
+    component: 'SimpleWJIIITemplate'
+  },
+  {
+    id: 'WJ-IV-Cog-Std',
+    name: 'WJ-IV COG: Standard Battery',
+    icon: '🎯',
+    component: 'SimpleWJIVCogStdTemplate'
+  },
+  {
+    id: 'WJ-IV-Cog-Ext',
+    name: 'WJ-IV COG: Standard & Extended Battery',
+    icon: '🎯',
+    component: 'SimpleWJIVCogExtTemplate'
+  },
+  {
+    id: 'WJ-IV-Ach',
+    name: 'WJ-IV ACH: Achievement Battery',
+    icon: '📝',
+    component: 'SimpleWJIVAchTemplate'
+  },
+  {
+    id: 'WRAT-5-English',
+    name: 'WRAT-5: Wide Range Achievement Test (English)',
+    icon: '🇬🇧',
+    component: 'SimpleWRAT5EngTemplate'
+  },
+  {
+    id: 'WRAT-5-Hindi',
+    name: 'WRAT-5: Wide Range Achievement Test (Hindi)',
+    icon: '🇮🇳',
+    component: 'SimpleWRAT5HindiTemplate'
+  },
+  {
+    id: 'WRMT-III',
+    name: 'WRMT-III: Woodcock Reading Mastery Tests',
+    icon: '📖',
+    component: 'SimpleWRMT3Template'
+  },
+  {
+    id: 'Diagnostic-Report',
+    name: 'Diagnostic Report: Diagnosis & Recommendations',
+    icon: '📋',
+    component: 'SimpleDiagnosticReportTemplate'
+  },
+  {
+    id: 'Summary-Evaluation',
+    name: 'Summary of Evaluation',
+    icon: '📊',
+    component: 'SimpleSummaryEvaluationTemplate'
+  },
+  {
     id: 'GARS-3',
     name: 'GARS-3: Gilliam Autism Rating Scale',
     icon: '🧩',
@@ -69,20 +142,20 @@ const SIMPLE_TEMPLATES = [
     id: 'TAPS-3',
     name: 'TAPS-3: Test of Auditory Perceptual Skills',
     icon: '👂',
-    component: null
+    component: 'SimpleTAPS3Template'
   },
   {
     id: 'TOWL-4',
     name: 'TOWL-4: Test of Written Language',
     icon: '✍️',
-    component: null
+    component: 'SimpleTOWL4Template'
   },
   {
-    id: 'VAS',
-    name: 'VAS: Visual Attention Span',
-    icon: '👁️',
-    component: null
-  }
+    id: 'VABS-3',
+    name: 'VABS-3: Vineland Adaptive Behaviour Scales',
+    icon: '�',
+    component: 'SimpleVABSTemplate'
+  },
 ];
 
 const GenerateReportModal = ({ isOpen, onClose }) => {
@@ -298,6 +371,32 @@ const GenerateReportModal = ({ isOpen, onClose }) => {
                 <ADHD2Template examinee={selectedExaminee} />
               ) : selectedTemplate.id === 'RIPA' ? (
                 <SimpleRIPATemplate onBack={() => setStep(2)} />
+              ) : selectedTemplate.id === 'TAPS-3' ? (
+                <SimpleTAPS3Template onBack={() => setStep(2)} />
+              ) : selectedTemplate.id === 'TOWL-4' ? (
+                <SimpleTOWL4Template onBack={() => setStep(2)} />
+              ) : selectedTemplate.id === 'VABS-3' ? (
+                <SimpleVABSTemplate onBack={() => setStep(2)} />
+              ) : selectedTemplate.id === 'WISC-IV' ? (
+                <SimpleWISC4Template onBack={() => setStep(2)} />
+              ) : selectedTemplate.id === 'WJ-III' ? (
+                <SimpleWJIIITemplate onBack={() => setStep(2)} />
+              ) : selectedTemplate.id === 'WJ-IV-Cog-Std' ? (
+                <SimpleWJIVCogStdTemplate onBack={() => setStep(2)} />
+              ) : selectedTemplate.id === 'WJ-IV-Cog-Ext' ? (
+                <SimpleWJIVCogExtTemplate onBack={() => setStep(2)} />
+              ) : selectedTemplate.id === 'WJ-IV-Ach' ? (
+                <SimpleWJIVAchTemplate onBack={() => setStep(2)} />
+              ) : selectedTemplate.id === 'WRAT-5-English' ? (
+                <SimpleWRAT5EngTemplate onBack={() => setStep(2)} />
+              ) : selectedTemplate.id === 'WRAT-5-Hindi' ? (
+                <SimpleWRAT5HindiTemplate onBack={() => setStep(2)} />
+              ) : selectedTemplate.id === 'WRMT-III' ? (
+                <SimpleWRMT3Template onBack={() => setStep(2)} />
+              ) : selectedTemplate.id === 'Diagnostic-Report' ? (
+                <SimpleDiagnosticReportTemplate onBack={() => setStep(2)} />
+              ) : selectedTemplate.id === 'Summary-Evaluation' ? (
+                <SimpleSummaryEvaluationTemplate onBack={() => setStep(2)} />
               ) : (
                 <div style={{
                   textAlign: 'center',

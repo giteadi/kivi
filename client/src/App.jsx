@@ -69,6 +69,19 @@ import SimpleNelsonDennyTemplate from './components/SimpleNelsonDennyTemplate';
 import SimpleWRAML2Template from './components/SimpleWRAML2Template';
 import SimpleRavensCPMTemplate from './components/SimpleRavensCPMTemplate';
 import SimpleRIPATemplate from './components/SimpleRIPATemplate';
+import SimpleTAPS3Template from './components/SimpleTAPS3Template';
+import SimpleTOWL4Template from './components/SimpleTOWL4Template';
+import SimpleVABSTemplate from './components/SimpleVABSTemplate';
+import SimpleWISC4Template from './components/SimpleWISC4Template';
+import SimpleWJIIITemplate from './components/SimpleWJIIITemplate';
+import SimpleWJIVCogStdTemplate from './components/SimpleWJIVCogStdTemplate';
+import SimpleWJIVCogExtTemplate from './components/SimpleWJIVCogExtTemplate';
+import SimpleWJIVAchTemplate from './components/SimpleWJIVAchTemplate';
+import SimpleWRAT5EngTemplate from './components/SimpleWRAT5EngTemplate';
+import SimpleWRAT5HindiTemplate from './components/SimpleWRAT5HindiTemplate';
+import SimpleWRMT3Template from './components/SimpleWRMT3Template';
+import SimpleDiagnosticReportTemplate from './components/SimpleDiagnosticReportTemplate';
+import SimpleSummaryEvaluationTemplate from './components/SimpleSummaryEvaluationTemplate';
 import ADHT2CardView from './components/ADHT2CardView';
 // import TherapistCreateForm from './components/TherapistCreateForm'; // Temporarily disabled
 import SessionCreateForm from './components/SessionCreateForm';
@@ -999,6 +1012,97 @@ ${service.target_age_group || 'Not specified'}
       if (selectedTemplateId === 'RIPA') {
         return (
           <SimpleRIPATemplate 
+            onBack={() => setSelectedTemplateId(null)}
+          />
+        );
+      }
+      if (selectedTemplateId === 'TAPS-3') {
+        return (
+          <SimpleTAPS3Template 
+            onBack={() => setSelectedTemplateId(null)}
+          />
+        );
+      }
+      if (selectedTemplateId === 'TOWL-4') {
+        return (
+          <SimpleTOWL4Template 
+            onBack={() => setSelectedTemplateId(null)}
+          />
+        );
+      }
+      if (selectedTemplateId === 'VABS-3') {
+        return (
+          <SimpleVABSTemplate 
+            onBack={() => setSelectedTemplateId(null)}
+          />
+        );
+      }
+      if (selectedTemplateId === 'WISC-IV') {
+        return (
+          <SimpleWISC4Template 
+            onBack={() => setSelectedTemplateId(null)}
+          />
+        );
+      }
+      if (selectedTemplateId === 'WJ-III') {
+        return (
+          <SimpleWJIIITemplate 
+            onBack={() => setSelectedTemplateId(null)}
+          />
+        );
+      }
+      if (selectedTemplateId === 'WJ-IV-Cog-Std') {
+        return (
+          <SimpleWJIVCogStdTemplate 
+            onBack={() => setSelectedTemplateId(null)}
+          />
+        );
+      }
+      if (selectedTemplateId === 'WJ-IV-Cog-Ext') {
+        return (
+          <SimpleWJIVCogExtTemplate 
+            onBack={() => setSelectedTemplateId(null)}
+          />
+        );
+      }
+      if (selectedTemplateId === 'WJ-IV-Ach') {
+        return (
+          <SimpleWJIVAchTemplate 
+            onBack={() => setSelectedTemplateId(null)}
+          />
+        );
+      }
+      if (selectedTemplateId === 'WRAT-5-English') {
+        return (
+          <SimpleWRAT5EngTemplate 
+            onBack={() => setSelectedTemplateId(null)}
+          />
+        );
+      }
+      if (selectedTemplateId === 'WRAT-5-Hindi') {
+        return (
+          <SimpleWRAT5HindiTemplate 
+            onBack={() => setSelectedTemplateId(null)}
+          />
+        );
+      }
+      if (selectedTemplateId === 'WRMT-III') {
+        return (
+          <SimpleWRMT3Template 
+            onBack={() => setSelectedTemplateId(null)}
+          />
+        );
+      }
+      if (selectedTemplateId === 'Diagnostic-Report') {
+        return (
+          <SimpleDiagnosticReportTemplate 
+            onBack={() => setSelectedTemplateId(null)}
+          />
+        );
+      }
+      if (selectedTemplateId === 'Summary-Evaluation') {
+        return (
+          <SimpleSummaryEvaluationTemplate 
             onBack={() => setSelectedTemplateId(null)}
           />
         );
