@@ -45,6 +45,8 @@ const MobileMenu = ({ isOpen, setIsOpen, activeItem, setActiveItem }) => {
       ]
     },
     { id: 'patients', label: 'Examinees', icon: FiUser, section: 'USERS' },
+    { id: 'groups', label: 'Groups', icon: FiUsers, section: 'USERS' },
+    { id: 'examinee-group-report', label: 'Examinee/Group/Report', icon: FiFileText, section: 'USERS' },
     { id: 'doctors', label: 'Therapists', icon: FiUserCheck, section: 'USERS' },
     // { id: 'receptionists', label: 'Staff', icon: FiUser, section: 'USERS' }, // Temporarily disabled
     { id: 'clinics', label: 'Centres', icon: FiMapPin, section: 'CENTRE' },
@@ -52,6 +54,7 @@ const MobileMenu = ({ isOpen, setIsOpen, activeItem, setActiveItem }) => {
     // { id: 'doctor-revenue', label: 'Therapist Revenue', icon: FiDollarSign, section: 'FINANCIAL' }, // Temporarily disabled
     { id: 'taxes', label: 'Taxes', icon: FiPercent, section: 'FINANCIAL' },
     { id: 'billing-records', label: 'Billing Records', icon: FiCreditCard, section: 'FINANCIAL' },
+    { id: 'report', label: 'Reports', icon: FiFileText, section: 'FINANCIAL' },
   ];
 
   const sections = ['MAIN', 'USERS', 'CENTRE', 'FINANCIAL'];

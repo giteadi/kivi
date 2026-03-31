@@ -48,6 +48,9 @@ import TemplateViewer from './components/TemplateViewer';
 import TemplateSelector from './components/TemplateSelector';
 import TemplateBasedEncounter from './components/TemplateBasedEncounter';
 import MobileMenu from './components/MobileMenu';
+import GroupAdministration from './components/GroupAdministration';
+import Report from './components/Report';
+import ExamineeGroupReport from './components/ExamineeGroupReport';
 import ClinicRevenue from './components/ClinicRevenue';
 import DoctorRevenue from './components/DoctorRevenue';
 import TaxList from './components/TaxList';
@@ -1067,6 +1070,15 @@ ${service.target_age_group || 'Not specified'}
       
       case 'patients':
         return <ExamineesManagement onViewPatient={handleViewPatient} onEditPatient={handleEditPatient} onDeletePatient={handleDeletePatient} onCreateNewPatient={handleCreateNewPatient} />;
+      
+      case 'groups':
+        return <GroupAdministration />;
+      
+      case 'report':
+        return <Report />;
+      
+      case 'examinee-group-report':
+        return <ExamineeGroupReport />;
       
       case 'doctors':
         return <DoctorsList onViewDoctor={handleViewDoctor} onEditDoctor={handleEditDoctor} onDeleteDoctor={handleDeleteDoctor} onCreateNewDoctor={handleCreateNewDoctor} />;
