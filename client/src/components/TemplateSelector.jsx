@@ -10,7 +10,7 @@ const TemplateSelector = ({ onSelectTemplate, onCancel, patientData }) => {
     // Special handling for assessment templates
     if (template.name === 'TEST OF AUDITORY PROCESSING SKILLS-TAPS-3') {
       // Import and render TAPS3Template directly
-      import('./TAPS3Template').then((module) => {
+      import('./SimpleTAPS3Template').then((module) => {
         const TAPS3Template = module.default;
         // Create a wrapper that handles the template
         const templateWrapper = {

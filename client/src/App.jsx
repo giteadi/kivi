@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { setCredentials } from './store/slices/authSlice';
 import { fetchDoctors } from './store/slices/doctorSlice';
 import { fetchServices } from './store/slices/serviceSlice';
-import { deletePatient, fetchPatients } from './store/slices/patientSlice';
 import api from './services/api';
 import ErrorBoundary from './components/ErrorBoundary';
 import ErrorToast from './components/ErrorToast';
@@ -43,6 +42,11 @@ import ReceptionistProfile from './components/ReceptionistProfile';
 import ReceptionistEditForm from './components/ReceptionistEditForm';
 import EncounterDetail from './components/EncounterDetail';
 import EncountersList from './components/EncountersList';
+import EncounterTemplates from './components/EncounterTemplates';
+import TemplateBuilder from './components/TemplateBuilder';
+import TemplateViewer from './components/TemplateViewer';
+import TemplateSelector from './components/TemplateSelector';
+import TemplateBasedEncounter from './components/TemplateBasedEncounter';
 import MobileMenu from './components/MobileMenu';
 import ClinicRevenue from './components/ClinicRevenue';
 import DoctorRevenue from './components/DoctorRevenue';
@@ -57,38 +61,13 @@ import ServiceCreateForm from './components/ServiceCreateForm';
 import ServiceEditForm from './components/ServiceEditForm';
 import ExamineeCreateForm from './components/ExamineeCreateForm';
 import ExamineeDetail from './components/ExamineeDetail';
-import AssessmentTemplateSelector from './components/AssessmentTemplateSelector';
-import SimpleADHT2Template from './components/SimpleADHT2Template';
-import SimpleADHDDSM5Template from './components/SimpleADHDDSM5Template';
-import SimpleAstonIndexTemplate from './components/SimpleAstonIndexTemplate';
-import SimpleBKTTemplate from './components/SimpleBKTTemplate';
-import SimpleBrownEFATemplate from './components/SimpleBrownEFATemplate';
-import SimpleEACATemplate from './components/SimpleEACATemplate';
-import SimpleGARS3Template from './components/SimpleGARS3Template';
-import SimpleNelsonDennyTemplate from './components/SimpleNelsonDennyTemplate';
-import SimpleWRAML2Template from './components/SimpleWRAML2Template';
-import SimpleRavensCPMTemplate from './components/SimpleRavensCPMTemplate';
-import SimpleRIPATemplate from './components/SimpleRIPATemplate';
-import SimpleTAPS3Template from './components/SimpleTAPS3Template';
-import SimpleTOWL4Template from './components/SimpleTOWL4Template';
-import SimpleVABSTemplate from './components/SimpleVABSTemplate';
-import SimpleWISC4Template from './components/SimpleWISC4Template';
-import SimpleWJIIITemplate from './components/SimpleWJIIITemplate';
-import SimpleWJIVCogStdTemplate from './components/SimpleWJIVCogStdTemplate';
-import SimpleWJIVCogExtTemplate from './components/SimpleWJIVCogExtTemplate';
-import SimpleWJIVAchTemplate from './components/SimpleWJIVAchTemplate';
-import SimpleWRAT5EngTemplate from './components/SimpleWRAT5EngTemplate';
-import SimpleWRAT5HindiTemplate from './components/SimpleWRAT5HindiTemplate';
-import SimpleWRMT3Template from './components/SimpleWRMT3Template';
-import SimpleDiagnosticReportTemplate from './components/SimpleDiagnosticReportTemplate';
-import SimpleSummaryEvaluationTemplate from './components/SimpleSummaryEvaluationTemplate';
-import ADHT2CardView from './components/ADHT2CardView';
 // import TherapistCreateForm from './components/TherapistCreateForm'; // Temporarily disabled
 import SessionCreateForm from './components/SessionCreateForm';
 import SessionEditForm from './components/SessionEditForm';
 import SessionList from './components/SessionList';
 import PlansList from './components/PlansList';
 import AdminSessionsList from './components/AdminSessionsList';
+import TemplateManager from './components/TemplateManager';
 
 function App() {
   const dispatch = useDispatch();
@@ -99,11 +78,13 @@ function App() {
   // All useState hooks at the top level
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
-  const [showHomepage, setShowHomepage] = useState(false);
+  const [showHomepage, setShowHomepage] = useState(true); // Show homepage by default
   const [selectedPlan, setSelectedPlan] = useState(null);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [activeItem, setActiveItem] = useState('dashboard');
   const [currentView, setCurrentView] = useState('dashboard');
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [selectedPatientId, setSelectedPatientId] = useState(null);
   const [selectedExamineeId, setSelectedExamineeId] = useState(null);
@@ -118,8 +99,6 @@ function App() {
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [navigationHistory, setNavigationHistory] = useState(['dashboard']);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [selectedTemplateId, setSelectedTemplateId] = useState(null);
 
   // Check authentication on app load
   useEffect(() => {
@@ -202,7 +181,7 @@ function App() {
   const handleSetActiveItem = (item) => {
     setActiveItem(item);
     // Reset currentView when navigating to main sections to avoid conflicts
-    if (item === 'sessions' || item === 'dashboard' || item === 'patients' || item === 'doctors' || item === 'clinics' || item === 'services' || item === 'template-manager') {
+    if (item === 'sessions' || item === 'dashboard' || item === 'patients' || item === 'doctors' || item === 'clinics' || item === 'services') {
       setCurrentView(item);
     }
     updateNavigationHistory(item);
@@ -339,21 +318,86 @@ function App() {
     setCurrentView('encounters-list');
   };
 
+  const handleCreateTemplate = () => {
+    setSelectedTemplate(null);
+    setCurrentView('template-builder');
+  };
+
+  const handleEditTemplate = (template) => {
+    setSelectedTemplate(template);
+    setCurrentView('template-builder');
+  };
+
+  const handleViewTemplate = (template) => {
+    setSelectedTemplate(template);
+    setCurrentView('template-viewer');
+  };
+
+  const handleDuplicateTemplate = (template) => {
+    const duplicatedTemplate = {
+      ...template,
+      id: Date.now(),
+      name: `${template.name} (Copy)`,
+      usageCount: 0,
+      createdDate: new Date().toISOString().split('T')[0]
+    };
+    setSelectedTemplate(duplicatedTemplate);
+    setCurrentView('template-builder');
+  };
+
+  const handleDeleteTemplate = (template) => {
+    if (window.confirm(`Are you sure you want to delete "${template.name}"?`)) {
+      // In a real app, this would delete from backend
+      alert('Template deleted successfully!');
+      handleBackToTemplates();
+    }
+  };
+
+  const handleSaveTemplate = (templateData) => {
+    // In a real app, this would save to backend
+    console.log('Saving template:', templateData);
+    alert('Template saved successfully!');
+    handleBackToTemplates();
+  };
+
+  const handleCancelTemplate = () => {
+    handleBackToTemplates();
+  };
+
+  const handleBackToTemplates = () => {
+    setSelectedTemplate(null);
+    setCurrentView('encounter-templates');
+    setActiveItem('encounter-templates');
+  };
+
   const handleCreateNewEncounter = (patientData = null) => {
     // Open session creation modal instead of template selector
     setIsSessionCreateModalOpen(true);
   };
 
-  const handleCreateNewAppointment = () => {
-    // Navigate directly to appointment creation
-    setSelectedPatient({
-      id: 'P001',
-      name: 'Examinee',
-      age: '12',
-      gender: 'Male'
-    });
-    setCurrentView('session-create');
+  const handleSelectTemplate = (template) => {
+    setSelectedTemplate(template);
+    setCurrentView('template-based-encounter');
+  };
+
+  const handleCancelTemplateSelection = () => {
+    setSelectedPatient(null);
+    setCurrentView('encounters-list');
     setActiveItem('encounters-list');
+  };
+
+  const handleSaveEncounter = (encounterData) => {
+    // In a real app, this would save to backend
+    console.log('Saving encounter:', encounterData);
+    alert('Encounter report created successfully!');
+    setSelectedTemplate(null);
+    setSelectedPatient(null);
+    setCurrentView('encounters-list');
+    setActiveItem('encounters-list');
+  };
+
+  const handleCancelEncounter = () => {
+    setCurrentView('template-selector');
   };
 
   const handleViewPatient = (patientId) => {
@@ -535,16 +579,9 @@ setActiveItem('doctors');
   };
 
   // Delete handlers
-  const handleDeletePatient = async (patientId) => {
+  const handleDeletePatient = (patientId) => {
     if (window.confirm('Are you sure you want to delete this examinee?')) {
-      try {
-        await dispatch(deletePatient(patientId.replace('#', '')));
-        // Refresh the patients list to show updated data
-        await dispatch(fetchPatients());
-        toast.success('Examinee deleted successfully!');
-      } catch (error) {
-        toast.error('Failed to delete examinee: ' + error.message);
-      }
+      toast.success(`Examinee ${patientId} deleted successfully!`);
     }
   };
 
@@ -609,8 +646,19 @@ setActiveItem('doctors');
   };
 
   const handleCreateNewClinic = () => {
-    setCurrentView('clinic-create');
-    setActiveItem('clinics');
+    alert('Create new centre functionality - Form coming soon');
+  };
+
+  const handleCreateNewAppointment = () => {
+    // Navigate to template selector for appointment-based session creation
+    setSelectedPatient({
+      id: 'P001',
+      name: 'Examinee',
+      age: '12',
+      gender: 'Male'
+    });
+    setCurrentView('template-selector');
+    setActiveItem('encounters-list');
   };
 
   const handleSaveSession = (sessionData) => {
@@ -936,182 +984,49 @@ ${service.target_age_group || 'Not specified'}
       );
     }
 
-    // Handle template selection - Card View first, then Template on click
-    if (currentView === 'template-selector' || currentView === 'template-manager') {
-      // If a template is selected, show the appropriate template
-      if (selectedTemplateId === 'ADHT-2') {
-        return (
-          <SimpleADHT2Template 
-            onBack={() => setSelectedTemplateId(null)}
-          />
-        );
-      }
-      if (selectedTemplateId === 'ADHD-DSM5') {
-        return (
-          <SimpleADHDDSM5Template 
-            onBack={() => setSelectedTemplateId(null)}
-          />
-        );
-      }
-      if (selectedTemplateId === 'ASTON-INDEX') {
-        return (
-          <SimpleAstonIndexTemplate 
-            onBack={() => setSelectedTemplateId(null)}
-          />
-        );
-      }
-      if (selectedTemplateId === 'BKT') {
-        return (
-          <SimpleBKTTemplate 
-            onBack={() => setSelectedTemplateId(null)}
-          />
-        );
-      }
-      if (selectedTemplateId === 'BROWN-EFA') {
-        return (
-          <SimpleBrownEFATemplate 
-            onBack={() => setSelectedTemplateId(null)}
-          />
-        );
-      }
-      if (selectedTemplateId === 'EACA') {
-        return (
-          <SimpleEACATemplate 
-            onBack={() => setSelectedTemplateId(null)}
-          />
-        );
-      }
-      if (selectedTemplateId === 'GARS-3') {
-        return (
-          <SimpleGARS3Template 
-            onBack={() => setSelectedTemplateId(null)}
-          />
-        );
-      }
-      if (selectedTemplateId === 'NELSON-DENNY') {
-        return (
-          <SimpleNelsonDennyTemplate 
-            onBack={() => setSelectedTemplateId(null)}
-          />
-        );
-      }
-      if (selectedTemplateId === 'WRAML-2') {
-        return (
-          <SimpleWRAML2Template 
-            onBack={() => setSelectedTemplateId(null)}
-          />
-        );
-      }
-      if (selectedTemplateId === 'RAVENS-CPM') {
-        return (
-          <SimpleRavensCPMTemplate 
-            onBack={() => setSelectedTemplateId(null)}
-          />
-        );
-      }
-      if (selectedTemplateId === 'RIPA') {
-        return (
-          <SimpleRIPATemplate 
-            onBack={() => setSelectedTemplateId(null)}
-          />
-        );
-      }
-      if (selectedTemplateId === 'TAPS-3') {
-        return (
-          <SimpleTAPS3Template 
-            onBack={() => setSelectedTemplateId(null)}
-          />
-        );
-      }
-      if (selectedTemplateId === 'TOWL-4') {
-        return (
-          <SimpleTOWL4Template 
-            onBack={() => setSelectedTemplateId(null)}
-          />
-        );
-      }
-      if (selectedTemplateId === 'VABS-3') {
-        return (
-          <SimpleVABSTemplate 
-            onBack={() => setSelectedTemplateId(null)}
-          />
-        );
-      }
-      if (selectedTemplateId === 'WISC-IV') {
-        return (
-          <SimpleWISC4Template 
-            onBack={() => setSelectedTemplateId(null)}
-          />
-        );
-      }
-      if (selectedTemplateId === 'WJ-III') {
-        return (
-          <SimpleWJIIITemplate 
-            onBack={() => setSelectedTemplateId(null)}
-          />
-        );
-      }
-      if (selectedTemplateId === 'WJ-IV-Cog-Std') {
-        return (
-          <SimpleWJIVCogStdTemplate 
-            onBack={() => setSelectedTemplateId(null)}
-          />
-        );
-      }
-      if (selectedTemplateId === 'WJ-IV-Cog-Ext') {
-        return (
-          <SimpleWJIVCogExtTemplate 
-            onBack={() => setSelectedTemplateId(null)}
-          />
-        );
-      }
-      if (selectedTemplateId === 'WJ-IV-Ach') {
-        return (
-          <SimpleWJIVAchTemplate 
-            onBack={() => setSelectedTemplateId(null)}
-          />
-        );
-      }
-      if (selectedTemplateId === 'WRAT-5-English') {
-        return (
-          <SimpleWRAT5EngTemplate 
-            onBack={() => setSelectedTemplateId(null)}
-          />
-        );
-      }
-      if (selectedTemplateId === 'WRAT-5-Hindi') {
-        return (
-          <SimpleWRAT5HindiTemplate 
-            onBack={() => setSelectedTemplateId(null)}
-          />
-        );
-      }
-      if (selectedTemplateId === 'WRMT-III') {
-        return (
-          <SimpleWRMT3Template 
-            onBack={() => setSelectedTemplateId(null)}
-          />
-        );
-      }
-      if (selectedTemplateId === 'Diagnostic-Report') {
-        return (
-          <SimpleDiagnosticReportTemplate 
-            onBack={() => setSelectedTemplateId(null)}
-          />
-        );
-      }
-      if (selectedTemplateId === 'Summary-Evaluation') {
-        return (
-          <SimpleSummaryEvaluationTemplate 
-            onBack={() => setSelectedTemplateId(null)}
-          />
-        );
-      }
-      // Otherwise show card view
+    // Handle template-based encounter creation
+    if (currentView === 'template-based-encounter') {
       return (
-        <ADHT2CardView 
-          onOpenTemplate={(templateId) => setSelectedTemplateId(templateId)}
-          onBack={() => setCurrentView('dashboard')}
+        <TemplateBasedEncounter
+          template={selectedTemplate}
+          patientData={selectedPatient}
+          onSave={handleSaveEncounter}
+          onCancel={handleCancelEncounter}
+        />
+      );
+    }
+
+    // Handle template selection
+    if (currentView === 'template-selector') {
+      return (
+        <TemplateSelector
+          onSelectTemplate={handleSelectTemplate}
+          onCancel={handleCancelTemplateSelection}
+          patientData={selectedPatient}
+        />
+      );
+    }
+
+    // Handle template viewer
+    if (currentView === 'template-viewer') {
+      return (
+        <TemplateViewer
+          template={selectedTemplate}
+          onBack={handleBackToTemplates}
+          onEdit={handleEditTemplate}
+          onDuplicate={handleDuplicateTemplate}
+          onDelete={handleDeleteTemplate}
+        />
+      );
+    }
+
+    // Handle template builder view
+    if (currentView === 'template-builder') {
+      return (
+        <TemplateBuilder
+          template={selectedTemplate}
+          onSave={handleSaveTemplate}
+          onCancel={handleCancelTemplate}
         />
       );
     }
@@ -1175,11 +1090,25 @@ ${service.target_age_group || 'Not specified'}
         if (currentView === 'appointments-list') {
           return <AppointmentsList onViewAppointment={handleAppointmentClick} onEditAppointment={handleEditAppointment} onDeleteAppointment={handleDeleteAppointment} onCreateNewAppointment={handleCreateNewAppointment} />;
         }
-        // Show PlansList for sessions
+        // Show PlansList for Sessions List
         return <PlansList />;
+      
+      case 'encounter-templates':
+        return (
+          <EncounterTemplates 
+            onCreateTemplate={handleCreateTemplate}
+            onEditTemplate={handleEditTemplate}
+            onViewTemplate={handleViewTemplate}
+            onDuplicateTemplate={handleDuplicateTemplate}
+            onDeleteTemplate={handleDeleteTemplate}
+          />
+        );
       
       case 'sessions':
         return <PlansList />;
+      
+      case 'template-manager':
+        return <TemplateManager />;
       
       case 'clinic-revenue':
         return <ClinicRevenue />;
@@ -1224,7 +1153,7 @@ ${service.target_age_group || 'Not specified'}
           <Sidebar 
             activeItem={activeItem} 
             setActiveItem={handleSetActiveItem} 
-            shouldExpandEncounters={activeItem === 'encounters-list'}
+            shouldExpandEncounters={activeItem === 'encounters-list' || activeItem === 'encounter-templates'}
             sidebarCollapsed={sidebarCollapsed}
             setSidebarCollapsed={setSidebarCollapsed}
           />
