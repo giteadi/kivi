@@ -444,13 +444,299 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 10 }}
-                  className="p-12 text-center"
+                  className="space-y-6"
                 >
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <FiCheckCircle className="w-8 h-8 text-blue-600" />
+                  {/* Sub Tabs */}
+                  <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit mb-6">
+                    <button className="px-4 py-2 bg-white text-blue-600 rounded-md text-sm font-medium shadow-sm">
+                      Reasons For Testing
+                    </button>
+                    <button className="px-4 py-2 text-gray-600 hover:text-gray-800 rounded-md text-sm font-medium">
+                      Diagnoses
+                    </button>
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Evaluation</h3>
-                  <p className="text-gray-500">Evaluation features coming soon</p>
+
+                  <h3 className="text-sm font-semibold text-blue-800 mb-4">
+                    Reason(s) for Testing (Mark all that apply)
+                  </h3>
+
+                  {/* Academic Concerns */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-medium text-gray-500 uppercase">Academic Concerns:</h4>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Maths
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        General or Not Specific
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Writing
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Other
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Reading
+                      </label>
+                    </div>
+
+                    {/* Cognitive Evaluation */}
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-medium text-gray-500 uppercase">Cognitive Evaluation:</h4>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Intellectual Disability
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        General or Not Specific
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Gifted and Talented
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Other
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Traumatic Brain Injury
+                      </label>
+                    </div>
+
+                    {/* Behaviour Concerns */}
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-medium text-gray-500 uppercase">Behaviour Concerns:</h4>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Aggression
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        General or Not Specific
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Attention/Hyperactivity
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Other
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Rule Breaking/Defiance
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Mental Health Concerns */}
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-medium text-gray-500 uppercase">Mental Health Concerns:</h4>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Anxiety
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        General or Not Specific
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Depression
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Other
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Personality Issues
+                      </label>
+                    </div>
+
+                    {/* Developmental Delay */}
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-medium text-gray-500 uppercase">Developmental Delay:</h4>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Motor
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        General or Not Specific
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Physical/Growth
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Other
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Social Skills/Interactions (includes Autism)
+                      </label>
+                    </div>
+
+                    {/* Language Concerns */}
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-medium text-gray-500 uppercase">Language Concerns:</h4>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Receptive
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        General or Not Specific
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Expressive
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Other
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Pragmatic
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Speech Concerns */}
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-medium text-gray-500 uppercase">Speech Concerns:</h4>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Articulation
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        General or Not Specific
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Fluency
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Other
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Voice
+                      </label>
+                    </div>
+
+                    {/* Physical Concerns */}
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-medium text-gray-500 uppercase">Physical Concerns:</h4>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Health
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        General or Not Specific
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Motor Functioning
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Other
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Pain
+                      </label>
+                    </div>
+
+                    {/* Substance Abuse */}
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-medium text-gray-500 uppercase">Substance Abuse:</h4>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Alcohol
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        General or Not Specific
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Illegal Drugs
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Other
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Prescription Drugs
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Employment */}
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-medium text-gray-500 uppercase">Employment:</h4>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Internal Applicant
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Other
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        External Applicant
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        Professional Development
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Other Reason */}
+                  <div className="mt-6">
+                    <label className="block text-xs font-medium text-gray-600 mb-2">
+                      Other Reason(s) for Testing (Please Specify):
+                    </label>
+                    <textarea
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      placeholder="Enter other reasons..."
+                      maxLength={500}
+                    />
+                    <div className="text-xs text-gray-500 mt-1 text-right">
+                      500 characters remaining
+                    </div>
+                  </div>
+
+                  {/* Preference Checkbox */}
+                  <div className="mt-4 pt-4 border-t">
+                    <label className="flex items-start gap-3 text-sm text-gray-700">
+                      <input type="checkbox" className="mt-0.5 rounded border-gray-300" />
+                      <span>I prefer to not provide referral information for this examinee, or reason for testing information is not currently known</span>
+                    </label>
+                  </div>
                 </motion.div>
               )}
 
