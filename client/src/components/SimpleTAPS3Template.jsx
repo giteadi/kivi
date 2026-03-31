@@ -1,8 +1,9 @@
 import { useState, useRef } from 'react';
 import { FiPrinter, FiArrowLeft } from 'react-icons/fi';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import Sidebar from './Sidebar';
 
-const SimpleTAPS3Template = ({ onBack }) => {
+const SimpleTAPS3Template = ({ onBack, activeItem, setActiveItem }) => {
   const [formData, setFormData] = useState({
     title: "TEST OF AUDITORY PROCESSING SKILLS-TAPS-3",
     description: "The Test of Auditory Processing Skills (Third Edition; TAPS-3) is a measure of auditory skill important to the development, use, and understanding of the language used in academic instruction. It includes subtests designed to assess basic phonological skills (which are important to learning to read memory abilities (essential to processing information), and auditory cohesion (which requires not onl understanding, but also the ability to use inference, deduction and abstraction to comprehend th meaning of verbally presented information). The scores below serve to show ABC's performance o these auditory tasks in comparison to a normative sample of his same age peers, as well as to compar his performance on different subtests.",
@@ -39,7 +40,7 @@ const SimpleTAPS3Template = ({ onBack }) => {
     ],
     cohesionIndex: { score: "98", label: "Cohesion Index Standard Score" },
     
-    overallIndex: { score: "97", label: "Overall Index Score" },
+    overallIndex:  { score: "97", label: "Overall Index Score" },
     
     // Remark
     remark: "ABC's Overall TAPS-3 Index Standard Score is 97, is in the average range (85-115 average) for his chronological age."
@@ -94,7 +95,7 @@ const SimpleTAPS3Template = ({ onBack }) => {
             img.src = url;
           });
           
-          chartImage = canvas.toDataURL('image/png');
+          chartImage = canvas.toDataURL('image/png'); 
         }
       } catch (err) {
         console.error('Failed to capture chart:', err);
@@ -217,11 +218,19 @@ const SimpleTAPS3Template = ({ onBack }) => {
   ];
 
   return (
-    <div className="lg:ml-64 min-h-screen bg-gray-100">
-      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            {onBack && <button onClick={onBack} className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"><FiArrowLeft className="w-5 h-5" /><span>Back</span></button>}
+    <div className="min-h-screen bg-gray-100 flex">
+      <Sidebar 
+        activeItem={activeItem || 'patients'} 
+        setActiveItem={setActiveItem || (() => {})}
+        sidebarCollapsed={false}
+        setSidebarCollapsed={() => {}}
+      />
+      
+      <div className="flex-1 lg:ml-64">
+        <div className="bg-white shadow-sm border-b sticky top-0 z-10">
+          <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              {onBack && <button onClick={onBack} className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"><FiArrowLeft className="w-5 h-5" /><span>Back</span></button>}
             <h1 className="text-xl font-semibold text-gray-800">TAPS-3</h1>
           </div>
           <button onClick={handlePrint} className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"><FiPrinter className="w-4 h-4" /><span>Print / PDF</span></button>
@@ -402,6 +411,7 @@ const SimpleTAPS3Template = ({ onBack }) => {
           <div className="bg-blue-50 border-t border-blue-100 px-8 py-4"><p className="text-sm text-blue-800"><strong>Instructions:</strong> All fields are editable. Click on any text to edit. Click "Print / PDF" to generate a printable report.</p></div>
         </div>
       </div>
+    </div>
     </div>
   );
 };

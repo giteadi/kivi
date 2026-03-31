@@ -1,619 +1,489 @@
-import { motion } from 'framer-motion';
-import { FiArrowLeft, FiSave, FiX, FiUser, FiMail, FiPhone, FiMapPin, FiPlus, FiTrash2, FiUpload, FiFile, FiImage } from 'react-icons/fi';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  FiArrowLeft, 
+  FiSave, 
+  FiX, 
+  FiUser, 
+  FiMail, 
+  FiCalendar,
+  FiMapPin,
+  FiChevronDown,
+  FiInfo,
+  FiCheckCircle,
+  FiPhone
+} from 'react-icons/fi';
 import { useSelector } from 'react-redux';
 import api from '../services/api';
+import Sidebar from './Sidebar';
 
-const ExamineeCreateForm = ({ onSave, onCancel }) => {
+const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActiveItem }) => {
   const { user } = useSelector((state) => state.auth);
+  const [activeTab, setActiveTab] = useState('demographics');
+  const [isSaving, setIsSaving] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [age, setAge] = useState({ years: 0, months: 0 });
+  
   const [formData, setFormData] = useState({
     firstName: '',
+    middleName: '',
     lastName: '',
-    email: '',
-    phone: '',
-    dateOfBirth: '',
+    examineeId: '',
     gender: '',
-    centreId: '',
-    status: 'active',
-    student_id: '', // User can enter their own student ID
-    account_email: user?.email || '',
-    account_phone: user?.phone || '',
-    customFields: {}, // Dynamic custom fields object
-    documents: [] // Array to store uploaded documents
+    birthDate: '',
+    email: '',
+    comment: '',
+    account: 'MINDSAID LEARNING CENTRE',
+    center1: '',
+    center2: '',
+    center3: '',
+    center4: ''
   });
 
-  const [errors, setErrors] = useState({});
-  const [customFieldCount, setCustomFieldCount] = useState(2); // Fixed to 2 custom fields only
-
-  const centres = [
-    { id: 1, name: 'MindSaid Learning Centre' },
-    { id: 5, name: 'Test' }
-  ];
-
-  // Handle custom field changes
-  const handleCustomFieldChange = (index, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      customFields: {
-        ...prev.customFields,
-        [`customField_${index}`]: value
+  // Calculate age when birth date changes
+  useEffect(() => {
+    if (formData.birthDate) {
+      const birth = new Date(formData.birthDate);
+      const today = new Date();
+      let years = today.getFullYear() - birth.getFullYear();
+      let months = today.getMonth() - birth.getMonth();
+      
+      if (months < 0) {
+        years--;
+        months += 12;
       }
-    }));
-  };
+      
+      setAge({ years, months });
+    } else {
+      setAge({ years: 0, months: 0 });
+    }
+  }, [formData.birthDate]);
 
-  // Add new custom field
-  const addCustomField = () => {
-    setCustomFieldCount(prev => prev + 1);
-  };
-
-  // Remove custom field
-  const removeCustomField = (index) => {
-    const newCustomFields = { ...formData.customFields };
-    delete newCustomFields[`customField_${index}`];
-    
-    setFormData(prev => ({
-      ...prev,
-      customFields: newCustomFields
-    }));
-    
-    setCustomFieldCount(prev => Math.max(1, prev - 1)); // Minimum 1 field
-  };
-
-  // Handle file upload
-  const handleFileUpload = (e) => {
-    const files = Array.from(e.target.files);
-    
-    files.forEach(file => {
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        alert(`File ${file.name} is too large. Maximum size is 10MB.`);
-        return;
-      }
-    });
-
-    const filePromises = files.map(file => {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          resolve({
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            data: e.target.result, // Base64 string
-            uploadDate: new Date().toISOString()
-          });
-        };
-        reader.readAsDataURL(file);
-      });
-    });
-
-    Promise.all(filePromises).then(newDocuments => {
-      setFormData(prev => ({
-        ...prev,
-        documents: [...prev.documents, ...newDocuments]
-      }));
-    });
-  };
-
-  // Remove uploaded document
-  const removeDocument = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      documents: prev.documents.filter((_, i) => i !== index)
-    }));
-  };
-
-  // Get file icon based on type
-  const getFileIcon = (type) => {
-    if (type.startsWith('image/')) return <FiImage className="w-4 h-4" />;
-    return <FiFile className="w-4 h-4" />;
-  };
-
-  // Format file size
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    
-    // Clear error when user starts typing
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors(prev => ({
-        ...prev,
-        [field]: ''
-      }));
+      setErrors(prev => ({ ...prev, [field]: null }));
     }
   };
 
   const validateForm = () => {
     const newErrors = {};
+    if (!formData.firstName.trim()) newErrors.firstName = 'First Name is required';
+    if (!formData.lastName.trim()) newErrors.lastName = 'Last Name is required';
+    if (!formData.birthDate) newErrors.birthDate = 'Birth Date is required';
+    if (!formData.gender) newErrors.gender = 'Gender is required';
     
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = 'First name is required';
-    }
-    
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Last name is required';
-    }
-    
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
-    }
-    
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-    }
-    
-    if (!formData.dateOfBirth) {
-      newErrors.dateOfBirth = 'Date of birth is required';
-    }
-    
-    if (!formData.gender) {
-      newErrors.gender = 'Gender is required';
-    }
-    
-    if (!formData.centreId) {
-      newErrors.centreId = 'Centre is required';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
     
-    if (validateForm()) {
-      try {
-        // Map frontend field names to database column names
-        const dbData = {
-          student_id: formData.student_id || `STU${Date.now()}`, // Use user ID or auto-generate
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-          date_of_birth: formData.dateOfBirth,
-          gender: formData.gender,
-          centre_id: formData.centreId,
-          status: formData.status,
-          account_email: formData.account_email,
-          account_phone: formData.account_phone,
-          ...formData.customFields, // Spread all dynamic custom fields
-          documents: formData.documents // Include uploaded documents
-        };
-        
-        const result = await api.createPatient(dbData);
-        
-        if (result.success) {
-          onSave(result.data);
-        } else {
-          console.error('Error creating examinee:', result.message);
-          // Show user-friendly error message
-          if (result.message && result.message.includes('already exists')) {
-            alert('This Student ID is already taken. Please use a different Student ID or leave it empty for auto-generation.');
-          } else {
-            alert('Error creating examinee: ' + result.message);
-          }
-        }
-      } catch (error) {
-        console.error('Error creating examinee:', error);
+    setIsSaving(true);
+    try {
+      const apiData = {
+        first_name: formData.firstName,
+        middle_name: formData.middleName,
+        last_name: formData.lastName,
+        student_id: formData.examineeId,
+        gender: formData.gender.toLowerCase(),
+        date_of_birth: formData.birthDate,
+        email: formData.email,
+        comment: formData.comment,
+        centre_name: formData.account,
+        custom_field_1: formData.center1,
+        custom_field_2: formData.center2,
+        custom_field_3: formData.center3,
+        custom_field_4: formData.center4,
+        status: 'active'
+      };
+
+      const response = await api.request('/students', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(apiData)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        onSave && onSave(result.data);
+      } else {
+        setErrors({ submit: result.message || 'Failed to create examinee' });
       }
+    } catch (error) {
+      console.error('Error creating examinee:', error);
+      setErrors({ submit: 'An error occurred while creating the examinee' });
+    } finally {
+      setIsSaving(false);
     }
   };
 
+  const tabs = [
+    { id: 'demographics', label: 'Demographics' },
+    { id: 'evaluation', label: 'Evaluation' },
+    { id: 'history', label: 'History' }
+  ];
+
+  const inputClass = (field) => `
+    w-full px-3 py-2 border rounded-lg text-sm transition-all duration-200
+    ${errors[field] 
+      ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-200' 
+      : 'border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200'
+    }
+    outline-none
+  `;
+
+  const labelClass = "block text-xs font-medium text-gray-600 mb-1";
+  const requiredMark = <span className="text-red-500 ml-0.5">*</span>;
+
   return (
-    <div className="lg:ml-64 min-h-screen bg-gray-50">
-      <div className="p-4 lg:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex">
+      <Sidebar 
+        activeItem={activeItem} 
+        setActiveItem={setActiveItem}
+        sidebarCollapsed={false}
+        setSidebarCollapsed={() => {}}
+      />
+      
+      <div className="flex-1 lg:ml-64">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-4">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={onCancel}
-              className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              <FiArrowLeft className="w-5 h-5" />
-              <span>Back to Examinees</span>
-            </motion.button>
-          </div>
-          
-          <div className="flex items-center space-x-3">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={onCancel}
-              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <FiX className="w-4 h-4" />
-              <span>Cancel</span>
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleSubmit}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-            >
-              <FiSave className="w-4 h-4" />
-              <span>Create Examinee</span>
-            </motion.button>
+        <div className="bg-white shadow-sm border-b sticky top-0 z-20">
+          <div className="px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={onCancel}
+                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <FiArrowLeft className="w-5 h-5" />
+                  <span className="font-medium">Back</span>
+                </button>
+                <div className="h-6 w-px bg-gray-200" />
+                <h1 className="text-xl font-semibold text-gray-900">New Examinee</h1>
+              </div>
+              <div className="flex items-center space-x-3">
+                <span className="text-xs text-red-500">* Required</span>
+                <button
+                  onClick={handleSubmit}
+                  disabled={isSaving}
+                  className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg hover:from-emerald-600 hover:to-teal-600 transition-all shadow-sm hover:shadow-md text-sm font-medium disabled:opacity-50"
+                >
+                  <FiSave className="w-4 h-4" />
+                  <span>{isSaving ? 'Saving...' : 'Save'}</span>
+                </button>
+                <button
+                  onClick={onCancel}
+                  className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all text-sm font-medium"
+                >
+                  <FiX className="w-4 h-4" />
+                  <span>Cancel</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Breadcrumb */}
-        <div className="flex items-center text-sm text-gray-500 mb-6">
-          <span>Home</span>
-          <span className="mx-2">›</span>
-          <span>Examinees</span>
-          <span className="mx-2">›</span>
-          <span className="text-gray-800">Create New Examinee</span>
-        </div>
-
-        {/* Form */}
+      {/* Main Content */}
+      <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl shadow-sm border"
+          className="bg-white rounded-xl shadow-sm border overflow-hidden"
         >
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <FiUser className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold text-gray-800">Create New Examinee</h2>
-                <p className="text-gray-600">Add a new examinee to the learning centre</p>
-              </div>
+          {/* Tabs */}
+          <div className="border-b bg-gray-50/50">
+            <div className="flex px-6">
+              {tabs.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === tab.id
+                      ? 'border-blue-600 text-blue-600 bg-white'
+                      : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
-            {/* Personal Information */}
-            <div>
-              <h3 className="text-lg font-medium text-gray-800 mb-4">Personal Information</h3>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    First Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.firstName}
-                    onChange={(e) => handleInputChange('firstName', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.firstName ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="Enter first name"
-                  />
-                  {errors.firstName && (
-                    <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Last Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.lastName}
-                    onChange={(e) => handleInputChange('lastName', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.lastName ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="Enter last name"
-                  />
-                  {errors.lastName && (
-                    <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Date of Birth *
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.dateOfBirth}
-                    onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  />
-                  {errors.dateOfBirth && (
-                    <p className="mt-1 text-sm text-red-600">{errors.dateOfBirth}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Gender *
-                  </label>
-                  <select
-                    value={formData.gender}
-                    onChange={(e) => handleInputChange('gender', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.gender ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  >
-                    <option value="">Select gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
-                  {errors.gender && (
-                    <p className="mt-1 text-sm text-red-600">{errors.gender}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Contact Information */}
-            <div>
-              <h3 className="text-lg font-medium text-gray-800 mb-4">Contact Information</h3>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email *
-                  </label>
-                  <div className="relative">
-                    <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                      className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.email ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="Enter email address"
-                    />
-                  </div>
-                  {errors.email && (
-                    <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone *
-                  </label>
-                  <div className="relative">
-                    <FiPhone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                      className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.phone ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="Enter phone number"
-                    />
-                  </div>
-                  {errors.phone && (
-                    <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Account Information */}
-            <div>
-              <h3 className="text-lg font-medium text-gray-800 mb-4">Account Information</h3>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Examinee ID
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.student_id}
-                    onChange={(e) => handleInputChange('student_id', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter examinee ID (leave empty for auto-generate)"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Account Email
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.account_email}
-                    onChange={(e) => handleInputChange('account_email', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Account holder email (auto-filled)"
-                    readOnly
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Account Phone
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.account_phone}
-                    onChange={(e) => handleInputChange('account_phone', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Account holder phone (auto-filled)"
-                    readOnly
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Custom Fields */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-800">Custom Fields</h3>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={addCustomField}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          {/* Form Content */}
+          <div className="p-6">
+            <AnimatePresence mode="wait">
+              {activeTab === 'demographics' && (
+                <motion.div
+                  key="demographics"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  className="space-y-6"
                 >
-                  <FiPlus className="w-4 h-4" />
-                  <span>Add Custom Field</span>
-                </motion.button>
-              </div>
-              
-              <div className="grid grid-cols-1 gap-6">
-                {Array.from({ length: customFieldCount }, (_, index) => (
-                  <div key={index} className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Custom Field {index + 1}
-                      </label>
-                      {index >= 1 && (
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => removeCustomField(index)}
-                          className="p-2 text-red-600 hover:text-red-800 transition-colors"
-                        >
-                          <FiTrash2 className="w-4 h-4" />
-                        </motion.button>
-                      )}
-                    </div>
-                    
-                    <input
-                      type="text"
-                      value={formData.customFields[`customField_${index}`] || ''}
-                      onChange={(e) => handleCustomFieldChange(index, 'customField', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Enter field name"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Document Upload */}
-            <div>
-              <h3 className="text-lg font-medium text-gray-800 mb-4">Documents Upload</h3>
-              <div className="space-y-4">
-                {/* Upload Button */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Upload Documents (DOCX, Excel, Images, PDF, etc.)
-                  </label>
-                  <div className="flex items-center space-x-4">
-                    <label className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer transition-colors">
-                      <FiUpload className="w-4 h-4" />
-                      <span>Choose Files</span>
-                      <input
-                        type="file"
-                        multiple
-                        accept=".docx,.xlsx,.xls,.doc,.pdf,.jpg,.jpeg,.png,.gif,.bmp,.tiff"
-                        onChange={handleFileUpload}
-                        className="hidden"
-                      />
-                    </label>
-                    <span className="text-sm text-gray-500">
-                      Maximum file size: 10MB per file
-                    </span>
-                  </div>
-                </div>
-
-                {/* Uploaded Documents List */}
-                {formData.documents.length > 0 && (
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-3">
-                      Uploaded Documents ({formData.documents.length})
-                    </h4>
-                    <div className="space-y-2">
-                      {formData.documents.map((doc, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className="text-blue-600">
-                              {getFileIcon(doc.type)}
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-800">
-                                {doc.name}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {formatFileSize(doc.size)} • {doc.type || 'Unknown type'}
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => removeDocument(index)}
-                            className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Remove document"
-                          >
-                            <FiTrash2 className="w-4 h-4" />
-                          </button>
+                  {/* Two Column Layout */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Left Column - Personal Info */}
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide border-b pb-2">
+                        Personal Information
+                      </h3>
+                      
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="col-span-1">
+                          <label className={labelClass}>
+                            First Name{requiredMark}
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.firstName}
+                            onChange={(e) => handleChange('firstName', e.target.value)}
+                            className={inputClass('firstName')}
+                            placeholder="First"
+                          />
+                          {errors.firstName && (
+                            <p className="text-xs text-red-500 mt-1">{errors.firstName}</p>
+                          )}
                         </div>
-                      ))}
+                        
+                        <div className="col-span-1">
+                          <label className={labelClass}>Middle Name</label>
+                          <input
+                            type="text"
+                            value={formData.middleName}
+                            onChange={(e) => handleChange('middleName', e.target.value)}
+                            className={inputClass('middleName')}
+                            placeholder="Middle"
+                          />
+                        </div>
+                        
+                        <div className="col-span-1">
+                          <label className={labelClass}>
+                            Last Name{requiredMark}
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.lastName}
+                            onChange={(e) => handleChange('lastName', e.target.value)}
+                            className={inputClass('lastName')}
+                            placeholder="Last"
+                          />
+                          {errors.lastName && (
+                            <p className="text-xs text-red-500 mt-1">{errors.lastName}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className={labelClass}>Examinee ID</label>
+                        <input
+                          type="text"
+                          value={formData.examineeId}
+                          onChange={(e) => handleChange('examineeId', e.target.value)}
+                          className={inputClass('examineeId')}
+                          placeholder="Auto-generated if empty"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className={labelClass}>
+                            Gender{requiredMark}
+                          </label>
+                          <div className="relative">
+                            <select
+                              value={formData.gender}
+                              onChange={(e) => handleChange('gender', e.target.value)}
+                              className={`${inputClass('gender')} appearance-none`}
+                            >
+                              <option value="">Please Select...</option>
+                              <option value="Male">Male</option>
+                              <option value="Female">Female</option>
+                              <option value="Other">Other</option>
+                            </select>
+                            <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                          </div>
+                          {errors.gender && (
+                            <p className="text-xs text-red-500 mt-1">{errors.gender}</p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className={labelClass}>
+                            Birth Date{requiredMark}
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="date"
+                              value={formData.birthDate}
+                              onChange={(e) => handleChange('birthDate', e.target.value)}
+                              className={`${inputClass('birthDate')} pr-10`}
+                            />
+                            <FiCalendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                          </div>
+                          {errors.birthDate && (
+                            <p className="text-xs text-red-500 mt-1">{errors.birthDate}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {formData.birthDate && (
+                        <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-lg">
+                          <FiInfo className="w-4 h-4" />
+                          <span>Age: {age.years} years {age.months} months</span>
+                        </div>
+                      )}
+
+                      <div>
+                        <label className={labelClass}>Email</label>
+                        <div className="relative">
+                          <input
+                            type="email"
+                            value={formData.email}
+                            onChange={(e) => handleChange('email', e.target.value)}
+                            className={`${inputClass('email')} pl-10`}
+                            placeholder="email@example.com"
+                          />
+                          <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className={labelClass}>Comment</label>
+                        <textarea
+                          value={formData.comment}
+                          onChange={(e) => handleChange('comment', e.target.value)}
+                          rows={4}
+                          className={inputClass('comment')}
+                          placeholder="Enter any additional comments..."
+                          maxLength={500}
+                        />
+                        <div className="text-xs text-gray-500 mt-1 text-right">
+                          {500 - formData.comment.length} characters remaining
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Column - Account & Centers */}
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide border-b pb-2">
+                        Account Information
+                      </h3>
+
+                      <div>
+                        <label className={labelClass}>Account</label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={formData.account}
+                            readOnly
+                            className={`${inputClass('account')} bg-gray-50 pl-10 font-medium text-gray-700`}
+                          />
+                          <FiMapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        </div>
+                      </div>
+
+                      <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide border-b pb-2 pt-4">
+                        Center Assignments
+                      </h3>
+
+                      <div className="space-y-3">
+                        <div>
+                          <label className={labelClass}>Center 1</label>
+                          <input
+                            type="text"
+                            value={formData.center1}
+                            onChange={(e) => handleChange('center1', e.target.value)}
+                            className={inputClass('center1')}
+                            placeholder="Enter center name"
+                          />
+                        </div>
+
+                        <div>
+                          <label className={labelClass}>Center 2</label>
+                          <input
+                            type="text"
+                            value={formData.center2}
+                            onChange={(e) => handleChange('center2', e.target.value)}
+                            className={inputClass('center2')}
+                            placeholder="Enter center name"
+                          />
+                        </div>
+
+                        <div>
+                          <label className={labelClass}>Center 3</label>
+                          <input
+                            type="text"
+                            value={formData.center3}
+                            onChange={(e) => handleChange('center3', e.target.value)}
+                            className={inputClass('center3')}
+                            placeholder="Enter center name"
+                          />
+                        </div>
+
+                        <div>
+                          <label className={labelClass}>Center 4</label>
+                          <input
+                            type="text"
+                            value={formData.center4}
+                            onChange={(e) => handleChange('center4', e.target.value)}
+                            className={inputClass('center4')}
+                            placeholder="Enter center name"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
-            </div>
+                </motion.div>
+              )}
 
-            {/* Centre & Status */}
-            <div>
-              <h3 className="text-lg font-medium text-gray-800 mb-4">Centre & Status</h3>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Centre *
-                  </label>
-                  <select
-                    value={formData.centreId}
-                    onChange={(e) => handleInputChange('centreId', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.centreId ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  >
-                    <option value="">Select centre</option>
-                    {centres.map((centre) => (
-                      <option key={centre.id} value={centre.id}>
-                        {centre.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.centreId && (
-                    <p className="mt-1 text-sm text-red-600">{errors.centreId}</p>
-                  )}
-                </div>
+              {activeTab === 'evaluation' && (
+                <motion.div
+                  key="evaluation"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  className="p-12 text-center"
+                >
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <FiCheckCircle className="w-8 h-8 text-blue-600" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Evaluation</h3>
+                  <p className="text-gray-500">Evaluation features coming soon</p>
+                </motion.div>
+              )}
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Status
-                  </label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => handleInputChange('status', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                    <option value="on_leave">On Leave</option>
-                    <option value="graduated">Graduated</option>
-                    <option value="transferred">Transferred</option>
-                  </select>
-                </div>
-              </div>
+              {activeTab === 'history' && (
+                <motion.div
+                  key="history"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  className="p-12 text-center"
+                >
+                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <FiUser className="w-8 h-8 text-purple-600" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">History</h3>
+                  <p className="text-gray-500">History features coming soon</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Footer Error Message */}
+          {errors.submit && (
+            <div className="px-6 py-3 bg-red-50 border-t border-red-100">
+              <p className="text-sm text-red-600 flex items-center gap-2">
+                <FiInfo className="w-4 h-4" />
+                {errors.submit}
+              </p>
             </div>
-          </form>
+          )}
         </motion.div>
       </div>
+    </div>
     </div>
   );
 };

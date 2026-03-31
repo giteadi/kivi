@@ -68,6 +68,7 @@ import SessionList from './components/SessionList';
 import PlansList from './components/PlansList';
 import AdminSessionsList from './components/AdminSessionsList';
 import TemplateManager from './components/TemplateManager';
+import ExamineesManagement from './components/ExamineesManagement';
 
 function App() {
   const dispatch = useDispatch();
@@ -1065,7 +1066,7 @@ ${service.target_age_group || 'Not specified'}
         />;
       
       case 'patients':
-        return <PatientsList onViewPatient={handleViewPatient} onEditPatient={handleEditPatient} onDeletePatient={handleDeletePatient} onCreateNewPatient={handleCreateNewPatient} />;
+        return <ExamineesManagement onViewPatient={handleViewPatient} onEditPatient={handleEditPatient} onDeletePatient={handleDeletePatient} onCreateNewPatient={handleCreateNewPatient} />;
       
       case 'doctors':
         return <DoctorsList onViewDoctor={handleViewDoctor} onEditDoctor={handleEditDoctor} onDeleteDoctor={handleDeleteDoctor} onCreateNewDoctor={handleCreateNewDoctor} />;
