@@ -37,6 +37,25 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
     substanceAbuse: { other: false, otherText: '' },
     employment: { other: false, otherText: '' }
   });
+
+  // State for Evaluation sub-tabs and Diagnoses
+  const [evaluationSubTab, setEvaluationSubTab] = useState('reasonsForTesting');
+  const [expandedDiagnoses, setExpandedDiagnoses] = useState({
+    autismSpectrum: true,
+    behaviourEmotional: false,
+    giftedTalented: false,
+    intellectualDisability: false,
+    languageDelay: false,
+    learningDisability: false,
+    moodRelated: false,
+    motorDelay: false,
+    personalityDisorders: false,
+    schizophrenia: false,
+    speech: false,
+    substanceAbuse: false,
+    traumaticBrainInjury: false,
+    other: false
+  });
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -91,6 +110,13 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
     setEvaluationData(prev => ({
       ...prev,
       [category]: { ...prev[category], otherText: text }
+    }));
+  };
+
+  const toggleDiagnosisCategory = (category) => {
+    setExpandedDiagnoses(prev => ({
+      ...prev,
+      [category]: !prev[category]
     }));
   };
 
@@ -192,7 +218,6 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                 <h1 className="text-xl font-semibold text-gray-900">New Examinee</h1>
               </div>
               <div className="flex items-center space-x-3">
-                <span className="text-xs text-red-500">* Required</span>
                 <button
                   onClick={handleSubmit}
                   disabled={isSaving}
@@ -476,20 +501,36 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                 >
                   {/* Sub Tabs */}
                   <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit mb-6">
-                    <button className="px-4 py-2 bg-white text-blue-600 rounded-md text-sm font-medium shadow-sm">
+                    <button 
+                      onClick={() => setEvaluationSubTab('reasonsForTesting')}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                        evaluationSubTab === 'reasonsForTesting'
+                          ? 'bg-white text-blue-600 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
                       Reasons For Testing
                     </button>
-                    <button className="px-4 py-2 text-gray-600 hover:text-gray-800 rounded-md text-sm font-medium">
+                    <button 
+                      onClick={() => setEvaluationSubTab('diagnoses')}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                        evaluationSubTab === 'diagnoses'
+                          ? 'bg-white text-blue-600 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
                       Diagnoses
                     </button>
                   </div>
 
-                  <h3 className="text-sm font-semibold text-blue-800 mb-4">
-                    Reason(s) for Testing (Mark all that apply)
-                  </h3>
+                  {evaluationSubTab === 'reasonsForTesting' && (
+                    <>
+                      <h3 className="text-sm font-semibold text-blue-800 mb-4">
+                        Reason(s) for Testing (Mark all that apply)
+                      </h3>
 
-                  {/* Academic Concerns */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Academic Concerns */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <h4 className="text-xs font-medium text-gray-500 uppercase">Academic Concerns:</h4>
                       <label className="flex items-center gap-2 text-sm text-gray-700">
@@ -881,8 +922,755 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                       <span>I prefer to not provide referral information for this examinee, or reason for testing information is not currently known</span>
                     </label>
                   </div>
-                </motion.div>
+                </>
               )}
+
+              {evaluationSubTab === 'diagnoses' && (
+                <>
+                  <p className="text-sm text-gray-600 mb-2">
+                    Please select a diagnosis for this examinee. You may select more than one diagnosis.
+                  </p>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Click the [+] to expand and [-] to collapse a category.
+                  </p>
+
+                  {/* Autism Spectrum Disorder */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => toggleDiagnosisCategory('autismSpectrum')}
+                      className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                    >
+                      <span className="text-sm font-medium">{expandedDiagnoses.autismSpectrum ? '⊟' : '⊞'}</span>
+                      <span className="font-medium text-sm">Autism Spectrum Disorder</span>
+                    </button>
+                    {expandedDiagnoses.autismSpectrum && (
+                      <div className="px-4 py-2 pl-10 space-y-1">
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Asperger's Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Autistic Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Childhood Disintegrative Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Pervasive Developmental Delay/Disability
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Rett's Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Other
+                        </label>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Behaviour/Emotional Disorder */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => toggleDiagnosisCategory('behaviourEmotional')}
+                      className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                    >
+                      <span className="text-sm font-medium">{expandedDiagnoses.behaviourEmotional ? '⊟' : '⊞'}</span>
+                      <span className="font-medium text-sm">Behaviour/Emotional Disorder</span>
+                    </button>
+                    {expandedDiagnoses.behaviourEmotional && (
+                      <div className="px-4 py-2 pl-10 space-y-1">
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Attention Deficit/Hyperactivity Disorder (any type)
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Conduct Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Disruptive Behavior Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Emotional Disturbance
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Intermittent Explosive Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Kleptomania
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Oppositional Defiant Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Pathological Gambling
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Pyromania
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Trichotillomania
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Other
+                        </label>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Intellectual Disability */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => toggleDiagnosisCategory('intellectualDisability')}
+                      className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                    >
+                      <span className="text-sm font-medium">{expandedDiagnoses.intellectualDisability ? '⊟' : '⊞'}</span>
+                      <span className="font-medium text-sm">Intellectual Disability</span>
+                    </button>
+                    {expandedDiagnoses.intellectualDisability && (
+                      <div className="px-4 py-2 pl-10 space-y-1">
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Borderline Intellectual Functioning
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Cognitive Developmental Delay
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Intellectual Disability Mild (formerly called Mild Mental Retardation)
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Intellectual Disability Moderate (formerly called Moderate Mental Retardation)
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Intellectual Disability Profound (formerly called Profound Mental Retardation)
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Intellectual Disability Severe (formerly called Severe Mental Retardation)
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Other
+                        </label>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Gifted and Talented */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => toggleDiagnosisCategory('giftedTalented')}
+                      className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                    >
+                      <span className="text-sm font-medium">{expandedDiagnoses.giftedTalented ? '⊟' : '⊞'}</span>
+                      <span className="font-medium text-sm">Gifted and Talented</span>
+                    </button>
+                    {expandedDiagnoses.giftedTalented && (
+                      <div className="px-4 py-2 pl-10 space-y-1">
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Gifted and Talented
+                        </label>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Language Delay/Disorder */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => toggleDiagnosisCategory('languageDelay')}
+                      className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                    >
+                      <span className="text-sm font-medium">{expandedDiagnoses.languageDelay ? '⊟' : '⊞'}</span>
+                      <span className="font-medium text-sm">Language Delay/Disorder</span>
+                    </button>
+                    {expandedDiagnoses.languageDelay && (
+                      <div className="px-4 py-2 pl-10 space-y-1">
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Expressive Language Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Language Delay
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Mixed Receptive/Expressive Language Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Phonological Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Other
+                        </label>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Learning Disability */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => toggleDiagnosisCategory('learningDisability')}
+                      className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                    >
+                      <span className="text-sm font-medium">{expandedDiagnoses.learningDisability ? '⊟' : '⊞'}</span>
+                      <span className="font-medium text-sm">Learning Disability</span>
+                    </button>
+                    {expandedDiagnoses.learningDisability && (
+                      <div className="px-4 py-2 pl-10 space-y-1">
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Learning Disability in Reading/Reading Disorder/Dyslexia
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Learning Disability in Mathematics/Mathematics Disorder/Dyscalculia
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Learning Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Learning Disability in Writing/Disorder of Written Expression/Orthographic Impairment
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Nonverbal Learning Disability
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Other
+                        </label>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Mood Related Disorders */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => toggleDiagnosisCategory('moodRelated')}
+                      className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                    >
+                      <span className="text-sm font-medium">{expandedDiagnoses.moodRelated ? '⊟' : '⊞'}</span>
+                      <span className="font-medium text-sm">Mood Related Disorders</span>
+                    </button>
+                    {expandedDiagnoses.moodRelated && (
+                      <div className="px-4 py-2 pl-10 space-y-1">
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Acute Stress Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Agoraphobia without a History of Panic Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Anorexia Nervosa
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Bipolar Disorder (I, II, & NOS)
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Bulimia Nervosa
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Conversion Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Cyclothymic Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Depressive/Mood Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Dysthymic Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Generalized Anxiety Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Major Depressive Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Obsessive Compulsive Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Pain Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Panic Disorder Without Agoraphobia
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Posttraumatic Stress Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Separation Anxiety Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Social Phobia
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Somatization Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Specific Phobia (Animals, Objects, Etc.)
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Other
+                        </label>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Motor Delay/Impairment */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => toggleDiagnosisCategory('motorDelay')}
+                      className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                    >
+                      <span className="text-sm font-medium">{expandedDiagnoses.motorDelay ? '⊟' : '⊞'}</span>
+                      <span className="font-medium text-sm">Motor Delay/Impairment</span>
+                    </button>
+                    {expandedDiagnoses.motorDelay && (
+                      <div className="px-4 py-2 pl-10 space-y-1">
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Developmental Coordination Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Dyspraxia
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Motor Delay
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Paraplegia
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Quadriplegia
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Stereotypic Movement Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Other
+                        </label>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Personality Disorders */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => toggleDiagnosisCategory('personalityDisorders')}
+                      className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                    >
+                      <span className="text-sm font-medium">{expandedDiagnoses.personalityDisorders ? '⊟' : '⊞'}</span>
+                      <span className="font-medium text-sm">Personality Disorders</span>
+                    </button>
+                    {expandedDiagnoses.personalityDisorders && (
+                      <div className="px-4 py-2 pl-10 space-y-1">
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Antisocial Personality Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Avoidant Personality Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Borderline Personality Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Dependent Personality Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Histrionic Personality Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Narcissistic Personality Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Obsessive Compulsive Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Obsessive Compulsive Personality Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Paranoid Personality Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Schizoid Personality Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Schizotypal Personality Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Other
+                        </label>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Schizophrenia */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => toggleDiagnosisCategory('schizophrenia')}
+                      className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                    >
+                      <span className="text-sm font-medium">{expandedDiagnoses.schizophrenia ? '⊟' : '⊞'}</span>
+                      <span className="font-medium text-sm">Schizophrenia</span>
+                    </button>
+                    {expandedDiagnoses.schizophrenia && (
+                      <div className="px-4 py-2 pl-10 space-y-1">
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Brief Psychotic Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Delusional Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Schizoaffective Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Schizophrenia - Catatonic Type
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Schizophrenia - Disorganized Type
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Schizophrenia - Paranoid Type
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Schizophrenia - Residual Type
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Schizophrenia - Undifferentiated Type
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Schizophreniform Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Other
+                        </label>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Speech */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => toggleDiagnosisCategory('speech')}
+                      className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                    >
+                      <span className="text-sm font-medium">{expandedDiagnoses.speech ? '⊟' : '⊞'}</span>
+                      <span className="font-medium text-sm">Speech</span>
+                    </button>
+                    {expandedDiagnoses.speech && (
+                      <div className="px-4 py-2 pl-10 space-y-1">
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Aphasia
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Apraxia
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Articulation Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Broca's Aphasia
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Central Auditory Processing Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Dysarthria
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Fluency Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Receptive Aphasia
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Voice Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Other
+                        </label>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Substance Abuse */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => toggleDiagnosisCategory('substanceAbuseDiag')}
+                      className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                    >
+                      <span className="text-sm font-medium">{expandedDiagnoses.substanceAbuseDiag ? '⊟' : '⊞'}</span>
+                      <span className="font-medium text-sm">Substance Abuse</span>
+                    </button>
+                    {expandedDiagnoses.substanceAbuseDiag && (
+                      <div className="px-4 py-2 pl-10 space-y-1">
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Alcohol Abuse Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Alcohol Dependence Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Polysubstance Abuse Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Polysubstance Dependence Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Substance Abuse Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Substance Dependence Disorder (Alcohol, drugs, or inhalants)
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Other
+                        </label>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Traumatic Brain Injury */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => toggleDiagnosisCategory('traumaticBrainInjury')}
+                      className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                    >
+                      <span className="text-sm font-medium">{expandedDiagnoses.traumaticBrainInjury ? '⊟' : '⊞'}</span>
+                      <span className="font-medium text-sm">Traumatic Brain Injury</span>
+                    </button>
+                    {expandedDiagnoses.traumaticBrainInjury && (
+                      <div className="px-4 py-2 pl-10 space-y-1">
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Traumatic Brain Injury
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Traumatic Brain Injury - Mild Severity
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Traumatic Brain Injury - Moderate Severity
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Traumatic Brain Injury - Severe Severity
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Other
+                        </label>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Other */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => toggleDiagnosisCategory('otherDiag')}
+                      className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                    >
+                      <span className="text-sm font-medium">{expandedDiagnoses.otherDiag ? '⊟' : '⊞'}</span>
+                      <span className="font-medium text-sm">Other</span>
+                    </button>
+                    {expandedDiagnoses.otherDiag && (
+                      <div className="px-4 py-2 pl-10 space-y-1">
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Adjustment Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Cognitive Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Creutzfeldt-Jakob Disease
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Dementia of the Alzheimer's Type
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Depersonalization Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Dissociative Identity Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Epilepsy, Not Specified
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Factitious Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Gender Identity Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Huntington's Disease
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Left Cerebral Vascular Accident (Stroke)
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Left Temporal Lobe Epilepsy
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Mild Cognitive Impairment
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Parkinson's Disease
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Pick's Disease
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Primary Insomnia
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Right Cerebral Vascular Accident (Stroke)
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Right Temporal Lobe Epilepsy
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Seizure Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Stroke, Not Specified
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Tic Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Tourette's Disorder
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Vascular Dementia
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                          Other
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </motion.div>
+          )}
 
               {activeTab === 'history' && (
                 <motion.div
