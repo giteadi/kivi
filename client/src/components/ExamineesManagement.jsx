@@ -57,6 +57,12 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
     center: 'all',
     gender: 'all'
   });
+  const [showAssignAssessment, setShowAssignAssessment] = useState(false);
+  const [selectedAssessment, setSelectedAssessment] = useState('');
+  const [assessmentTab, setAssessmentTab] = useState('all');
+  const [assessmentSearch, setAssessmentSearch] = useState('');
+  const [alphaFilter, setAlphaFilter] = useState('all');
+  const [favoriteAssessments, setFavoriteAssessments] = useState([]);
 
   useEffect(() => {
     dispatch(fetchPatients());
@@ -139,6 +145,189 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
     { id: 'group', label: 'Group Administration', icon: FiUsers },
     { id: 'report', label: 'Report', icon: FiFileText }
   ];
+
+  // Assessment data
+  const assessments = [
+    { id: '16pf', name: '16PF', category: 'Personality' },
+    { id: 'bai', name: 'BAI', category: 'Anxiety' },
+    { id: 'basc3-bess-college', name: 'BASC-3 BESS College', category: 'Behavior' },
+    { id: 'basc3-bess-parent-child', name: 'BASC-3 BESS Parent Child/Adolescent', category: 'Behavior' },
+    { id: 'basc3-bess-preschool', name: 'BASC-3 BESS Parent Preschool', category: 'Behavior' },
+    { id: 'basc3-bess-student', name: 'BASC-3 BESS Student', category: 'Behavior' },
+    { id: 'basc3-bess-teacher-child', name: 'BASC-3 BESS Teacher Child/Adolescent', category: 'Behavior' },
+    { id: 'basc3-bess-teacher-preschool', name: 'BASC-3 BESS Teacher Preschool', category: 'Behavior' },
+    { id: 'basc3-flex-parent', name: 'BASC-3 Flex Monitor - Parent', category: 'Behavior' },
+    { id: 'basc3-flex-self', name: 'BASC-3 Flex Monitor - Self', category: 'Behavior' },
+    { id: 'basc3-flex-teacher', name: 'BASC-3 Flex Monitor - Teacher', category: 'Behavior' },
+    { id: 'basc3-prq-child', name: 'BASC-3 PRQ-Child/Adolescent', category: 'Behavior' },
+    { id: 'basc3-prq-preschool', name: 'BASC-3 PRQ-Preschool', category: 'Behavior' },
+    { id: 'basc3-prs-adolescent', name: 'BASC-3 PRS-Adolescent', category: 'Behavior' },
+    { id: 'basc3-prs-child', name: 'BASC-3 PRS-Child', category: 'Behavior' },
+    { id: 'basc3-prs-preschool', name: 'BASC-3 PRS-Preschool', category: 'Behavior' },
+    { id: 'basc3-sdh', name: 'BASC-3 SDH', category: 'Behavior' },
+    { id: 'basc3-sos', name: 'BASC-3 SOS', category: 'Behavior' },
+    { id: 'basc3-srp-adolescent', name: 'BASC-3 SRP-Adolescent', category: 'Behavior' },
+    { id: 'basc3-srp-child', name: 'BASC-3 SRP-Child', category: 'Behavior' },
+    { id: 'basc3-srp-college', name: 'BASC-3 SRP-College', category: 'Behavior' },
+    { id: 'basc3-srp-interview', name: 'BASC-3 SRP-Interview', category: 'Behavior' },
+    { id: 'basc3-trs-adolescent', name: 'BASC-3 TRS-Adolescent', category: 'Behavior' },
+    { id: 'basc3-trs-child', name: 'BASC-3 TRS-Child', category: 'Behavior' },
+    { id: 'basc3-trs-preschool', name: 'BASC-3 TRS-Preschool', category: 'Behavior' },
+    { id: 'bayley4-cognitive', name: 'Bayley-4 Cognitive, Language, and Motor', category: 'Development' },
+    { id: 'bayley4-social', name: 'Bayley-4 Social-Emotional and Adaptive Behavior', category: 'Development' },
+    { id: 'bdi-ii', name: 'BDI-II', category: 'Depression' },
+    { id: 'bhi2', name: 'BHI 2', category: 'Health' },
+    { id: 'bhs', name: 'BHS', category: 'Hopelessness' },
+    { id: 'bmat-comprehensive', name: 'BMAT Comprehensive Form', category: 'Memory' },
+    { id: 'bmat-short', name: 'BMAT Short Form', category: 'Memory' },
+    { id: 'bot2-complete', name: 'BOT-2 Complete Form', category: 'Motor' },
+    { id: 'bot2-short', name: 'BOT-2 Short Form', category: 'Motor' },
+    { id: 'bot3', name: 'BOT-3', category: 'Motor' },
+    { id: 'brown-efa-parent-adolescent', name: 'Brown EF/A Scales - Parent Form - Adolescent (Ages 13-18)', category: 'Executive Function' },
+    { id: 'brown-efa-parent-child', name: 'Brown EF/A Scales - Parent Form - Child (Ages 8-12)', category: 'Executive Function' },
+    { id: 'brown-efa-parent-early', name: 'Brown EF/A Scales - Parent Form - Early Childhood (Ages 3-7)', category: 'Executive Function' },
+    { id: 'brown-efa-self-adolescent', name: 'Brown EF/A Scales - Self-Report Form - Adolescent (Ages 13-18)', category: 'Executive Function' },
+    { id: 'brown-efa-self-adult', name: 'Brown EF/A Scales - Self-Report Form - Adult (Ages 19+)', category: 'Executive Function' },
+    { id: 'brown-efa-self-child', name: 'Brown EF/A Scales - Self-Report Form - Child (Ages 8-12)', category: 'Executive Function' },
+    { id: 'brown-efa-teacher-child', name: 'Brown EF/A Scales - Teacher Form - Child (Ages 8-12)', category: 'Executive Function' },
+    { id: 'brown-efa-teacher-early', name: 'Brown EF/A Scales - Teacher Form - Early Childhood (Ages 3-7)', category: 'Executive Function' },
+    { id: 'bsi', name: 'BSI', category: 'Symptoms' },
+    { id: 'bsi18', name: 'BSI 18', category: 'Symptoms' },
+    { id: 'bsra4', name: 'BSRA-4', category: 'School Readiness' },
+    { id: 'bss', name: 'BSS', category: 'Suicide' },
+    { id: 'byi2', name: 'BYI-2', category: 'Youth' },
+    { id: 'byi2-in', name: 'BYI-2 IN', category: 'Youth' },
+    { id: 'cainv-enhanced', name: 'CAInv-Enhanced', category: 'Career' },
+    { id: 'cainv-vocational', name: 'CAInv-Vocational', category: 'Career' },
+    { id: 'celf5', name: 'CELF-5', category: 'Language' },
+    { id: 'celf-preschool3', name: 'CELF Preschool-3', category: 'Language' },
+    { id: 'ciss', name: 'CISS', category: 'Coping' },
+    { id: 'conners4-adhd-parent', name: 'Conners 4–ADHD Index Parent', category: 'ADHD' },
+    { id: 'conners4-adhd-self', name: 'Conners 4–ADHD Index Self-Report', category: 'ADHD' },
+    { id: 'conners4-adhd-teacher', name: 'Conners 4–ADHD Index Teacher', category: 'ADHD' },
+    { id: 'conners4-parent', name: 'Conners 4 Parent', category: 'ADHD' },
+    { id: 'conners4-self', name: 'Conners 4 Self-Report', category: 'ADHD' },
+    { id: 'conners4-short-self', name: 'Conners 4–Short Self-Report', category: 'ADHD' },
+    { id: 'conners4-teacher', name: 'Conners 4 Teacher', category: 'ADHD' },
+    { id: 'cvlt3-alternate', name: 'CVLT 3 Alternate Form', category: 'Memory' },
+    { id: 'cvlt3-brief', name: 'CVLT 3 Brief Form', category: 'Memory' },
+    { id: 'cvlt3-standard', name: 'CVLT 3 Standard Form', category: 'Memory' },
+    { id: 'dial4', name: 'DIAL-4', category: 'Development' },
+    { id: 'd-ref-adult-collateral', name: 'D-REF Adult Collateral Rating Form', category: 'ADHD' },
+    { id: 'd-ref-adult-self', name: 'D-REF Adult Self Rating Form', category: 'ADHD' },
+    { id: 'd-ref-parent', name: 'D-REF Parent Form', category: 'ADHD' },
+    { id: 'd-ref-self', name: 'D-REF Self Form', category: 'ADHD' },
+    { id: 'd-ref-teacher', name: 'D-REF Teacher Form', category: 'ADHD' },
+    { id: 'ems-observer', name: 'EMS Observer Form', category: 'Medication' },
+    { id: 'ems-self', name: 'EMS Self-Report Form', category: 'Medication' },
+    { id: 'esi3-kindergarten', name: 'ESI-3 Kindergarten', category: 'Development' },
+    { id: 'esi3-parent', name: 'ESI-3 Parent Questionnaire', category: 'Development' },
+    { id: 'esi3-preschool', name: 'ESI-3 Preschool', category: 'Development' },
+    { id: 'evt2-a', name: 'EVT-2 Form A', category: 'Vocabulary' },
+    { id: 'evt2-b', name: 'EVT-2 Form B', category: 'Vocabulary' },
+    { id: 'evt3-a', name: 'EVT-3 Form A', category: 'Vocabulary' },
+    { id: 'evt3-b', name: 'EVT-3 Form B', category: 'Vocabulary' },
+    { id: 'gama', name: 'GAMA', category: 'Abilities' },
+    { id: 'gfta3', name: 'GFTA-3', category: 'Articulation' },
+    { id: 'grs-preschool', name: 'GRS-Preschool/Kindergarten', category: 'Gifted' },
+    { id: 'grs-school', name: 'GRS-School', category: 'Gifted' },
+    { id: 'kabc2', name: 'KABC-II & KABC-II NU', category: 'Cognitive' },
+    { id: 'kbit2', name: 'KBIT-2 Revised', category: 'Abilities' },
+    { id: 'ktea3-a', name: 'KTEA-3 Form A', category: 'Academic' },
+    { id: 'ktea3-b', name: 'KTEA-3 Form B', category: 'Academic' },
+    { id: 'maci', name: 'MACI', category: 'Personality' },
+    { id: 'maci2', name: 'MACI-II', category: 'Personality' },
+    { id: 'mapi', name: 'MAPI', category: 'Personality' },
+    { id: 'mbmd', name: 'MBMD', category: 'Health' },
+    { id: 'mcci', name: 'MCCI', category: 'Personality' },
+    { id: 'mcmi3', name: 'MCMI-III', category: 'Personality' },
+    { id: 'mcmi4', name: 'MCMI-IV', category: 'Personality' },
+    { id: 'mips', name: 'MIPS Revised', category: 'Personality' },
+    { id: 'mmpi2', name: 'MMPI-2', category: 'Personality' },
+    { id: 'mmpi2-rf', name: 'MMPI-2-RF', category: 'Personality' },
+    { id: 'mmpi3', name: 'MMPI-3 English', category: 'Personality' },
+    { id: 'mmpi-a', name: 'MMPI-A', category: 'Personality' },
+    { id: 'mmpi-a-rf', name: 'MMPI-A-RF', category: 'Personality' },
+    { id: 'm-paci', name: 'M-PACI', category: 'Personality' },
+    { id: 'mpq', name: 'MPQ', category: 'Personality' },
+    { id: 'p-3', name: 'P-3', category: 'Personality' },
+    { id: 'pedi-cat', name: 'PEDI-CAT', category: 'Functional' },
+    { id: 'ppvt4-a', name: 'PPVT-4 Form A', category: 'Vocabulary' },
+    { id: 'ppvt4-b', name: 'PPVT-4 Form B', category: 'Vocabulary' },
+    { id: 'ppvt5-a', name: 'PPVT-5 Form A', category: 'Vocabulary' },
+    { id: 'ppvt5-b', name: 'PPVT-5 Form B', category: 'Vocabulary' },
+    { id: 'qoli', name: 'QOLI', category: 'Quality of Life' },
+    { id: 'ravens2-long', name: 'Raven\'s 2 Digital Long Form', category: 'Abilities' },
+    { id: 'ravens2-short', name: 'Raven\'s 2 Digital Short Form', category: 'Abilities' },
+    { id: 'ravens2-paper', name: 'Raven\'s 2 Paper Form', category: 'Abilities' },
+    { id: 'scl90r', name: 'SCL-90-R', category: 'Symptoms' },
+    { id: 'sensory-child', name: 'Sensory Profile 2 Child', category: 'Sensory' },
+    { id: 'sensory-infant', name: 'Sensory Profile 2 Infant', category: 'Sensory' },
+    { id: 'sensory-school', name: 'Sensory Profile 2 School Companion', category: 'Sensory' },
+    { id: 'sensory-short', name: 'Sensory Profile 2 Short', category: 'Sensory' },
+    { id: 'sensory-toddler', name: 'Sensory Profile 2 Toddler', category: 'Sensory' },
+    { id: 'sensory-adult', name: 'Sensory Profile Adolescent/Adult', category: 'Sensory' },
+    { id: 'shaywitz-adolescent', name: 'Shaywitz DyslexiaScreen Adolescent-Adult Form', category: 'Dyslexia' },
+    { id: 'shaywitz-form0', name: 'Shaywitz DyslexiaScreen Form 0', category: 'Dyslexia' },
+    { id: 'shaywitz-form1', name: 'Shaywitz DyslexiaScreen Form 1', category: 'Dyslexia' },
+    { id: 'shaywitz-form2', name: 'Shaywitz DyslexiaScreen Form 2', category: 'Dyslexia' },
+    { id: 'shaywitz-form3', name: 'Shaywitz DyslexiaScreen Form 3', category: 'Dyslexia' },
+    { id: 'shaywitz-india0', name: 'Shaywitz DyslexiaScreen-India Form 0', category: 'Dyslexia' },
+    { id: 'shaywitz-india1', name: 'Shaywitz DyslexiaScreen-India Form 1', category: 'Dyslexia' },
+    { id: 'speed-dial4', name: 'Speed DIAL-4', category: 'Development' },
+    { id: 'ssis-parent', name: 'SSIS SEL Edition Parent', category: 'Social Skills' },
+    { id: 'ssis-screening', name: 'SSIS SEL Edition Screening/Progress Monitoring Scales', category: 'Social Skills' },
+    { id: 'ssis-student', name: 'SSIS SEL Edition Student', category: 'Social Skills' },
+    { id: 'ssis-teacher', name: 'SSIS SEL Edition Teacher', category: 'Social Skills' },
+    { id: 'vineland3-comp-interview', name: 'Vineland-3 Comprehensive Interview Form', category: 'Adaptive' },
+    { id: 'vineland3-comp-parent', name: 'Vineland-3 Comprehensive Parent/Caregiver Form', category: 'Adaptive' },
+    { id: 'vineland3-comp-teacher', name: 'Vineland-3 Comprehensive Teacher Form', category: 'Adaptive' },
+    { id: 'vineland3-domain-interview', name: 'Vineland-3 Domain-Level Interview Form', category: 'Adaptive' },
+    { id: 'vineland3-domain-parent', name: 'Vineland-3 Domain-Level Parent/Caregiver Form', category: 'Adaptive' },
+    { id: 'vineland3-domain-teacher', name: 'Vineland-3 Domain-Level Teacher Form', category: 'Adaptive' },
+    { id: 'wais5', name: 'WAIS-5', category: 'Intelligence' },
+    { id: 'wais4', name: 'WAIS-IV', category: 'Intelligence' },
+    { id: 'wiat4', name: 'WIAT-4', category: 'Academic' },
+    { id: 'wiat3', name: 'WIAT-III', category: 'Academic' },
+    { id: 'wisc5', name: 'WISC-V', category: 'Intelligence' },
+    { id: 'wisc5-uk', name: 'WISC-V UK', category: 'Intelligence' },
+    { id: 'wisc5-uk-qi', name: 'WISC-V UK Q-interactive Assessments ONLY', category: 'Intelligence' },
+    { id: 'wms4', name: 'WMS-IV', category: 'Memory' },
+    { id: 'wppsi4', name: 'WPPSI-IV', category: 'Intelligence' },
+    { id: 'wraml3-brief', name: 'WRAML3 Brief Form', category: 'Memory' },
+    { id: 'wraml3-standard', name: 'WRAML3 Standard Form', category: 'Memory' },
+    { id: 'wrat5-blue', name: 'WRAT5 Blue Form', category: 'Academic' },
+    { id: 'wrat5-green', name: 'WRAT5 Green Form', category: 'Academic' },
+    { id: 'wrat5-india-blue', name: 'WRAT5-India Blue Form', category: 'Academic' },
+    { id: 'wrmt3-a', name: 'WRMT-III Form A', category: 'Reading' },
+    { id: 'wrmt3-b', name: 'WRMT-III Form B', category: 'Reading' }
+  ];
+
+  // Filter assessments
+  const filteredAssessments = assessments.filter(assessment => {
+    const matchesSearch = assessment.name.toLowerCase().includes(assessmentSearch.toLowerCase());
+    const firstLetter = assessment.name.charAt(0).toUpperCase();
+    const matchesAlpha = alphaFilter === 'all' || 
+      (alphaFilter === 'a-b' && firstLetter >= 'A' && firstLetter <= 'B') ||
+      (alphaFilter === 'c-f' && firstLetter >= 'C' && firstLetter <= 'F') ||
+      (alphaFilter === 'g-k' && firstLetter >= 'G' && firstLetter <= 'K') ||
+      (alphaFilter === 'l-m' && firstLetter >= 'L' && firstLetter <= 'M') ||
+      (alphaFilter === 'n-q' && firstLetter >= 'N' && firstLetter <= 'Q') ||
+      (alphaFilter === 'r-v' && firstLetter >= 'R' && firstLetter <= 'V') ||
+      (alphaFilter === 'w-z' && firstLetter >= 'W' && firstLetter <= 'Z');
+    const matchesTab = assessmentTab === 'all' || 
+      (assessmentTab === 'favorites' && favoriteAssessments.includes(assessment.id));
+    return matchesSearch && matchesAlpha && matchesTab;
+  });
+
+  // Toggle favorite
+  const toggleFavorite = (id) => {
+    setFavoriteAssessments(prev => 
+      prev.includes(id) 
+        ? prev.filter(item => item !== id)
+        : [...prev, id]
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex">
@@ -233,7 +422,15 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
 
                     <div className="h-6 w-px bg-gray-200 mx-2" />
 
-                    <button className="flex items-center space-x-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all text-sm font-medium">
+                    <button 
+                      onClick={() => setShowAssignAssessment(true)}
+                      disabled={selectedItems.length === 0}
+                      className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all text-sm font-medium ${
+                        selectedItems.length > 0
+                          ? 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                          : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      }`}
+                    >
                       <FiUser className="w-4 h-4" />
                       <span>Assign Assessment</span>
                     </button>
@@ -1256,6 +1453,186 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                   >
                     Cancel
                   </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Assign Assessment Modal */}
+        <AnimatePresence>
+          {showAssignAssessment && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+              onClick={() => setShowAssignAssessment(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[85vh] overflow-hidden"
+              >
+                {/* Header */}
+                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex items-center justify-between rounded-t-xl">
+                  <div className="flex items-center gap-3">
+                    <FiUser className="w-5 h-5 text-white" />
+                    <h2 className="text-lg font-bold text-white">Assign Assessment</h2>
+                  </div>
+                  <button 
+                    onClick={() => setShowAssignAssessment(false)}
+                    className="text-white/80 hover:text-white"
+                  >
+                    <FiX className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Tabs */}
+                <div className="flex border-b bg-gray-50">
+                  <button
+                    onClick={() => setAssessmentTab('all')}
+                    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                      assessmentTab === 'all'
+                        ? 'bg-white text-blue-600 border-b-2 border-blue-600'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    All Assessments
+                  </button>
+                  <button
+                    onClick={() => setAssessmentTab('favorites')}
+                    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                      assessmentTab === 'favorites'
+                        ? 'bg-white text-blue-600 border-b-2 border-blue-600'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    My Favourites
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="p-6">
+                  {/* Search and Filters */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="relative flex-1">
+                      <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <input
+                        type="text"
+                        placeholder="Search assessments..."
+                        value={assessmentSearch}
+                        onChange={(e) => setAssessmentSearch(e.target.value)}
+                        className="pl-10 pr-4 py-2 w-full border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Alphabetical Filter */}
+                  <div className="flex flex-wrap gap-1 mb-4">
+                    {[
+                      { key: 'a-b', label: 'A-B' },
+                      { key: 'c-f', label: 'C-F' },
+                      { key: 'g-k', label: 'G-K' },
+                      { key: 'l-m', label: 'L-M' },
+                      { key: 'n-q', label: 'N-Q' },
+                      { key: 'r-v', label: 'R-V' },
+                      { key: 'w-z', label: 'W-Z' },
+                      { key: 'all', label: 'All' }
+                    ].map(filter => (
+                      <button
+                        key={filter.key}
+                        onClick={() => setAlphaFilter(filter.key)}
+                        className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                          alphaFilter === filter.key
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {filter.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Assessment List */}
+                  <div className="border rounded-lg overflow-hidden max-h-[400px] overflow-y-auto">
+                    {filteredAssessments.length === 0 ? (
+                      <div className="p-8 text-center text-gray-500">
+                        No assessments found
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-gray-100">
+                        {filteredAssessments.map(assessment => (
+                          <div
+                            key={assessment.id}
+                            className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+                          >
+                            <input
+                              type="radio"
+                              name="assessment"
+                              value={assessment.id}
+                              checked={selectedAssessment === assessment.id}
+                              onChange={() => setSelectedAssessment(assessment.id)}
+                              className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                            />
+                            <div className="flex-1 cursor-pointer" onClick={() => setSelectedAssessment(assessment.id)}>
+                              <div className="text-sm font-medium text-gray-800">{assessment.name}</div>
+                              <div className="text-xs text-gray-500">{assessment.category}</div>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFavorite(assessment.id);
+                              }}
+                              className="text-gray-400 hover:text-yellow-500 transition-colors p-1"
+                            >
+                              {favoriteAssessments.includes(assessment.id) ? (
+                                <svg className="w-5 h-5 text-yellow-500 fill-current" viewBox="0 0 20 20">
+                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                              ) : (
+                                <svg className="w-5 h-5 fill-current" viewBox="0 0 20 20">
+                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                              )}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="bg-gray-50 border-t px-6 py-4 flex items-center justify-between rounded-b-xl">
+                  <div className="text-sm text-gray-500">
+                    {selectedItems.length} examinee{selectedItems.length !== 1 ? 's' : ''} selected
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => setShowAssignAssessment(false)}
+                      className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      onClick={() => {
+                        // TODO: Implement assign logic
+                        setShowAssignAssessment(false);
+                        setSelectedAssessment('');
+                      }}
+                      disabled={!selectedAssessment}
+                      className={`px-6 py-2 rounded-lg text-sm font-medium shadow-sm ${
+                        selectedAssessment
+                          ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600'
+                          : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      }`}
+                    >
+                      Assign
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             </motion.div>
