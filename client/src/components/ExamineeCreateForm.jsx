@@ -56,6 +56,33 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
     traumaticBrainInjury: false,
     other: false
   });
+
+  // State for History sub-tabs
+  const [historySubTab, setHistorySubTab] = useState('referral');
+
+  // State for History Other fields
+  const [historyOtherData, setHistoryOtherData] = useState({
+    birthInformationOther: false,
+    birthInformationOtherText: '',
+    developmentalMilestonesOther: false,
+    developmentalMilestonesOtherText: ''
+  });
+
+  // Handler for History Other checkboxes
+  const handleHistoryOtherChange = (field, checked) => {
+    setHistoryOtherData(prev => ({
+      ...prev,
+      [field]: checked
+    }));
+  };
+
+  // Handler for History Other text inputs
+  const handleHistoryOtherTextChange = (field, text) => {
+    setHistoryOtherData(prev => ({
+      ...prev,
+      [field]: text
+    }));
+  };
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -1678,13 +1705,1413 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 10 }}
-                  className="p-12 text-center"
+                  className="space-y-6"
                 >
-                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <FiUser className="w-8 h-8 text-purple-600" />
+                  <p className="text-sm text-gray-500 italic">
+                    Entry is optional. Values entered here only appear on specific product reports. <span className="text-blue-600 cursor-pointer">Learn More.</span>
+                  </p>
+
+                  {/* History Sub-tabs */}
+                  <div className="flex flex-wrap gap-1 bg-gray-100 p-1 rounded-lg w-fit">
+                    <button 
+                      onClick={() => setHistorySubTab('referral')}
+                      className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                        historySubTab === 'referral'
+                          ? 'bg-white text-blue-600 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      Referral
+                    </button>
+                    <button 
+                      onClick={() => setHistorySubTab('personal')}
+                      className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                        historySubTab === 'personal'
+                          ? 'bg-white text-blue-600 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      Personal
+                    </button>
+                    <button 
+                      onClick={() => setHistorySubTab('language')}
+                      className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                        historySubTab === 'language'
+                          ? 'bg-white text-blue-600 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      Language/Development
+                    </button>
+                    <button 
+                      onClick={() => setHistorySubTab('education')}
+                      className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                        historySubTab === 'education'
+                          ? 'bg-white text-blue-600 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      Education
+                    </button>
+                    <button 
+                      onClick={() => setHistorySubTab('health')}
+                      className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                        historySubTab === 'health'
+                          ? 'bg-white text-blue-600 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      Health
+                    </button>
+                    <button 
+                      onClick={() => setHistorySubTab('employment')}
+                      className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                        historySubTab === 'employment'
+                          ? 'bg-white text-blue-600 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      Employment
+                    </button>
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">History</h3>
-                  <p className="text-gray-500">History features coming soon</p>
+
+                  {/* Sample Report Sentence */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <button className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left">
+                      <span className="text-xs font-medium">⊞</span>
+                      <span className="font-medium text-xs">Sample Report Sentence</span>
+                    </button>
+                  </div>
+
+                  {historySubTab === 'referral' && (
+                    <>
+                      {/* Referral Content */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Referral Source */}
+                        <div className="space-y-4">
+                          <h3 className="text-sm font-semibold text-blue-800">Referral Source</h3>
+                          
+                          <div>
+                            <label className="block text-xs text-gray-600 mb-1">Name of the Referral Source:</label>
+                            <input
+                              type="text"
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs text-gray-600 mb-1">Role of the Referral Source:</label>
+                            <select className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
+                              <option value="">Please Select...</option>
+                              <option value="teacher">Teacher</option>
+                              <option value="parent">Parent</option>
+                              <option value="physician">Physician</option>
+                              <option value="psychologist">Psychologist</option>
+                              <option value="therapist">Therapist</option>
+                              <option value="other">Other</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Referral Reason(s) */}
+                        <div className="space-y-3">
+                          <h3 className="text-sm font-semibold text-blue-800">Referral Reason(s)</h3>
+                          
+                          <div className="space-y-2">
+                            <label className="flex items-center gap-2 text-xs text-gray-700">
+                              <input type="checkbox" className="rounded border-gray-300" />
+                              School Related Concerns
+                            </label>
+                            <label className="flex items-center gap-2 text-xs text-gray-700">
+                              <input type="checkbox" className="rounded border-gray-300" />
+                              Speech Concerns
+                            </label>
+                            <label className="flex items-center gap-2 text-xs text-gray-700">
+                              <input type="checkbox" className="rounded border-gray-300" />
+                              Language Concerns
+                            </label>
+                            <label className="flex items-center gap-2 text-xs text-gray-700">
+                              <input type="checkbox" className="rounded border-gray-300" />
+                              Social/Emotional Concerns
+                            </label>
+                            <label className="flex items-center gap-2 text-xs text-gray-700">
+                              <input type="checkbox" className="rounded border-gray-300" />
+                              Cognitive Concerns
+                            </label>
+                            <label className="flex items-center gap-2 text-xs text-gray-700">
+                              <input type="checkbox" className="rounded border-gray-300" />
+                              Physical Concerns
+                            </label>
+                            <label className="flex items-center gap-2 text-xs text-gray-700">
+                              <input type="checkbox" className="rounded border-gray-300" />
+                              Vocational/Rehabilitation/Legal Issues
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {historySubTab === 'personal' && (
+                    <>
+                      {/* Personal Content */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Family Information */}
+                        <div className="space-y-4">
+                          <h3 className="text-sm font-semibold text-blue-800">Family Information</h3>
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">Marital Status:</label>
+                              <select className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
+                                <option value="">Please Select...</option>
+                                <option value="single">Single</option>
+                                <option value="married">Married</option>
+                                <option value="divorced">Divorced</option>
+                                <option value="widowed">Widowed</option>
+                                <option value="separated">Separated</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">Number of children:</label>
+                              <input
+                                type="number"
+                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">Number of siblings in home:</label>
+                              <input
+                                type="number"
+                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">Number of other adults in home:</label>
+                              <input
+                                type="number"
+                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs text-gray-600 mb-1">Current Living Arrangements:</label>
+                            <select className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
+                              <option value="">Please Select...</option>
+                              <option value="parents">With parents</option>
+                              <option value="relatives">With relatives</option>
+                              <option value="foster">Foster home</option>
+                              <option value="group">Group home</option>
+                              <option value="independent">Independent living</option>
+                              <option value="institution">Institution</option>
+                              <option value="other">Other</option>
+                            </select>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">Length of time in current living arrangements (years):</label>
+                              <input
+                                type="number"
+                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">Length of time in current living arrangements (months):</label>
+                              <input
+                                type="number"
+                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs text-gray-600 mb-1">How many times have custodial arrangements changed in the last three years?:</label>
+                            <input
+                              type="number"
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Parent or Guardian Contact Information */}
+                        <div className="space-y-4">
+                          <h3 className="text-sm font-semibold text-blue-800">Parent or Guardian Contact Information</h3>
+                          
+                          <div>
+                            <label className="block text-xs text-gray-600 mb-1">Name:</label>
+                            <input
+                              type="text"
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs text-gray-600 mb-1">Address:</label>
+                            <input
+                              type="text"
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs text-gray-600 mb-1">City, Region, Postcode:</label>
+                            <input
+                              type="text"
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs text-gray-600 mb-1">Telephone:</label>
+                            <input
+                              type="text"
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {historySubTab === 'language' && (
+                    <>
+                      {/* Language Content */}
+                      <div className="space-y-6">
+                        <h3 className="text-sm font-semibold text-blue-800">Language</h3>
+                        
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-xs text-gray-600 mb-1">Other Languages Spoken (Besides Primary Language):</label>
+                            <input
+                              type="text"
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                            <label className="block text-xs text-gray-600 mb-1">Exposed to English:</label>
+                            <div className="space-y-1">
+                              <label className="flex items-center gap-2 text-xs text-gray-700">
+                                <input type="radio" name="exposedToEnglish" className="rounded border-gray-300" />
+                                not specified
+                              </label>
+                              <label className="flex items-center gap-2 text-xs text-gray-700">
+                                <input type="radio" name="exposedToEnglish" className="rounded border-gray-300" />
+                                since birth
+                              </label>
+                              <label className="flex items-center gap-2 text-xs text-gray-700">
+                                <input type="radio" name="exposedToEnglish" className="rounded border-gray-300" />
+                                for one to three years
+                              </label>
+                              <label className="flex items-center gap-2 text-xs text-gray-700">
+                                <input type="radio" name="exposedToEnglish" className="rounded border-gray-300" />
+                                for four to five years
+                              </label>
+                              <label className="flex items-center gap-2 text-xs text-gray-700">
+                                <input type="radio" name="exposedToEnglish" className="rounded border-gray-300" />
+                                for longer than five years
+                              </label>
+                              <label className="flex items-center gap-2 text-xs text-gray-700">
+                                <input type="radio" name="exposedToEnglish" className="rounded border-gray-300" />
+                                other
+                              </label>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="block text-xs text-gray-600 mb-1">Speaking English:</label>
+                            <div className="space-y-1">
+                              <label className="flex items-center gap-2 text-xs text-gray-700">
+                                <input type="radio" name="speakingEnglish" className="rounded border-gray-300" />
+                                not specified
+                              </label>
+                              <label className="flex items-center gap-2 text-xs text-gray-700">
+                                <input type="radio" name="speakingEnglish" className="rounded border-gray-300" />
+                                since first talking
+                              </label>
+                              <label className="flex items-center gap-2 text-xs text-gray-700">
+                                <input type="radio" name="speakingEnglish" className="rounded border-gray-300" />
+                                for one to three years
+                              </label>
+                              <label className="flex items-center gap-2 text-xs text-gray-700">
+                                <input type="radio" name="speakingEnglish" className="rounded border-gray-300" />
+                                for four to five years
+                              </label>
+                              <label className="flex items-center gap-2 text-xs text-gray-700">
+                                <input type="radio" name="speakingEnglish" className="rounded border-gray-300" />
+                                for longer than five years
+                              </label>
+                              <label className="flex items-center gap-2 text-xs text-gray-700">
+                                <input type="radio" name="speakingEnglish" className="rounded border-gray-300" />
+                                other
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="block text-xs text-gray-600 mb-1">Examiner rating of Examinee's English language fluency to complete test administration:</label>
+                          <div className="space-y-1">
+                            <label className="flex items-center gap-2 text-xs text-gray-700">
+                              <input type="radio" name="englishFluency" className="rounded border-gray-300" />
+                              not specified
+                            </label>
+                            <label className="flex items-center gap-2 text-xs text-gray-700">
+                              <input type="radio" name="englishFluency" className="rounded border-gray-300" />
+                              adequate
+                            </label>
+                            <label className="flex items-center gap-2 text-xs text-gray-700">
+                              <input type="radio" name="englishFluency" className="rounded border-gray-300" />
+                              somewhat adequate
+                            </label>
+                            <label className="flex items-center gap-2 text-xs text-gray-700">
+                              <input type="radio" name="englishFluency" className="rounded border-gray-300" />
+                              poor
+                            </label>
+                          </div>
+                        </div>
+
+                        <h3 className="text-sm font-semibold text-blue-800 pt-4 border-t">Development</h3>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-xs text-gray-600 mb-1">Developmental History According to:</label>
+                            <select className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
+                              <option value="">Please Select...</option>
+                              <option value="parent">Parent</option>
+                              <option value="guardian">Guardian</option>
+                              <option value="self">Self</option>
+                              <option value="records">Medical records</option>
+                              <option value="other">Other</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <label className="block text-xs text-gray-600">Birth Information:</label>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            <label className="flex items-center gap-2 text-xs text-gray-700">
+                              <input type="checkbox" className="rounded border-gray-300" />
+                              was born with no apparent complications
+                            </label>
+                            <label className="flex items-center gap-2 text-xs text-gray-700">
+                              <input type="checkbox" className="rounded border-gray-300" />
+                              was born premature
+                            </label>
+                            <label className="flex items-center gap-2 text-xs text-gray-700">
+                              <input type="checkbox" className="rounded border-gray-300" />
+                              weighed less than 5 1/2 pounds at birth
+                            </label>
+                            <label className="flex items-center gap-2 text-xs text-gray-700">
+                              <input type="checkbox" className="rounded border-gray-300" />
+                              spent time in a neonatal intensive care unit
+                            </label>
+                            <label className="flex items-center gap-2 text-xs text-gray-700">
+                              <input type="checkbox" className="rounded border-gray-300" />
+                              required assistance with breathing
+                            </label>
+                            <label className="flex items-center gap-2 text-xs text-gray-700">
+                              <input type="checkbox" className="rounded border-gray-300" />
+                              was born past due date
+                            </label>
+                            <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                              <input 
+                                type="checkbox" 
+                                className="rounded border-gray-300"
+                                checked={historyOtherData.birthInformationOther}
+                                onChange={(e) => handleHistoryOtherChange('birthInformationOther', e.target.checked)}
+                              />
+                              other
+                            </label>
+                            {historyOtherData.birthInformationOther && (
+                              <input
+                                type="text"
+                                value={historyOtherData.birthInformationOtherText}
+                                onChange={(e) => handleHistoryOtherTextChange('birthInformationOtherText', e.target.value)}
+                                placeholder="Please specify..."
+                                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ml-6"
+                              />
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <label className="block text-xs text-gray-600">Developmental Milestones:</label>
+                          <div className="space-y-2">
+                            {[
+                              'sitting alone', 'crawling', 'standing alone', 'walking alone',
+                              'babbling', 'speaking first words', 'speaking short sentences',
+                              'eating solids', 'self-feeding', 'using toilet when awake',
+                              'staying dry at night', 'social interaction', 'other'
+                            ].map((milestone) => (
+                              <div key={milestone} className={`grid gap-2 items-center ${milestone === 'other' ? 'grid-cols-1' : 'grid-cols-5'}`}>
+                                {milestone !== 'other' && (
+                                  <>
+                                    <span className="text-xs text-gray-700 capitalize">{milestone}:</span>
+                                    <label className="flex items-center gap-1 text-xs text-gray-700">
+                                      <input type="radio" name={milestone} className="rounded border-gray-300" />
+                                      early
+                                    </label>
+                                    <label className="flex items-center gap-1 text-xs text-gray-700">
+                                      <input type="radio" name={milestone} className="rounded border-gray-300" />
+                                      typical
+                                    </label>
+                                    <label className="flex items-center gap-1 text-xs text-gray-700">
+                                      <input type="radio" name={milestone} className="rounded border-gray-300" />
+                                      late
+                                    </label>
+                                    <label className="flex items-center gap-1 text-xs text-gray-700">
+                                      <input type="radio" name={milestone} className="rounded border-gray-300" defaultChecked />
+                                      unknown
+                                    </label>
+                                  </>
+                                )}
+                                {milestone === 'other' && (
+                                  <>
+                                    <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                                      <input 
+                                        type="checkbox" 
+                                        className="rounded border-gray-300"
+                                        checked={historyOtherData.developmentalMilestonesOther}
+                                        onChange={(e) => handleHistoryOtherChange('developmentalMilestonesOther', e.target.checked)}
+                                      />
+                                      other
+                                    </label>
+                                    {historyOtherData.developmentalMilestonesOther && (
+                                      <input
+                                        type="text"
+                                        value={historyOtherData.developmentalMilestonesOtherText}
+                                        onChange={(e) => handleHistoryOtherTextChange('developmentalMilestonesOtherText', e.target.value)}
+                                        placeholder="Please specify..."
+                                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ml-6"
+                                      />
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {historySubTab === 'education' && (
+                    <>
+                      {/* Education Content */}
+                      <div className="space-y-6">
+                        <div>
+                          <label className="block text-xs text-gray-600 mb-1">Educational History According to:</label>
+                          <select className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
+                            <option value="">Please Select...</option>
+                            <option value="parent">Parent</option>
+                            <option value="guardian">Guardian</option>
+                            <option value="self">Self</option>
+                            <option value="school">School Records</option>
+                            <option value="other">Other</option>
+                          </select>
+                        </div>
+
+                        {/* Highest Level of Education */}
+                        <div className="space-y-4">
+                          <h3 className="text-sm font-semibold text-blue-800">Highest Level of Education</h3>
+                          
+                          {/* Sample Report Sentence */}
+                          <div className="border rounded-lg overflow-hidden">
+                            <button className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left">
+                              <span className="text-xs font-medium">⊞</span>
+                              <span className="font-medium text-xs">Sample Report Sentence</span>
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                              <label className="block text-xs text-gray-600">Examinee:</label>
+                              <select className="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white">
+                                <option value="">Please Select...</option>
+                                <option value="none">None</option>
+                                <option value="primary">Primary</option>
+                                <option value="secondary">Secondary</option>
+                                <option value="highschool">High School</option>
+                                <option value="undergraduate">Undergraduate</option>
+                                <option value="graduate">Graduate</option>
+                                <option value="postgraduate">Post Graduate</option>
+                              </select>
+                              <label className="flex items-center gap-2 text-xs text-gray-700">
+                                <input type="checkbox" className="rounded border-gray-300" />
+                                Completed Programme
+                              </label>
+                            </div>
+                            <div className="space-y-2">
+                              <label className="block text-xs text-gray-600">Mother:</label>
+                              <select className="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white">
+                                <option value="">Please Select...</option>
+                                <option value="none">None</option>
+                                <option value="primary">Primary</option>
+                                <option value="secondary">Secondary</option>
+                                <option value="highschool">High School</option>
+                                <option value="undergraduate">Undergraduate</option>
+                                <option value="graduate">Graduate</option>
+                                <option value="postgraduate">Post Graduate</option>
+                              </select>
+                              <label className="flex items-center gap-2 text-xs text-gray-700">
+                                <input type="checkbox" className="rounded border-gray-300" />
+                                Completed Programme
+                              </label>
+                            </div>
+                            <div className="space-y-2">
+                              <label className="block text-xs text-gray-600">Father:</label>
+                              <select className="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white">
+                                <option value="">Please Select...</option>
+                                <option value="none">None</option>
+                                <option value="primary">Primary</option>
+                                <option value="secondary">Secondary</option>
+                                <option value="highschool">High School</option>
+                                <option value="undergraduate">Undergraduate</option>
+                                <option value="graduate">Graduate</option>
+                                <option value="postgraduate">Post Graduate</option>
+                              </select>
+                              <label className="flex items-center gap-2 text-xs text-gray-700">
+                                <input type="checkbox" className="rounded border-gray-300" />
+                                Completed Programme
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* School/Class Placement */}
+                        <div className="space-y-4">
+                          <h3 className="text-sm font-semibold text-blue-800">School/Class Placement</h3>
+                          
+                          {/* Sample Report Sentence */}
+                          <div className="border rounded-lg overflow-hidden">
+                            <button className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left">
+                              <span className="text-xs font-medium">⊞</span>
+                              <span className="font-medium text-xs">Sample Report Sentence</span>
+                            </button>
+                          </div>
+
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">School/Class Placement:</label>
+                              <select className="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white">
+                                <option value="">Please Select...</option>
+                                <option value="regular">Regular</option>
+                                <option value="gifted">Gifted/Talented</option>
+                                <option value="special">Special Education</option>
+                                <option value="remedial">Remedial</option>
+                                <option value="other">Other</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">Length of time in selected placement:</label>
+                              <input type="text" className="w-full px-2 py-1 text-xs border border-gray-300 rounded" />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">Current (or Last Known) Results:</label>
+                              <select className="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white">
+                                <option value="">Please Select...</option>
+                                <option value="pass">Pass</option>
+                                <option value="fail">Fail</option>
+                                <option value="incomplete">Incomplete</option>
+                                <option value="withdrawn">Withdrawn</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* School Performance */}
+                        <div className="space-y-4">
+                          <h3 className="text-sm font-semibold text-blue-800">School Performance</h3>
+                          
+                          <div className="space-y-4">
+                            <div>
+                              <h4 className="text-xs font-medium text-gray-700 mb-2">Current</h4>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-xs text-gray-600 mb-1">Name of Current School:</label>
+                                  <input type="text" className="w-full px-2 py-1 text-xs border border-gray-300 rounded" />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-gray-600 mb-1">Current Interpersonal/Behavioural Difficulties:</label>
+                                  <select className="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white">
+                                    <option value="">Please Select...</option>
+                                    <option value="none">None</option>
+                                    <option value="mild">Mild</option>
+                                    <option value="moderate">Moderate</option>
+                                    <option value="severe">Severe</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-gray-600 mb-1">Current Attendance:</label>
+                                  <select className="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white">
+                                    <option value="">Please Select...</option>
+                                    <option value="excellent">Excellent</option>
+                                    <option value="good">Good</option>
+                                    <option value="fair">Fair</option>
+                                    <option value="poor">Poor</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-gray-600 mb-1">Current Academic Performance:</label>
+                                  <select className="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white">
+                                    <option value="">Please Select...</option>
+                                    <option value="excellent">Excellent</option>
+                                    <option value="good">Good</option>
+                                    <option value="average">Average</option>
+                                    <option value="below">Below Average</option>
+                                    <option value="poor">Poor</option>
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <h4 className="text-xs font-medium text-gray-700 mb-2">Past</h4>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-xs text-gray-600 mb-1">Past Attendance:</label>
+                                  <select className="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white">
+                                    <option value="">Please Select...</option>
+                                    <option value="excellent">Excellent</option>
+                                    <option value="good">Good</option>
+                                    <option value="fair">Fair</option>
+                                    <option value="poor">Poor</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-gray-600 mb-1">Past Interpersonal/Behavioural Difficulties:</label>
+                                  <select className="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white">
+                                    <option value="">Please Select...</option>
+                                    <option value="none">None</option>
+                                    <option value="mild">Mild</option>
+                                    <option value="moderate">Moderate</option>
+                                    <option value="severe">Severe</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-gray-600 mb-1">Past Academic Performance:</label>
+                                  <select className="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white">
+                                    <option value="">Please Select...</option>
+                                    <option value="excellent">Excellent</option>
+                                    <option value="good">Good</option>
+                                    <option value="average">Average</option>
+                                    <option value="below">Below Average</option>
+                                    <option value="poor">Poor</option>
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Standardised Achievement Test Performance */}
+                        <div className="space-y-4">
+                          <h3 className="text-sm font-semibold text-blue-800">Standardised Achievement Test Performance</h3>
+                          
+                          {/* Sample Report Sentence */}
+                          <div className="border rounded-lg overflow-hidden">
+                            <button className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left">
+                              <span className="text-xs font-medium">⊞</span>
+                              <span className="font-medium text-xs">Sample Report Sentence</span>
+                            </button>
+                          </div>
+
+                          <div className="space-y-4">
+                            <div>
+                              <h4 className="text-xs font-medium text-gray-700 mb-2">Most Recent Standardised Achievement Test Performance</h4>
+                              <div className="space-y-2">
+                                {['Reading', 'Math', 'Language', 'Other'].map((subject) => (
+                                  <div key={subject} className="grid grid-cols-5 gap-2 items-center">
+                                    <span className="text-xs text-gray-700">{subject}:</span>
+                                    <label className="flex items-center gap-1 text-xs text-gray-700">
+                                      <input type="radio" name={`recent${subject}`} className="rounded border-gray-300" defaultChecked />
+                                      not specified
+                                    </label>
+                                    <label className="flex items-center gap-1 text-xs text-gray-700">
+                                      <input type="radio" name={`recent${subject}`} className="rounded border-gray-300" />
+                                      above average
+                                    </label>
+                                    <label className="flex items-center gap-1 text-xs text-gray-700">
+                                      <input type="radio" name={`recent${subject}`} className="rounded border-gray-300" />
+                                      average
+                                    </label>
+                                    <label className="flex items-center gap-1 text-xs text-gray-700">
+                                      <input type="radio" name={`recent${subject}`} className="rounded border-gray-300" />
+                                      below average
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div>
+                              <h4 className="text-xs font-medium text-gray-700 mb-2">Standardised Achievement Test Performance in the Past</h4>
+                              <div className="space-y-2">
+                                {['Reading', 'Math', 'Language', 'Other'].map((subject) => (
+                                  <div key={`past${subject}`} className="grid grid-cols-5 gap-2 items-center">
+                                    <span className="text-xs text-gray-700">{subject}:</span>
+                                    <label className="flex items-center gap-1 text-xs text-gray-700">
+                                      <input type="radio" name={`past${subject}`} className="rounded border-gray-300" defaultChecked />
+                                      not specified
+                                    </label>
+                                    <label className="flex items-center gap-1 text-xs text-gray-700">
+                                      <input type="radio" name={`past${subject}`} className="rounded border-gray-300" />
+                                      above average
+                                    </label>
+                                    <label className="flex items-center gap-1 text-xs text-gray-700">
+                                      <input type="radio" name={`past${subject}`} className="rounded border-gray-300" />
+                                      average
+                                    </label>
+                                    <label className="flex items-center gap-1 text-xs text-gray-700">
+                                      <input type="radio" name={`past${subject}`} className="rounded border-gray-300" />
+                                      below average
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Other */}
+                        <div className="space-y-4">
+                          <h3 className="text-sm font-semibold text-blue-800">Other</h3>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-3">
+                              <h4 className="text-xs font-medium text-gray-700">Frequency of Changing Schools</h4>
+                              <div>
+                                <label className="block text-xs text-gray-600 mb-1">Examinee has attended:</label>
+                                <select className="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white">
+                                  <option value="">Please Select...</option>
+                                  <option value="1">1 school</option>
+                                  <option value="2-3">2-3 schools</option>
+                                  <option value="4-5">4-5 schools</option>
+                                  <option value="6+">6 or more schools</option>
+                                </select>
+                              </div>
+                            </div>
+
+                            <div className="space-y-3">
+                              <h4 className="text-xs font-medium text-gray-700">Early Education</h4>
+                              <div>
+                                <label className="block text-xs text-gray-600 mb-1">Nursery Experience:</label>
+                                <select className="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white">
+                                  <option value="">Please Select...</option>
+                                  <option value="none">None</option>
+                                  <option value="less1">Less than 1 year</option>
+                                  <option value="1-2">1-2 years</option>
+                                  <option value="2+">2+ years</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-xs text-gray-600 mb-1">Preschool Experience:</label>
+                                <select className="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white">
+                                  <option value="">Please Select...</option>
+                                  <option value="none">None</option>
+                                  <option value="less1">Less than 1 year</option>
+                                  <option value="1-2">1-2 years</option>
+                                  <option value="2+">2+ years</option>
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div>
+                            <h4 className="text-xs font-medium text-gray-700 mb-2">School Retention</h4>
+                            <div className="flex items-center gap-2">
+                              <label className="text-xs text-gray-600">Retained in Years:</label>
+                              <input type="number" className="w-20 px-2 py-1 text-xs border border-gray-300 rounded" />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Academic Performance - Strengths and Weaknesses */}
+                        <div className="space-y-4">
+                          <h3 className="text-sm font-semibold text-blue-800">Academic Performance - Strengths and Weaknesses</h3>
+                          
+                          {/* Sample Report Sentence */}
+                          <div className="border rounded-lg overflow-hidden">
+                            <button className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left">
+                              <span className="text-xs font-medium">⊞</span>
+                              <span className="font-medium text-xs">Sample Report Sentence</span>
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Personal Strengths */}
+                            <div className="space-y-2">
+                              <h4 className="text-xs font-medium text-gray-700">Personal Strengths (select up to three):</h4>
+                              <div className="space-y-1">
+                                {['reading', 'writing', 'mathematics', 'language', 'science', 'art', 'athletics', 'music', 'other'].map((item) => (
+                                  <label key={`strength-${item}`} className="flex items-center gap-2 text-xs text-gray-700">
+                                    <input type="checkbox" className="rounded border-gray-300" />
+                                    {item}
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Personal Weaknesses */}
+                            <div className="space-y-2">
+                              <h4 className="text-xs font-medium text-gray-700">Personal Weaknesses (select up to three):</h4>
+                              <div className="space-y-1">
+                                {['reading', 'writing', 'mathematics', 'language', 'science', 'art', 'athletics', 'music', 'other'].map((item) => (
+                                  <label key={`weakness-${item}`} className="flex items-center gap-2 text-xs text-gray-700">
+                                    <input type="checkbox" className="rounded border-gray-300" />
+                                    {item}
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Strengths Compared to Peers */}
+                            <div className="space-y-2">
+                              <h4 className="text-xs font-medium text-gray-700">Strengths Compared to Peers (select up to three):</h4>
+                              <div className="space-y-1">
+                                {['reading', 'writing', 'mathematics', 'language', 'science', 'art', 'athletics', 'music', 'other'].map((item) => (
+                                  <label key={`peer-strength-${item}`} className="flex items-center gap-2 text-xs text-gray-700">
+                                    <input type="checkbox" className="rounded border-gray-300" />
+                                    {item}
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Weaknesses Compared to Peers */}
+                            <div className="space-y-2">
+                              <h4 className="text-xs font-medium text-gray-700">Weaknesses Compared to Peers (select up to three):</h4>
+                              <div className="space-y-1">
+                                {['reading', 'writing', 'mathematics', 'language', 'science', 'art', 'athletics', 'music', 'other'].map((item) => (
+                                  <label key={`peer-weakness-${item}`} className="flex items-center gap-2 text-xs text-gray-700">
+                                    <input type="checkbox" className="rounded border-gray-300" />
+                                    {item}
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Diagnosed Specific Learning Disorders/Disabilities */}
+                          <div className="space-y-2">
+                            <h4 className="text-xs font-medium text-gray-700">Diagnosed Specific Learning Disorders/Disabilities:</h4>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                              {['reading', 'writing', 'mathematics', 'other', 'other', 'other'].map((item, index) => (
+                                <label key={`disability-${index}`} className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  {item} {index > 2 ? index - 2 : ''}
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {historySubTab === 'health' && (
+                    <>
+                      {/* Health Content */}
+                      <div className="space-y-6">
+                        <div>
+                          <label className="block text-xs text-gray-600 mb-1">Health History According to:</label>
+                          <select className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
+                            <option value="">Please Select...</option>
+                            <option value="parent">Parent</option>
+                            <option value="guardian">Guardian</option>
+                            <option value="self">Self</option>
+                            <option value="records">Medical Records</option>
+                            <option value="other">Other</option>
+                          </select>
+                        </div>
+
+                        {/* Vision and Hearing Conditions */}
+                        <div className="space-y-4">
+                          <h3 className="text-sm font-semibold text-blue-800">Vision and Hearing Conditions</h3>
+                          
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Vision */}
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2">
+                                <label className="block text-xs text-gray-600">Date of Vision Screening:</label>
+                                <input type="text" className="w-24 px-2 py-1 text-xs border border-gray-300 rounded" />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="block text-xs text-gray-600">Results of Vision Screening:</label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  normal visual acuity
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  normal visual acuity with the aid of corrective lenses
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  a need for follow-up vision screening
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  a need for a complete vision examination
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  other
+                                </label>
+                              </div>
+                            </div>
+
+                            {/* Hearing */}
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2">
+                                <label className="block text-xs text-gray-600">Date of Hearing Screening:</label>
+                                <input type="text" className="w-24 px-2 py-1 text-xs border border-gray-300 rounded" />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="block text-xs text-gray-600">Results of Hearing Screening:</label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  within normal limits
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  within normal limits when aided
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  needs a referral to assess the functioning of the inner ear
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  a need for a follow-up hearing screening
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  further assessment needed; refer to audiologist
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  other
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Sensory or Motor Conditions */}
+                        <div className="space-y-4">
+                          <h3 className="text-sm font-semibold text-blue-800">Sensory or Motor Conditions</h3>
+                          
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Sensory Conditions */}
+                            <div className="space-y-3">
+                              <h4 className="text-xs font-medium text-gray-700">Sensory Conditions</h4>
+                              <label className="flex items-center gap-2 text-xs text-gray-700">
+                                <input type="checkbox" className="rounded border-gray-300" />
+                                no history of sensory dysfunction
+                              </label>
+                              <label className="flex items-center gap-2 text-xs text-gray-700">
+                                <input type="checkbox" className="rounded border-gray-300" />
+                                a history of sensory dysfunction
+                              </label>
+                              <div className="space-y-1 ml-4">
+                                <label className="block text-xs text-gray-600">Sensory History:</label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  sensory modulation dysfunction
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  sensory integration dysfunction
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  visual perceptual dysfunction
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  visual processing
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  auditory processing
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  other
+                                </label>
+                              </div>
+                            </div>
+
+                            {/* Motor Conditions */}
+                            <div className="space-y-3">
+                              <h4 className="text-xs font-medium text-gray-700">Motor Conditions</h4>
+                              <label className="flex items-center gap-2 text-xs text-gray-700">
+                                <input type="checkbox" className="rounded border-gray-300" />
+                                no history of motor dysfunction
+                              </label>
+                              <label className="flex items-center gap-2 text-xs text-gray-700">
+                                <input type="checkbox" className="rounded border-gray-300" />
+                                a history of motor dysfunction
+                              </label>
+                              <div className="space-y-1 ml-4">
+                                <label className="block text-xs text-gray-600">Fine-Motor History:</label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  poor hand strength
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  poor manipulation of objects
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  poor handwriting
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  other
+                                </label>
+                              </div>
+                              <div className="space-y-1 ml-4">
+                                <label className="block text-xs text-gray-600">Gross-Motor History:</label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  poor coordination
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  poor endurance
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  poor strength
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  poor motor planning
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  poor balance
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  poor postural control
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  difficulty learning to ride a bicycle
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                  <input type="checkbox" className="rounded border-gray-300" />
+                                  other
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Health Conditions */}
+                        <div className="space-y-4">
+                          <h3 className="text-sm font-semibold text-blue-800">Health Conditions</h3>
+                          
+                          {/* Sample Report Sentence */}
+                          <div className="border rounded-lg overflow-hidden">
+                            <button className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left">
+                              <span className="text-xs font-medium">⊞</span>
+                              <span className="font-medium text-xs">Sample Report Sentence</span>
+                            </button>
+                          </div>
+
+                          {/* General checkboxes */}
+                          <div className="space-y-2">
+                            <label className="flex items-center gap-2 text-xs text-gray-700">
+                              <input type="checkbox" className="rounded border-gray-300" />
+                              No history of medical, psychiatric, or neurological problems
+                            </label>
+                            <label className="flex items-center gap-2 text-xs text-gray-700">
+                              <input type="checkbox" className="rounded border-gray-300" />
+                              Medical, psychiatric, and neurological history is unknown
+                            </label>
+                          </div>
+
+                          {/* Medical Conditions Table */}
+                          <div className="space-y-2">
+                            <h4 className="text-xs font-semibold text-blue-700 bg-gray-100 p-2">Medical Conditions</h4>
+                            <div className="grid grid-cols-5 gap-2 text-xs font-medium text-gray-600 border-b pb-1">
+                              <span className="col-span-1">Condition</span>
+                              <span className="text-center">Diagnosed in the Past</span>
+                              <span className="text-center">Diagnosed Currently</span>
+                              <span className="text-center">Previously Treated</span>
+                              <span className="text-center">Currently Being Treated</span>
+                            </div>
+                            {[
+                              'Alcohol use disorder', 'Allergy (severe)', 'Asthma', 'Balance difficulties',
+                              'Cerebral palsy', 'Cleft palate', 'Chromosomal abnormalities',
+                              'Chronic obstructive pulmonary disease', 'Delirium', 'Diabetes', 'Dizziness',
+                              'Down syndrome', 'Drug use disorder', 'Ear infections (chronic)',
+                              'Eating disorder', 'Fetal alcohol syndrome', 'Headaches', 'Heart disease',
+                              'HIV infection', "Huntington's disease", 'Hypertension', 'Lead poisoning',
+                              'Lupus', 'Medical concerns (general)', 'Multiple sclerosis',
+                              'Muscular dystrophy', 'Pain (back or chronic)', "Parkinson's disease",
+                              'Sleeping problems', 'Spina bifida', 'Stroke (cerebrovascular accident)',
+                              'Transient ischemic attack'
+                            ].map((condition) => (
+                              <div key={condition} className="grid grid-cols-5 gap-2 items-center py-1 border-b border-gray-100">
+                                <span className="text-xs text-gray-700">{condition}</span>
+                                <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                                <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                                <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                                <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                              </div>
+                            ))}
+                            <div className="grid grid-cols-5 gap-2 items-center py-1">
+                              <span className="text-xs text-gray-700">Other</span>
+                              <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                              <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                              <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                              <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                            </div>
+                            <input type="text" className="w-full px-2 py-1 text-xs border border-gray-300 rounded" placeholder="Please specify other medical condition..." />
+                          </div>
+
+                          {/* Psychiatric/Psychological Conditions Table */}
+                          <div className="space-y-2">
+                            <h4 className="text-xs font-semibold text-blue-700 bg-gray-100 p-2">Psychiatric / Psychological Conditions</h4>
+                            <div className="grid grid-cols-5 gap-2 text-xs font-medium text-gray-600 border-b pb-1">
+                              <span className="col-span-1">Condition</span>
+                              <span className="text-center">Diagnosed in the Past</span>
+                              <span className="text-center">Diagnosed Currently</span>
+                              <span className="text-center">Previously Treated</span>
+                              <span className="text-center">Currently Being Treated</span>
+                            </div>
+                            {[
+                              'Anxiety', "Asperger's Disorder", 'Attention-deficit hyperactivity disorder',
+                              'Autism spectrum disorder', 'Bipolar disorder', 'Depression',
+                              'Executive functioning disorder', 'Generalized anxiety disorder',
+                              'Pervasive Developmental Disorder', 'Post-traumatic stress disorder',
+                              'Schizophrenia'
+                            ].map((condition) => (
+                              <div key={condition} className="grid grid-cols-5 gap-2 items-center py-1 border-b border-gray-100">
+                                <span className="text-xs text-gray-700">{condition}</span>
+                                <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                                <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                                <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                                <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                              </div>
+                            ))}
+                            <div className="grid grid-cols-5 gap-2 items-center py-1">
+                              <span className="text-xs text-gray-700">Other</span>
+                              <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                              <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                              <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                              <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                            </div>
+                            <input type="text" className="w-full px-2 py-1 text-xs border border-gray-300 rounded" placeholder="Please specify other psychiatric/psychological condition..." />
+                          </div>
+
+                          {/* Neurological Conditions Table */}
+                          <div className="space-y-2">
+                            <h4 className="text-xs font-semibold text-blue-700 bg-gray-100 p-2">Neurological Conditions</h4>
+                            <div className="grid grid-cols-5 gap-2 text-xs font-medium text-gray-600 border-b pb-1">
+                              <span className="col-span-1">Condition</span>
+                              <span className="text-center">Diagnosed in the Past</span>
+                              <span className="text-center">Diagnosed Currently</span>
+                              <span className="text-center">Previously Treated</span>
+                              <span className="text-center">Currently Being Treated</span>
+                            </div>
+                            {[
+                              'Brain insult', 'Brain tumor', 'Concussion', 'Loss of consciousness',
+                              'Memory difficulties', 'Neuroimaging findings (inconclusive)',
+                              'Neurological exam (abnormal)', 'Seizure disorder', 'Seizures or convulsions',
+                              'Sensory-motor difficulties', 'Sensory processing problems', 'Tic (motor)',
+                              'Traumatic brain injury'
+                            ].map((condition) => (
+                              <div key={condition} className="grid grid-cols-5 gap-2 items-center py-1 border-b border-gray-100">
+                                <span className="text-xs text-gray-700">{condition}</span>
+                                <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                                <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                                <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                                <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                              </div>
+                            ))}
+                            <div className="grid grid-cols-5 gap-2 items-center py-1">
+                              <span className="text-xs text-gray-700">Other</span>
+                              <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                              <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                              <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                              <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                            </div>
+                            <input type="text" className="w-full px-2 py-1 text-xs border border-gray-300 rounded" placeholder="Please specify other neurological condition..." />
+                          </div>
+
+                          {/* Other / Related Conditions Table */}
+                          <div className="space-y-2">
+                            <h4 className="text-xs font-semibold text-blue-700 bg-gray-100 p-2">Other / Related Conditions</h4>
+                            <div className="grid grid-cols-5 gap-2 text-xs font-medium text-gray-600 border-b pb-1">
+                              <span className="col-span-1">Condition</span>
+                              <span className="text-center">Diagnosed in the Past</span>
+                              <span className="text-center">Diagnosed Currently</span>
+                              <span className="text-center">Previously Treated</span>
+                              <span className="text-center">Currently Being Treated</span>
+                            </div>
+                            {[
+                              'Auditory processing disorder', 'Cognitive delay', 'Dysphagia',
+                              'Feeding difficulties', 'Hearing difficulty (allergy-related)',
+                              'Intellectual disability', 'Pressure equalization (P/E) tubes'
+                            ].map((condition) => (
+                              <div key={condition} className="grid grid-cols-5 gap-2 items-center py-1 border-b border-gray-100">
+                                <span className="text-xs text-gray-700">{condition}</span>
+                                <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                                <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                                <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                                <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                              </div>
+                            ))}
+                            <div className="grid grid-cols-5 gap-2 items-center py-1">
+                              <span className="text-xs text-gray-700">Other</span>
+                              <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                              <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                              <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                              <div className="flex justify-center"><input type="checkbox" className="rounded border-gray-300" /></div>
+                            </div>
+                            <input type="text" className="w-full px-2 py-1 text-xs border border-gray-300 rounded" placeholder="Please specify other related condition..." />
+                          </div>
+
+                          {/* All Current Medications */}
+                          <div className="space-y-2">
+                            <label className="block text-xs text-gray-600">All Current Medications:</label>
+                            <textarea 
+                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              rows={3}
+                              maxLength={255}
+                            />
+                            <p className="text-xs text-gray-500 text-right">255 Characters remaining</p>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {historySubTab === 'employment' && (
+                    <>
+                      {/* Employment Content */}
+                      <div className="space-y-6">
+                        {/* Sample Report Sentence */}
+                        <div className="border rounded-lg overflow-hidden">
+                          <button className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left">
+                            <span className="text-xs font-medium">⊞</span>
+                            <span className="font-medium text-xs">Sample Report Sentence</span>
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                          {/* Current Employment */}
+                          <div className="space-y-4">
+                            <h3 className="text-sm font-semibold text-blue-800">Current Employment</h3>
+                            
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">Employment Status:</label>
+                              <select className="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white">
+                                <option value="">Please Select...</option>
+                                <option value="fulltime">Full-time</option>
+                                <option value="parttime">Part-time</option>
+                                <option value="selfemployed">Self-employed</option>
+                                <option value="unemployed">Unemployed</option>
+                                <option value="retired">Retired</option>
+                                <option value="student">Student</option>
+                                <option value="other">Other</option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">Work Performance:</label>
+                              <select className="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white">
+                                <option value="">Please Select...</option>
+                                <option value="excellent">Excellent</option>
+                                <option value="good">Good</option>
+                                <option value="average">Average</option>
+                                <option value="below">Below Average</option>
+                                <option value="poor">Poor</option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">Difficulties Affecting Performance:</label>
+                              <input type="text" className="w-full px-2 py-1 text-xs border border-gray-300 rounded" />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">Employment Duration (Years):</label>
+                              <input type="number" className="w-full px-2 py-1 text-xs border border-gray-300 rounded" />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">Employment Duration (Months):</label>
+                              <input type="number" className="w-full px-2 py-1 text-xs border border-gray-300 rounded" />
+                            </div>
+                          </div>
+
+                          {/* Previous Employment */}
+                          <div className="space-y-4">
+                            <h3 className="text-sm font-semibold text-blue-800">Previous Employment</h3>
+                            
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">Employment Status:</label>
+                              <select className="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white">
+                                <option value="">Please Select...</option>
+                                <option value="fulltime">Full-time</option>
+                                <option value="parttime">Part-time</option>
+                                <option value="selfemployed">Self-employed</option>
+                                <option value="unemployed">Unemployed</option>
+                                <option value="retired">Retired</option>
+                                <option value="student">Student</option>
+                                <option value="other">Other</option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">Work Performance:</label>
+                              <select className="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white">
+                                <option value="">Please Select...</option>
+                                <option value="excellent">Excellent</option>
+                                <option value="good">Good</option>
+                                <option value="average">Average</option>
+                                <option value="below">Below Average</option>
+                                <option value="poor">Poor</option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">Difficulties Affecting Performance:</label>
+                              <input type="text" className="w-full px-2 py-1 text-xs border border-gray-300 rounded" />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">Employment Duration (Years):</label>
+                              <input type="number" className="w-full px-2 py-1 text-xs border border-gray-300 rounded" />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">Employment Duration (Months):</label>
+                              <input type="number" className="w-full px-2 py-1 text-xs border border-gray-300 rounded" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
