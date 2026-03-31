@@ -58,11 +58,15 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
     gender: 'all'
   });
   const [showAssignAssessment, setShowAssignAssessment] = useState(false);
-  const [selectedAssessment, setSelectedAssessment] = useState('');
+  const [selectedAssessments, setSelectedAssessments] = useState([]);
+  const [packageName, setPackageName] = useState('');
   const [assessmentTab, setAssessmentTab] = useState('all');
   const [assessmentSearch, setAssessmentSearch] = useState('');
   const [alphaFilter, setAlphaFilter] = useState('all');
-  const [favoriteAssessments, setFavoriteAssessments] = useState([]);
+  const [showAssessmentAdmin, setShowAssessmentAdmin] = useState(false);
+  const [currentAssessment, setCurrentAssessment] = useState(null);
+  const [deliveryMethod, setDeliveryMethod] = useState('manual');
+  const ASSESSMENT_PRICE = 5500;
 
   useEffect(() => {
     dispatch(fetchPatients());
@@ -315,18 +319,32 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
       (alphaFilter === 'n-q' && firstLetter >= 'N' && firstLetter <= 'Q') ||
       (alphaFilter === 'r-v' && firstLetter >= 'R' && firstLetter <= 'V') ||
       (alphaFilter === 'w-z' && firstLetter >= 'W' && firstLetter <= 'Z');
-    const matchesTab = assessmentTab === 'all' || 
-      (assessmentTab === 'favorites' && favoriteAssessments.includes(assessment.id));
-    return matchesSearch && matchesAlpha && matchesTab;
+    return matchesSearch && matchesAlpha;
   });
 
-  // Toggle favorite
-  const toggleFavorite = (id) => {
-    setFavoriteAssessments(prev => 
+  // Toggle assessment selection
+  const toggleAssessmentSelection = (id) => {
+    setSelectedAssessments(prev => 
       prev.includes(id) 
         ? prev.filter(item => item !== id)
         : [...prev, id]
     );
+  };
+
+  // Calculate total price
+  const totalPrice = selectedAssessments.length * ASSESSMENT_PRICE;
+
+  // Create package
+  const createPackage = () => {
+    const packageData = {
+      name: packageName || `Package ${new Date().toLocaleDateString()}`,
+      assessments: selectedAssessments.map(id => assessments.find(a => a.id === id)),
+      totalPrice: totalPrice,
+      createdAt: new Date().toISOString()
+    };
+    console.log('Package created:', packageData);
+    // TODO: Send package data to backend or generate exports
+    return packageData;
   };
 
   return (
@@ -1459,7 +1477,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
           )}
         </AnimatePresence>
 
-        {/* Assign Assessment Modal */}
+        {/* Create Package Modal */}
         <AnimatePresence>
           {showAssignAssessment && (
             <motion.div
@@ -1474,7 +1492,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[85vh] overflow-hidden"
+                className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
               >
                 {/* Header */}
                 <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex items-center justify-between rounded-t-xl">
@@ -1490,32 +1508,26 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                   </button>
                 </div>
 
-                {/* Tabs */}
-                <div className="flex border-b bg-gray-50">
-                  <button
-                    onClick={() => setAssessmentTab('all')}
-                    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                      assessmentTab === 'all'
-                        ? 'bg-white text-blue-600 border-b-2 border-blue-600'
-                        : 'text-gray-600 hover:text-gray-800'
-                    }`}
-                  >
-                    All Assessments
-                  </button>
-                  <button
-                    onClick={() => setAssessmentTab('favorites')}
-                    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                      assessmentTab === 'favorites'
-                        ? 'bg-white text-blue-600 border-b-2 border-blue-600'
-                        : 'text-gray-600 hover:text-gray-800'
-                    }`}
-                  >
-                    My Favourites
-                  </button>
-                </div>
-
                 {/* Content */}
-                <div className="p-6">
+                <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+                  {/* Package Name & Pricing Info */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 bg-blue-50 p-4 rounded-lg">
+                    <div className="flex-1 w-full sm:w-auto">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Package Name</label>
+                      <input
+                        type="text"
+                        placeholder="Enter package name..."
+                        value={packageName}
+                        onChange={(e) => setPackageName(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      />
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm text-gray-600">Price per assessment</div>
+                      <div className="text-lg font-bold text-blue-600">₹{ASSESSMENT_PRICE.toLocaleString()}</div>
+                    </div>
+                  </div>
+
                   {/* Search and Filters */}
                   <div className="flex items-center gap-3 mb-4">
                     <div className="relative flex-1">
@@ -1556,8 +1568,19 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                     ))}
                   </div>
 
+                  {/* Selected Count & Total */}
+                  <div className="flex items-center justify-between mb-3 bg-gray-100 p-3 rounded-lg">
+                    <div className="text-sm">
+                      <span className="font-medium text-gray-700">{selectedAssessments.length}</span>
+                      <span className="text-gray-600"> assessments selected</span>
+                    </div>
+                    <div className="text-lg font-bold text-emerald-600">
+                      Total: ₹{totalPrice.toLocaleString()}
+                    </div>
+                  </div>
+
                   {/* Assessment List */}
-                  <div className="border rounded-lg overflow-hidden max-h-[400px] overflow-y-auto">
+                  <div className="border rounded-lg overflow-hidden max-h-[350px] overflow-y-auto">
                     {filteredAssessments.length === 0 ? (
                       <div className="p-8 text-center text-gray-500">
                         No assessments found
@@ -1570,34 +1593,18 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                             className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
                           >
                             <input
-                              type="radio"
-                              name="assessment"
-                              value={assessment.id}
-                              checked={selectedAssessment === assessment.id}
-                              onChange={() => setSelectedAssessment(assessment.id)}
-                              className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                              type="checkbox"
+                              checked={selectedAssessments.includes(assessment.id)}
+                              onChange={() => toggleAssessmentSelection(assessment.id)}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
                             />
-                            <div className="flex-1 cursor-pointer" onClick={() => setSelectedAssessment(assessment.id)}>
+                            <div className="flex-1 cursor-pointer" onClick={() => toggleAssessmentSelection(assessment.id)}>
                               <div className="text-sm font-medium text-gray-800">{assessment.name}</div>
                               <div className="text-xs text-gray-500">{assessment.category}</div>
                             </div>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleFavorite(assessment.id);
-                              }}
-                              className="text-gray-400 hover:text-yellow-500 transition-colors p-1"
-                            >
-                              {favoriteAssessments.includes(assessment.id) ? (
-                                <svg className="w-5 h-5 text-yellow-500 fill-current" viewBox="0 0 20 20">
-                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                </svg>
-                              ) : (
-                                <svg className="w-5 h-5 fill-current" viewBox="0 0 20 20">
-                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                </svg>
-                              )}
-                            </button>
+                            <div className="text-sm font-medium text-blue-600">
+                              ₹{ASSESSMENT_PRICE.toLocaleString()}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -1606,35 +1613,379 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                 </div>
 
                 {/* Footer */}
-                <div className="bg-gray-50 border-t px-6 py-4 flex items-center justify-between rounded-b-xl">
-                  <div className="text-sm text-gray-500">
-                    {selectedItems.length} examinee{selectedItems.length !== 1 ? 's' : ''} selected
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <button 
-                      onClick={() => setShowAssignAssessment(false)}
-                      className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium"
-                    >
-                      Cancel
-                    </button>
-                    <button 
-                      onClick={() => {
-                        // TODO: Implement assign logic
-                        setShowAssignAssessment(false);
-                        setSelectedAssessment('');
-                      }}
-                      disabled={!selectedAssessment}
-                      className={`px-6 py-2 rounded-lg text-sm font-medium shadow-sm ${
-                        selectedAssessment
-                          ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600'
-                          : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      }`}
-                    >
-                      Assign
-                    </button>
+                <div className="bg-gray-50 border-t px-6 py-4 rounded-b-xl">
+                  {/* Export Options */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-600">Share as:</span>
+                      <button 
+                        onClick={() => {
+                          const pkg = createPackage();
+                          alert(`Package "${pkg.name}" exported as PDF!\n\nTotal: ₹${pkg.totalPrice.toLocaleString()}\nAssessments: ${pkg.assessments.length}`);
+                        }}
+                        disabled={selectedAssessments.length === 0}
+                        className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                          selectedAssessments.length > 0
+                            ? 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'
+                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        }`}
+                      >
+                        PDF
+                      </button>
+                      <button 
+                        onClick={() => {
+                          const pkg = createPackage();
+                          alert(`Package "${pkg.name}" exported as Excel!\n\nTotal: ₹${pkg.totalPrice.toLocaleString()}\nAssessments: ${pkg.assessments.length}`);
+                        }}
+                        disabled={selectedAssessments.length === 0}
+                        className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                          selectedAssessments.length > 0
+                            ? 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-200'
+                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        }`}
+                      >
+                        Excel
+                      </button>
+                      <button 
+                        onClick={() => {
+                          const pkg = createPackage();
+                          alert(`Package "${pkg.name}" exported as Word!\n\nTotal: ₹${pkg.totalPrice.toLocaleString()}\nAssessments: ${pkg.assessments.length}`);
+                        }}
+                        disabled={selectedAssessments.length === 0}
+                        className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                          selectedAssessments.length > 0
+                            ? 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
+                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        }`}
+                      >
+                        Word
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={() => {
+                          setShowAssignAssessment(false);
+                          setSelectedAssessments([]);
+                          setPackageName('');
+                        }}
+                        className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium"
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        onClick={() => {
+                          const pkg = createPackage();
+                          setCurrentAssessment(pkg.assessments[0]);
+                          setShowAssessmentAdmin(true);
+                          setShowAssignAssessment(false);
+                        }}
+                        disabled={selectedAssessments.length === 0}
+                        className={`px-6 py-2 rounded-lg text-sm font-medium shadow-sm ${
+                          selectedAssessments.length > 0
+                            ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600'
+                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        }`}
+                      >
+                        Create Package
+                      </button>
+                    </div>
                   </div>
                 </div>
               </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Assessment Administration Screen */}
+        <AnimatePresence>
+          {showAssessmentAdmin && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-white z-50 overflow-y-auto"
+            >
+              {/* Header */}
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+                <div className="flex items-center gap-3">
+                  <FiUser className="w-5 h-5 text-white" />
+                  <h2 className="text-lg font-bold text-white">Assessment Administration</h2>
+                </div>
+                <button 
+                  onClick={() => setShowAssessmentAdmin(false)}
+                  className="text-white/80 hover:text-white"
+                >
+                  <FiX className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="max-w-6xl mx-auto p-6 space-y-6">
+                {/* Action Buttons */}
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={() => {
+                      alert('Assessment saved successfully!');
+                    }}
+                    className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg text-sm font-medium hover:from-emerald-600 hover:to-teal-600 shadow-sm"
+                  >
+                    Save
+                  </button>
+                  <button 
+                    onClick={() => {
+                      alert('Assessment saved!');
+                      setShowAssessmentAdmin(false);
+                    }}
+                    className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg text-sm font-medium hover:from-emerald-600 hover:to-teal-600 shadow-sm"
+                  >
+                    Save and Close
+                  </button>
+                  <button 
+                    onClick={() => setShowAssessmentAdmin(false)}
+                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200"
+                  >
+                    Cancel
+                  </button>
+                  <div className="ml-auto text-emerald-600 text-sm font-medium">
+                    Assessment Help
+                  </div>
+                </div>
+
+                {/* Examinee Details */}
+                <div className="bg-white rounded-xl shadow-sm border p-6">
+                  <h3 className="text-lg font-bold text-blue-600 mb-4">Examinee Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">First Name: *</label>
+                      <input 
+                        type="text" 
+                        defaultValue="Aditya"
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Middle Name:</label>
+                      <input 
+                        type="text" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Last Name: *</label>
+                      <input 
+                        type="text" 
+                        defaultValue="Sharma"
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Examinee ID: *</label>
+                      <input 
+                        type="text" 
+                        defaultValue="as/msl/260331"
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Gender: *</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded text-sm">
+                        <option>Male</option>
+                        <option>Female</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Birth Date: *</label>
+                      <input 
+                        type="date" 
+                        defaultValue="2000-05-23"
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Age:</label>
+                      <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded text-sm text-gray-700">
+                        25 years 10 months
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Email:</label>
+                      <input 
+                        type="email" 
+                        defaultValue="aditya@gmail.com"
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Assessment Details */}
+                <div className="bg-white rounded-xl shadow-sm border p-6">
+                  <h3 className="text-lg font-bold text-blue-600 mb-4">Assessment Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Assessment: *</label>
+                      <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded text-sm text-gray-700 font-medium">
+                        {currentAssessment?.name || '16PF'}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Batch ID:</label>
+                      <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded text-sm text-gray-700">
+                        -
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Status:</label>
+                      <div className="px-3 py-2 bg-emerald-50 border border-emerald-200 rounded text-sm text-emerald-700 font-medium">
+                        Ready for Administration
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Price:</label>
+                      <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700 font-bold">
+                        ₹{ASSESSMENT_PRICE.toLocaleString()}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Administration Date: *</label>
+                      <input 
+                        type="date" 
+                        defaultValue={new Date().toISOString().split('T')[0]}
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Age at Administration:</label>
+                      <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded text-sm text-gray-700">
+                        25 years 10 months
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Examiner: *</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded text-sm">
+                        <option>JAGGI, KRUTIKA</option>
+                        <option>New Examiner</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Delivery Options */}
+                <div className="bg-white rounded-xl shadow-sm border p-6">
+                  <h3 className="text-lg font-bold text-blue-600 mb-4">Delivery Options</h3>
+                  <div className="space-y-4">
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        name="delivery" 
+                        value="manual"
+                        checked={deliveryMethod === 'manual'}
+                        onChange={(e) => setDeliveryMethod(e.target.value)}
+                        className="mt-1 w-4 h-4 text-blue-600 border-gray-300"
+                      />
+                      <div>
+                        <div className="font-medium text-sm">Manual Entry</div>
+                        <div className="text-xs text-gray-500">Enter responses manually for paper-based assessments</div>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        name="delivery" 
+                        value="onscreen"
+                        checked={deliveryMethod === 'onscreen'}
+                        onChange={(e) => setDeliveryMethod(e.target.value)}
+                        className="mt-1 w-4 h-4 text-blue-600 border-gray-300"
+                      />
+                      <div className="flex-1">
+                        <div className="font-medium text-sm">On-Screen Administration</div>
+                        <div className="text-xs text-gray-500 mb-2">Administer assessment digitally on this computer</div>
+                        <label className="flex items-center gap-2 ml-6">
+                          <input type="checkbox" className="w-3 h-3 text-blue-600 rounded" />
+                          <span className="text-xs">Launch with Test Session Lock</span>
+                        </label>
+                        <div className="ml-6 text-xs text-gray-500 mt-1">
+                          Test Session Lock will block examinees from accessing your computer during and after testing. 
+                          When finished, press <strong>Ctrl + Shift + Q</strong> to unlock. 
+                          To use this feature, you must <a href="#" className="text-blue-600 underline">download and install Test Session Lock</a> (one time only).
+                        </div>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        name="delivery" 
+                        value="remote"
+                        checked={deliveryMethod === 'remote'}
+                        onChange={(e) => setDeliveryMethod(e.target.value)}
+                        className="mt-1 w-4 h-4 text-blue-600 border-gray-300"
+                      />
+                      <div>
+                        <div className="font-medium text-sm">Remote On-Screen Administration</div>
+                        <div className="text-xs text-gray-500">Send assessment link to examinee for remote completion</div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Item Entry */}
+                <div className="bg-white rounded-xl shadow-sm border p-6">
+                  <h3 className="text-lg font-bold text-blue-600 mb-4">Item Entry</h3>
+                  <div className="flex items-center gap-2 mb-4">
+                    <input type="checkbox" id="showItemText" className="w-4 h-4 text-blue-600 rounded" />
+                    <label htmlFor="showItemText" className="text-sm text-gray-700 cursor-pointer">Show Item Text</label>
+                  </div>
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="grid grid-cols-12 gap-2 p-3 bg-gray-50 border-b text-xs font-medium text-gray-600">
+                      <div className="col-span-1">#</div>
+                      <div className="col-span-11">Response</div>
+                    </div>
+                    <div className="divide-y divide-gray-100 max-h-[400px] overflow-y-auto">
+                      {Array.from({ length: 24 }, (_, i) => i + 1).map(itemNum => (
+                        <div key={itemNum} className="grid grid-cols-12 gap-2 p-2 items-center hover:bg-gray-50">
+                          <div className="col-span-1 text-sm text-gray-600 font-medium">{itemNum}.</div>
+                          <div className="col-span-11">
+                            <input 
+                              type="text" 
+                              className="w-20 px-2 py-1 border border-gray-300 rounded text-sm"
+                              placeholder=""
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer Buttons */}
+                <div className="flex items-center gap-3 pb-6">
+                  <button 
+                    onClick={() => {
+                      alert('Assessment saved successfully!');
+                    }}
+                    className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg text-sm font-medium hover:from-emerald-600 hover:to-teal-600 shadow-sm"
+                  >
+                    Save
+                  </button>
+                  <button 
+                    onClick={() => {
+                      alert('Assessment saved!');
+                      setShowAssessmentAdmin(false);
+                    }}
+                    className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg text-sm font-medium hover:from-emerald-600 hover:to-teal-600 shadow-sm"
+                  >
+                    Save and Close
+                  </button>
+                  <button 
+                    onClick={() => setShowAssessmentAdmin(false)}
+                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
