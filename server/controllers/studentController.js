@@ -137,12 +137,14 @@ class StudentController {
       const studentData = {
         student_id: req.body.studentId || `STU${Date.now()}`,
         first_name: req.body.firstName,
+        middle_name: req.body.middleName,
         last_name: req.body.lastName,
         email: req.body.email,
         phone: req.body.phone,
         date_of_birth: req.body.dateOfBirth,
         gender: req.body.gender,
-        centre_id: req.body.centreId || 1, // Default to centre_id 1 if not provided
+        centre_id: req.body.centreId || 1,
+        centre_name: req.body.centreName,
         address: req.body.address,
         city: req.body.city,
         state: req.body.state,
@@ -152,6 +154,11 @@ class StudentController {
         emergency_contact_relation: req.body.emergencyContactRelation,
         learning_needs: req.body.learningNeeds,
         support_requirements: req.body.supportRequirements,
+        comment: req.body.comment,
+        custom_field_1: req.body.customField1,
+        custom_field_2: req.body.customField2,
+        custom_field_3: req.body.customField3,
+        custom_field_4: req.body.customField4,
         registration_date: req.body.registrationDate || new Date().toISOString().split('T')[0],
         status: req.body.status || 'active'
       };
@@ -264,12 +271,14 @@ class StudentController {
       // Map camelCase to snake_case for database
       const updateData = {
         first_name: req.body.firstName,
+        middle_name: req.body.middleName,
         last_name: req.body.lastName,
         email: req.body.email,
         phone: req.body.phone,
         date_of_birth: req.body.dateOfBirth,
         gender: req.body.gender,
-        centre_id: req.body.centreId || req.body.centre, // Handle both centreId and centre
+        centre_id: req.body.centreId || req.body.centre,
+        centre_name: req.body.centreName,
         address: req.body.address,
         city: req.body.city,
         state: req.body.state,
@@ -279,6 +288,11 @@ class StudentController {
         emergency_contact_relation: req.body.emergencyContactRelation,
         learning_needs: req.body.learningNeeds,
         support_requirements: req.body.supportRequirements,
+        comment: req.body.comment,
+        custom_field_1: req.body.customField1,
+        custom_field_2: req.body.customField2,
+        custom_field_3: req.body.customField3,
+        custom_field_4: req.body.customField4,
         registration_date: req.body.registrationDate,
         status: req.body.status
       };
