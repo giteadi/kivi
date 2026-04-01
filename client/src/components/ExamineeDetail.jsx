@@ -82,7 +82,11 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       email: patient.email || 'Not provided',
       phone: patient.phone || 'Not provided',
       centre: patient.centre_name || 'MindSaid Learning Centre',
-      documents: patient.documents ? (Array.isArray(patient.documents) ? patient.documents : []) : []
+      documents: patient.documents ? (Array.isArray(patient.documents) ? patient.documents : []) : [],
+      evaluationData: patient.evaluation_data,
+      diagnosisData: patient.diagnosis_data,
+      historyData: patient.history_data,
+      comment: patient.comment
     };
   };
 
@@ -263,6 +267,111 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
     };
 
     fileInput.click();
+  };
+
+  // Helper function to render evaluation data
+  const renderEvaluationData = () => {
+    if (!examineeData?.evaluationData) return null;
+    
+    const categories = {
+      academicConcerns: 'Academic Concerns',
+      cognitiveEvaluation: 'Cognitive Evaluation',
+      behaviourConcerns: 'Behaviour Concerns',
+      mentalHealth: 'Mental Health Concerns',
+      developmentalDelay: 'Developmental Delay',
+      languageConcerns: 'Language Concerns',
+      speechConcerns: 'Speech Concerns',
+      physicalConcerns: 'Physical Concerns',
+      substanceAbuse: 'Substance Abuse',
+      employment: 'Employment'
+    };
+
+    const hasData = Object.entries(examineeData.evaluationData).some(([key, value]) => 
+      value && (value.other === true || value.otherText)
+    );
+
+    if (!hasData) return <p className="text-gray-500 text-sm italic">No evaluation data recorded</p>;
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {Object.entries(examineeData.evaluationData).map(([key, value]) => {
+          if (!value || (!value.other && !value.otherText)) return null;
+          return (
+            <div key={key} className="bg-blue-50 rounded-lg p-3">
+              <p className="text-xs font-medium text-blue-700 uppercase">{categories[key] || key}</p>
+              {value.other && <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 mt-1 mr-1">Other</span>}
+              {value.otherText && <p className="text-sm text-gray-700 mt-1">{value.otherText}</p>}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // Helper function to render diagnosis data
+  const renderDiagnosisData = () => {
+    if (!examineeData?.diagnosisData) return null;
+    
+    const diagnoses = {
+      autismSpectrum: 'Autism Spectrum Disorder',
+      behaviourEmotional: 'Behaviour/Emotional Disorder',
+      intellectualDisability: 'Intellectual Disability',
+      giftedTalented: 'Gifted and Talented',
+      languageDelay: 'Language Delay/Disorder',
+      learningDisability: 'Learning Disability',
+      moodRelated: 'Mood Related Disorder',
+      motorDelay: 'Motor Delay/Disorder',
+      personalityDisorders: 'Personality Disorders',
+      schizophrenia: 'Schizophrenia and Other Psychotic Disorders',
+      speech: 'Speech Disorder',
+      substanceAbuse: 'Substance Abuse',
+      traumaticBrainInjury: 'Traumatic Brain Injury',
+      other: 'Other'
+    };
+
+    const selectedDiagnoses = Object.entries(examineeData.diagnosisData)
+      .filter(([key, value]) => value === true)
+      .map(([key]) => diagnoses[key] || key);
+
+    if (selectedDiagnoses.length === 0) {
+      return <p className="text-gray-500 text-sm italic">No diagnoses recorded</p>;
+    }
+
+    return (
+      <div className="flex flex-wrap gap-2">
+        {selectedDiagnoses.map((diagnosis, index) => (
+          <span key={index} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+            {diagnosis}
+          </span>
+        ))}
+      </div>
+    );
+  };
+
+  // Helper function to render history data
+  const renderHistoryData = () => {
+    if (!examineeData?.historyData) return null;
+    
+    const hasData = Object.entries(examineeData.historyData).some(([key, value]) => 
+      value === true || (typeof value === 'string' && value.length > 0)
+    );
+
+    if (!hasData) return <p className="text-gray-500 text-sm italic">No history data recorded</p>;
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {Object.entries(examineeData.historyData).map(([key, value]) => {
+          if (!value || (typeof value === 'boolean' && !value)) return null;
+          const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+          return (
+            <div key={key} className="bg-amber-50 rounded-lg p-3">
+              <p className="text-xs font-medium text-amber-700 uppercase">{label}</p>
+              <p className="text-sm text-gray-700 mt-1">{typeof value === 'boolean' ? 'Yes' : value}</p>
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   const getStatusColor = (status) => {
@@ -642,6 +751,50 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                 <p className="text-gray-500 text-sm">No documents uploaded yet</p>
               </div>
             )}
+          </motion.div>
+        )}
+
+        {/* Evaluation Section */}
+        {(examineeData?.evaluationData || examineeData?.diagnosisData || examineeData?.historyData) && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="bg-white rounded-xl shadow-sm border mb-6"
+          >
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-800">Evaluation & Clinical Information</h2>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              {/* Reasons for Testing */}
+              <div>
+                <h3 className="text-lg font-medium text-gray-800 mb-3">Reasons for Testing</h3>
+                {renderEvaluationData()}
+              </div>
+
+              {/* Diagnoses */}
+              <div className="pt-6 border-t border-gray-200">
+                <h3 className="text-lg font-medium text-gray-800 mb-3">Diagnoses</h3>
+                {renderDiagnosisData()}
+              </div>
+
+              {/* History */}
+              <div className="pt-6 border-t border-gray-200">
+                <h3 className="text-lg font-medium text-gray-800 mb-3">History Information</h3>
+                {renderHistoryData()}
+              </div>
+
+              {/* Comment */}
+              {examineeData?.comment && (
+                <div className="pt-6 border-t border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-800 mb-3">Additional Comments</h3>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-sm text-gray-700">{examineeData.comment}</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </motion.div>
         )}
 

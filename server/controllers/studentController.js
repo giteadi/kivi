@@ -160,7 +160,10 @@ class StudentController {
         custom_field_3: req.body.customField3,
         custom_field_4: req.body.customField4,
         registration_date: req.body.registrationDate || new Date().toISOString().split('T')[0],
-        status: req.body.status || 'active'
+        status: req.body.status || 'active',
+        evaluation_data: req.body.evaluationData ? JSON.stringify(req.body.evaluationData) : null,
+        diagnosis_data: req.body.diagnosisData ? JSON.stringify(req.body.diagnosisData) : null,
+        history_data: req.body.historyData ? JSON.stringify(req.body.historyData) : null
       };
 
       // Handle documents if provided
@@ -294,7 +297,10 @@ class StudentController {
         custom_field_3: req.body.customField3,
         custom_field_4: req.body.customField4,
         registration_date: req.body.registrationDate,
-        status: req.body.status
+        status: req.body.status,
+        evaluation_data: req.body.evaluationData ? JSON.stringify(req.body.evaluationData) : null,
+        diagnosis_data: req.body.diagnosisData ? JSON.stringify(req.body.diagnosisData) : null,
+        history_data: req.body.historyData ? JSON.stringify(req.body.historyData) : null
       };
 
       // Handle documents if provided

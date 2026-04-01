@@ -177,7 +177,10 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
         customField2: formData.center2,
         customField3: formData.center3,
         customField4: formData.center4,
-        status: 'active'
+        status: 'active',
+        evaluationData: evaluationData,
+        diagnosisData: expandedDiagnoses,
+        historyData: historyOtherData
       };
 
       const response = await api.request('/students', {
