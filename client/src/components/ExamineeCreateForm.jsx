@@ -164,19 +164,19 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
     setIsSaving(true);
     try {
       const apiData = {
-        first_name: formData.firstName,
-        middle_name: formData.middleName,
-        last_name: formData.lastName,
-        student_id: formData.examineeId,
+        firstName: formData.firstName,
+        middleName: formData.middleName,
+        lastName: formData.lastName,
+        studentId: formData.examineeId,
         gender: formData.gender.toLowerCase(),
-        date_of_birth: formData.birthDate,
+        dateOfBirth: formData.birthDate,
         email: formData.email,
         comment: formData.comment,
-        centre_name: formData.account,
-        custom_field_1: formData.center1,
-        custom_field_2: formData.center2,
-        custom_field_3: formData.center3,
-        custom_field_4: formData.center4,
+        centreName: formData.account,
+        customField1: formData.center1,
+        customField2: formData.center2,
+        customField3: formData.center3,
+        customField4: formData.center4,
         status: 'active'
       };
 
