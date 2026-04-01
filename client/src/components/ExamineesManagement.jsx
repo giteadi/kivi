@@ -365,7 +365,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center space-x-4">
                 <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-lg">
-                  Kivi
+                  dashboard
                 </div>
                 <div className="h-6 w-px bg-gray-200" />
                 <span className="text-gray-600 font-medium">MindSaid Learning Centre</span>
@@ -1995,7 +1995,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
         <div className="px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between text-sm text-gray-500">
             <div className="flex items-center space-x-4">
-              <span className="font-medium text-gray-700">Kivi</span>
+              <span className="font-medium text-gray-700">dashboard</span>
               <a href="#" className="hover:text-gray-700">About</a>
               <a href="#" className="hover:text-gray-700">Contact</a>
               <a href="#" className="hover:text-gray-700">Privacy</a>
