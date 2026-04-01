@@ -21,6 +21,9 @@ router.put('/:id', studentController.updateStudent.bind(studentController));
 // DELETE /api/students/:id - Delete student
 router.delete('/:id', studentController.deleteStudent.bind(studentController));
 
+// POST /api/students/export - Export students data
+router.post('/export', studentController.exportStudents.bind(studentController));
+
 // Assessment routes for students
 router.get('/:studentId/assessments', assessmentController.getAssessments.bind(assessmentController));
 

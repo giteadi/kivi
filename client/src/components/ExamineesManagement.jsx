@@ -20,11 +20,21 @@ import {
   FiUsers,
   FiFileText,
   FiSettings,
-  FiAlertTriangle
+  FiAlertTriangle,
+  FiFile,
+  FiEdit,
+  FiEye,
+  FiMail,
+  FiPrinter
 } from 'react-icons/fi';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchPatients } from '../store/slices/patientSlice';
 import Sidebar from './Sidebar';
+import * as XLSX from 'xlsx';
+import { Document, Packer, Paragraph, Table, TableCell, TableRow, TextRun, HeadingLevel } from 'docx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import html2canvas from 'html2canvas';
 
 const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, onCreateNewPatient, activeItem = 'patients', setActiveItem }) => {
   const dispatch = useDispatch();
@@ -66,11 +76,31 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
   const [showAssessmentAdmin, setShowAssessmentAdmin] = useState(false);
   const [currentAssessment, setCurrentAssessment] = useState(null);
   const [deliveryMethod, setDeliveryMethod] = useState('manual');
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const [showMoreActionsMenu, setShowMoreActionsMenu] = useState(false);
   const ASSESSMENT_PRICE = 5500;
 
   useEffect(() => {
     dispatch(fetchPatients());
   }, [dispatch]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showDownloadMenu || showMoreActionsMenu) {
+        const downloadButton = event.target.closest('[data-download-button]');
+        const moreActionsButton = event.target.closest('[data-more-actions-button]');
+        
+        if (!downloadButton && !moreActionsButton) {
+          setShowDownloadMenu(false);
+          setShowMoreActionsMenu(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showDownloadMenu, showMoreActionsMenu]);
 
   // Transform patient data
   const transformedPatients = patients.map(patient => ({
@@ -347,6 +377,366 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
     return packageData;
   };
 
+  // Export functions
+  const getApiUrl = () => {
+    return import.meta.env.VITE_API_URL || 'http://localhost:3005/api';
+  };
+
+  const exportToExcel = async (selectedPatients = null) => {
+    try {
+      console.log('🔄 Excel Export started...');
+      const studentIds = selectedPatients ? selectedPatients.map(p => p.id) : null;
+      const apiUrl = getApiUrl();
+      console.log('📤 API URL:', apiUrl);
+      
+      const response = await fetch(`${apiUrl}/students/export`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          format: 'excel',
+          studentIds: studentIds
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        const ws = XLSX.utils.json_to_sheet(result.data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Examinees');
+        XLSX.writeFile(wb, `${result.filename}.xlsx`);
+      } else {
+        alert('Failed to export data: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Failed to export data');
+    }
+  };
+
+  const exportToWord = async (selectedPatients = null) => {
+    try {
+      console.log('🔄 Word Export started...');
+      const studentIds = selectedPatients ? selectedPatients.map(p => p.id) : null;
+      const apiUrl = getApiUrl();
+      console.log('📤 API URL:', apiUrl);
+      
+      const response = await fetch(`${apiUrl}/students/export`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          format: 'word',
+          studentIds: studentIds
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        const tableRows = result.data.map(patient => 
+          new TableRow({
+            children: [
+              new TableCell({ children: [new Paragraph(patient['System ID'])] }),
+              new TableCell({ children: [new Paragraph(patient['First Name'])] }),
+              new TableCell({ children: [new Paragraph(patient['Last Name'])] }),
+              new TableCell({ children: [new Paragraph(patient['Examinee ID'])] }),
+              new TableCell({ children: [new Paragraph(patient['Birth Date'])] }),
+              new TableCell({ children: [new Paragraph(patient['Gender'])] }),
+              new TableCell({ children: [new Paragraph(patient['Center'])] }),
+              new TableCell({ children: [new Paragraph(patient['Status'])] })
+            ]
+          })
+        );
+
+        const doc = new Document({
+          sections: [{
+            properties: {},
+            children: [
+              new Paragraph({
+                text: "Examinees Report",
+                heading: HeadingLevel.HEADING_1,
+                spacing: { after: 400 }
+              }),
+              new Paragraph({
+                text: `Generated on: ${new Date().toLocaleDateString()}`,
+                spacing: { after: 400 }
+              }),
+              new Table({
+                rows: [
+                  new TableRow({
+                    children: [
+                      new TableCell({ children: [new Paragraph({ text: "System ID", bold: true })] }),
+                      new TableCell({ children: [new Paragraph({ text: "First Name", bold: true })] }),
+                      new TableCell({ children: [new Paragraph({ text: "Last Name", bold: true })] }),
+                      new TableCell({ children: [new Paragraph({ text: "Examinee ID", bold: true })] }),
+                      new TableCell({ children: [new Paragraph({ text: "Birth Date", bold: true })] }),
+                      new TableCell({ children: [new Paragraph({ text: "Gender", bold: true })] }),
+                      new TableCell({ children: [new Paragraph({ text: "Center", bold: true })] }),
+                      new TableCell({ children: [new Paragraph({ text: "Status", bold: true })] })
+                    ]
+                  }),
+                  ...tableRows
+                ]
+              })
+            ]
+          }]
+        });
+
+        const buffer = await Packer.toBuffer(doc);
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${result.filename}.docx`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } else {
+        alert('Failed to export data: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Failed to export data');
+    }
+  };
+
+  const exportToPDF = async (selectedPatients = null) => {
+    try {
+      console.log('🔄 PDF Export started...');
+      const studentIds = selectedPatients ? selectedPatients.map(p => p.id) : null;
+      const apiUrl = getApiUrl();
+      console.log('📤 API URL:', apiUrl);
+      
+      const response = await fetch(`${apiUrl}/students/export`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          format: 'pdf',
+          studentIds: studentIds
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('📥 Backend response:', result);
+      
+      if (result.success && result.data && result.data.length > 0) {
+        console.log(`✅ Generating PDF with ${result.data.length} records...`);
+        
+        const pdf = new jsPDF('l', 'mm', 'a4'); // Landscape mode for better table fit
+        
+        // Add title
+        pdf.setFontSize(16);
+        pdf.text('Examinees Report', 14, 15);
+        
+        // Add date
+        pdf.setFontSize(10);
+        pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 22);
+        pdf.text(`Total Records: ${result.data.length}`, 14, 27);
+        
+        // Prepare table data
+        const headers = [['System ID', 'First Name', 'Last Name', 'Examinee ID', 'Birth Date', 'Gender', 'Status']];
+        const data = result.data.map(patient => [
+          patient['System ID'] || '',
+          patient['First Name'] || '',
+          patient['Last Name'] || '',
+          patient['Examinee ID'] || '',
+          patient['Birth Date'] || '',
+          patient['Gender'] || '',
+          patient['Status'] || ''
+        ]);
+        
+        console.log('📊 Table data prepared:', { headers, dataCount: data.length });
+        
+        // Use autoTable plugin for better table formatting
+        pdf.autoTable({
+          head: headers,
+          body: data,
+          startY: 35,
+          theme: 'grid',
+          headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+          styles: { fontSize: 8, cellPadding: 2 },
+          alternateRowStyles: { fillColor: [245, 245, 245] },
+          margin: { top: 35 }
+        });
+        
+        // Save the PDF
+        const filename = result.filename || `examinees_${new Date().toISOString().split('T')[0]}`;
+        console.log('💾 Saving PDF as:', filename);
+        pdf.save(`${filename}.pdf`);
+        
+        console.log('✅ PDF Export completed successfully!');
+      } else {
+        console.error('❌ No data received from backend');
+        alert('No data available to export. Please try again.');
+      }
+    } catch (error) {
+      console.error('❌ PDF Export error:', error);
+      alert('Failed to export PDF: ' + error.message);
+    }
+  };
+
+  const getSelectedPatientsData = () => {
+    return transformedPatients.filter(patient => selectedItems.includes(patient.id));
+  };
+
+  const handleDownload = async (format) => {
+    console.log('🔘 Download clicked:', format);
+    console.log('📋 Selected items:', selectedItems);
+    
+    const selectedData = selectedItems.length > 0 ? getSelectedPatientsData() : null;
+    console.log('📊 Data to export:', selectedData);
+    
+    try {
+      switch (format) {
+        case 'excel':
+          await exportToExcel(selectedData);
+          break;
+        case 'word':
+          await exportToWord(selectedData);
+          break;
+        case 'pdf':
+          await exportToPDF(selectedData);
+          break;
+      }
+    } catch (error) {
+      console.error('❌ Download failed:', error);
+      alert('Download failed: ' + error.message);
+    }
+    setShowDownloadMenu(false);
+  };
+
+  const handleMoreAction = (action) => {
+    console.log('🔘 More Action triggered:', action);
+    
+    switch (action) {
+      case 'print':
+        console.log('🖨️ Print action selected');
+        handlePrint();
+        break;
+      case 'email':
+        alert('Email functionality to be implemented');
+        break;
+      case 'viewDetails':
+        if (selectedItems.length === 1) {
+          onViewPatient && onViewPatient(selectedItems[0]);
+        } else {
+          alert('Please select exactly one examinee to view details');
+        }
+        break;
+      case 'edit':
+        if (selectedItems.length === 1) {
+          onEditPatient && onEditPatient(selectedItems[0]);
+        } else {
+          alert('Please select exactly one examinee to edit');
+        }
+        break;
+      case 'exportAll':
+        exportToExcel(transformedPatients);
+        break;
+    }
+    setShowMoreActionsMenu(false);
+  };
+
+  // Handle print functionality
+  const handlePrint = () => {
+    console.log('🖨️ Starting print process...');
+    
+    // Get the data to print
+    const dataToPrint = selectedItems.length > 0 
+      ? transformedPatients.filter(p => selectedItems.includes(p.id))
+      : paginatedPatients;
+    
+    console.log('📊 Data to print:', dataToPrint.length, 'records');
+    
+    if (dataToPrint.length === 0) {
+      alert('No data available to print');
+      return;
+    }
+    
+    // Create print window content
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Examinees Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          h1 { color: #333; margin-bottom: 10px; }
+          .meta { color: #666; margin-bottom: 20px; font-size: 12px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th { background-color: #3182ce; color: white; padding: 10px; text-align: left; font-size: 12px; }
+          td { padding: 8px; border-bottom: 1px solid #ddd; font-size: 11px; }
+          tr:nth-child(even) { background-color: #f5f5f5; }
+          .footer { margin-top: 30px; font-size: 10px; color: #999; }
+        </style>
+      </head>
+      <body>
+        <h1>Examinees Report</h1>
+        <div class="meta">
+          Generated on: ${new Date().toLocaleDateString()}<br>
+          Total Records: ${dataToPrint.length}
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>System ID</th>
+              <th>First Name</th>
+              <th>Last Name</th>
+              <th>Examinee ID</th>
+              <th>Birth Date</th>
+              <th>Gender</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${dataToPrint.map(p => `
+              <tr>
+                <td>${p.systemId}</td>
+                <td>${p.firstName}</td>
+                <td>${p.lastName}</td>
+                <td>${p.examineeId}</td>
+                <td>${p.birthDate}</td>
+                <td>${p.gender}</td>
+                <td>${p.status}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div class="footer">
+          MindSaid Learning Centre - Examinees Management System
+        </div>
+      </body>
+      </html>
+    `;
+    
+    // Open print window
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      
+      // Wait for content to load then print
+      setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+        console.log('✅ Print dialog opened');
+      }, 500);
+    } else {
+      console.error('❌ Failed to open print window - popup might be blocked');
+      alert('Please allow popups to print');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex">
       {/* Sidebar */}
@@ -459,11 +849,72 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                     </button>
 
                     <div className="relative">
-                      <button className="flex items-center space-x-2 px-4 py-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-all text-sm font-medium">
+                      <button 
+                        data-more-actions-button
+                        onClick={() => setShowMoreActionsMenu(!showMoreActionsMenu)}
+                        className="flex items-center space-x-2 px-4 py-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-all text-sm font-medium"
+                      >
                         <FiMoreHorizontal className="w-4 h-4" />
                         <span>More Actions</span>
                         <FiChevronDown className="w-3 h-3" />
                       </button>
+                      
+                      {showMoreActionsMenu && (
+                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                          <div className="py-1">
+                            <button
+                              onClick={() => handleMoreAction('viewDetails')}
+                              disabled={selectedItems.length !== 1}
+                              className={`flex items-center space-x-2 w-full px-4 py-2 text-sm transition-colors ${
+                                selectedItems.length === 1
+                                  ? 'text-gray-700 hover:bg-gray-100'
+                                  : 'text-gray-400 cursor-not-allowed'
+                              }`}
+                            >
+                              <FiEye className="w-4 h-4" />
+                              <span>View Details</span>
+                            </button>
+                            <button
+                              onClick={() => handleMoreAction('edit')}
+                              disabled={selectedItems.length !== 1}
+                              className={`flex items-center space-x-2 w-full px-4 py-2 text-sm transition-colors ${
+                                selectedItems.length === 1
+                                  ? 'text-gray-700 hover:bg-gray-100'
+                                  : 'text-gray-400 cursor-not-allowed'
+                              }`}
+                            >
+                              <FiEdit className="w-4 h-4" />
+                              <span>Edit</span>
+                            </button>
+                            <button
+                              onClick={() => handleMoreAction('print')}
+                              className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                            >
+                              <FiPrinter className="w-4 h-4" />
+                              <span>Print</span>
+                            </button>
+                            <button
+                              onClick={() => handleMoreAction('email')}
+                              disabled={selectedItems.length === 0}
+                              className={`flex items-center space-x-2 w-full px-4 py-2 text-sm transition-colors ${
+                                selectedItems.length > 0
+                                  ? 'text-gray-700 hover:bg-gray-100'
+                                  : 'text-gray-400 cursor-not-allowed'
+                              }`}
+                            >
+                              <FiMail className="w-4 h-4" />
+                              <span>Email</span>
+                            </button>
+                            <button
+                              onClick={() => handleMoreAction('exportAll')}
+                              className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                            >
+                              <FiDownload className="w-4 h-4" />
+                              <span>Export All</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -482,9 +933,43 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                       <FiRefreshCw className="w-4 h-4" />
                     </button>
                     
-                    <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all">
-                      <FiDownload className="w-4 h-4" />
-                    </button>
+                    <div className="relative">
+                      <button 
+                        data-download-button
+                        onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                        className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
+                      >
+                        <FiDownload className="w-4 h-4" />
+                      </button>
+                      
+                      {showDownloadMenu && (
+                        <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                          <div className="py-1">
+                            <button
+                              onClick={() => handleDownload('excel')}
+                              className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                            >
+                              <FiFile className="w-4 h-4" />
+                              <span>Excel</span>
+                            </button>
+                            <button
+                              onClick={() => handleDownload('word')}
+                              className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                            >
+                              <FiFileText className="w-4 h-4" />
+                              <span>Word</span>
+                            </button>
+                            <button
+                              onClick={() => handleDownload('pdf')}
+                              className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                            >
+                              <FiFile className="w-4 h-4" />
+                              <span>PDF</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 

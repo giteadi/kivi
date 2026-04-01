@@ -383,6 +383,62 @@ class StudentController {
       });
     }
   }
+
+  // Export students data
+  async exportStudents(req, res) {
+    try {
+      const { format, studentIds } = req.body;
+      const filters = studentIds && studentIds.length > 0 ? { ids: studentIds } : req.query;
+      
+      console.log(`📤 EXPORT: Requested format: ${format}, Student IDs: ${studentIds || 'all'}`);
+      
+      const students = await this.studentModel.getStudents(filters);
+      console.log(`📤 EXPORT: Found ${students.length} students to export`);
+
+      if (!students || students.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'No students found to export'
+        });
+      }
+
+      // Transform data for export
+      const exportData = students.map(student => ({
+        'System ID': `SYS${student.id.toString().padStart(6, '0')}`,
+        'First Name': student.first_name || '',
+        'Last Name': student.last_name || '',
+        'Examinee ID': student.student_id || `STU${student.id}`,
+        'Birth Date': student.date_of_birth ? new Date(student.date_of_birth).toLocaleDateString('en-GB') : '',
+        'Gender': student.gender ? student.gender.charAt(0).toUpperCase() + student.gender.slice(1) : '',
+        'Email': student.email || '',
+        'Phone': student.phone || '',
+        'Center': student.centre_name || 'MindSaid Learning Centre',
+        'Status': student.status === 'active' ? 'Active' : 'Inactive',
+        'Registration Date': student.registration_date || '',
+        'Address': student.address || '',
+        'City': student.city || '',
+        'State': student.state || '',
+        'Zip Code': student.zip_code || ''
+      }));
+
+      console.log(`📤 EXPORT: Transformed data for ${format} format`);
+
+      res.json({
+        success: true,
+        data: exportData,
+        format: format,
+        count: exportData.length,
+        filename: `examinees_${new Date().toISOString().split('T')[0]}`
+      });
+    } catch (error) {
+      console.error('❌ EXPORT ERROR:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: error.message
+      });
+    }
+  }
 }
 
 module.exports = StudentController;
