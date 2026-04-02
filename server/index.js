@@ -8,13 +8,15 @@ const app = express();
 // Middleware
 app.use(cors({
   origin: [
-    'http://localhost:5173', 
-    'http://localhost:3000', 
-    'http://127.0.0.1:5173', 
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:5173',
     'http://127.0.0.1:3000',
     'https://dashboard.iplanbymsl.in'
   ],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 // Increase JSON payload limit to 50MB to support document uploads
 app.use(express.json({ limit: '50mb' }));
