@@ -53,6 +53,8 @@ const startServer = async () => {
     app.use('/api/reports', require('./routes/reportRoutes'));
     app.use('/api/examinees', require('./routes/examineeRoutes'));
     app.use('/api/assessments', require('./routes/assessmentRoutes')); // Added assessment routes
+    app.use('/api/assessment-results', require('./routes/assessmentResultRoutes')); // Assessment item results
+    app.use('/api/invoices', require('./routes/invoiceRoutes')); // Invoice email routes
     
     // Direct assessment routes (temporary fix)
     app.post('/api/assessments/:id', async (req, res) => {

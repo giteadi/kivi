@@ -189,7 +189,8 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
         body: JSON.stringify(apiData)
       });
 
-      const result = await response.json();
+      // api.request() already returns parsed JSON data
+      const result = response;
 
       if (result.success) {
         onSave && onSave(result.data);

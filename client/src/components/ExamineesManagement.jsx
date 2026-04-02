@@ -78,6 +78,10 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
   const [deliveryMethod, setDeliveryMethod] = useState('manual');
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
   const [showMoreActionsMenu, setShowMoreActionsMenu] = useState(false);
+  const [assessmentItemResponses, setAssessmentItemResponses] = useState({});
+  const [isSavingAssessment, setIsSavingAssessment] = useState(false);
+  const [isSendingInvoice, setIsSendingInvoice] = useState(false);
+  const [showInvoiceConfirm, setShowInvoiceConfirm] = useState(false);
   const ASSESSMENT_PRICE = 5500;
 
   useEffect(() => {
@@ -734,6 +738,128 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
     } else {
       console.error('❌ Failed to open print window - popup might be blocked');
       alert('Please allow popups to print');
+    }
+  };
+
+  // Handle item response change
+  const handleItemResponseChange = (itemNum, value) => {
+    setAssessmentItemResponses(prev => ({
+      ...prev,
+      [itemNum]: value
+    }));
+  };
+
+  // Save assessment results to backend
+  const handleSaveAssessment = async (closeAfterSave = false) => {
+    if (!currentAssessment?.id) {
+      alert('No assessment selected. Please select an assessment first.');
+      return;
+    }
+
+    setIsSavingAssessment(true);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3005/api';
+      
+      // Prepare items data
+      const items = Object.entries(assessmentItemResponses).map(([itemNum, response]) => ({
+        itemNumber: parseInt(itemNum),
+        response: response,
+        responseText: null,
+        isCorrect: null,
+        score: null,
+        timeTaken: null
+      }));
+
+      // Calculate completion percentage
+      const totalItems = 24;
+      const completedItems = items.length;
+      const completionPercentage = Math.round((completedItems / totalItems) * 100);
+
+      const response = await fetch(`${apiUrl}/assessment-results`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          assessmentId: currentAssessment.id,
+          studentId: selectedItems[0],
+          items: items,
+          completionPercentage: completionPercentage,
+          totalScore: null,
+          maxScore: null
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert(`Assessment saved successfully! ${result.data.totalItems} responses saved.`);
+        if (closeAfterSave) {
+          setShowAssessmentAdmin(false);
+          setAssessmentItemResponses({});
+        }
+      } else {
+        alert('Failed to save assessment: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Error saving assessment:', error);
+      alert('Failed to save assessment. Please try again.');
+    } finally {
+      setIsSavingAssessment(false);
+    }
+  };
+
+  // Send invoice email
+  const handleSendInvoice = async () => {
+    if (!currentAssessment?.id) {
+      alert('No assessment selected.');
+      return;
+    }
+
+    const emailInput = document.querySelector('input[type="email"]');
+    const email = emailInput?.value;
+    
+    if (!email) {
+      alert('Please enter an email address for the examinee.');
+      return;
+    }
+
+    setIsSendingInvoice(true);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3005/api';
+      
+      const response = await fetch(`${apiUrl}/invoices/send-assessment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          assessmentId: currentAssessment.id,
+          studentId: selectedItems[0],
+          email: email,
+          firstName: currentAssessment.firstName || '',
+          lastName: currentAssessment.lastName || '',
+          assessmentName: currentAssessment.name || 'Educational Assessment',
+          assessmentType: currentAssessment.type || 'Standard',
+          price: ASSESSMENT_PRICE,
+          adminDate: document.querySelector('input[type="date"]')?.value,
+          examiner: document.querySelector('select')?.value || 'To be assigned'
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert('Invoice sent successfully to ' + email);
+        setShowInvoiceConfirm(false);
+      } else {
+        alert('Failed to send invoice: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Error sending invoice:', error);
+      alert('Failed to send invoice. Please check your email configuration.');
+    } finally {
+      setIsSendingInvoice(false);
     }
   };
 
@@ -2208,26 +2334,34 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
 
               <div className="max-w-6xl mx-auto p-6 space-y-6">
                 {/* Action Buttons */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                   <button 
-                    onClick={() => {
-                      alert('Assessment saved successfully!');
-                    }}
-                    className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg text-sm font-medium hover:from-emerald-600 hover:to-teal-600 shadow-sm"
+                    onClick={() => handleSaveAssessment(false)}
+                    disabled={isSavingAssessment}
+                    className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg text-sm font-medium hover:from-emerald-600 hover:to-teal-600 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Save
+                    {isSavingAssessment ? 'Saving...' : 'Save'}
+                  </button>
+                  <button 
+                    onClick={() => handleSaveAssessment(true)}
+                    disabled={isSavingAssessment}
+                    className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg text-sm font-medium hover:from-emerald-600 hover:to-teal-600 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSavingAssessment ? 'Saving...' : 'Save and Close'}
+                  </button>
+                  <button 
+                    onClick={() => setShowInvoiceConfirm(true)}
+                    disabled={isSendingInvoice}
+                    className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg text-sm font-medium hover:from-blue-600 hover:to-indigo-600 shadow-sm flex items-center gap-2"
+                  >
+                    <FiMail className="w-4 h-4" />
+                    {isSendingInvoice ? 'Sending...' : 'Send Invoice'}
                   </button>
                   <button 
                     onClick={() => {
-                      alert('Assessment saved!');
                       setShowAssessmentAdmin(false);
+                      setAssessmentItemResponses({});
                     }}
-                    className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg text-sm font-medium hover:from-emerald-600 hover:to-teal-600 shadow-sm"
-                  >
-                    Save and Close
-                  </button>
-                  <button 
-                    onClick={() => setShowAssessmentAdmin(false)}
                     className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200"
                   >
                     Cancel
@@ -2236,6 +2370,55 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                     Assessment Help
                   </div>
                 </div>
+
+                {/* Invoice Confirmation Modal */}
+                {showInvoiceConfirm && (
+                  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6"
+                    >
+                      <h3 className="text-lg font-bold text-gray-900 mb-4">Send Invoice</h3>
+                      <p className="text-gray-600 mb-4">
+                        Send payment invoice for <strong>{currentAssessment?.name || 'Assessment'}</strong> to the examinee's email?
+                      </p>
+                      <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                        <div className="flex justify-between mb-2">
+                          <span className="text-gray-600">Assessment:</span>
+                          <span className="font-medium">{currentAssessment?.name || 'Educational Assessment'}</span>
+                        </div>
+                        <div className="flex justify-between mb-2">
+                          <span className="text-gray-600">Price:</span>
+                          <span className="font-medium">₹{ASSESSMENT_PRICE.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">GST (18%):</span>
+                          <span className="font-medium">₹{(ASSESSMENT_PRICE * 0.18).toLocaleString()}</span>
+                        </div>
+                        <div className="border-t mt-2 pt-2 flex justify-between">
+                          <span className="font-bold text-gray-800">Total:</span>
+                          <span className="font-bold text-blue-600">₹{(ASSESSMENT_PRICE * 1.18).toLocaleString()}</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => setShowInvoiceConfirm(false)}
+                          className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSendInvoice}
+                          disabled={isSendingInvoice}
+                          className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                        >
+                          {isSendingInvoice ? 'Sending...' : 'Send Invoice'}
+                        </button>
+                      </div>
+                    </motion.div>
+                  </div>
+                )}
 
                 {/* Examinee Details */}
                 <div className="bg-white rounded-xl shadow-sm border p-6">
@@ -2435,7 +2618,9 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                           <div className="col-span-11">
                             <input 
                               type="text" 
-                              className="w-20 px-2 py-1 border border-gray-300 rounded text-sm"
+                              value={assessmentItemResponses[itemNum] || ''}
+                              onChange={(e) => handleItemResponseChange(itemNum, e.target.value)}
+                              className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                               placeholder=""
                             />
                           </div>
@@ -2446,26 +2631,34 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                 </div>
 
                 {/* Footer Buttons */}
-                <div className="flex items-center gap-3 pb-6">
+                <div className="flex items-center gap-3 pb-6 flex-wrap">
                   <button 
-                    onClick={() => {
-                      alert('Assessment saved successfully!');
-                    }}
-                    className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg text-sm font-medium hover:from-emerald-600 hover:to-teal-600 shadow-sm"
+                    onClick={() => handleSaveAssessment(false)}
+                    disabled={isSavingAssessment}
+                    className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg text-sm font-medium hover:from-emerald-600 hover:to-teal-600 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Save
+                    {isSavingAssessment ? 'Saving...' : 'Save'}
+                  </button>
+                  <button 
+                    onClick={() => handleSaveAssessment(true)}
+                    disabled={isSavingAssessment}
+                    className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg text-sm font-medium hover:from-emerald-600 hover:to-teal-600 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSavingAssessment ? 'Saving...' : 'Save and Close'}
+                  </button>
+                  <button 
+                    onClick={() => setShowInvoiceConfirm(true)}
+                    disabled={isSendingInvoice}
+                    className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg text-sm font-medium hover:from-blue-600 hover:to-indigo-600 shadow-sm flex items-center gap-2"
+                  >
+                    <FiMail className="w-4 h-4" />
+                    {isSendingInvoice ? 'Sending...' : 'Send Invoice'}
                   </button>
                   <button 
                     onClick={() => {
-                      alert('Assessment saved!');
                       setShowAssessmentAdmin(false);
+                      setAssessmentItemResponses({});
                     }}
-                    className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg text-sm font-medium hover:from-emerald-600 hover:to-teal-600 shadow-sm"
-                  >
-                    Save and Close
-                  </button>
-                  <button 
-                    onClick={() => setShowAssessmentAdmin(false)}
                     className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200"
                   >
                     Cancel
