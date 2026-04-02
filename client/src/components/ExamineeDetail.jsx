@@ -469,6 +469,34 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             <FiEdit3 className="w-4 h-4" />
             <span>Edit Examinee</span>
           </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              console.log('🔴 Delete button clicked');
+              console.log('🔴 Examinee ID:', examineeId);
+              console.log('🔴 Examinee Name:', examineeData?.name);
+              if (window.confirm(`Are you sure you want to delete examinee "${examineeData?.name}"?`)) {
+                console.log('🔴 Confirmation OK - sending DELETE request');
+                api.deletePatient(examineeId)
+                  .then((response) => {
+                    console.log('🔴 Delete success:', response);
+                    toast.success(`Examinee "${examineeData?.name}" deleted successfully!`);
+                    onBack && onBack();
+                  })
+                  .catch((error) => {
+                    console.error('🔴 Delete error:', error);
+                    toast.error('Failed to delete examinee: ' + error.message);
+                  });
+              } else {
+                console.log('🔴 Confirmation cancelled');
+              }
+            }}
+            className="flex items-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+          >
+            <FiTrash2 className="w-4 h-4" />
+            <span>Delete</span>
+          </motion.button>
         </div>
 
         {/* Breadcrumb */}

@@ -818,6 +818,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                     
                     <button
                       disabled={selectedItems.length === 0}
+                      onClick={() => onDeletePatient && onDeletePatient(selectedItems)}
                       className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                         selectedItems.length > 0
                           ? 'bg-red-50 text-red-600 hover:bg-red-100'

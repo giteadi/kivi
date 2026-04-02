@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { setCredentials } from './store/slices/authSlice';
 import { fetchDoctors } from './store/slices/doctorSlice';
 import { fetchServices } from './store/slices/serviceSlice';
+import { fetchPatients } from './store/slices/patientSlice';
+import { fetchAppointments } from './store/slices/appointmentSlice';
 import api from './services/api';
 import ErrorBoundary from './components/ErrorBoundary';
 import ErrorToast from './components/ErrorToast';
@@ -583,27 +585,106 @@ setActiveItem('doctors');
   };
 
   // Delete handlers
-  const handleDeletePatient = (patientId) => {
-    if (window.confirm('Are you sure you want to delete this examinee?')) {
-      toast.success(`Examinee ${patientId} deleted successfully!`);
+  const handleDeletePatient = async (patientIds) => {
+    const ids = Array.isArray(patientIds) ? patientIds : [patientIds];
+    
+    if (ids.length === 0) {
+      toast.error('No examinees selected for deletion');
+      return;
+    }
+    
+    const confirmMessage = ids.length === 1 
+      ? 'Are you sure you want to delete this examinee?' 
+      : `Are you sure you want to delete ${ids.length} examinees?`;
+    
+    if (window.confirm(confirmMessage)) {
+      try {
+        console.log('🗑️ Deleting students:', ids);
+        
+        // Delete each student
+        const results = await Promise.all(
+          ids.map(id => 
+            api.request(`/students/${id}`, {
+              method: 'DELETE'
+            })
+          )
+        );
+        
+        const allSuccessful = results.every(r => r.success);
+        
+        if (allSuccessful) {
+          toast.success(ids.length === 1 ? 'Examinee deleted successfully!' : `${ids.length} examinees deleted successfully!`);
+          // Refresh the students list
+          dispatch(fetchPatients());
+        } else {
+          toast.error('Some deletions failed. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error deleting examinee(s):', error);
+        toast.error('Failed to delete examinee(s). Please try again.');
+      }
     }
   };
 
-  const handleDeleteDoctor = (doctorId) => {
+  const handleDeleteDoctor = async (doctorId) => {
     if (window.confirm('Are you sure you want to delete this therapist?')) {
-      toast.success(`Therapist ${doctorId} deleted successfully!`);
+      try {
+        const response = await api.request(`/therapists/${doctorId}`, {
+          method: 'DELETE'
+        });
+        
+        if (response.success) {
+          toast.success('Therapist deleted successfully!');
+          dispatch(fetchDoctors());
+        } else {
+          toast.error('Failed to delete therapist');
+        }
+      } catch (error) {
+        console.error('Error deleting therapist:', error);
+        toast.error('Failed to delete therapist. Please try again.');
+      }
     }
   };
 
-  const handleDeleteReceptionist = (receptionistId) => {
+  const handleDeleteReceptionist = async (receptionistId) => {
     if (window.confirm('Are you sure you want to delete this staff member?')) {
-      alert(`Staff member ${receptionistId} deleted successfully!`);
+      try {
+        const response = await api.request(`/receptionists/${receptionistId}`, {
+          method: 'DELETE'
+        });
+        
+        if (response.success) {
+          toast.success('Staff member deleted successfully!');
+          // Refresh the page to update the list (no Redux slice for receptionists)
+          window.location.reload();
+        } else {
+          toast.error('Failed to delete staff member');
+        }
+      } catch (error) {
+        console.error('Error deleting staff member:', error);
+        toast.error('Failed to delete staff member. Please try again.');
+      }
     }
   };
 
-  const handleDeleteAppointment = (appointmentId) => {
+  const handleDeleteAppointment = async (appointmentId) => {
     if (window.confirm('Are you sure you want to delete this session?')) {
-      alert(`Session ${appointmentId} deleted successfully!`);
+      try {
+        const response = await api.request(`/appointments/${appointmentId}`, {
+          method: 'DELETE'
+        });
+        
+        if (response.success) {
+          toast.success('Session deleted successfully!');
+          // Refresh the list
+          dispatch(fetchAppointments());
+        } else {
+          toast.error('Failed to delete session');
+        }
+      } catch (error) {
+        console.error('Error deleting session:', error);
+        toast.error('Failed to delete session. Please try again.');
+      }
     }
   };
 
