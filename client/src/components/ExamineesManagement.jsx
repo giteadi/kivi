@@ -2601,7 +2601,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
 
                 {/* Item Entry */}
                 <div className="bg-white rounded-xl shadow-sm border p-6">
-                  <h3 className="text-lg font-bold text-blue-600 mb-4">Item Entry</h3>
+                  <h3 className="text-lg font-bold text-blue-600 mb-4">Conners</h3>
                   <div className="flex items-center gap-2 mb-4">
                     <input type="checkbox" id="showItemText" className="w-4 h-4 text-blue-600 rounded" />
                     <label htmlFor="showItemText" className="text-sm text-gray-700 cursor-pointer">Show Item Text</label>
