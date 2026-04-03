@@ -8,6 +8,13 @@ class AssessmentResultController {
   // Save assessment item responses
   async saveResults(req, res) {
     try {
+      console.log('📥 [saveResults] Request received:', {
+        body: req.body,
+        headers: req.headers,
+        path: req.path,
+        method: req.method
+      });
+      
       const { assessmentId, studentId, items, totalScore, maxScore, completionPercentage } = req.body;
 
       console.log('Saving assessment results:', {
@@ -18,16 +25,30 @@ class AssessmentResultController {
         maxScore
       });
 
+      console.log('🔍 [saveResults] Validation check:', {
+        hasAssessmentId: !!assessmentId,
+        hasStudentId: !!studentId,
+        hasItems: !!items,
+        isItemsArray: Array.isArray(items),
+        itemsLength: items?.length
+      });
+
       if (!assessmentId || !studentId || !items || !Array.isArray(items)) {
+        console.log('❌ [saveResults] Validation FAILED - Missing required fields');
         return res.status(400).json({
           success: false,
           message: 'Missing required fields: assessmentId, studentId, items'
         });
       }
+      
+      console.log('✅ [saveResults] Validation PASSED');
 
       // Save each item response
       const savedResults = [];
+      console.log('💾 [saveResults] Starting to save', items.length, 'items');
+      
       for (const item of items) {
+        console.log('📝 [saveResults] Processing item:', item);
         const resultData = {
           assessment_id: assessmentId,
           student_id: studentId,
@@ -39,11 +60,22 @@ class AssessmentResultController {
           time_taken: item.timeTaken || null
         };
 
+        console.log('💾 [saveResults] Saving resultData:', resultData);
+        
         const resultId = await this.assessmentResultModel.create(resultData);
+        console.log('✅ [saveResults] Saved item, resultId:', resultId);
         savedResults.push({ id: resultId, itemNumber: item.itemNumber });
       }
 
       // Update assessment with summary data
+      console.log('📝 [saveResults] Updating assessment summary:', {
+        assessmentId,
+        totalScore,
+        maxScore,
+        completionPercentage,
+        calculatedCompletion: Math.round((items.length / 24) * 100)
+      });
+      
       const Assessment = require('../models/Assessment');
       const assessmentModel = new Assessment();
       await assessmentModel.update(assessmentId, {
@@ -52,6 +84,8 @@ class AssessmentResultController {
         completion_percentage: completionPercentage || Math.round((items.length / 24) * 100), // Assuming 24 items
         status: completionPercentage >= 100 ? 'Completed' : 'In Progress'
       });
+      
+      console.log('✅ [saveResults] Assessment summary updated successfully');
 
       res.json({
         success: true,
@@ -81,9 +115,19 @@ class AssessmentResultController {
   // Get assessment results for a specific assessment
   async getResults(req, res) {
     try {
+      console.log('📥 [getResults] Request received:', {
+        params: req.params,
+        headers: req.headers,
+        path: req.path,
+        method: req.method
+      });
+      
       const { assessmentId } = req.params;
+      console.log('🔍 [getResults] Fetching results for assessmentId:', assessmentId);
 
       const results = await this.assessmentResultModel.getResultsByAssessment(assessmentId);
+      
+      console.log('✅ [getResults] Found', results.length, 'results');
 
       res.json({
         success: true,
@@ -91,10 +135,17 @@ class AssessmentResultController {
         count: results.length
       });
     } catch (error) {
-      console.error('Get assessment results error:', error);
+      console.error('❌ [getResults] Error:', {
+        message: error.message,
+        code: error.code,
+        sqlState: error.sqlState,
+        sqlMessage: error.sqlMessage,
+        stack: error.stack
+      });
       res.status(500).json({
         success: false,
-        message: 'Failed to fetch assessment results'
+        message: 'Failed to fetch assessment results',
+        error: error.message
       });
     }
   }
@@ -102,19 +153,36 @@ class AssessmentResultController {
   // Delete assessment results
   async deleteResults(req, res) {
     try {
+      console.log('📥 [deleteResults] Request received:', {
+        params: req.params,
+        headers: req.headers,
+        path: req.path,
+        method: req.method
+      });
+      
       const { assessmentId } = req.params;
+      console.log('🗑️ [deleteResults] Deleting results for assessmentId:', assessmentId);
 
       await this.assessmentResultModel.deleteByAssessment(assessmentId);
+      
+      console.log('✅ [deleteResults] Results deleted successfully');
 
       res.json({
         success: true,
         message: 'Assessment results deleted successfully'
       });
     } catch (error) {
-      console.error('Delete assessment results error:', error);
+      console.error('❌ [deleteResults] Error:', {
+        message: error.message,
+        code: error.code,
+        sqlState: error.sqlState,
+        sqlMessage: error.sqlMessage,
+        stack: error.stack
+      });
       res.status(500).json({
         success: false,
-        message: 'Failed to delete assessment results'
+        message: 'Failed to delete assessment results',
+        error: error.message
       });
     }
   }

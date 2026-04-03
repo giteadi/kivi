@@ -8,6 +8,8 @@ class AssessmentResult extends BaseModel {
   // Create new assessment result
   async create(data) {
     try {
+      console.log('[AssessmentResult.create] Input data:', data);
+      
       const columns = Object.keys(data).join(', ');
       const placeholders = Object.keys(data).map(() => '?').join(', ');
       const values = Object.values(data);
@@ -16,11 +18,23 @@ class AssessmentResult extends BaseModel {
         INSERT INTO kivi_assessment_results (${columns})
         VALUES (${placeholders})
       `;
+      
+      console.log('[AssessmentResult.create] SQL:', sql);
+      console.log('[AssessmentResult.create] Values:', values);
 
       const result = await this.query(sql, values);
+      
+      console.log('[AssessmentResult.create] Insert successful, insertId:', result.insertId);
       return result.insertId;
     } catch (error) {
-      console.error('Error creating assessment result:', error);
+      console.error('[AssessmentResult.create] ERROR:', {
+        message: error.message,
+        code: error.code,
+        sqlState: error.sqlState,
+        sqlMessage: error.sqlMessage,
+        sql: error.sql,
+        stack: error.stack
+      });
       throw error;
     }
   }
