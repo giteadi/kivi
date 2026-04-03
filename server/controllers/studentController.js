@@ -72,6 +72,32 @@ class StudentController {
       cache.set(cacheKey, student, 5 * 60 * 1000);
       console.log(`🗄️ CACHE STORE: Student ${id} cached for 5 minutes`);
 
+      // Parse JSON fields if they exist
+      if (student.evaluation_data && typeof student.evaluation_data === 'string') {
+        try {
+          student.evaluation_data = JSON.parse(student.evaluation_data);
+        } catch (e) {
+          console.error('Error parsing evaluation_data:', e.message);
+          student.evaluation_data = null;
+        }
+      }
+      if (student.diagnosis_data && typeof student.diagnosis_data === 'string') {
+        try {
+          student.diagnosis_data = JSON.parse(student.diagnosis_data);
+        } catch (e) {
+          console.error('Error parsing diagnosis_data:', e.message);
+          student.diagnosis_data = null;
+        }
+      }
+      if (student.history_data && typeof student.history_data === 'string') {
+        try {
+          student.history_data = JSON.parse(student.history_data);
+        } catch (e) {
+          console.error('Error parsing history_data:', e.message);
+          student.history_data = null;
+        }
+      }
+
       console.log(`✅ GET SUCCESS: Student ${id} retrieved with ${student.documents.length} documents`);
       res.json({
         success: true,
