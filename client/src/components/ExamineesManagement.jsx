@@ -30,6 +30,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchPatients } from '../store/slices/patientSlice';
 import Sidebar from './Sidebar';
+import InvoiceScreen from './InvoiceScreen';
 import * as XLSX from 'xlsx';
 import { Document, Packer, Paragraph, Table, TableCell, TableRow, TextRun, HeadingLevel } from 'docx';
 import jsPDF from 'jspdf';
@@ -82,6 +83,8 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
   const [isSavingAssessment, setIsSavingAssessment] = useState(false);
   const [isSendingInvoice, setIsSendingInvoice] = useState(false);
   const [showInvoiceConfirm, setShowInvoiceConfirm] = useState(false);
+  const [showInvoiceScreen, setShowInvoiceScreen] = useState(false);
+  const [currentPackage, setCurrentPackage] = useState(null); // Store created package
   const ASSESSMENT_PRICE = 5500;
 
   useEffect(() => {
@@ -377,7 +380,9 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
       createdAt: new Date().toISOString()
     };
     console.log('Package created:', packageData);
-    // TODO: Send package data to backend or generate exports
+    setCurrentPackage(packageData); // Save to state
+    setShowAssignAssessment(false); // Close modal
+    setShowAssessmentAdmin(true); // Open assessment admin
     return packageData;
   };
 
@@ -751,7 +756,10 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
 
   // Save assessment results to backend
   const handleSaveAssessment = async (closeAfterSave = false) => {
-    if (!currentAssessment?.id) {
+    // Get assessment ID from currentAssessment or from the first assessment in the package
+    const assessmentId = currentAssessment?.id || currentPackage?.assessments?.[0]?.id;
+    
+    if (!assessmentId) {
       alert('No assessment selected. Please select an assessment first.');
       return;
     }
@@ -781,8 +789,8 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          assessmentId: currentAssessment.id,
-          studentId: selectedItems[0],
+          assessmentId: parseInt(assessmentId) || 1,
+          studentId: parseInt(selectedItems[0]) || 1,
           items: items,
           completionPercentage: completionPercentage,
           totalScore: null,
@@ -2350,7 +2358,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                     {isSavingAssessment ? 'Saving...' : 'Save and Close'}
                   </button>
                   <button 
-                    onClick={() => setShowInvoiceConfirm(true)}
+                    onClick={() => setShowInvoiceScreen(true)}
                     disabled={isSendingInvoice}
                     className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg text-sm font-medium hover:from-blue-600 hover:to-indigo-600 shadow-sm flex items-center gap-2"
                   >
@@ -2371,53 +2379,85 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                   </div>
                 </div>
 
-                {/* Invoice Confirmation Modal */}
-                {showInvoiceConfirm && (
-                  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6"
-                    >
-                      <h3 className="text-lg font-bold text-gray-900 mb-4">Send Invoice</h3>
-                      <p className="text-gray-600 mb-4">
-                        Send payment invoice for <strong>{currentAssessment?.name || 'Assessment'}</strong> to the examinee's email?
-                      </p>
-                      <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                        <div className="flex justify-between mb-2">
-                          <span className="text-gray-600">Assessment:</span>
-                          <span className="font-medium">{currentAssessment?.name || 'Educational Assessment'}</span>
-                        </div>
-                        <div className="flex justify-between mb-2">
-                          <span className="text-gray-600">Price:</span>
-                          <span className="font-medium">₹{ASSESSMENT_PRICE.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">GST (18%):</span>
-                          <span className="font-medium">₹{(ASSESSMENT_PRICE * 0.18).toLocaleString()}</span>
-                        </div>
-                        <div className="border-t mt-2 pt-2 flex justify-between">
-                          <span className="font-bold text-gray-800">Total:</span>
-                          <span className="font-bold text-blue-600">₹{(ASSESSMENT_PRICE * 1.18).toLocaleString()}</span>
-                        </div>
-                      </div>
-                      <div className="flex gap-3">
-                        <button
-                          onClick={() => setShowInvoiceConfirm(false)}
-                          className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={handleSendInvoice}
-                          disabled={isSendingInvoice}
-                          className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                        >
-                          {isSendingInvoice ? 'Sending...' : 'Send Invoice'}
-                        </button>
-                      </div>
-                    </motion.div>
-                  </div>
+                {/* Invoice Screen */}
+                {showInvoiceScreen && (
+                  <InvoiceScreen
+                    isOpen={showInvoiceScreen}
+                    onClose={() => setShowInvoiceScreen(false)}
+                    assessmentData={{
+                      name: currentPackage?.name || currentAssessment?.name || 'Assessment Package',
+                      price: currentPackage?.totalPrice || totalPrice || ASSESSMENT_PRICE,
+                      id: currentAssessment?.id,
+                      count: currentPackage?.assessments?.length || selectedAssessments.length || 1,
+                      assessments: currentPackage?.assessments || []
+                    }}
+                    examineeData={{
+                      name: 'Aditya Sharma',
+                      email: 'aditya@gmail.com',
+                      age: '25 years 10 months',
+                      gender: 'Male',
+                      examineeId: 'as/msl/260331',
+                      centre: 'MindSaid Learning Centre',
+                      diagnosisData: {},
+                      evaluationData: {},
+                      historyData: {}
+                    }}
+                    onSendInvoice={async (invoiceData) => {
+                      setIsSendingInvoice(true);
+                      try {
+                        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3005/api';
+                        
+                        // Use name from examineeData (hardcoded as 'Aditya Sharma')
+                        const nameParts = 'Aditya Sharma'.split(' ');
+                        const firstName = nameParts[0] || '';
+                        const lastName = nameParts.slice(1).join(' ') || '';
+                        
+                        // DEBUG: Log the data being sent
+                        const payload = {
+                          assessmentId: currentAssessment?.id || currentPackage?.assessments?.[0]?.id,
+                          studentId: selectedItems[0],
+                          email: invoiceData.toEmail,
+                          firstName: firstName,
+                          lastName: lastName,
+                          assessmentName: currentPackage?.name || (selectedAssessments.length > 1 ? `Package (${selectedAssessments.length} assessments)` : (currentAssessment?.name || 'Assessment')),
+                          assessmentType: 'Standard',
+                          price: invoiceData.price || currentPackage?.totalPrice || totalPrice || ASSESSMENT_PRICE,
+                          adminDate: new Date().toISOString().split('T')[0],
+                          examiner: 'JAGGI, KRUTIKA',
+                          notes: invoiceData.notes,
+                          customMessage: invoiceData.customMessage
+                        };
+                        
+                        console.log('Sending invoice payload:', payload);
+                        console.log('currentPackage:', currentPackage);
+                        console.log('currentAssessment:', currentAssessment);
+                        console.log('selectedItems:', selectedItems);
+                        
+                        const response = await fetch(`${apiUrl}/invoices/send-assessment`, {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify(payload)
+                        });
+                        
+                        const result = await response.json();
+                        console.log('Response:', result);
+                        
+                        if (result.success) {
+                          alert('Invoice sent successfully!');
+                          setShowInvoiceScreen(false);
+                        } else {
+                          alert('Failed to send: ' + result.message);
+                        }
+                      } catch (error) {
+                        console.error('Error:', error);
+                        alert('Failed to send invoice');
+                      } finally {
+                        setIsSendingInvoice(false);
+                      }
+                    }}
+                  />
                 )}
 
                 {/* Examinee Details */}
@@ -2494,13 +2534,13 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">Assessment: *</label>
                       <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded text-sm text-gray-700 font-medium">
-                        {currentAssessment?.name || '16PF'}
+                        {currentPackage?.name || currentAssessment?.name || '16PF'}
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Batch ID:</label>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Items Count:</label>
                       <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded text-sm text-gray-700">
-                        -
+                        {currentPackage?.assessments?.length || 1} assessment(s)
                       </div>
                     </div>
                     <div>
@@ -2512,7 +2552,12 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">Price:</label>
                       <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700 font-bold">
-                        ₹{ASSESSMENT_PRICE.toLocaleString()}
+                        ₹{(currentPackage?.totalPrice || totalPrice || ASSESSMENT_PRICE).toLocaleString()}
+                        {currentPackage?.assessments?.length > 1 && (
+                          <span className="text-xs text-blue-500 block font-normal">
+                            ({currentPackage.assessments.length} assessments × ₹{ASSESSMENT_PRICE.toLocaleString()})
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div>
@@ -2647,7 +2692,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                     {isSavingAssessment ? 'Saving...' : 'Save and Close'}
                   </button>
                   <button 
-                    onClick={() => setShowInvoiceConfirm(true)}
+                    onClick={() => setShowInvoiceScreen(true)}
                     disabled={isSendingInvoice}
                     className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg text-sm font-medium hover:from-blue-600 hover:to-indigo-600 shadow-sm flex items-center gap-2"
                   >

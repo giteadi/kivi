@@ -63,10 +63,17 @@ class AssessmentResultController {
       });
     } catch (error) {
       console.error('Save assessment results error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        sqlState: error.sqlState,
+        sqlMessage: error.sqlMessage
+      });
       res.status(500).json({
         success: false,
         message: 'Failed to save assessment results',
-        error: error.message
+        error: error.message,
+        sqlError: error.sqlMessage || null
       });
     }
   }

@@ -393,4 +393,84 @@ router.post('/add-missing-columns', async (req, res) => {
   }
 });
 
+// Check and create assessment results table
+router.post('/check-assessment-results-table', async (req, res) => {
+  try {
+    const db = getDb();
+    
+    // Check if table exists
+    const [tables] = await new Promise((resolve, reject) => {
+      db.query("SHOW TABLES LIKE 'kivi_assessment_results'", (err, results) => {
+        if (err) reject(err);
+        else resolve(results);
+      });
+    });
+    
+    let tableExists = tables && tables.length > 0;
+    let tableInfo = null;
+    let columns = [];
+    
+    if (tableExists) {
+      // Get table structure
+      tableInfo = await new Promise((resolve, reject) => {
+        db.query('DESCRIBE kivi_assessment_results', (err, results) => {
+          if (err) reject(err);
+          else resolve(results);
+        });
+      });
+      columns = tableInfo.map(col => ({
+        field: col.Field,
+        type: col.Type,
+        null: col.Null,
+        key: col.Key,
+        default: col.Default
+      }));
+    } else {
+      // Create the table
+      await new Promise((resolve, reject) => {
+        const createTableSQL = `
+          CREATE TABLE IF NOT EXISTS kivi_assessment_results (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            assessment_id INT NOT NULL,
+            student_id INT NOT NULL,
+            item_number INT NOT NULL,
+            response_value VARCHAR(255),
+            response_text TEXT,
+            is_correct BOOLEAN DEFAULT NULL,
+            score DECIMAL(5,2) DEFAULT NULL,
+            time_taken INT DEFAULT NULL COMMENT 'Time taken in seconds',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_assessment_results (assessment_id),
+            INDEX idx_student_results (student_id),
+            INDEX idx_item_number (item_number)
+          )
+        `;
+        db.query(createTableSQL, (err, results) => {
+          if (err) reject(err);
+          else resolve(results);
+        });
+      });
+      
+      tableExists = true;
+      columns = ['Table created successfully'];
+    }
+    
+    res.json({
+      success: true,
+      tableExists: tableExists,
+      columns: columns,
+      message: tableExists ? 'Table exists and ready' : 'Table created successfully'
+    });
+    
+  } catch (error) {
+    console.error('Check assessment results table error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to check/create table',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
