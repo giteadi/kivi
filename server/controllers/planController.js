@@ -1,8 +1,8 @@
-const Plan = require('../models/Plan');
+const Programme = require('../models/Programme');
 
-class PlanController extends Plan {
+class PlanController {
   constructor() {
-    super();
+    this.programmeModel = new Programme();
   }
 
   // Get all available plans
@@ -22,7 +22,7 @@ class PlanController extends Plan {
       if (min_price) filters.min_price = parseFloat(min_price);
       if (max_price) filters.max_price = parseFloat(max_price);
 
-      const plans = await super.getPlans(filters);
+      const plans = await this.programmeModel.getProgrammes(filters);
 
       res.json({
         success: true,
@@ -42,7 +42,7 @@ class PlanController extends Plan {
   async getPlan(req, res) {
     try {
       const { id } = req.params;
-      const plan = await super.getPlanById(id);
+      const plan = await this.programmeModel.findById(id);
 
       if (!plan) {
         return res.status(404).json({
@@ -69,7 +69,7 @@ class PlanController extends Plan {
   async getPlansWithAvailability(req, res) {
     try {
       const { planId } = req.query;
-      const plans = await super.getPlansWithTherapistAvailability(planId);
+      const plans = await this.programmeModel.getProgrammes({});
 
       res.json({
         success: true,
@@ -102,21 +102,25 @@ class PlanController extends Plan {
         });
       }
 
-      const planData = {
+      // Map plan data to programme structure
+      const programmeData = {
         name: req.body.name,
         description: req.body.description || '',
-        type: req.body.type, // 'session' or 'assessment'
+        category: req.body.type === 'session' ? 'Therapy Session' : 'Educational Assessment',
+        status: 'active',
+        duration: req.body.duration || '60',
         price: parseFloat(req.body.price),
-        duration: req.body.duration || '',
-        sessions_count: parseInt(req.body.sessions_count) || 1,
-        features: JSON.stringify(req.body.features || []),
-        is_active: 1
+        programme_id: 'PROG-' + Date.now(),
+        centre_id: req.body.centre_id || 1,
+        therapist_id: req.body.therapist_id || null,
+        created_at: new Date(),
+        updated_at: new Date()
       };
 
-      console.log('🔍 Processed plan data:', planData);
+      console.log('🔍 Processed programme data:', programmeData);
 
       // Validate numeric values
-      if (isNaN(planData.price) || planData.price <= 0) {
+      if (isNaN(programmeData.price) || programmeData.price <= 0) {
         console.error('❌ Invalid price:', req.body.price);
         return res.status(400).json({
           success: false,
@@ -124,15 +128,7 @@ class PlanController extends Plan {
         });
       }
 
-      if (isNaN(planData.sessions_count) || planData.sessions_count <= 0) {
-        console.error('❌ Invalid sessions_count:', req.body.sessions_count);
-        return res.status(400).json({
-          success: false,
-          message: 'Sessions count must be a valid positive number'
-        });
-      }
-
-      const planId = await super.createPlan(planData);
+      const planId = await this.programmeModel.create(programmeData);
 
       res.status(201).json({
         success: true,
@@ -154,18 +150,18 @@ class PlanController extends Plan {
   async updatePlan(req, res) {
     try {
       const { id } = req.params;
-      const updateData = {};
+      const updateData = {
+        updated_at: new Date()
+      };
 
       if (req.body.name) updateData.name = req.body.name;
       if (req.body.description) updateData.description = req.body.description;
-      if (req.body.type) updateData.type = req.body.type;
+      if (req.body.type) updateData.category = req.body.type === 'session' ? 'Therapy Session' : 'Educational Assessment';
       if (req.body.price !== undefined) updateData.price = parseFloat(req.body.price);
       if (req.body.duration) updateData.duration = req.body.duration;
-      if (req.body.sessions_count !== undefined) updateData.sessions_count = parseInt(req.body.sessions_count);
-      if (req.body.features) updateData.features = JSON.stringify(req.body.features);
-      if (req.body.is_active !== undefined) updateData.is_active = req.body.is_active;
+      if (req.body.status) updateData.status = req.body.status;
 
-      const updated = await super.updatePlan(id, updateData);
+      const updated = await this.programmeModel.update(id, updateData);
 
       if (!updated) {
         return res.status(404).json({
@@ -191,7 +187,7 @@ class PlanController extends Plan {
   async deletePlan(req, res) {
     try {
       const { id } = req.params;
-      const deleted = await super.deletePlan(id);
+      const deleted = await this.programmeModel.delete(id);
 
       if (!deleted) {
         return res.status(404).json({
