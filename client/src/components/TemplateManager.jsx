@@ -15,47 +15,71 @@ const colLabel = (i) => {
 
 const parseExcel = (buf) => {
   try {
-    const wb = XLSX.read(buf, { type: "array", cellDates: true, cellNF: true, cellStyles: true });
+    console.log('📊 PARSE: Starting Excel parse, buffer size:', buf.byteLength);
+    const wb = XLSX.read(buf, {
+      type: "array",
+      cellStyles: true,
+      cellNF: true,
+      cellText: true
+    });
     const sheets = {};
-    
-    wb.SheetNames.forEach((name) => {
-      const ws = wb.Sheets[name];
-      
-      if (!ws || !ws["!ref"]) {
-        sheets[name] = [[""]];
-        return;
-      }
+
+    const deepParseSheet = (ws) => {
+      const data = [];
+      if (!ws || !ws["!ref"]) return [[""]];
 
       const range = XLSX.utils.decode_range(ws["!ref"]);
-      const rows = [];
 
-      for (let R = range.s.r; R <= range.e.r; R++) {
+      for (let R = 0; R <= range.e.r; R++) {
         const row = [];
-        for (let C = range.s.c; C <= range.e.c; C++) {
-          const cellAddr = XLSX.utils.encode_cell({ r: R, c: C });
-          const cell = ws[cellAddr];
-          
-          if (!cell || cell.v === undefined || cell.v === null) {
-            row.push("");
-          } else {
-            // w = formatted string, v = raw value
-            row.push(cell.w !== undefined ? cell.w : String(cell.v));
+        let hasData = false;
+
+        for (let C = 0; C <= range.e.c; C++) {
+          const cell = ws[XLSX.utils.encode_cell({ r: R, c: C })];
+          let val = "";
+
+          if (cell) {
+            val = cell.v ?? cell.w ?? cell.f ?? "";
+            if (val !== "" && val !== null && val !== undefined) hasData = true;
           }
+
+          row.push(val ? String(val) : "");
         }
-        rows.push(row);
+
+        if (hasData) data.push(row);
       }
 
-      // Remove trailing empty rows
-      while (rows.length > 0 && rows[rows.length - 1].every(c => c === "")) {
-        rows.pop();
+      return data.length ? data : [[""]];
+    };
+
+    wb.SheetNames.forEach((name) => {
+      const ws = wb.Sheets[name];
+      console.log(`📊 PARSE: Processing sheet "${name}"`);
+
+      // Try normal parse first
+      let rows = XLSX.utils.sheet_to_json(ws, {
+        header: 1,
+        defval: "",
+      });
+
+      // If empty or all blank, use deep parse
+      if (!rows.length || rows.every(r => r.every(c => c === ""))) {
+        console.log("⚠️ Empty sheet detected, using deep parse:", name);
+        rows = deepParseSheet(ws);
       }
 
-      sheets[name] = rows.length > 0 ? rows : [[""]];
+      console.log(`📊 PARSE: Sheet "${name}" rows:`, rows.length);
+      if (rows.length > 0) {
+        console.log(`📊 PARSE: First row:`, rows[0]);
+      }
+
+      sheets[name] = rows.length ? rows : [[""]];
     });
-    
+
+    console.log('✅ PARSE: Complete, sheets:', Object.keys(sheets));
     return { ok: true, sheets, names: wb.SheetNames };
   } catch (e) {
-    console.error("Excel parse error:", e);
+    console.error("❌ PARSE ERROR:", e);
     return { ok: false, error: e.message };
   }
 };
@@ -291,25 +315,69 @@ export default function TemplateManager() {
   }, []);
 
   const fetchTemplates = async () => {
+    console.log('🔄 FETCH: Starting template fetch...');
     setLoading(true);
     setError(null);
     try {
       const response = await api.getTemplates();
-      if (response.success && response.data) {
+      console.log('🔄 FETCH: API response:', { success: response.success, count: response.data?.length });
+      
+      if (response.success && response.data && response.data.length > 0) {
+        // DEBUG: Log raw response
+        const rawTemplateData = response.data[0]?.template_data;
+        console.log('🔍 RAW template_data exists:', !!rawTemplateData);
+        console.log('🔍 RAW template_data type:', typeof rawTemplateData);
+        if (rawTemplateData) {
+          console.log('🔍 RAW template_data preview:', JSON.stringify(rawTemplateData).substring(0, 500));
+        }
+        
+        console.log('✅ FETCH: Found', response.data.length, 'templates');
+        
         // Transform backend data to frontend format
-        const transformed = response.data.map(t => ({
-          id: t.id,
-          name: t.name,
-          type: t.type || 'import',
-          desc: t.description || `${t.name} template`,
-          sheets: t.template_data?.sheets || {},
-          sheetNames: t.template_data?.sheetNames || Object.keys(t.template_data?.sheets || {}),
-          createdAt: t.created_at || new Date().toISOString(),
-        }));
+        const transformed = response.data.map(t => {
+          // Parse template_data if it's a string
+          let parsedData = t.template_data;
+          if (typeof t.template_data === 'string') {
+            try {
+              parsedData = JSON.parse(t.template_data);
+            } catch (e) {
+              console.error('❌ Failed to parse template_data string:', e);
+              parsedData = {};
+            }
+          }
+          
+          const sheets = parsedData?.sheets || {};
+          const sheetNames = parsedData?.sheetNames || Object.keys(sheets);
+          
+          console.log(`📊 FETCH: Template ${t.id} (${t.name}):`, { sheetCount: sheetNames.length, sheetNames });
+          
+          // DEBUG: Check if sheets have data
+          const firstSheet = Object.values(sheets)[0];
+          if (firstSheet) {
+            console.log(`📊 FETCH: Template ${t.id} first sheet rows:`, firstSheet.length);
+            console.log(`📊 FETCH: Template ${t.id} first sheet sample (first 2 rows):`, firstSheet.slice(0, 2));
+          } else {
+            console.warn(`⚠️ FETCH: Template ${t.id} has NO sheet data!`);
+          }
+          
+          return {
+            id: t.id,
+            name: t.name,
+            type: t.type || 'import',
+            desc: t.description || `${t.name} template`,
+            sheets: sheets,
+            sheetNames: sheetNames,
+            createdAt: t.created_at || new Date().toISOString(),
+          };
+        });
+        console.log('✅ FETCH: Transformed', transformed.length, 'templates');
         setTemplates(transformed);
+      } else {
+        console.log('ℹ️ FETCH: No templates found');
+        setTemplates([]);
       }
     } catch (err) {
-      console.error('Failed to fetch templates:', err);
+      console.error('❌ FETCH ERROR:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -324,41 +392,41 @@ export default function TemplateManager() {
   const handleUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    console.log('📤 UPLOAD: Starting file upload:', file.name);
     setLoading(true);
-    const reader = new FileReader();
-    reader.onload = async (ev) => {
-      try {
-        const res = parseExcel(ev.target.result);
-        if (!res.ok) { alert("Parse error: " + res.error); return; }
-        
-        // Prepare template data for backend
-        const templateData = {
-          name: file.name.replace(/\.(xlsx?|csv)$/i, ""),
-          type: "import",
-          description: `${Object.keys(res.sheets).length} sheet(s) • ${file.name}`,
-          template_data: {
-            sheets: res.sheets,
-            sheetNames: res.names
-          }
-        };
-        
-        // Save to backend API
-        const response = await api.createTemplate(templateData);
-        if (response.success) {
-          // Refresh templates from backend
-          await fetchTemplates();
-        } else {
-          alert("Failed to save template: " + (response.message || "Unknown error"));
-        }
-      } catch (err) {
-        console.error('Upload error:', err);
-        alert("Error uploading template: " + err.message);
-      } finally {
-        setLoading(false);
+    
+    try {
+      // Use FormData to send file to backend Python parser
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      console.log('� UPLOAD: Sending to backend Python parser...');
+      
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://dashboard.iplanbymsl.in/api'}/templates/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+        },
+        body: formData,
+      });
+      
+      const result = await response.json();
+      console.log('📤 UPLOAD: API response:', result);
+      
+      if (result.success) {
+        console.log('✅ UPLOAD: Success, refreshing templates...');
+        await fetchTemplates();
+      } else {
+        console.error('❌ UPLOAD: Failed:', result.message);
+        alert("Failed to upload: " + (result.message || "Unknown error"));
       }
-    };
-    reader.readAsArrayBuffer(file);
-    e.target.value = "";
+    } catch (err) {
+      console.error('❌ UPLOAD ERROR:', err);
+      alert("Error uploading template: " + err.message);
+    } finally {
+      setLoading(false);
+      e.target.value = "";
+    }
   };
 
   // ── export ──
@@ -420,6 +488,8 @@ export default function TemplateManager() {
 
   // ── open edit ──
   const openEdit = (tpl) => {
+    console.log('✏️ EDIT: Opening template:', { id: tpl.id, name: tpl.name, sheets: Object.keys(tpl.sheets) });
+    console.log('✏️ EDIT: Sheet data sample:', Object.values(tpl.sheets)[0]?.slice(0, 2));
     setActiveTemplate(tpl);
     setEditSheets(JSON.parse(JSON.stringify(tpl.sheets)));
     setEditName(tpl.name);
@@ -451,6 +521,8 @@ export default function TemplateManager() {
 
   // ── open view ──
   const openView = (tpl) => {
+    console.log('👁️ VIEW: Opening template:', { id: tpl.id, name: tpl.name, sheets: Object.keys(tpl.sheets) });
+    console.log('👁️ VIEW: Sheet data sample:', Object.values(tpl.sheets)[0]?.slice(0, 2));
     setActiveTemplate(tpl);
     setActiveSheetIdx(0);
     setPanel("view");

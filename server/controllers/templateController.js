@@ -1,8 +1,50 @@
 const Template = require('../models/Template');
+const { exec } = require('child_process');
+const path = require('path');
+const fs = require('fs');
 
 class TemplateController {
   constructor() {
     this.templateModel = new Template();
+  }
+
+  // Parse Excel using Python (for complex templates)
+  parseExcelWithPython(filePath) {
+    return new Promise((resolve, reject) => {
+      const scriptPath = path.join(__dirname, '..', 'scripts', 'parse_excel.py');
+      const cmd = `python3 "${scriptPath}" "${filePath}"`;
+      
+      console.log('🐍 PYTHON: Executing command:', cmd);
+      
+      exec(cmd, { timeout: 30000 }, (error, stdout, stderr) => {
+        if (error) {
+          console.error('❌ PYTHON ERROR:', error);
+          console.error('❌ PYTHON STDERR:', stderr);
+          reject(new Error(`Python parsing failed: ${error.message}`));
+          return;
+        }
+        
+        if (stderr) {
+          console.warn('⚠️ PYTHON STDERR:', stderr);
+        }
+        
+        try {
+          const result = JSON.parse(stdout);
+          console.log('✅ PYTHON: Parsed successfully');
+          console.log('📊 PYTHON: Sheets found:', result.names?.length);
+          if (result.sheets && result.names?.length > 0) {
+            const firstSheet = result.sheets[result.names[0]];
+            console.log('📊 PYTHON: First sheet rows:', firstSheet?.length);
+            console.log('📊 PYTHON: First row sample:', firstSheet?.[0]?.slice(0, 5));
+          }
+          resolve(result);
+        } catch (e) {
+          console.error('❌ JSON PARSE ERROR:', e);
+          console.error('❌ RAW OUTPUT:', stdout);
+          reject(new Error('Failed to parse Python output'));
+        }
+      });
+    });
   }
 
   // Get all templates
@@ -12,20 +54,36 @@ class TemplateController {
       const filters = req.query;
       const templates = await this.templateModel.getTemplates(filters);
       
+      console.log(`📋 RAW TEMPLATES FROM DB: ${templates.length} templates found`);
+      
       // Parse template_data for each template
       const parsedTemplates = templates.map(template => {
         if (template.template_data) {
           try {
             template.template_data = JSON.parse(template.template_data);
+            console.log(`📊 Template ${template.id} (${template.name}): template_data parsed successfully`);
+            console.log(`📊 Template ${template.id} sheets:`, Object.keys(template.template_data?.sheets || {}));
           } catch (error) {
-            console.error('Error parsing template data:', error);
+            console.error(`❌ Error parsing template ${template.id} data:`, error);
             template.template_data = {};
           }
+        } else {
+          console.warn(`⚠️ Template ${template.id} has NO template_data`);
         }
         return template;
       });
 
       console.log(`✅ GET TEMPLATES SUCCESS: Found ${parsedTemplates.length} templates`);
+      // Log first template sample if exists
+      if (parsedTemplates[0]) {
+        console.log(`📊 SAMPLE TEMPLATE:`, {
+          id: parsedTemplates[0].id,
+          name: parsedTemplates[0].name,
+          type: parsedTemplates[0].type,
+          sheetNames: Object.keys(parsedTemplates[0].template_data?.sheets || {})
+        });
+      }
+      
       res.json({
         success: true,
         data: parsedTemplates
@@ -76,9 +134,38 @@ class TemplateController {
       console.log(`📤 REQUEST BODY:`, {
         name: req.body.name,
         type: req.body.type,
-        studentName: req.body.studentName,
-        subscalesCount: req.body.subscales ? req.body.subscales.length : 0
+        description: req.body.description,
       });
+      
+      // DEBUG: Log template_data structure
+      let templateDataToSave = req.body.template_data;
+      
+      // If template_data is a string, parse it (frontend may stringify it)
+      if (typeof templateDataToSave === 'string') {
+        try {
+          templateDataToSave = JSON.parse(templateDataToSave);
+          console.log('📊 TEMPLATE_DATA was STRING, parsed successfully');
+        } catch (e) {
+          console.error('❌ Failed to parse template_data string:', e);
+        }
+      }
+      
+      if (templateDataToSave) {
+        console.log('📊 TEMPLATE_DATA STRUCTURE:', JSON.stringify(templateDataToSave, null, 2).substring(0, 1000));
+        console.log('📊 SHEETS COUNT:', Object.keys(templateDataToSave.sheets || {}).length);
+        console.log('📊 SHEET NAMES:', Object.keys(templateDataToSave.sheets || {}));
+        // Log first sheet sample data
+        const firstSheet = Object.values(templateDataToSave.sheets || {})[0];
+        if (firstSheet) {
+          console.log('📊 FIRST SHEET ROWS:', firstSheet.length);
+          console.log('📊 FIRST SHEET SAMPLE (first 3 rows):', firstSheet.slice(0, 3));
+        }
+      } else {
+        console.warn('⚠️ NO TEMPLATE_DATA in request!');
+      }
+      
+      // Update req.body with parsed data
+      req.body.template_data = templateDataToSave;
 
       const templateId = await this.templateModel.createTemplate(req.body);
       console.log(`✅ CREATE TEMPLATE SUCCESS: Template created with ID: ${templateId}`);
@@ -213,6 +300,75 @@ class TemplateController {
       res.status(500).json({
         success: false,
         message: 'Internal server error during bulk delete'
+      });
+    }
+  }
+
+  // Upload Excel with Python parsing
+  async uploadExcel(req, res) {
+    try {
+      console.log('📤 UPLOAD EXCEL: Starting upload with Python parsing');
+      
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: 'No file uploaded'
+        });
+      }
+
+      const filePath = req.file.path;
+      const fileName = req.file.originalname || req.file.filename;
+      
+      console.log('📤 UPLOAD EXCEL: File received:', fileName);
+      console.log('📤 UPLOAD EXCEL: File path:', filePath);
+
+      // Parse using Python
+      const parsedData = await this.parseExcelWithPython(filePath);
+      
+      if (!parsedData.ok) {
+        return res.status(400).json({
+          success: false,
+          message: 'Failed to parse Excel: ' + parsedData.error
+        });
+      }
+
+      // Create template data
+      const templateData = {
+        name: fileName.replace(/\.(xlsx?|csv)$/i, ""),
+        type: "import",
+        description: `${parsedData.names.length} sheet(s) • ${fileName}`,
+        template_data: {
+          sheets: parsedData.sheets,
+          sheetNames: parsedData.names
+        },
+        excel_filename: fileName
+      };
+
+      // Save to database
+      const templateId = await this.templateModel.createTemplate(templateData);
+      
+      // Cleanup temp file
+      fs.unlink(filePath, (err) => {
+        if (err) console.error('Failed to delete temp file:', err);
+      });
+
+      console.log(`✅ UPLOAD EXCEL SUCCESS: Template created with ID: ${templateId}`);
+
+      res.status(201).json({
+        success: true,
+        data: { 
+          id: templateId,
+          name: templateData.name,
+          sheets: parsedData.names.length
+        },
+        message: 'Excel uploaded and parsed successfully'
+      });
+    } catch (error) {
+      console.error('❌ UPLOAD EXCEL ERROR:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: error.message
       });
     }
   }

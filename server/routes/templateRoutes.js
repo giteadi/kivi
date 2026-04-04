@@ -1,11 +1,18 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 const TemplateController = require('../controllers/templateController');
 
 const templateController = new TemplateController();
 
+// Configure multer for file uploads
+const upload = multer({ dest: 'uploads/' });
+
 // GET /api/templates
 router.get('/', templateController.getTemplates.bind(templateController));
+
+// POST /api/templates/upload - Upload Excel with Python parsing
+router.post('/upload', upload.single('file'), templateController.uploadExcel.bind(templateController));
 
 // POST /api/templates
 router.post('/', templateController.createTemplate.bind(templateController));
