@@ -107,9 +107,9 @@ class PlanController {
         name: req.body.name,
         description: req.body.description || '',
         category: req.body.type === 'session' ? 'Therapy Session' : 'Educational Assessment',
-        status: 'active',
-        duration: req.body.duration || '60',
-        price: parseFloat(req.body.price),
+        status: req.body.status?.toLowerCase() || 'active',
+        duration: parseInt(req.body.duration) || 60,
+        fee: parseFloat(req.body.price),
         programme_id: 'PROG-' + Date.now(),
         centre_id: req.body.centre_id || 1,
         therapist_id: req.body.therapist_id || null,
@@ -120,8 +120,8 @@ class PlanController {
       console.log('🔍 Processed programme data:', programmeData);
 
       // Validate numeric values
-      if (isNaN(programmeData.price) || programmeData.price <= 0) {
-        console.error('❌ Invalid price:', req.body.price);
+      if (isNaN(programmeData.fee) || programmeData.fee < 0) {
+        console.error('❌ Invalid fee/price:', req.body.price);
         return res.status(400).json({
           success: false,
           message: 'Price must be a valid positive number'
@@ -157,7 +157,7 @@ class PlanController {
       if (req.body.name) updateData.name = req.body.name;
       if (req.body.description) updateData.description = req.body.description;
       if (req.body.type) updateData.category = req.body.type === 'session' ? 'Therapy Session' : 'Educational Assessment';
-      if (req.body.price !== undefined) updateData.price = parseFloat(req.body.price);
+      if (req.body.price !== undefined) updateData.fee = parseFloat(req.body.price);
       if (req.body.duration) updateData.duration = req.body.duration;
       if (req.body.status) updateData.status = req.body.status;
 
