@@ -15,45 +15,42 @@ const colLabel = (i) => {
 
 const parseExcel = (buf) => {
   try {
-    const wb = XLSX.read(buf, { type: "array", cellDates: true, cellNF: true });
+    const wb = XLSX.read(buf, { type: "array", cellDates: true, cellNF: true, cellStyles: true });
     const sheets = {};
     
     wb.SheetNames.forEach((name) => {
       const ws = wb.Sheets[name];
       
-      // Use sheet_to_json with header:1 to get array of arrays
-      let rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
-      
-      // Ensure we have at least empty array
-      if (!rows || rows.length === 0) {
-        rows = [[""]];
+      if (!ws || !ws["!ref"]) {
+        sheets[name] = [[""]];
+        return;
       }
-      
-      // Normalize all rows to same length
-      const maxCols = Math.max(...rows.map(r => r?.length || 0), 1);
-      rows = rows.map(r => {
-        const row = Array.isArray(r) ? r : [];
-        const padded = [...row];
-        while (padded.length < maxCols) padded.push("");
-        return padded;
-      });
-      
-      // Remove trailing empty rows
-      while (rows.length > 0) {
-        const lastRow = rows[rows.length - 1];
-        if (lastRow.every(c => c === "" || c == null)) {
-          rows.pop();
-        } else {
-          break;
+
+      const range = XLSX.utils.decode_range(ws["!ref"]);
+      const rows = [];
+
+      for (let R = range.s.r; R <= range.e.r; R++) {
+        const row = [];
+        for (let C = range.s.c; C <= range.e.c; C++) {
+          const cellAddr = XLSX.utils.encode_cell({ r: R, c: C });
+          const cell = ws[cellAddr];
+          
+          if (!cell || cell.v === undefined || cell.v === null) {
+            row.push("");
+          } else {
+            // w = formatted string, v = raw value
+            row.push(cell.w !== undefined ? cell.w : String(cell.v));
+          }
         }
+        rows.push(row);
       }
-      
-      // Ensure at least one row with one column
-      if (rows.length === 0) {
-        rows = [[""]];
+
+      // Remove trailing empty rows
+      while (rows.length > 0 && rows[rows.length - 1].every(c => c === "")) {
+        rows.pop();
       }
-      
-      sheets[name] = rows;
+
+      sheets[name] = rows.length > 0 ? rows : [[""]];
     });
     
     return { ok: true, sheets, names: wb.SheetNames };
@@ -400,9 +397,25 @@ export default function TemplateManager() {
 
   // ── copy/paste ──
   const copyTpl = (t) => setClipboard(t);
-  const pasteTpl = () => {
+  const pasteTpl = async () => {
     if (!clipboard) return;
-    persist([{ ...clipboard, id: Date.now(), name: clipboard.name + " (Copy)", createdAt: new Date().toISOString() }, ...templates]);
+    try {
+      const templateData = {
+        name: clipboard.name + " (Copy)",
+        type: clipboard.type || 'import',
+        description: clipboard.desc || 'Copied template',
+        template_data: {
+          sheets: clipboard.sheets,
+          sheetNames: clipboard.sheetNames || Object.keys(clipboard.sheets)
+        }
+      };
+      
+      await api.createTemplate(templateData);
+      await fetchTemplates();
+    } catch (err) {
+      console.error('Paste error:', err);
+      alert("Failed to copy template");
+    }
   };
 
   // ── open edit ──
@@ -463,28 +476,50 @@ export default function TemplateManager() {
 
   // ── merge ──
   const openMerge = () => { setMergeTarget(null); setPanel("merge"); };
-  const doMerge = () => {
+  const doMerge = async () => {
     if (!mergeTarget) return;
-    const sources = selected.filter((t) => t.id !== mergeTarget.id);
-    const merged = { ...mergeTarget.sheets };
-    sources.forEach((t) => Object.entries(t.sheets).forEach(([n, d]) => { merged[`${t.name}__${n}`] = d; }));
-    const updated = templates.map((t) =>
-      t.id === mergeTarget.id ? { ...t, name: t.name + " (Merged)", sheets: merged, sheetNames: Object.keys(merged) } : t
-    );
-    persist(updated);
-    setSelected([]);
-    setPanel(null);
+    try {
+      const sources = selected.filter((t) => t.id !== mergeTarget.id);
+      const merged = { ...mergeTarget.sheets };
+      sources.forEach((t) => Object.entries(t.sheets).forEach(([n, d]) => { merged[`${t.name}__${n}`] = d; }));
+      
+      const templateData = {
+        name: mergeTarget.name + " (Merged)",
+        type: "import",
+        description: `Merged from ${selected.length} templates`,
+        template_data: { sheets: merged, sheetNames: Object.keys(merged) }
+      };
+      
+      await api.createTemplate(templateData);
+      setSelected([]);
+      setPanel(null);
+      await fetchTemplates();
+    } catch (err) {
+      console.error('Merge error:', err);
+      alert("Failed to merge templates");
+    }
   };
 
   // ── report ──
   const openReport = () => { setReportName(`Report_${new Date().toISOString().slice(0,10)}`); setPanel("report"); };
-  const saveReport = () => {
-    const sheets = {};
-    selected.forEach((t) => Object.entries(t.sheets).forEach(([n, d]) => { sheets[`${t.name}__${n}`] = d; }));
-    const tpl = { id: Date.now(), name: reportName, type: "report", desc: `From ${selected.length} template(s)`, sheets, sheetNames: Object.keys(sheets), createdAt: new Date().toISOString() };
-    persist([tpl, ...templates]);
-    setSelected([]);
-    setPanel(null);
+  const saveReport = async () => {
+    try {
+      const sheets = {};
+      selected.forEach((t) => Object.entries(t.sheets).forEach(([n, d]) => { sheets[`${t.name}__${n}`] = d; }));
+      const templateData = {
+        name: reportName,
+        type: "report",
+        description: `From ${selected.length} template(s)`,
+        template_data: { sheets, sheetNames: Object.keys(sheets) }
+      };
+      await api.createTemplate(templateData);
+      setSelected([]);
+      setPanel(null);
+      await fetchTemplates();
+    } catch (err) {
+      console.error('Save report error:', err);
+      alert("Failed to save report");
+    }
   };
   const exportReport = () => {
     const sheets = {};
