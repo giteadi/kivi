@@ -189,7 +189,7 @@ function App() {
   const handleSetActiveItem = (item) => {
     setActiveItem(item);
     // Reset currentView when navigating to main sections to avoid conflicts
-    if (item === 'sessions' || item === 'dashboard' || item === 'patients' || item === 'doctors' || item === 'clinics' || item === 'services') {
+    if (item === 'sessions' || item === 'dashboard' || item === 'patients' || item === 'doctors' || item === 'clinics' || item === 'services' || item === 'assessment-list' || item === 'therapy-list') {
       setCurrentView(item);
     }
     updateNavigationHistory(item);
