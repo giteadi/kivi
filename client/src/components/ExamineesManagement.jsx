@@ -86,6 +86,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
   const [showInvoiceConfirm, setShowInvoiceConfirm] = useState(false);
   const [showInvoiceScreen, setShowInvoiceScreen] = useState(false);
   const [currentPackage, setCurrentPackage] = useState(null); // Store created package
+  const [includeSubAccounts, setIncludeSubAccounts] = useState(false);
   const ASSESSMENT_PRICE = 5500;
 
   useEffect(() => {
@@ -1183,12 +1184,17 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input 
                       type="checkbox" 
+                      checked={includeSubAccounts}
+                      onChange={(e) => setIncludeSubAccounts(e.target.checked)}
                       className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                     <span className="text-sm text-gray-700">Include Sub-Accounts</span>
                   </label>
                   
-                  <button className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-sm font-medium">
+                  <button 
+                    onClick={() => setSortConfig({ key: 'lastName', direction: 'asc' })}
+                    className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  >
                     <FiRefreshCw className="w-4 h-4" />
                     <span>Reset Sort Order</span>
                   </button>
@@ -1599,12 +1605,17 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input 
                       type="checkbox" 
+                      checked={includeSubAccounts}
+                      onChange={(e) => setIncludeSubAccounts(e.target.checked)}
                       className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                     <span className="text-sm text-gray-700">Include Sub-Accounts</span>
                   </label>
 
-                  <button className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-sm font-medium sm:ml-auto">
+                  <button 
+                    onClick={() => setSortConfig({ key: 'lastName', direction: 'asc' })}
+                    className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-sm font-medium sm:ml-auto"
+                  >
                     <FiRefreshCw className="w-4 h-4" />
                     <span>Reset Sort Order</span>
                   </button>
@@ -2078,8 +2089,8 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                 <div className="bg-gray-50 border-t px-6 py-4 flex items-center gap-3 rounded-b-xl">
                   <button 
                     onClick={() => {
-                      // TODO: Implement search
                       setShowAdvancedSearch(false);
+                      setCurrentPage(1);
                     }}
                     className="px-6 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg hover:from-emerald-600 hover:to-teal-600 text-sm font-medium shadow-sm"
                   >
