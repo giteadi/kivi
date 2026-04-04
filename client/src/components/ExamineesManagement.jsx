@@ -40,6 +40,7 @@ import html2canvas from 'html2canvas';
 const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, onCreateNewPatient, activeItem = 'patients', setActiveItem }) => {
   const dispatch = useDispatch();
   const { patients, isLoading, error } = useSelector((state) => state.patients);
+  const { user } = useSelector((state) => state.auth);
 
   const [activeTab, setActiveTab] = useState('examinee');
   const [searchTerm, setSearchTerm] = useState('');
@@ -889,7 +890,6 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center space-x-4">
                 <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-lg">
-                  dashboard
                 </div>
                 <div className="h-6 w-px bg-gray-200" />
                 <span className="text-gray-600 font-medium">MindSaid Learning Centre</span>
@@ -899,9 +899,9 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                   <FiSettings className="w-5 h-5" />
                 </button>
                 <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
-                  KR
+                  {user?.first_name ? user.first_name.substring(0, 2).toUpperCase() : 'AD'}
                 </div>
-                <span className="text-sm font-medium text-gray-700">KRITIKA JAGGI</span>
+                <span className="text-sm font-medium text-gray-700">{user?.first_name && user?.last_name ? `${user.first_name.toUpperCase()} ${user.last_name.toUpperCase()}` : 'ADMIN USER'}</span>
               </div>
             </div>
           </div>
