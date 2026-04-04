@@ -167,6 +167,56 @@ class TemplateController {
     }
   }
 
+  // Bulk delete templates
+  async bulkDeleteTemplates(req, res) {
+    try {
+      const { ids } = req.body;
+      
+      if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Please provide an array of template IDs to delete'
+        });
+      }
+
+      console.log(`🗑️ BULK DELETE: Deleting ${ids.length} templates:`, ids);
+
+      // Delete templates one by one and count successes
+      let deletedCount = 0;
+      const errors = [];
+
+      for (const id of ids) {
+        try {
+          const deleted = await this.templateModel.delete(id);
+          if (deleted) {
+            deletedCount++;
+          } else {
+            errors.push(`Template ${id} not found`);
+          }
+        } catch (err) {
+          console.error(`Error deleting template ${id}:`, err);
+          errors.push(`Template ${id}: ${err.message}`);
+        }
+      }
+
+      console.log(`✅ BULK DELETE SUCCESS: Deleted ${deletedCount}/${ids.length} templates`);
+      
+      res.json({
+        success: true,
+        deletedCount,
+        totalRequested: ids.length,
+        errors: errors.length > 0 ? errors : undefined,
+        message: `Deleted ${deletedCount} template(s) successfully`
+      });
+    } catch (error) {
+      console.error('❌ BULK DELETE ERROR:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error during bulk delete'
+      });
+    }
+  }
+
   // Generate report from template
   async generateReportFromTemplate(req, res) {
     console.log(`📄 GENERATE REPORT METHOD CALLED!`);

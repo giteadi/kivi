@@ -22,4 +22,7 @@ router.put('/:id', templateController.updateTemplate.bind(templateController));
 // DELETE /api/templates/:id
 router.delete('/:id', templateController.deleteTemplate.bind(templateController));
 
+// POST /api/templates/bulk-delete - Bulk delete templates
+router.post('/bulk-delete', templateController.bulkDeleteTemplates.bind(templateController));
+
 module.exports = router;

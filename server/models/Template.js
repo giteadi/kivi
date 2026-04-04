@@ -62,9 +62,13 @@ class Template extends BaseModel {
       name: data.name,
       type: data.type || 'ADHDT2',
       description: data.description || '',
-      template_data: JSON.stringify(data),
+      template_data: typeof data.template_data === 'string' ? data.template_data : JSON.stringify(data.template_data || data),
       status: data.status || 'active',
-      created_by: data.createdBy || null,
+      created_by: data.createdBy || data.created_by || null,
+      excel_filename: data.excel_filename || null,
+      source_template_id: data.source_template_id || null,
+      is_merged: data.is_merged || 0,
+      merged_from: data.merged_from || null,
       created_at: new Date(),
       updated_at: new Date()
     };
@@ -78,10 +82,18 @@ class Template extends BaseModel {
       name: data.name,
       type: data.type || 'ADHDT2',
       description: data.description || '',
-      template_data: JSON.stringify(data),
+      template_data: typeof data.template_data === 'string' ? data.template_data : JSON.stringify(data.template_data || data),
       status: data.status || 'active',
+      excel_filename: data.excel_filename || null,
+      is_merged: data.is_merged !== undefined ? data.is_merged : undefined,
+      merged_from: data.merged_from || null,
       updated_at: new Date()
     };
+
+    // Remove undefined values
+    Object.keys(templateData).forEach(key => {
+      if (templateData[key] === undefined) delete templateData[key];
+    });
 
     return await this.update(id, templateData);
   }
