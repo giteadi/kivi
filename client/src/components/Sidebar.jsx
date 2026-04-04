@@ -46,7 +46,8 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
         section: 'MAIN',
         hasSubmenu: true,
         submenu: [
-          { id: 'encounters-list', label: 'Sessions List', icon: FiList }
+          { id: 'assessment-list', label: 'Assessment List', icon: FiFileText },
+          { id: 'therapy-list', label: 'Therapy List', icon: FiActivity }
         ]
       },
       { id: 'patients', label: 'Examinees', icon: FiUser, section: 'USERS' },
@@ -69,8 +70,8 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
       section: 'MAIN',
       hasSubmenu: true,
       submenu: [
-        { id: 'encounters-list', label: 'Sessions List', icon: FiList },
-        { id: 'encounter-templates', label: 'Session Templates', icon: FiFileText }
+        { id: 'assessment-list', label: 'Assessment List', icon: FiFileText },
+        { id: 'therapy-list', label: 'Therapy List', icon: FiActivity }
       ]
     },
     { id: 'patients', label: 'Examinees', icon: FiUser, section: 'USERS' },

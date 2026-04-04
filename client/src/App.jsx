@@ -74,6 +74,8 @@ import PlansList from './components/PlansList';
 import AdminSessionsList from './components/AdminSessionsList';
 import TemplateManager from './components/TemplateManager';
 import ExamineesManagement from './components/ExamineesManagement';
+import AssessmentList from './components/AssessmentList';
+import TherapyList from './components/TherapyList';
 
 function App() {
   const dispatch = useDispatch();
@@ -1200,6 +1202,12 @@ ${service.target_age_group || 'Not specified'}
       
       case 'sessions':
         return <PlansList />;
+
+      case 'assessment-list':
+        return <AssessmentList />;
+      
+      case 'therapy-list':
+        return <TherapyList />;
       
       case 'template-manager':
         return <TemplateManager />;

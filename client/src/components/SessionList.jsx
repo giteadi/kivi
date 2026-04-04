@@ -18,11 +18,13 @@ import {
   FiXCircle,
   FiAlertCircle,
   FiRefreshCw,
-  FiBell
+  FiBell,
+  FiGrid
 } from 'react-icons/fi';
 import { fetchPlans } from '../store/slices/plansSlice';
 import SessionCreateForm from './SessionCreateForm';
 import SessionEditForm from './SessionEditForm';
+import SessionCalendar from './SessionCalendar';
 import api from '../services/api';
 import { useSidebar } from '../App';
 import toast from 'react-hot-toast';
@@ -35,12 +37,15 @@ const SessionList = ({ onViewEncounter }) => {
   const sidebarContext = useSidebar() || {};
   const { sidebarCollapsed = false } = sidebarContext;
 
+  // Map plans to sessions for consistent naming
+  const sessions = plans || [];
+
   console.log('🔍 SessionList: Redux state - plans:', plans?.length || 0, 'loading:', loading, 'error:', error);
   
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [viewMode, setViewMode] = useState('card'); // card or table
+  const [viewMode, setViewMode] = useState('card'); // card, table, or calendar
   const [currentPage, setCurrentPage] = useState(1);
   const [plansPerPage] = useState(12);
   const [searchTerm, setSearchTerm] = useState('');
@@ -366,16 +371,27 @@ const SessionList = ({ onViewEncounter }) => {
                 className={`px-3 py-1.5 rounded transition-colors flex items-center ${
                   viewMode === 'card' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'
                 }`}
+                title="Card View"
               >
-                <FiEye className="w-4 h-4" />
+                <FiGrid className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('table')}
                 className={`px-3 py-1.5 rounded transition-colors flex items-center ${
                   viewMode === 'table' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'
                 }`}
+                title="Table View"
               >
                 <FiFilter className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('calendar')}
+                className={`px-3 py-1.5 rounded transition-colors flex items-center ${
+                  viewMode === 'calendar' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'
+                }`}
+                title="Calendar View"
+              >
+                <FiCalendar className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -565,6 +581,15 @@ const SessionList = ({ onViewEncounter }) => {
                       </motion.div>
                     ))}
                   </div>
+          ) : viewMode === 'calendar' ? (
+            <SessionCalendar 
+              sessions={filteredSessions}
+              onSessionClick={(session) => {
+                clearNewSessionStatus(session.id);
+                openEditForm(session);
+              }}
+              onViewSession={(session) => onViewEncounter && onViewEncounter(session.id)}
+            />
           ) : (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
               <div className="overflow-x-auto">

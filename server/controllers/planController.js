@@ -110,7 +110,7 @@ class PlanController {
         status: req.body.status?.toLowerCase() || 'active',
         duration: parseInt(req.body.duration) || 60,
         fee: parseFloat(req.body.price),
-        programme_id: 'PROG-' + Date.now(),
+        programme_id: 'P' + Date.now().toString().slice(-9),
         centre_id: req.body.centre_id || 1,
         therapist_id: req.body.therapist_id || null,
         created_at: new Date(),
