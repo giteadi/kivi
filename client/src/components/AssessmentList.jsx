@@ -186,7 +186,7 @@ const AssessmentList = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="lg:ml-64 p-4 lg:p-6 min-h-screen bg-gray-50">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
@@ -302,8 +302,8 @@ const AssessmentList = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center text-sm text-gray-600">
-                          <FiDollarSign className="w-4 h-4 mr-1 text-gray-400" />
-                          ₹{assessment.fee}
+                          <span className="text-gray-400 mr-1">₹</span>
+                          {assessment.fee}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
