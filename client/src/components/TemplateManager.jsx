@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import * as XLSX from "xlsx";
+import api from "../services/api";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 const colLabel = (i) => {
@@ -16,26 +17,48 @@ const parseExcel = (buf) => {
   try {
     const wb = XLSX.read(buf, { type: "array", cellDates: true, cellNF: true });
     const sheets = {};
+    
     wb.SheetNames.forEach((name) => {
       const ws = wb.Sheets[name];
-      const range = XLSX.utils.decode_range(ws["!ref"] || "A1:A1");
-      let rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "", blankrows: true, raw: false });
-      if (!rows.length || rows.every((r) => !r.some(Boolean))) {
-        rows = [];
-        for (let R = range.s.r; R <= range.e.r; R++) {
-          const row = [];
-          for (let C = range.s.c; C <= range.e.c; C++) {
-            const cell = ws[XLSX.utils.encode_cell({ r: R, c: C })];
-            row.push(cell ? (cell.w || cell.v?.toString() || "") : "");
-          }
-          rows.push(row);
+      
+      // Use sheet_to_json with header:1 to get array of arrays
+      let rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+      
+      // Ensure we have at least empty array
+      if (!rows || rows.length === 0) {
+        rows = [[""]];
+      }
+      
+      // Normalize all rows to same length
+      const maxCols = Math.max(...rows.map(r => r?.length || 0), 1);
+      rows = rows.map(r => {
+        const row = Array.isArray(r) ? r : [];
+        const padded = [...row];
+        while (padded.length < maxCols) padded.push("");
+        return padded;
+      });
+      
+      // Remove trailing empty rows
+      while (rows.length > 0) {
+        const lastRow = rows[rows.length - 1];
+        if (lastRow.every(c => c === "" || c == null)) {
+          rows.pop();
+        } else {
+          break;
         }
       }
-      while (rows.length && rows[rows.length - 1].every((c) => c === "")) rows.pop();
-      sheets[name] = rows.length ? rows : [[""]];
+      
+      // Ensure at least one row with one column
+      if (rows.length === 0) {
+        rows = [[""]];
+      }
+      
+      sheets[name] = rows;
     });
+    
     return { ok: true, sheets, names: wb.SheetNames };
   } catch (e) {
+    console.error("Excel parse error:", e);
     return { ok: false, error: e.message };
   }
 };
@@ -245,6 +268,8 @@ const SpreadsheetGrid = ({ data, onDataChange, readOnly = false }) => {
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 export default function TemplateManager() {
   const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [view, setView] = useState("grid"); // grid | list
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState([]);
@@ -263,37 +288,77 @@ export default function TemplateManager() {
 
   const fileRef = useRef(null);
 
-  // ── load from localStorage ──
+  // ── load from backend API ──
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("xlsm_templates");
-      if (saved) setTemplates(JSON.parse(saved));
-    } catch {}
+    fetchTemplates();
   }, []);
 
-  const persist = (list) => {
+  const fetchTemplates = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await api.getTemplates();
+      if (response.success && response.data) {
+        // Transform backend data to frontend format
+        const transformed = response.data.map(t => ({
+          id: t.id,
+          name: t.name,
+          type: t.type || 'import',
+          desc: t.description || `${t.name} template`,
+          sheets: t.template_data?.sheets || {},
+          sheetNames: t.template_data?.sheetNames || Object.keys(t.template_data?.sheets || {}),
+          createdAt: t.created_at || new Date().toISOString(),
+        }));
+        setTemplates(transformed);
+      }
+    } catch (err) {
+      console.error('Failed to fetch templates:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const persist = async (list) => {
     setTemplates(list);
-    try { localStorage.setItem("xlsm_templates", JSON.stringify(list)); } catch {}
   };
 
   // ── upload ──
-  const handleUpload = (e) => {
+  const handleUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    setLoading(true);
     const reader = new FileReader();
-    reader.onload = (ev) => {
-      const res = parseExcel(ev.target.result);
-      if (!res.ok) { alert("Parse error: " + res.error); return; }
-      const tpl = {
-        id: Date.now(),
-        name: file.name.replace(/\.(xlsx?|csv)$/i, ""),
-        type: "import",
-        desc: `${Object.keys(res.sheets).length} sheet(s) • ${file.name}`,
-        sheets: res.sheets,
-        sheetNames: res.names,
-        createdAt: new Date().toISOString(),
-      };
-      persist([tpl, ...templates]);
+    reader.onload = async (ev) => {
+      try {
+        const res = parseExcel(ev.target.result);
+        if (!res.ok) { alert("Parse error: " + res.error); return; }
+        
+        // Prepare template data for backend
+        const templateData = {
+          name: file.name.replace(/\.(xlsx?|csv)$/i, ""),
+          type: "import",
+          description: `${Object.keys(res.sheets).length} sheet(s) • ${file.name}`,
+          template_data: {
+            sheets: res.sheets,
+            sheetNames: res.names
+          }
+        };
+        
+        // Save to backend API
+        const response = await api.createTemplate(templateData);
+        if (response.success) {
+          // Refresh templates from backend
+          await fetchTemplates();
+        } else {
+          alert("Failed to save template: " + (response.message || "Unknown error"));
+        }
+      } catch (err) {
+        console.error('Upload error:', err);
+        alert("Error uploading template: " + err.message);
+      } finally {
+        setLoading(false);
+      }
     };
     reader.readAsArrayBuffer(file);
     e.target.value = "";
@@ -309,10 +374,28 @@ export default function TemplateManager() {
   };
 
   // ── delete ──
-  const deleteTpl = (id) => persist(templates.filter((t) => t.id !== id));
-  const bulkDelete = () => {
-    persist(templates.filter((t) => !selected.find((s) => s.id === t.id)));
-    setSelected([]);
+  const deleteTpl = async (id) => {
+    try {
+      await api.deleteTemplate(id);
+      await fetchTemplates();
+    } catch (err) {
+      console.error('Delete error:', err);
+      alert("Failed to delete template");
+    }
+  };
+  const bulkDelete = async () => {
+    try {
+      const ids = selected.map(s => s.id);
+      await api.request('/templates/bulk-delete', {
+        method: 'POST',
+        body: JSON.stringify({ ids })
+      });
+      setSelected([]);
+      await fetchTemplates();
+    } catch (err) {
+      console.error('Bulk delete error:', err);
+      alert("Failed to delete templates");
+    }
   };
 
   // ── copy/paste ──
@@ -332,12 +415,25 @@ export default function TemplateManager() {
   };
 
   // ── save edit ──
-  const saveEdit = () => {
-    const updated = templates.map((t) =>
-      t.id === activeTemplate.id ? { ...t, name: editName, sheets: editSheets, sheetNames: Object.keys(editSheets) } : t
-    );
-    persist(updated);
-    setPanel(null);
+  const saveEdit = async () => {
+    try {
+      const updatedTemplate = {
+        name: editName,
+        type: activeTemplate.type,
+        description: activeTemplate.desc,
+        template_data: {
+          sheets: editSheets,
+          sheetNames: Object.keys(editSheets)
+        }
+      };
+      
+      await api.updateTemplate(activeTemplate.id, updatedTemplate);
+      await fetchTemplates();
+      setPanel(null);
+    } catch (err) {
+      console.error('Save error:', err);
+      alert("Failed to save template changes");
+    }
   };
 
   // ── open view ──
@@ -529,9 +625,13 @@ export default function TemplateManager() {
         <div style={css.header}>
         <div style={css.headerLeft}>
           <h1 style={css.h1}>📊 Template Manager</h1>
-          <p style={css.subtitle}>{templates.length} template{templates.length !== 1 ? "s" : ""} • Excel-like editing</p>
+          <p style={css.subtitle}>
+            {loading ? "Loading..." : `${templates.length} template${templates.length !== 1 ? "s" : ""} • Excel-like editing`}
+            {error && <span style={{ color: "#DC2626", marginLeft: 8 }}>⚠️ {error}</span>}
+          </p>
         </div>
         <div style={css.headerRight}>
+          {loading && <span style={{ color: "#6B7280", fontSize: 13 }}>⏳ Loading...</span>}
           {clipboard && (
             <button style={css.btn("green")} onClick={pasteTpl}>
               <Icon d={icons.copy} size={14} /> Paste Copy
