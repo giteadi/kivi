@@ -1,351 +1,406 @@
 #!/usr/bin/env python3
 """
-Excel Parser - Supports .xlsx, .xls, .csv formats
-Uses openpyxl for .xlsx and xlrd for .xls
+Universal Excel Parser v4
+Special handling: Embedded Word Documents (OLE objects) in Excel sheets
+Each sheet has an embedded .docx file in xl/embeddings/
 """
 
-import openpyxl
-import sys
-import os
-import csv
-import json
-import zipfile
-import re
+import sys, os, csv, json, zipfile, re
 import xml.etree.ElementTree as ET
 
-def parse_excel(file_path):
-    """Parse Excel/CSV file and return sheets data as JSON"""
+def log(msg):
+    print(f"[PARSER] {msg}", file=sys.stderr)
+
+# ─── WORD DOCX PARSER ────────────────────────────────────────────────────────
+def parse_docx_bytes(docx_bytes):
+    """Extract text from a .docx file given as bytes. Returns list of rows."""
+    rows = []
     try:
-        file_ext = os.path.splitext(file_path)[1].lower()
-        
-        if file_ext == '.csv':
-            return parse_csv(file_path)
-        elif file_ext == '.xls':
-            return parse_xls(file_path)
-        else:
-            # .xlsx, .xlsm, .xltx, .xltm
-            return parse_xlsx(file_path)
+        with zipfile.ZipFile(__import__('io').BytesIO(docx_bytes)) as dz:
+            # Read word/document.xml
+            doc_xml = dz.read('word/document.xml')
+            root = ET.fromstring(doc_xml)
+
+            # Word namespace
+            W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
+
+            # Extract paragraphs
+            for para in root.findall(f'.//{{{W}}}p'):
+                # Collect all runs in paragraph
+                parts = []
+                for run in para.findall(f'.//{{{W}}}r'):
+                    for t in run.findall(f'{{{W}}}t'):
+                        if t.text:
+                            parts.append(t.text)
+                    # Tab character
+                    if run.find(f'{{{W}}}tab') is not None:
+                        parts.append('\t')
+                
+                line = ''.join(parts).strip()
+                if line:
+                    rows.append([line])
+
+            # Also extract table cells if any
+            for tbl in root.findall(f'.//{{{W}}}tbl'):
+                for tr in tbl.findall(f'.//{{{W}}}tr'):
+                    row_cells = []
+                    for tc in tr.findall(f'.//{{{W}}}tc'):
+                        cell_text = []
+                        for para in tc.findall(f'.//{{{W}}}p'):
+                            parts = []
+                            for run in para.findall(f'.//{{{W}}}r'):
+                                for t in run.findall(f'{{{W}}}t'):
+                                    if t.text:
+                                        parts.append(t.text)
+                            line = ''.join(parts).strip()
+                            if line:
+                                cell_text.append(line)
+                        row_cells.append('\n'.join(cell_text))
+                    if any(c.strip() for c in row_cells):
+                        rows.append(row_cells)
+
+    except Exception as e:
+        log(f"  DOCX parse error: {e}")
     
+    return rows if rows else [['']]
+
+# ─── GET EMBEDDING PATH FOR EACH SHEET ───────────────────────────────────────
+def get_sheet_embeddings(zf):
+    """
+    Returns dict: sheet_xml_path → list of embedded docx paths
+    Reads xl/worksheets/_rels/sheetN.xml.rels to find oleObject relationships
+    """
+    result = {}
+    ns_rels = 'http://schemas.openxmlformats.org/package/2006/relationships'
+    ns_main = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+    ns_r    = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
+    all_files = set(zf.namelist())
+
+    try:
+        wb_root = ET.fromstring(zf.read('xl/workbook.xml'))
+        wb_rels  = ET.fromstring(zf.read('xl/_rels/workbook.xml.rels'))
+
+        rid_to_path = {}
+        for rel in wb_rels.findall(f'{{{ns_rels}}}Relationship'):
+            rid    = rel.attrib.get('Id', '')
+            target = rel.attrib.get('Target', '')
+            if rid and target:
+                p = os.path.normpath('xl/' + target.lstrip('/')).replace('\\', '/')
+                rid_to_path[rid] = p
+
+        for sh in wb_root.findall(f'.//{{{ns_main}}}sheet'):
+            rid     = sh.attrib.get(f'{{{ns_r}}}id', '')
+            ws_path = rid_to_path.get(rid, '')
+            if not ws_path:
+                continue
+
+            rels_path = ws_path.replace('xl/worksheets/', 'xl/worksheets/_rels/') + '.rels'
+            embeddings = []
+
+            if rels_path in all_files:
+                try:
+                    ws_rels = ET.fromstring(zf.read(rels_path))
+                    for rel in ws_rels.findall(f'{{{ns_rels}}}Relationship'):
+                        target = rel.attrib.get('Target', '')
+                        rtype  = rel.attrib.get('Type', '')
+                        if not target:
+                            continue
+                        # Resolve path relative to xl/worksheets/
+                        full = os.path.normpath('xl/worksheets/' + target).replace('\\', '/')
+                        # Fix ../embeddings/ pattern
+                        full = re.sub(r'xl/worksheets/\.\./(.+)', r'xl/\1', full)
+                        full = full.replace('\\', '/')
+                        if full in all_files and full.endswith('.docx'):
+                            embeddings.append(full)
+                            log(f"  Found embedding: {full}")
+                except Exception as e:
+                    log(f"  Rels error {ws_path}: {e}")
+
+            result[ws_path] = embeddings
+    except Exception as e:
+        log(f"  SheetEmbedding map error: {e}")
+
+    return result
+
+# ─── SHARED STRINGS ──────────────────────────────────────────────────────────
+def load_shared_strings(zf):
+    shared = []
+    try:
+        root = ET.fromstring(zf.read('xl/sharedStrings.xml'))
+        ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+        for si in root.findall(f'.//{{{ns}}}si'):
+            parts = [t.text for t in si.findall(f'.//{{{ns}}}t') if t.text]
+            shared.append(''.join(parts))
+    except Exception:
+        pass
+    return shared
+
+# ─── STYLES ──────────────────────────────────────────────────────────────────
+def load_styles(zf):
+    fmt_ids, num_fmts = [], {}
+    try:
+        root = ET.fromstring(zf.read('xl/styles.xml'))
+        ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+        for nf in root.findall(f'.//{{{ns}}}numFmt'):
+            num_fmts[int(nf.attrib.get('numFmtId', 0))] = nf.attrib.get('formatCode', '')
+        for xf in root.findall(f'.//{{{ns}}}cellXfs/{{{ns}}}xf'):
+            fmt_ids.append(int(xf.attrib.get('numFmtId', 0)))
+    except Exception:
+        pass
+    return fmt_ids, num_fmts
+
+def is_date_fmt(fmt_id, num_fmts):
+    builtin = set(range(14, 18)) | {22} | set(range(27, 37)) | set(range(45, 48)) | set(range(50, 59))
+    if fmt_id in builtin:
+        return True
+    return any(c in num_fmts.get(fmt_id, '') for c in 'yYdDhHsS')
+
+def format_value(raw, fmt_id, num_fmts, ctype):
+    if raw is None:
+        return ''
+    try:
+        if ctype == 'b':
+            return 'TRUE' if str(raw) in ('1', 'true') else 'FALSE'
+        if ctype == 'e':
+            return str(raw)
+        try:
+            fval = float(raw)
+            if fmt_id and is_date_fmt(fmt_id, num_fmts):
+                import datetime
+                dt = datetime.datetime(1899, 12, 30) + datetime.timedelta(days=fval)
+                return dt.strftime('%d/%m/%Y')
+            return str(int(fval)) if fval == int(fval) else str(fval)
+        except (ValueError, TypeError):
+            return str(raw).strip()
+    except Exception:
+        return str(raw) if raw else ''
+
+def col_to_idx(col):
+    idx = 0
+    for ch in col.upper():
+        idx = idx * 26 + (ord(ch) - 64)
+    return idx - 1
+
+def ref_to_rc(ref):
+    m = re.match(r'([A-Za-z]+)(\d+)', ref)
+    return (int(m.group(2)) - 1, col_to_idx(m.group(1))) if m else (0, 0)
+
+def parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts):
+    ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+    root = ET.fromstring(ws_bytes)
+    grid = {}
+    max_r = max_c = 0
+    for row_el in root.findall(f'.//{{{ns}}}row'):
+        for c_el in row_el.findall(f'{{{ns}}}c'):
+            ref = c_el.attrib.get('r', '')
+            if not ref:
+                continue
+            r, c = ref_to_rc(ref)
+            max_r, max_c = max(max_r, r), max(max_c, c)
+            ctype = c_el.attrib.get('t', '')
+            sidx  = int(c_el.attrib.get('s', 0))
+            fmt   = fmt_ids[sidx] if sidx < len(fmt_ids) else 0
+            v_el  = c_el.find(f'{{{ns}}}v')
+            raw   = None
+            if ctype == 's' and v_el is not None:
+                try:
+                    raw = shared[int(v_el.text)]
+                    ctype = 'str'
+                except Exception:
+                    raw = v_el.text or ''
+            elif ctype == 'inlineStr':
+                parts = [t.text for t in c_el.findall(f'.//{{{ns}}}t') if t.text]
+                raw = ''.join(parts)
+                ctype = 'str'
+            elif v_el is not None and v_el.text:
+                raw = v_el.text
+            val = format_value(raw, fmt, num_fmts, ctype)
+            if val:
+                grid[(r, c)] = val
+    return grid, max_r, max_c
+
+def load_merge_map(ws_bytes):
+    ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+    merge_map = {}
+    try:
+        root = ET.fromstring(ws_bytes)
+        for mc in root.findall(f'.//{{{ns}}}mergeCell'):
+            ref = mc.attrib.get('ref', '')
+            if ':' not in ref:
+                continue
+            s, e = ref.split(':')
+            sr, sc = ref_to_rc(s)
+            er, ec = ref_to_rc(e)
+            for r in range(sr, er + 1):
+                for c in range(sc, ec + 1):
+                    merge_map[(r, c)] = (sr, sc)
+    except Exception:
+        pass
+    return merge_map
+
+# ─── MAIN XLSX PARSER ────────────────────────────────────────────────────────
+def parse_xlsx(file_path):
+    sheets, sheet_names = {}, []
+
+    try:
+        with zipfile.ZipFile(file_path, 'r') as zf:
+            all_files = set(zf.namelist())
+            shared    = load_shared_strings(zf)
+            fmt_ids, num_fmts = load_styles(zf)
+            sheet_embed_map   = get_sheet_embeddings(zf)
+
+            ns_main = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+            ns_r    = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
+            ns_rels = 'http://schemas.openxmlformats.org/package/2006/relationships'
+
+            wb_root = ET.fromstring(zf.read('xl/workbook.xml'))
+            wb_rels  = ET.fromstring(zf.read('xl/_rels/workbook.xml.rels'))
+
+            rid_to_path = {}
+            for rel in wb_rels.findall(f'{{{ns_rels}}}Relationship'):
+                rid    = rel.attrib.get('Id', '')
+                target = rel.attrib.get('Target', '')
+                if rid and target:
+                    p = os.path.normpath('xl/' + target.lstrip('/')).replace('\\', '/')
+                    rid_to_path[rid] = p
+
+            for sh in wb_root.findall(f'.//{{{ns_main}}}sheet'):
+                name    = sh.attrib.get('name', '')
+                rid     = sh.attrib.get(f'{{{ns_r}}}id', '')
+                ws_path = rid_to_path.get(rid, '')
+                if not name or not ws_path:
+                    continue
+
+                sheet_names.append(name)
+                log(f"Sheet '{name}' → {ws_path}")
+
+                # ── 1. Regular cells ─────────────────────────────────────
+                cell_grid, max_r, max_c, merge_map = {}, 0, 0, {}
+                if ws_path in all_files:
+                    try:
+                        ws_bytes  = zf.read(ws_path)
+                        cell_grid, max_r, max_c = parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts)
+                        merge_map = load_merge_map(ws_bytes)
+                    except Exception as e:
+                        log(f"  Cell error: {e}")
+
+                # Fill merged cells
+                for (r, c), (sr, sc) in merge_map.items():
+                    if (r, c) != (sr, sc) and (sr, sc) in cell_grid and (r, c) not in cell_grid:
+                        cell_grid[(r, c)] = cell_grid[(sr, sc)]
+                        max_r, max_c = max(max_r, r), max(max_c, c)
+
+                non_empty_cells = sum(1 for v in cell_grid.values() if str(v).strip())
+                log(f"  Regular cells: {non_empty_cells}")
+
+                # ── 2. Embedded Word documents ───────────────────────────
+                embed_rows = []
+                embeddings = sheet_embed_map.get(ws_path, [])
+                log(f"  Embeddings: {embeddings}")
+
+                for embed_path in embeddings:
+                    try:
+                        docx_bytes = zf.read(embed_path)
+                        doc_rows   = parse_docx_bytes(docx_bytes)
+                        embed_rows.extend(doc_rows)
+                        log(f"  DOCX '{embed_path}': {len(doc_rows)} rows")
+                        if doc_rows:
+                            log(f"  DOCX first 3 rows: {doc_rows[:3]}")
+                    except Exception as e:
+                        log(f"  DOCX error {embed_path}: {e}")
+
+                # ── 3. Build final rows ───────────────────────────────────
+                if non_empty_cells > 0:
+                    # Use cell data
+                    rows = []
+                    for r in range(max_r + 1):
+                        row = [cell_grid.get((r, c), '') for c in range(max_c + 1)]
+                        rows.append(row)
+                    while len(rows) > 1 and all(v == '' for v in rows[-1]):
+                        rows.pop()
+                    if rows:
+                        max_c2 = max((c for row in rows for c, v in enumerate(row) if v), default=0)
+                        rows = [row[:max_c2 + 1] for row in rows]
+                    # Append embedded doc rows if any
+                    if embed_rows:
+                        rows.extend(embed_rows)
+                elif embed_rows:
+                    # Use embedded doc data
+                    rows = embed_rows
+                else:
+                    rows = [['']]
+
+                sheets[name] = rows
+                total = sum(1 for row in rows for v in row if str(v).strip())
+                log(f"  FINAL: {len(rows)} rows, {total} non-empty cells")
+
     except Exception as e:
         import traceback
-        return {"ok": False, "error": str(e), "traceback": traceback.format_exc()}
+        log(f"FATAL: {e}\n{traceback.format_exc()}")
+        return {'ok': False, 'error': str(e)}
 
-def parse_csv(file_path):
-    """Parse CSV file"""
-    try:
-        sheets = {}
-        rows = []
-        
-        encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
-        
-        for encoding in encodings:
-            try:
-                with open(file_path, 'r', encoding=encoding, newline='') as f:
-                    reader = csv.reader(f)
-                    for row in reader:
-                        row_data = [str(cell).strip() if cell is not None else "" for cell in row]
-                        rows.append(row_data)
-                break
-            except UnicodeDecodeError:
-                continue
-        
-        if not rows:
-            rows = [[""]]
-        
-        sheets["Sheet1"] = rows
-        
-        return {"ok": True, "sheets": sheets, "names": ["Sheet1"]}
-    except Exception as e:
-        return {"ok": False, "error": f"CSV parse error: {str(e)}"}
+    total = sum(1 for s in sheets.values() for row in s for v in row if str(v).strip())
+    log(f"DONE: {len(sheets)} sheets, {total} total cells")
+    return {'ok': True, 'sheets': sheets, 'names': sheet_names,
+            'meta': {'total_cells': total}}
 
+# ─── XLS ─────────────────────────────────────────────────────────────────────
 def parse_xls(file_path):
-    """Parse .xls files using xlrd"""
     try:
         import xlrd
-        
         wb = xlrd.open_workbook(file_path)
-        sheets = {}
-        sheet_names = wb.sheet_names()
-        
-        for sheet_name in sheet_names:
-            ws = wb.sheet_by_name(sheet_name)
+        sheets, names = {}, wb.sheet_names()
+        for name in names:
+            ws   = wb.sheet_by_name(name)
             rows = []
-            
-            for row_idx in range(ws.nrows):
-                row_data = []
-                for col_idx in range(ws.ncols):
-                    cell = ws.cell(row_idx, col_idx)
-                    value = cell.value
-                    
-                    if value is None or value == "":
-                        row_data.append("")
-                    elif isinstance(value, float) and value == int(value):
-                        row_data.append(str(int(value)))
+            for r in range(ws.nrows):
+                row = []
+                for c in range(ws.ncols):
+                    v = ws.cell(r, c).value
+                    if v is None or v == '':
+                        row.append('')
+                    elif isinstance(v, float):
+                        row.append(str(int(v)) if v == int(v) else str(v))
                     else:
-                        row_data.append(str(value).strip())
-                
-                rows.append(row_data)
-            
-            sheets[sheet_name] = rows if rows else [[""]]
-        
-        wb.release_resources()
-        
-        return {"ok": True, "sheets": sheets, "names": sheet_names}
-    except ImportError:
-        return {"ok": False, "error": "xlrd not installed. Run: pip3 install xlrd"}
-    except Exception as e:
-        return {"ok": False, "error": f"XLS parse error: {str(e)}"}
-
-def extract_xlsx_data(file_path, data_only=True):
-    """Extract data from XLSX file - helper function"""
-    try:
-        wb = openpyxl.load_workbook(file_path, data_only=data_only)
-        sheets = {}
-        sheet_names = wb.sheetnames
-        
-        for sheet_name in sheet_names:
-            ws = wb[sheet_name]
-            rows = []
-            
-            # Get the dimensions to know the actual used range
-            if ws.dimensions:
-                # Iterate through all rows in the used range
-                for row in ws.iter_rows(values_only=True):
-                    row_data = []
-                    for cell_value in row:
-                        if cell_value is None or cell_value == "":
-                            row_data.append("")
-                        elif isinstance(cell_value, float) and cell_value == int(cell_value):
-                            row_data.append(str(int(cell_value)))
-                        else:
-                            row_data.append(str(cell_value).strip())
-                    rows.append(row_data)
-            
-            # Remove trailing empty rows but keep at least one
-            while len(rows) > 1 and all(cell == "" for cell in rows[-1]):
+                        row.append(str(v).strip())
+                rows.append(row)
+            while len(rows) > 1 and all(c == '' for c in rows[-1]):
                 rows.pop()
-            
-            if not rows:
-                rows = [[""]]
-            
-            sheets[sheet_name] = rows
-        
-        wb.close()
-        return sheets, sheet_names
-        
+            sheets[name] = rows or [['']]
+        wb.release_resources()
+        return {'ok': True, 'sheets': sheets, 'names': names}
+    except ImportError:
+        return {'ok': False, 'error': 'xlrd not installed'}
     except Exception as e:
-        raise Exception(f"Failed to extract XLSX data with data_only={data_only}: {str(e)}")
+        return {'ok': False, 'error': f'XLS: {e}'}
 
-def _xlsx_sheet_drawing_map(zf):
-    """Return mapping: sheet_name -> drawing_part_path (e.g. xl/drawings/drawing1.xml)"""
-    # Read workbook to get sheet names + relationship ids
-    wb_root = ET.fromstring(zf.read('xl/workbook.xml'))
-    wb_rels_root = ET.fromstring(zf.read('xl/_rels/workbook.xml.rels'))
-
-    ns = {
-        'main': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main',
-        'r': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships',
-        'rels': 'http://schemas.openxmlformats.org/package/2006/relationships'
-    }
-
-    rid_to_target = {}
-    for rel in wb_rels_root.findall('rels:Relationship', ns):
-        rid = rel.attrib.get('Id')
-        target = rel.attrib.get('Target')
-        if rid and target:
-            # Targets in workbook rels are relative to xl/
-            rid_to_target[rid] = 'xl/' + target.lstrip('/')
-
-    sheet_name_to_sheet_part = {}
-    for sh in wb_root.findall('main:sheets/main:sheet', ns):
-        name = sh.attrib.get('name')
-        rid = sh.attrib.get('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id')
-        if name and rid and rid in rid_to_target:
-            sheet_name_to_sheet_part[name] = rid_to_target[rid]
-
-    # For each worksheet part, resolve its drawing relationship
-    out = {}
-    for sheet_name, sheet_part in sheet_name_to_sheet_part.items():
+# ─── CSV ─────────────────────────────────────────────────────────────────────
+def parse_csv(file_path):
+    rows = []
+    for enc in ('utf-8', 'latin-1', 'cp1252'):
         try:
-            sheet_xml = ET.fromstring(zf.read(sheet_part))
-        except KeyError:
+            with open(file_path, 'r', encoding=enc, newline='') as f:
+                rows = [[str(c).strip() for c in row] for row in csv.reader(f)]
+            break
+        except UnicodeDecodeError:
             continue
+    return {'ok': True, 'sheets': {'Sheet1': rows or [['']]}, 'names': ['Sheet1']}
 
-        # Find <drawing r:id="rIdX"/>
-        drawing_el = sheet_xml.find('main:drawing', ns)
-        if drawing_el is None:
-            continue
+# ─── ENTRY ───────────────────────────────────────────────────────────────────
+def parse_excel(file_path):
+    ext = os.path.splitext(file_path)[1].lower()
+    if ext == '.csv':
+        return parse_csv(file_path)
+    if ext == '.xls':
+        return parse_xls(file_path)
+    return parse_xlsx(file_path)
 
-        drawing_rid = drawing_el.attrib.get('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id')
-        if not drawing_rid:
-            continue
-
-        # Worksheet rels file
-        # sheet_part: xl/worksheets/sheet1.xml -> rels: xl/worksheets/_rels/sheet1.xml.rels
-        rels_path = sheet_part.replace('xl/worksheets/', 'xl/worksheets/_rels/') + '.rels'
-        try:
-            rels_xml = ET.fromstring(zf.read(rels_path))
-        except KeyError:
-            continue
-
-        drawing_target = None
-        for rel in rels_xml.findall('rels:Relationship', ns):
-            if rel.attrib.get('Id') == drawing_rid:
-                drawing_target = rel.attrib.get('Target')
-                break
-        if not drawing_target:
-            continue
-
-        # Target is relative to xl/worksheets/
-        # typically "../drawings/drawing1.xml"
-        drawing_part = os.path.normpath('xl/worksheets/' + drawing_target).replace('xl/worksheets/xl/', 'xl/')
-        if drawing_part.startswith('xl/'):
-            out[sheet_name] = drawing_part
-    return out
-
-def _extract_text_from_drawing_xml(xml_bytes):
-    """Extract anchored texts from a drawing part. Returns list of (row, col, text) where row/col are 0-based."""
-    root = ET.fromstring(xml_bytes)
-    ns = {
-        'xdr': 'http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing',
-        'a': 'http://schemas.openxmlformats.org/drawingml/2006/main'
-    }
-
-    def collect_text(tx_body_el):
-        if tx_body_el is None:
-            return ''
-        parts = []
-        # paragraphs
-        for p in tx_body_el.findall('.//a:p', ns):
-            runs = []
-            for t in p.findall('.//a:t', ns):
-                if t.text:
-                    runs.append(t.text)
-            para = ''.join(runs).strip()
-            if para:
-                parts.append(para)
-        return '\n'.join(parts).strip()
-
-    anchored = []
-    # twoCellAnchor / oneCellAnchor
-    for anchor in root.findall('xdr:twoCellAnchor', ns) + root.findall('xdr:oneCellAnchor', ns):
-        from_el = anchor.find('xdr:from', ns)
-        if from_el is None:
-            continue
-        col_el = from_el.find('xdr:col', ns)
-        row_el = from_el.find('xdr:row', ns)
-        if col_el is None or row_el is None or col_el.text is None or row_el.text is None:
-            continue
-        try:
-            col = int(col_el.text)
-            row = int(row_el.text)
-        except ValueError:
-            continue
-
-        # Shape text is usually in sp/txBody
-        tx_body = anchor.find('.//xdr:sp//a:txBody', ns)
-        text = collect_text(tx_body)
-        if text:
-            anchored.append((row, col, text))
-    return anchored
-
-def extract_xlsx_shapes_text(file_path):
-    """Fallback: Extract text from shapes/textboxes inside XLSX drawings and place into a grid."""
-    sheets = {}
-    sheet_names = []
-    with zipfile.ZipFile(file_path, 'r') as zf:
-        sheet_drawing = _xlsx_sheet_drawing_map(zf)
-        for sheet_name, drawing_part in sheet_drawing.items():
-            sheet_names.append(sheet_name)
-            try:
-                anchored = _extract_text_from_drawing_xml(zf.read(drawing_part))
-            except KeyError:
-                sheets[sheet_name] = [[""]]
-                continue
-
-            if not anchored:
-                sheets[sheet_name] = [[""]]
-                continue
-
-            max_row = max(r for r, _, _ in anchored)
-            max_col = max(c for _, c, _ in anchored)
-            # Safety caps
-            max_row = min(max_row, 500)
-            max_col = min(max_col, 200)
-            grid = [["" for _ in range(max_col + 1)] for __ in range(max_row + 1)]
-            for r, c, text in anchored:
-                if r <= max_row and c <= max_col:
-                    grid[r][c] = text
-            sheets[sheet_name] = grid
-
-    return sheets, sheet_names
-
-def parse_xlsx(file_path):
-    """Parse .xlsx files - FIXED to properly extract all data"""
-    
-    try:
-        source = 'cells'
-        # Try with data_only=True first (gets calculated values from formulas)
-        sheets, sheet_names = extract_xlsx_data(file_path, data_only=True)
-        
-        # Check if we got any real data
-        total_non_empty_cells = sum(
-            sum(1 for cell in row if cell != "")
-            for sheet in sheets.values()
-            for row in sheet
-        )
-        
-        # If no data found, fallback to data_only=False (gets raw values/formulas)
-        if total_non_empty_cells == 0:
-            sheets, sheet_names = extract_xlsx_data(file_path, data_only=False)
-
-        # If still empty, try extracting textbox/shape text from drawings
-        total_non_empty_cells = sum(
-            sum(1 for cell in row if cell != "")
-            for sheet in sheets.values()
-            for row in sheet
-        )
-        if total_non_empty_cells == 0:
-            shape_sheets, shape_names = extract_xlsx_shapes_text(file_path)
-            shape_non_empty = sum(
-                sum(1 for cell in row if cell != "")
-                for sheet in shape_sheets.values()
-                for row in sheet
-            )
-            if shape_non_empty > 0:
-                sheets, sheet_names = shape_sheets, shape_names
-                source = 'shapes'
-        total_non_empty_cells = sum(
-            sum(1 for cell in row if cell != "")
-            for sheet in sheets.values()
-            for row in sheet
-        )
-        return {"ok": True, "sheets": sheets, "names": sheet_names, "meta": {"source": source, "non_empty_cells": total_non_empty_cells}}
-        
-    except Exception as e:
-        # Try fallback method with data_only=False
-        try:
-            sheets, sheet_names = extract_xlsx_data(file_path, data_only=False)
-            total_non_empty_cells = sum(
-                sum(1 for cell in row if cell != "")
-                for sheet in sheets.values()
-                for row in sheet
-            )
-            return {"ok": True, "sheets": sheets, "names": sheet_names, "meta": {"source": 'cells', "non_empty_cells": total_non_empty_cells}}
-        except Exception as e2:
-            import traceback
-            return {"ok": False, "error": f"XLSX parse error: {str(e)}", "traceback": traceback.format_exc()}
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print(json.dumps({"ok": False, "error": "No file path provided"}))
+        print(json.dumps({'ok': False, 'error': 'No file path'}))
         sys.exit(1)
-    
-    file_path = sys.argv[1]
-    
-    if not os.path.exists(file_path):
-        print(json.dumps({"ok": False, "error": f"File not found: {file_path}"}))
+    fp = sys.argv[1]
+    if not os.path.exists(fp):
+        print(json.dumps({'ok': False, 'error': f'Not found: {fp}'}))
         sys.exit(1)
-    
-    result = parse_excel(file_path)
-    print(json.dumps(result))
+    print(json.dumps(parse_excel(fp), ensure_ascii=False))
