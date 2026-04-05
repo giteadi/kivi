@@ -1,18 +1,39 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
+const path = require('path');
 const TemplateController = require('../controllers/templateController');
 
 const templateController = new TemplateController();
 
-// Configure multer for file uploads
-const upload = multer({ dest: 'uploads/' });
+// CORS middleware for this route
+const corsMiddleware = (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+};
+
+// Configure multer for file uploads with original extension
+const storage = multer.diskStorage({
+  destination: 'uploads/',
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+  }
+});
+const upload = multer({ storage: storage });
 
 // GET /api/templates
 router.get('/', templateController.getTemplates.bind(templateController));
 
-// POST /api/templates/upload - Upload Excel with Python parsing
-router.post('/upload', upload.single('file'), templateController.uploadExcel.bind(templateController));
+// POST /api/templates/upload - Upload Excel with Python parsing (with CORS)
+router.options('/upload', corsMiddleware);
+router.post('/upload', corsMiddleware, upload.single('file'), templateController.uploadExcel.bind(templateController));
 
 // POST /api/templates
 router.post('/', templateController.createTemplate.bind(templateController));
