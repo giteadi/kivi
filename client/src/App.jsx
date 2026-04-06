@@ -1252,13 +1252,16 @@ ${service.target_age_group || 'Not specified'}
     <ErrorBoundary>
       <SidebarContext.Provider value={{ sidebarCollapsed, setSidebarCollapsed }}>
         <div className="min-h-screen bg-gray-50">
-          <Sidebar 
-            activeItem={activeItem} 
-            setActiveItem={handleSetActiveItem} 
-            shouldExpandEncounters={activeItem === 'encounters-list' || activeItem === 'encounter-templates'}
-            sidebarCollapsed={sidebarCollapsed}
-            setSidebarCollapsed={setSidebarCollapsed}
-          />
+          {/* Hide outer sidebar when TemplateManager is active */}
+          {activeItem !== 'template-manager' && (
+            <Sidebar 
+              activeItem={activeItem} 
+              setActiveItem={handleSetActiveItem} 
+              shouldExpandEncounters={activeItem === 'encounters-list' || activeItem === 'encounter-templates'}
+              sidebarCollapsed={sidebarCollapsed}
+              setSidebarCollapsed={setSidebarCollapsed}
+            />
+          )}
         <MobileMenu 
           isOpen={isMobileMenuOpen} 
           setIsOpen={setIsMobileMenuOpen}
@@ -1274,7 +1277,7 @@ ${service.target_age_group || 'Not specified'}
         <motion.main
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="transition-all duration-300"
+          className={`transition-all duration-300 ${activeItem === 'template-manager' ? 'ml-0' : ''}`}
         >
           {renderContent()}
         </motion.main>

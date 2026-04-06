@@ -9,6 +9,7 @@ import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import * as XLSX from "xlsx";
 import api from "../services/api";
 import ReportSheetViewer from "./ReportSheetViewer";
+import Sidebar from "./Sidebar";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 const emptySheet = () => Array.from({ length: 20 }, () => Array(10).fill(""));
@@ -48,10 +49,7 @@ const icons = {
 // ─── CSS ──────────────────────────────────────────────────────────────────────
 const css = {
   root:         { fontFamily: "system-ui,-apple-system,sans-serif", minHeight: "100vh", background: "#F3F4F6", color: "#1a1a1a", display: "flex" },
-  sidebar:      { width: 220, background: "#1E293B", display: "flex", flexDirection: "column", position: "fixed", left: 0, top: 0, bottom: 0, zIndex: 30 },
-  sidebarTitle: { fontSize: 16, fontWeight: 700, color: "#F1F5F9", margin: 0, display: "flex", alignItems: "center", gap: 8 },
-  sidebarItem:  (a) => ({ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", borderRadius: 8, cursor: "pointer", background: a ? "#334155" : "transparent", color: a ? "#E2E8F0" : "#94A3B8", fontWeight: a ? 600 : 400, fontSize: 13, marginBottom: 2 }),
-  main:         { marginLeft: 220, flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh" },
+  main:         { flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh", overflow: "auto", marginLeft: 256 },
   header:       { background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, position: "sticky", top: 0, zIndex: 20 },
   h1:           { margin: 0, fontSize: 19, fontWeight: 700, letterSpacing: "-0.3px" },
   subtitle:     { margin: 0, fontSize: 12, color: "#6B7280" },
@@ -248,38 +246,13 @@ export default function TemplateManager() {
   // ─── RENDER ───────────────────────────────────────────────────────────────
   return (
     <div style={css.root}>
-      {/* ══ SIDEBAR ══ */}
-      <div style={css.sidebar}>
-        <div style={{ padding: "16px 18px", borderBottom: "1px solid #334155" }}>
-          <h2 style={css.sidebarTitle}><Icon d={icons.folder} size={22} stroke="#60A5FA" /> Templates</h2>
-        </div>
-        <div style={{ padding: "12px 12px", flex: 1 }}>
-          {[
-            { label: "All Templates", icon: icons.home },
-            { label: "Imported",      icon: icons.file },
-            { label: "Reports",       icon: icons.report },
-          ].map((item, i) => (
-            <div key={i} style={css.sidebarItem(i === 0)}>
-              <Icon d={item.icon} size={16} /> {item.label}
-            </div>
-          ))}
-          <div style={{ marginTop: 20, padding: "0 4px" }}>
-            <div style={{ fontSize: 10, color: "#475569", textTransform: "uppercase", letterSpacing: "0.8px", fontWeight: 600, marginBottom: 10 }}>Quick Stats</div>
-            {[
-              { label: "Total",    val: templates.length },
-              { label: "Imported", val: templates.filter(t => t.type === "import").length },
-              { label: "Reports",  val: templates.filter(t => t.type === "report").length },
-            ].map(s => (
-              <div key={s.label} style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"#94A3B8", marginBottom:6 }}>
-                <span>{s.label}</span><span style={{ color:"#E2E8F0", fontWeight:600 }}>{s.val}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div style={{ padding:"12px 16px", borderTop:"1px solid #334155", fontSize:11, color:"#475569" }}>
-          Report Builder v3.0
-        </div>
-      </div>
+      {/* ══ WHITE SIDEBAR ══ */}
+      <Sidebar 
+        activeItem="template-manager" 
+        setActiveItem={() => {}}
+        sidebarCollapsed={false}
+        setSidebarCollapsed={() => {}}
+      />
 
       {/* ══ MAIN ══ */}
       <div style={css.main}>
