@@ -775,7 +775,11 @@ export default function TemplateManager() {
           <div style={{ padding: "6px 16px", background: "#F9FAFB", borderBottom: "1px solid #E5E7EB", fontSize: 12, color: "#6B7280", flexShrink: 0 }}>
             {currentViewSheet} • {activeTemplate.sheets[currentViewSheet]?.length || 0} rows × {Math.max(...(activeTemplate.sheets[currentViewSheet] || [[""]]).map(r => r?.length || 0), 1)} cols • read-only
           </div>
-          <SpreadsheetGrid data={activeTemplate.sheets[currentViewSheet] || [[""]]} readOnly />
+          <SpreadsheetGrid 
+            data={activeTemplate.sheets[currentViewSheet] || [[""]]} 
+            rowHeights={activeTemplate.rowHeights?.[currentViewSheet] || {}}
+            readOnly 
+          />
         </div>
       )}
 
@@ -828,6 +832,7 @@ export default function TemplateManager() {
 
           <SpreadsheetGrid
             data={editSheets[currentEditSheet] || [[""]]}
+            rowHeights={activeTemplate.rowHeights?.[currentEditSheet] || {}}
             onDataChange={(next) => setEditSheets((s) => ({ ...s, [currentEditSheet]: next }))}
           />
         </div>

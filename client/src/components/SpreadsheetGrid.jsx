@@ -46,7 +46,7 @@ function computeColWidths(data, minW = 60, maxW = 400) {
 }
 
 // ─── CELL COMPONENT ───────────────────────────────────────────────────────────
-const Cell = ({ value, width, rowIdx, colIdx, isSelected, isEditing, onSelect, onEdit, onCommit, onChange, readOnly }) => {
+const Cell = ({ value, width, rowHeight, rowIdx, colIdx, isSelected, isEditing, onSelect, onEdit, onCommit, onChange, readOnly }) => {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -60,16 +60,17 @@ const Cell = ({ value, width, rowIdx, colIdx, isSelected, isEditing, onSelect, o
   const baseStyle = {
     display: "block",
     width: width,
-    height: 26,
+    minHeight: rowHeight,      // height → minHeight
     fontSize: 13,
     fontFamily: "ui-monospace, 'Cascadia Code', Consolas, monospace",
-    padding: "0 6px",
+    padding: "3px 6px",        // "0 6px" ki jagah
     borderRight: "1px solid #D0D0D0",
     borderBottom: "1px solid #D0D0D0",
     boxSizing: "border-box",
-    whiteSpace: "nowrap",
+    whiteSpace: "pre-wrap",    // ← "nowrap" ki jagah — MAIN FIX
+    wordBreak: "break-word",   // ← ADD
     overflow: "hidden",
-    textOverflow: "ellipsis",
+    // textOverflow: "ellipsis" — HATAO YEH
     cursor: readOnly ? "default" : "cell",
     userSelect: "none",
     background: isSelected ? "#E8F0FE" : rowIdx % 2 === 0 ? "#fff" : "#FAFAFA",
@@ -77,13 +78,13 @@ const Cell = ({ value, width, rowIdx, colIdx, isSelected, isEditing, onSelect, o
     outline: isSelected ? "2px solid #4285F4" : "none",
     outlineOffset: -2,
     textAlign: "left",
-    lineHeight: "26px",
+    lineHeight: "1.5",         // ← fixed px ki jagah ratio
     flexShrink: 0,
   };
 
   if (isEditing && !readOnly) {
     return (
-      <td style={{ padding: 0, width, minWidth: width, maxWidth: width }}>
+      <td style={{ padding: 0, width, minWidth: width, maxWidth: width, verticalAlign: "top" }}>
         <input
           ref={ref}
           value={value}
@@ -101,6 +102,7 @@ const Cell = ({ value, width, rowIdx, colIdx, isSelected, isEditing, onSelect, o
             outlineOffset: -2,
             background: "#fff",
             userSelect: "text",
+            whiteSpace: "nowrap",  // input mein nowrap rehne do
           }}
         />
       </td>
@@ -109,7 +111,7 @@ const Cell = ({ value, width, rowIdx, colIdx, isSelected, isEditing, onSelect, o
 
   return (
     <td
-      style={{ padding: 0, width, minWidth: width, maxWidth: width, overflow: "hidden" }}
+      style={{ padding: 0, width, minWidth: width, maxWidth: width, overflow: "hidden", verticalAlign: "top" }}
       title={value !== null && value !== undefined && String(value).length > 20 ? String(value) : undefined}
       onClick={() => !readOnly && onSelect(rowIdx, colIdx)}
       onDoubleClick={() => !readOnly && onEdit(rowIdx, colIdx)}
@@ -122,13 +124,14 @@ const Cell = ({ value, width, rowIdx, colIdx, isSelected, isEditing, onSelect, o
 };
 
 // ─── MAIN SPREADSHEET GRID ────────────────────────────────────────────────────
-export default function SpreadsheetGrid({ data, onDataChange, readOnly = false }) {
+export default function SpreadsheetGrid({ data, onDataChange, readOnly = false, rowHeights: externalRowHeights = {} }) {
   const [sel, setSel] = useState(null);
   const [editing, setEditing] = useState(null);
   const [editVal, setEditVal] = useState("");
   const [colWidths, setColWidths] = useState([]);
+  const [rowHeights, setRowHeights] = useState({}); // {rowIndex: height}
   const containerRef = useRef(null);
-  const resizingRef = useRef(null); // { colIdx, startX, startW }
+  const resizingRef = useRef(null); // { colIdx, startX, startW } or { rowIdx, startY, startH }
 
   const rows = data?.length || 0;
   const cols = useMemo(() => Math.max(...(data || []).map((r) => r?.length || 0), 1), [data]);
@@ -138,7 +141,38 @@ export default function SpreadsheetGrid({ data, onDataChange, readOnly = false }
     setColWidths(computeColWidths(data));
   }, [data]);
 
+  // ── NEW: Sync external row heights (from Excel) ──
+  useEffect(() => {
+    if (externalRowHeights && Object.keys(externalRowHeights).length > 0) {
+      // Excel points to pixels: 1 point ≈ 1.33px, min 26px
+      const converted = {};
+      Object.entries(externalRowHeights).forEach(([idx, ht]) => {
+        converted[Number(idx)] = Math.max(26, Math.round(ht * 1.33));
+      });
+      setRowHeights(converted);
+    } else if (data && colWidths.length > 0) {
+      // Auto-calculate: text kitni lines lega estimate karo
+      const heightMap = {};
+      data.forEach((row, r) => {
+        let maxLines = 1;
+        row.forEach((cell, c) => {
+          if (!cell) return;
+          const text = String(cell);
+          const colW = colWidths[c] ?? 90;
+          const charsPerLine = Math.max(1, Math.floor((colW - 12) / 7.8));
+          const newlineCount = (text.match(/\n/g) || []).length;
+          const wrapLines = Math.ceil(text.replace(/\n/g, '').length / charsPerLine);
+          maxLines = Math.max(maxLines, newlineCount + wrapLines);
+        });
+        const h = Math.max(26, maxLines * 20 + 6);
+        if (h > 26) heightMap[r] = h;
+      });
+      setRowHeights(heightMap);
+    }
+  }, [externalRowHeights, data, colWidths]);
+
   const getColWidth = (c) => colWidths[c] ?? 90;
+  const getRowHeight = (r) => rowHeights[r] ?? 26;
 
   // ── Commit edit ────────────────────────────────────────────────────────────
   const commitEdit = useCallback((cancel = false) => {
@@ -211,6 +245,28 @@ export default function SpreadsheetGrid({ data, onDataChange, readOnly = false }
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
   }, [colWidths]);
+
+  // ── Row resize mouse handlers ──────────────────────────────────────────────
+  const onRowResizeMouseDown = useCallback((e, rowIdx) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startY = e.clientY;
+    const startH = getRowHeight(rowIdx);
+
+    const onMouseMove = (moveEvent) => {
+      const delta = moveEvent.clientY - startY;
+      const newH = Math.max(18, startH + delta);
+      setRowHeights((prev) => ({ ...prev, [rowIdx]: newH }));
+    };
+
+    const onMouseUp = () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  }, [rowHeights]);
 
   // ── Copy selection ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -335,7 +391,7 @@ export default function SpreadsheetGrid({ data, onDataChange, readOnly = false }
 
         <tbody>
           {Array.from({ length: rows }, (_, r) => (
-            <tr key={r} style={{ height: 26 }}>
+            <tr key={r} style={{ height: getRowHeight(r) }}>
               {/* Row number */}
               <td
                 style={{
@@ -352,9 +408,26 @@ export default function SpreadsheetGrid({ data, onDataChange, readOnly = false }
                   zIndex: 1,
                   userSelect: "none",
                   boxSizing: "border-box",
+                  height: getRowHeight(r),
+                  position: "relative",
                 }}
               >
                 {r + 1}
+                {/* ── Row resize handle ── */}
+                <div
+                  onMouseDown={(e) => onRowResizeMouseDown(e, r)}
+                  style={{
+                    position: "absolute",
+                    bottom: -3,
+                    left: 0,
+                    width: "100%",
+                    height: 6,
+                    cursor: "row-resize",
+                    zIndex: 5,
+                    background: "transparent",
+                  }}
+                  title="Drag to resize row"
+                />
               </td>
 
               {Array.from({ length: cols }, (_, c) => {
@@ -365,6 +438,7 @@ export default function SpreadsheetGrid({ data, onDataChange, readOnly = false }
                     key={c}
                     value={isEdit ? editVal : (data[r]?.[c] ?? "")}
                     width={getColWidth(c)}
+                    rowHeight={getRowHeight(r)}
                     rowIdx={r}
                     colIdx={c}
                     isSelected={isSel}

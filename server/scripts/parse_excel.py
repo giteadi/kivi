@@ -52,15 +52,16 @@ def parse_docx_bytes(docx_bytes):
             W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
 
             def get_para_text(para_el):
-                """Get full text of a paragraph element"""
+                """Get full text of a paragraph element - handles nested formatting"""
                 parts = []
-                for run in para_el.findall(f'.//{{{W}}}r'):
-                    # Tab → space separator
-                    if run.find(f'{{{W}}}tab') is not None:
+                for node in para_el.iter():
+                    tag = node.tag.split('}')[-1] if '}' in node.tag else node.tag
+                    if tag == 't' and node.text:
+                        parts.append(node.text)
+                    elif tag == 'tab':
                         parts.append(' | ')
-                    for t in run.findall(f'{{{W}}}t'):
-                        if t.text:
-                            parts.append(t.text)
+                    elif tag == 'br':
+                        parts.append('\n')
                 return ''.join(parts).strip()
 
             def get_cell_text(tc_el):
@@ -68,8 +69,10 @@ def parse_docx_bytes(docx_bytes):
                 lines = []
                 for para in tc_el.findall(f'{{{W}}}p'):
                     txt = get_para_text(para)
-                    if txt:
-                        lines.append(txt)
+                    lines.append(txt)  # Keep empty lines for spacing
+                # Remove trailing empty lines only
+                while lines and not lines[-1].strip():
+                    lines.pop()
                 return '\n'.join(lines)
 
             # Collect all top-level body children in order
@@ -103,8 +106,12 @@ def parse_docx_bytes(docx_bytes):
                 elif tag == 'p':
                     # ── PARAGRAPH ─────────────────────────────────────
                     txt = get_para_text(child)
-                    if txt:
-                        rows.append([txt[:MAX_CELL_LENGTH]])
+                    # Split on tab characters to create multi-column rows
+                    if '|' in txt:
+                        cells = [cell.strip() for cell in txt.split('|')]
+                        rows.append(cells[:MAX_CELL_LENGTH])
+                    else:
+                        rows.append([txt[:MAX_CELL_LENGTH] if txt else ''])
 
                 elif tag == 'sdt':
                     # Structured document tag - extract paragraphs inside
@@ -112,7 +119,11 @@ def parse_docx_bytes(docx_bytes):
                         if id(para) not in table_para_ids:
                             txt = get_para_text(para)
                             if txt:
-                                rows.append([txt[:MAX_CELL_LENGTH]])
+                                if '|' in txt:
+                                    cells = [cell.strip() for cell in txt.split('|')]
+                                    rows.append(cells[:MAX_CELL_LENGTH])
+                                else:
+                                    rows.append([txt[:MAX_CELL_LENGTH]])
 
             # Remove consecutive duplicate rows (Word sometimes duplicates)
             deduped = []
@@ -201,10 +212,39 @@ def parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts):
     ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
     root = safe_xml_parse(ws_bytes)
     if root is None:
-        return {}, 0, 0
+        return {}, 0, 0, {}  # ← {} add kiya row_heights ke liye
+    
+    # ── Parse merged cells first ─────────────────────────
+    merge_map = {}  # (r, c) → (top_r, top_c) for every non-top-left cell in a merge
+    for mc in root.findall(f'.//{{{ns}}}mergeCell'):
+        ref = mc.attrib.get('ref', '')
+        if ':' not in ref:
+            continue
+        start_ref, end_ref = ref.split(':')
+        sr, sc = ref_to_rc(start_ref)
+        er, ec = ref_to_rc(end_ref)
+        for r in range(sr, er + 1):
+            for c in range(sc, ec + 1):
+                if r == sr and c == sc:
+                    continue  # top-left keeps its own value
+                merge_map[(r, c)] = (sr, sc)
+    
     grid = {}
     max_r = max_c = 0
+    row_heights = {}  # ← NEW: {row_index: height_in_points}
+
     for row_el in root.findall(f'.//{{{ns}}}row'):
+        # ── NEW: Read row height ──
+        r_attr = row_el.attrib.get('r')
+        ht = row_el.attrib.get('ht')
+        if r_attr and ht:
+            try:
+                row_idx = int(r_attr) - 1  # 0-based
+                row_heights[row_idx] = float(ht)
+            except:
+                pass
+        # ─────────────────────────
+
         for c_el in row_el.findall(f'{{{ns}}}c'):
             ref = c_el.attrib.get('r', '')
             if not ref:
@@ -231,7 +271,15 @@ def parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts):
             val = format_value(raw, fmt, num_fmts, ctype)
             if val:
                 grid[(r, c)] = val
-    return grid, max_r, max_c
+
+    # ── Fill merged child cells with top-left value ──────
+    for (r, c), (tr, tc) in merge_map.items():
+        max_r = max(max_r, r)
+        max_c = max(max_c, c)
+        if (tr, tc) in grid:
+            grid[(r, c)] = grid[(tr, tc)]
+
+    return grid, max_r, max_c, row_heights  # ← row_heights bhi return karo
 
 def get_sheet_embeddings(zf):
     result = {}
@@ -281,7 +329,7 @@ def get_sheet_embeddings(zf):
 
 # ─── MAIN XLSX PARSER ────────────────────────────────────────────────────────
 def parse_xlsx(file_path):
-    sheets, sheet_names = {}, []
+    sheets, sheet_names, sheet_row_heights = {}, [], {}  # ← NEW: sheet_row_heights dict
     try:
         with zipfile.ZipFile(file_path, 'r') as zf:
             all_files = set(zf.namelist())
@@ -317,11 +365,11 @@ def parse_xlsx(file_path):
                 log(f"Sheet '{name}'")
 
                 # Regular cells
-                cell_grid, max_r, max_c = {}, 0, 0
+                cell_grid, max_r, max_c, row_heights = {}, 0, 0, {}  # ← NEW: row_heights
                 if ws_path in all_files:
                     try:
                         ws_bytes = zf.read(ws_path)
-                        cell_grid, max_r, max_c = parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts)
+                        cell_grid, max_r, max_c, row_heights = parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts)  # ← row_heights unpack
                     except Exception as e:
                         log(f"  Cell error: {e}")
 
@@ -365,6 +413,7 @@ def parse_xlsx(file_path):
                     rows = [['']]
 
                 sheets[name] = rows
+                sheet_row_heights[name] = row_heights  # ← NEW: save row heights
                 total = sum(1 for row in rows for v in row if str(v).strip())
                 log(f"  → {len(rows)} rows, {total} cells")
 
@@ -375,7 +424,13 @@ def parse_xlsx(file_path):
 
     total = sum(1 for s in sheets.values() for row in s for v in row if str(v).strip())
     log(f"DONE: {len(sheets)} sheets, {total} cells")
-    return {'ok': True, 'sheets': sheets, 'names': sheet_names, 'meta': {'total_cells': total}}
+    return {
+        'ok': True,
+        'sheets': sheets,
+        'names': sheet_names,
+        'row_heights': sheet_row_heights,  # ← NEW: return row heights
+        'meta': {'total_cells': total}
+    }
 
 def parse_xls(file_path):
     try:

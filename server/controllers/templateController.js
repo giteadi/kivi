@@ -339,7 +339,8 @@ class TemplateController {
         description: `${parsedData.names.length} sheet(s) • ${fileName}`,
         template_data: {
           sheets: parsedData.sheets,
-          sheetNames: parsedData.names
+          sheetNames: parsedData.names,
+          row_heights: parsedData.row_heights || {}  // ← ADD: row_heights from parser
         },
         excel_filename: fileName
       };
