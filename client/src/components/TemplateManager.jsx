@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import * as XLSX from "xlsx";
 import api from "../services/api";
+import SpreadsheetGrid from "./SpreadsheetGrid";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 const colLabel = (i) => {
@@ -116,174 +117,6 @@ const icons = {
   tag: "M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82zM7 7h.01",
   home: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10",
   chart: "M18 20V10M12 20V4M6 20v-6",
-};
-
-// ─── CELL COMPONENT ──────────────────────────────────────────────────────────
-const Cell = ({ value, rowIdx, colIdx, isHeader, isSelected, isEditing, onSelect, onEdit, onCommit, onChange }) => {
-  const ref = useRef(null);
-
-  useEffect(() => {
-    if (isEditing && ref.current) {
-      ref.current.focus();
-      ref.current.select();
-    }
-  }, [isEditing]);
-
-  const baseStyle = {
-    position: "relative",
-    height: 28,
-    minWidth: isHeader && colIdx === -1 ? 44 : 90,
-    maxWidth: isHeader && colIdx === -1 ? 44 : 200,
-    fontSize: 13,
-    fontFamily: "ui-monospace, 'Cascadia Code', monospace",
-    padding: "0 6px",
-    borderRight: "1px solid #D0D0D0",
-    borderBottom: "1px solid #D0D0D0",
-    boxSizing: "border-box",
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    cursor: isHeader ? "default" : "cell",
-    userSelect: "none",
-    background: isHeader
-      ? "#F0F0F0"
-      : isSelected
-      ? "#E8F0FE"
-      : rowIdx % 2 === 0
-      ? "#fff"
-      : "#FAFAFA",
-    color: isHeader ? "#555" : "#1a1a1a",
-    fontWeight: isHeader ? 600 : 400,
-    outline: isSelected && !isHeader ? "2px solid #4285F4" : "none",
-    outlineOffset: -2,
-    textAlign: isHeader && colIdx === -1 ? "center" : "left",
-  };
-
-  if (isEditing) {
-    return (
-      <td style={{ padding: 0, position: "relative" }}>
-        <input
-          ref={ref}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onBlur={() => onCommit()}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); onCommit(); }
-            if (e.key === "Escape") onCommit(true);
-          }}
-          style={{
-            ...baseStyle,
-            cursor: "text",
-            outline: "2px solid #4285F4",
-            outlineOffset: -2,
-            background: "#fff",
-            zIndex: 10,
-            display: "block",
-          }}
-        />
-      </td>
-    );
-  }
-
-  return (
-    <td
-      style={baseStyle}
-      onClick={() => !isHeader && onSelect(rowIdx, colIdx)}
-      onDoubleClick={() => !isHeader && onEdit(rowIdx, colIdx)}
-    >
-      {value === null || value === undefined ? "" : String(value)}
-    </td>
-  );
-};
-
-// ─── SPREADSHEET GRID ────────────────────────────────────────────────────────
-const SpreadsheetGrid = ({ data, onDataChange, readOnly = false }) => {
-  const [sel, setSel] = useState(null);
-  const [editing, setEditing] = useState(null);
-  const [editVal, setEditVal] = useState("");
-  const containerRef = useRef(null);
-
-  const rows = data.length;
-  const cols = Math.max(...data.map((r) => r?.length || 0), 1);
-
-  const commitEdit = useCallback((cancel = false) => {
-    if (!editing) return;
-    if (!cancel && onDataChange) {
-      const next = data.map((r) => [...r]);
-      if (!next[editing.r]) next[editing.r] = [];
-      next[editing.r][editing.c] = editVal;
-      onDataChange(next);
-    }
-    setEditing(null);
-    setEditVal("");
-  }, [editing, editVal, data, onDataChange]);
-
-  const handleKeyDown = useCallback((e) => {
-    if (!sel || editing) return;
-    if (e.key === "Enter" || e.key === "F2") {
-      setEditing(sel);
-      setEditVal(data[sel.r]?.[sel.c] ?? "");
-      e.preventDefault();
-    }
-    if (e.key === "Delete" || e.key === "Backspace") {
-      const next = data.map((r) => [...r]);
-      if (next[sel.r]) next[sel.r][sel.c] = "";
-      if (onDataChange) onDataChange(next);
-    }
-    const moves = { ArrowUp: [-1,0], ArrowDown: [1,0], ArrowLeft: [0,-1], ArrowRight: [0,1] };
-    if (moves[e.key]) {
-      const [dr, dc] = moves[e.key];
-      setSel(s => ({ r: Math.max(0, Math.min(rows-1, s.r+dr)), c: Math.max(0, Math.min(cols-1, s.c+dc)) }));
-      e.preventDefault();
-    }
-  }, [sel, editing, data, rows, cols, onDataChange]);
-
-  return (
-    <div
-      ref={containerRef}
-      tabIndex={0}
-      onKeyDown={handleKeyDown}
-      style={{ outline: "none", overflow: "auto", flex: 1, background: "#fff" }}
-    >
-      <table style={{ borderCollapse: "collapse", tableLayout: "fixed" }}>
-        <thead>
-          <tr>
-            <td style={{ width: 44, minWidth: 44, height: 28, background: "#F0F0F0", borderRight: "1px solid #D0D0D0", borderBottom: "2px solid #B0B0B0", position: "sticky", top: 0, zIndex: 3 }} />
-            {Array.from({ length: cols }, (_, c) => (
-              <td key={c} style={{ width: 100, height: 28, background: "#F0F0F0", borderRight: "1px solid #D0D0D0", borderBottom: "2px solid #B0B0B0", textAlign: "center", fontSize: 12, fontWeight: 600, color: "#555", fontFamily: "system-ui,sans-serif", position: "sticky", top: 0, zIndex: 2 }}>
-                {colLabel(c)}
-              </td>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {Array.from({ length: rows }, (_, r) => (
-            <tr key={r}>
-              <td style={{ width: 44, textAlign: "center", background: "#F0F0F0", borderRight: "1px solid #D0D0D0", borderBottom: "1px solid #D0D0D0", fontSize: 11, color: "#888", fontFamily: "system-ui,sans-serif", position: "sticky", left: 0, zIndex: 1 }}>
-                {r + 1}
-              </td>
-              {Array.from({ length: cols }, (_, c) => {
-                const isEdit = editing?.r === r && editing?.c === c;
-                const isSel = sel?.r === r && sel?.c === c;
-                return (
-                  <Cell
-                    key={c}
-                    value={isEdit ? editVal : (data[r]?.[c] ?? "")}
-                    rowIdx={r} colIdx={c}
-                    isHeader={false} isSelected={isSel} isEditing={!readOnly && isEdit}
-                    onSelect={(r, c) => { setSel({ r, c }); containerRef.current?.focus(); }}
-                    onEdit={(r, c) => { if (!readOnly) { setSel({ r, c }); setEditing({ r, c }); setEditVal(data[r]?.[c] ?? ""); } }}
-                    onCommit={commitEdit}
-                    onChange={setEditVal}
-                  />
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
 };
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
@@ -553,7 +386,22 @@ export default function TemplateManager() {
     try {
       const sources = selected.filter((t) => t.id !== mergeTarget.id);
       const merged = { ...mergeTarget.sheets };
-      sources.forEach((t) => Object.entries(t.sheets).forEach(([n, d]) => { merged[`${t.name}__${n}`] = d; }));
+      
+      sources.forEach((t) => {
+        Object.entries(t.sheets).forEach(([n, d]) => {
+          if (merged[n]) {
+            // Same sheet name exists - append with separator
+            merged[n] = [
+              ...merged[n],
+              ["--- " + t.name + " ---"],
+              ...d
+            ];
+          } else {
+            // New sheet name
+            merged[n] = d;
+          }
+        });
+      });
       
       const templateData = {
         name: mergeTarget.name + " (Merged)",
