@@ -179,6 +179,10 @@ export default function TemplateManager() {
             }
           }
           
+          // DEBUG: Check row_heights
+          console.log('🔑 KEYS in template_data:', Object.keys(parsedData || {}));
+          console.log('📏 row_heights:', parsedData?.row_heights);
+          
           const sheets = parsedData?.sheets || {};
           const sheetNames = parsedData?.sheetNames || Object.keys(sheets);
           
@@ -200,6 +204,7 @@ export default function TemplateManager() {
             desc: t.description || `${t.name} template`,
             sheets: sheets,
             sheetNames: sheetNames,
+            rowHeights: parsedData?.row_heights || {},  // ← ADD
             createdAt: t.created_at || new Date().toISOString(),
           };
         });
