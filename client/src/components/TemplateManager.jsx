@@ -368,7 +368,7 @@ export default function TemplateManager() {
   };
 
   // ── add row/col ──
-  const addRow = (sheetName) => setEditSheets((s) => ({ ...s, [sheetName]: [...s[sheetName], Array(s[sheetName][0]?.length || 10).fill("")] }));
+  const addRow = (sheetName) => setEditSheets((s) => ({ ...s, [sheetName]: [...s[sheetName], Array(Math.max(...s[sheetName].map(r => r?.length || 0), 1)).fill("")] }));
   const addCol = (sheetName) => setEditSheets((s) => ({ ...s, [sheetName]: s[sheetName].map((r) => [...r, ""]) }));
   const delRow = (sheetName) => setEditSheets((s) => {
     const rows = s[sheetName];
@@ -773,7 +773,7 @@ export default function TemplateManager() {
             ))}
           </div>
           <div style={{ padding: "6px 16px", background: "#F9FAFB", borderBottom: "1px solid #E5E7EB", fontSize: 12, color: "#6B7280", flexShrink: 0 }}>
-            {currentViewSheet} • {activeTemplate.sheets[currentViewSheet]?.length || 0} rows × {activeTemplate.sheets[currentViewSheet]?.[0]?.length || 0} cols • read-only
+            {currentViewSheet} • {activeTemplate.sheets[currentViewSheet]?.length || 0} rows × {Math.max(...(activeTemplate.sheets[currentViewSheet] || [[""]]).map(r => r?.length || 0), 1)} cols • read-only
           </div>
           <SpreadsheetGrid data={activeTemplate.sheets[currentViewSheet] || [[""]]} readOnly />
         </div>
@@ -812,7 +812,7 @@ export default function TemplateManager() {
           {/* Grid toolbar */}
           <div style={css.gridToolbar}>
             <span style={{ fontSize: 12, color: "#6B7280", marginRight: 8 }}>
-              <b style={{ color: "#111" }}>{currentEditSheet}</b> • {editSheets[currentEditSheet]?.length || 0}R × {editSheets[currentEditSheet]?.[0]?.length || 0}C
+              <b style={{ color: "#111" }}>{currentEditSheet}</b> • {editSheets[currentEditSheet]?.length || 0}R × {Math.max(...(editSheets[currentEditSheet] || [[""]]).map(r => r?.length || 0), 1)}C
             </span>
             <span style={{ width: 1, height: 18, background: "#E5E7EB", margin: "0 4px" }} />
             {[

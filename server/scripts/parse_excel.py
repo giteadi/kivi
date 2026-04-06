@@ -337,16 +337,30 @@ def parse_xlsx(file_path):
                     except Exception as e:
                         log(f"  DOCX error: {e}")
 
+                # Calculate max columns from BOTH cell grid and embed rows
+                embed_max_c = max((len(row) for row in embed_rows), default=0)
+                final_max_c = max(max_c, embed_max_c)
+
                 # Build final
                 if non_empty > 0:
-                    rows = [[cell_grid.get((r, c), '') for c in range(max_c + 1)]
+                    rows = [[cell_grid.get((r, c), '') for c in range(final_max_c + 1)]
                             for r in range(max_r + 1)]
                     while len(rows) > 1 and all(v == '' for v in rows[-1]):
                         rows.pop()
                     if embed_rows:
+                        # Pad embed rows to match column count
+                        for er in embed_rows:
+                            while len(er) < final_max_c + 1:
+                                er.append('')
                         rows.extend(embed_rows)
                 elif embed_rows:
-                    rows = embed_rows
+                    # Pad all embed rows to same column count
+                    rows = []
+                    for er in embed_rows:
+                        padded = list(er)
+                        while len(padded) < final_max_c:
+                            padded.append('')
+                        rows.append(padded)
                 else:
                     rows = [['']]
 
