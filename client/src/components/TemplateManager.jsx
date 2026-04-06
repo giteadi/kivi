@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import * as XLSX from "xlsx";
 import api from "../services/api";
 import SpreadsheetGrid from "./SpreadsheetGrid";
+import DocViewer, { isDocumentSheet } from "./DocViewer";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 const colLabel = (i) => {
@@ -139,6 +140,7 @@ export default function TemplateManager() {
   // report
   const [reportName, setReportName] = useState("");
   const [mergeTarget, setMergeTarget] = useState(null);
+  const [docEditRaw, setDocEditRaw] = useState(false);
 
   const fileRef = useRef(null);
 
@@ -777,14 +779,46 @@ export default function TemplateManager() {
               <button key={name} style={css.tab(i === activeSheetIdx)} onClick={() => setActiveSheetIdx(i)}>{name}</button>
             ))}
           </div>
-          <div style={{ padding: "6px 16px", background: "#F9FAFB", borderBottom: "1px solid #E5E7EB", fontSize: 12, color: "#6B7280", flexShrink: 0 }}>
-            {currentViewSheet} • {activeTemplate.sheets[currentViewSheet]?.length || 0} rows × {Math.max(...(activeTemplate.sheets[currentViewSheet] || [[""]]).map(r => r?.length || 0), 1)} cols • read-only
+          <div style={{ padding: "6px 16px", background: "#F9FAFB", borderBottom: "1px solid #E5E7EB", fontSize: 12, color: "#6B7280", flexShrink: 0, display: "flex", alignItems: "center", gap: 12 }}>
+            <span>
+              <strong style={{ color: "#111" }}>{currentViewSheet}</strong>
+              {" • "}
+              {activeTemplate.sheets[currentViewSheet]?.length || 0} rows
+              {" × "}
+              {Math.max(...(activeTemplate.sheets[currentViewSheet] || [[""]]).map(r => r?.length || 0), 1)} cols
+            </span>
+            {/* Show mode badge */}
+            {isDocumentSheet(activeTemplate.sheets[currentViewSheet]) ? (
+              <span style={{
+                background: "#EFF6FF", color: "#2563EB",
+                fontSize: 11, fontWeight: 600, padding: "2px 8px",
+                borderRadius: 10, border: "1px solid #BFDBFE"
+              }}>
+                📄 Document View
+              </span>
+            ) : (
+              <span style={{
+                background: "#F0FDF4", color: "#059669",
+                fontSize: 11, fontWeight: 600, padding: "2px 8px",
+                borderRadius: 10, border: "1px solid #BBF7D0"
+              }}>
+                📊 Spreadsheet View
+              </span>
+            )}
           </div>
-          <SpreadsheetGrid 
-            data={activeTemplate.sheets[currentViewSheet] || [[""]]} 
-            rowHeights={activeTemplate.rowHeights?.[currentViewSheet] || {}}
-            readOnly 
-          />
+          {/* Content: DocViewer for document sheets, SpreadsheetGrid for data sheets */}
+          {isDocumentSheet(activeTemplate.sheets[currentViewSheet])
+            ? (
+              <DocViewer data={activeTemplate.sheets[currentViewSheet] || [[]]} />
+            )
+            : (
+              <SpreadsheetGrid
+                data={activeTemplate.sheets[currentViewSheet] || [[""]]}
+                rowHeights={activeTemplate.rowHeights?.[currentViewSheet] || {}}
+                readOnly
+              />
+            )
+          }
         </div>
       )}
 
@@ -835,11 +869,55 @@ export default function TemplateManager() {
             <span style={{ marginLeft: "auto", fontSize: 11, color: "#9CA3AF" }}>Double-click cell to edit • Arrow keys to navigate • Enter/F2 to edit</span>
           </div>
 
-          <SpreadsheetGrid
-            data={editSheets[currentEditSheet] || [[""]]}
-            rowHeights={activeTemplate.rowHeights?.[currentEditSheet] || {}}
-            onDataChange={(next) => setEditSheets((s) => ({ ...s, [currentEditSheet]: next }))}
-          />
+          {isDocumentSheet(editSheets[currentEditSheet])
+            ? (
+              // Document sheets: show DocViewer (editing embedded DOCX content is complex,
+              // show a message + raw grid toggle)
+              <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                <div style={{
+                  background: "#FFFBEB",
+                  borderBottom: "1px solid #FDE68A",
+                  padding: "8px 16px",
+                  fontSize: 12,
+                  color: "#92400E",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  flexShrink: 0,
+                }}>
+                  ⚠️ This sheet contains a formatted document (embedded Word content).
+                  Preview below — use the raw grid to edit individual cells.
+                  <button
+                    onClick={() => setDocEditRaw(v => !v)}
+                    style={{ marginLeft: "auto", fontSize: 11, padding: "3px 10px",
+                      borderRadius: 6, border: "1px solid #D97706", background: "#FEF3C7",
+                      color: "#92400E", cursor: "pointer" }}
+                  >
+                    {docEditRaw ? "📄 Document View" : "📊 Raw Grid"}
+                  </button>
+                </div>
+                {docEditRaw
+                  ? (
+                    <SpreadsheetGrid
+                      data={editSheets[currentEditSheet] || [[""]]}
+                      rowHeights={activeTemplate.rowHeights?.[currentEditSheet] || {}}
+                      onDataChange={(next) => setEditSheets((s) => ({ ...s, [currentEditSheet]: next }))}
+                    />
+                  )
+                  : (
+                    <DocViewer data={editSheets[currentEditSheet] || [[]]} />
+                  )
+                }
+              </div>
+            )
+            : (
+              <SpreadsheetGrid
+                data={editSheets[currentEditSheet] || [[""]]}
+                rowHeights={activeTemplate.rowHeights?.[currentEditSheet] || {}}
+                onDataChange={(next) => setEditSheets((s) => ({ ...s, [currentEditSheet]: next }))}
+              />
+            )
+          }
         </div>
       )}
 
