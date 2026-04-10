@@ -88,7 +88,7 @@ function getSheetHtml(sheetData) {
 }
 
 // ─── HTML → docx elements ────────────────────────────────────────────────────
-const CELL_BORDER = { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" };
+const CELL_BORDER = { style: BorderStyle.SINGLE, size: 4, color: "AAAAAA" };
 const CELL_BORDERS = { top: CELL_BORDER, bottom: CELL_BORDER, left: CELL_BORDER, right: CELL_BORDER };
 
 function nodeToRuns(node, inherited = {}) {
@@ -101,13 +101,101 @@ function nodeToRuns(node, inherited = {}) {
   const tag = node.tagName?.toLowerCase();
   const style = {
     ...inherited,
-    bold:    inherited.bold    || ["b", "strong"].includes(tag),
+    bold:    inherited.bold    || ["b", "strong", "th"].includes(tag),
     italics: inherited.italics || ["i", "em"].includes(tag),
     strike:  inherited.strike  || ["s", "del", "strike"].includes(tag),
     ...(tag === "u" ? { underline: {} } : {}),
   };
+
+  // Handle <br> inside runs
+  if (tag === "br") {
+    runs.push(new TextRun({ text: "", break: 1 }));
+    return runs;
+  }
+
   for (const child of node.childNodes) runs.push(...nodeToRuns(child, style));
   return runs;
+}
+
+// ── Cell content → Paragraphs (handles nested p/div/br inside td) ──
+function cellToParagraphs(tdNode) {
+  const paragraphs = [];
+
+  function processNode(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const t = node.textContent;
+      if (t.trim()) {
+        paragraphs.push(new Paragraph({
+          children: [new TextRun({ text: t })],
+          spacing: { after: 0 },
+        }));
+      }
+      return;
+    }
+    const tag = node.tagName?.toLowerCase();
+    if (!tag) return;
+
+    if (tag === "p" || tag === "div") {
+      const runs = nodeToRuns(node);
+      if (runs.length) {
+        paragraphs.push(new Paragraph({ children: runs, spacing: { after: 60 } }));
+      } else {
+        // Empty p/div = blank line
+        paragraphs.push(new Paragraph({ children: [], spacing: { after: 60 } }));
+      }
+      return;
+    }
+
+    if (tag === "br") {
+      paragraphs.push(new Paragraph({ children: [], spacing: { after: 0 } }));
+      return;
+    }
+
+    if (/^h[1-6]$/.test(tag)) {
+      const headingMap = { h1: HeadingLevel.HEADING_1, h2: HeadingLevel.HEADING_2,
+        h3: HeadingLevel.HEADING_3, h4: HeadingLevel.HEADING_4 };
+      paragraphs.push(new Paragraph({
+        heading: headingMap[tag] || HeadingLevel.HEADING_3,
+        children: nodeToRuns(node),
+        spacing: { after: 60 },
+      }));
+      return;
+    }
+
+    if (tag === "ul") {
+      node.querySelectorAll(":scope > li").forEach(li =>
+        paragraphs.push(new Paragraph({
+          numbering: { reference: "bullets", level: 0 },
+          children: nodeToRuns(li),
+          spacing: { after: 40 },
+        }))
+      );
+      return;
+    }
+
+    if (tag === "ol") {
+      node.querySelectorAll(":scope > li").forEach(li =>
+        paragraphs.push(new Paragraph({
+          numbering: { reference: "numbers", level: 0 },
+          children: nodeToRuns(li),
+          spacing: { after: 40 },
+        }))
+      );
+      return;
+    }
+
+    // Fallback: process children
+    for (const child of node.childNodes) processNode(child);
+  }
+
+  for (const child of tdNode.childNodes) processNode(child);
+
+  // Always at least one paragraph in cell
+  if (!paragraphs.length) {
+    paragraphs.push(new Paragraph({ children: [], spacing: { after: 0 } }));
+  }
+
+  return paragraphs;
 }
 
 function nodeToDocxElements(node) {
@@ -158,31 +246,54 @@ function nodeToDocxElements(node) {
     return els;
   }
 
+  // ── TABLE — fully fixed ──
   if (tag === "table") {
-    const trList = node.querySelectorAll("tr");
+    const trList = Array.from(node.querySelectorAll("tr"));
+    if (!trList.length) return els;
+
+    // Find actual max columns (accounting for colspan)
     let colCount = 0;
-    trList.forEach(tr => { colCount = Math.max(colCount, tr.querySelectorAll("td,th").length); });
-    const tableWidth = 9360;
-    const colWidth = colCount > 0 ? Math.floor(tableWidth / colCount) : tableWidth;
-    const rows = [];
-    trList.forEach((tr, ri) => {
-      const cells = [];
-      tr.querySelectorAll("td,th").forEach(td => {
-        const isHeader = td.tagName.toLowerCase() === "th" || ri === 0;
-        cells.push(new TableCell({
-          borders: CELL_BORDERS,
-          width: { size: colWidth, type: WidthType.DXA },
-          shading: isHeader ? { fill: "D5E8F0", type: ShadingType.CLEAR } : undefined,
-          margins: { top: 80, bottom: 80, left: 120, right: 120 },
-          children: [new Paragraph({ children: nodeToRuns(td) })],
-        }));
+    trList.forEach(tr => {
+      let count = 0;
+      tr.querySelectorAll("td,th").forEach(cell => {
+        count += parseInt(cell.getAttribute("colspan") || "1");
       });
-      rows.push(new TableRow({ children: cells }));
+      colCount = Math.max(colCount, count);
     });
-    if (rows.length) {
-      els.push(new Table({ width: { size: tableWidth, type: WidthType.DXA }, columnWidths: Array(colCount).fill(colWidth), rows }));
-      els.push(new Paragraph({ children: [] }));
-    }
+    if (colCount === 0) return els;
+
+    const PAGE_WIDTH = 9360; // twips (A4 with margins)
+    const colWidth = Math.floor(PAGE_WIDTH / colCount);
+
+    const rows = trList.map((tr, rowIdx) => {
+      const tdList = Array.from(tr.querySelectorAll("td,th"));
+      const cells = tdList.map((td, colIdx) => {
+        const isHeader = td.tagName.toLowerCase() === "th" || rowIdx === 0;
+        const colspan = parseInt(td.getAttribute("colspan") || "1");
+
+        return new TableCell({
+          borders: CELL_BORDERS,
+          columnSpan: colspan > 1 ? colspan : undefined,
+          width: { size: colWidth * colspan, type: WidthType.DXA },
+          shading: isHeader ? { fill: "D5E8F0", type: ShadingType.CLEAR } : undefined,
+          margins: { top: 100, bottom: 100, left: 150, right: 150 },
+          // Use cellToParagraphs to properly parse nested HTML inside each cell
+          children: cellToParagraphs(td),
+        });
+      });
+
+      return new TableRow({
+        children: cells,
+        tableHeader: rowIdx === 0, // First row as header
+      });
+    });
+
+    els.push(new Table({
+      width: { size: PAGE_WIDTH, type: WidthType.DXA },
+      columnWidths: Array(colCount).fill(colWidth),
+      rows,
+    }));
+    els.push(new Paragraph({ children: [], spacing: { after: 120 } }));
     return els;
   }
 
