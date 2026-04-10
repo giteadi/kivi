@@ -207,59 +207,82 @@ function htmlToDocxElements(html) {
 
 // ─── DOCX export ─────────────────────────────────────────────────────────────
 async function buildAndDownloadDocx(allData, sheetList, patientName, templateName) {
-  const sections = [];
+  try {
+    console.log('[DEBUG] buildAndDownloadDocx called with:', { patientName, templateName, sheetCount: sheetList?.length });
+    
+    if (!sheetList || sheetList.length === 0) {
+      throw new Error('No sheets to export');
+    }
 
-  sheetList.forEach((name, idx) => {
-    const html = getSheetHtml(allData[name] || []);
-    const children = [
-      // Sheet name as heading
-      new Paragraph({
-        heading: HeadingLevel.HEADING_1,
-        children: [new TextRun({ text: name, color: "1D4ED8" })],
-      }),
-      ...htmlToDocxElements(html),
-    ];
+    const sections = [];
 
-    sections.push({
-      properties: {
-        page: {
-          size: { width: 11906, height: 16838 },
-          margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
+    sheetList.forEach((name, idx) => {
+      const sheetData = allData[name] || [];
+      console.log(`[DEBUG] Processing sheet ${name}:`, sheetData);
+      
+      const html = getSheetHtml(sheetData);
+      console.log(`[DEBUG] HTML for sheet ${name}:`, html?.substring(0, 200));
+      
+      const children = [
+        // Sheet name as heading
+        new Paragraph({
+          heading: HeadingLevel.HEADING_1,
+          children: [new TextRun({ text: name, color: "1D4ED8" })],
+        }),
+        ...htmlToDocxElements(html),
+      ];
+
+      sections.push({
+        properties: {
+          page: {
+            size: { width: 11906, height: 16838 },
+            margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
+          },
         },
-      },
-      children,
+        children,
+      });
     });
-  });
 
-  const doc = new Document({
-    numbering: {
-      config: [
-        { reference: "bullets", levels: [{ level: 0, format: LevelFormat.BULLET, text: "•", alignment: AlignmentType.LEFT, style: { paragraph: { indent: { left: 720, hanging: 360 } } } }] },
-        { reference: "numbers", levels: [{ level: 0, format: LevelFormat.DECIMAL, text: "%1.", alignment: AlignmentType.LEFT, style: { paragraph: { indent: { left: 720, hanging: 360 } } } }] },
-      ],
-    },
-    styles: {
-      default: { document: { run: { font: "Arial", size: 24 } } },
-      paragraphStyles: [
-        { id: "Heading1", name: "Heading 1", basedOn: "Normal", next: "Normal", quickFormat: true,
-          run: { size: 32, bold: true, font: "Arial", color: "1D4ED8" },
-          paragraph: { spacing: { before: 240, after: 120 }, outlineLevel: 0 } },
-        { id: "Heading2", name: "Heading 2", basedOn: "Normal", next: "Normal", quickFormat: true,
-          run: { size: 28, bold: true, font: "Arial" },
-          paragraph: { spacing: { before: 180, after: 90 }, outlineLevel: 1 } },
-      ],
-    },
-    sections,
-  });
+    console.log('[DEBUG] Creating Document with sections:', sections.length);
+    
+    const doc = new Document({
+      numbering: {
+        config: [
+          { reference: "bullets", levels: [{ level: 0, format: LevelFormat.BULLET, text: "•", alignment: AlignmentType.LEFT, style: { paragraph: { indent: { left: 720, hanging: 360 } } } }] },
+          { reference: "numbers", levels: [{ level: 0, format: LevelFormat.DECIMAL, text: "%1.", alignment: AlignmentType.LEFT, style: { paragraph: { indent: { left: 720, hanging: 360 } } } }] },
+        ],
+      },
+      styles: {
+        default: { document: { run: { font: "Arial", size: 24 } } },
+        paragraphStyles: [
+          { id: "Heading1", name: "Heading 1", basedOn: "Normal", next: "Normal", quickFormat: true,
+            run: { size: 32, bold: true, font: "Arial", color: "1D4ED8" },
+            paragraph: { spacing: { before: 240, after: 120 }, outlineLevel: 0 } },
+          { id: "Heading2", name: "Heading 2", basedOn: "Normal", next: "Normal", quickFormat: true,
+            run: { size: 28, bold: true, font: "Arial" },
+            paragraph: { spacing: { before: 180, after: 90 }, outlineLevel: 1 } },
+        ],
+      },
+      sections,
+    });
 
-  const buffer = await Packer.toBuffer(doc);
-  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${patientName || "Report"}_${templateName || "export"}.docx`;
-  a.click();
-  URL.revokeObjectURL(url);
+    console.log('[DEBUG] Generating buffer...');
+    const buffer = await Packer.toBuffer(doc);
+    console.log('[DEBUG] Buffer generated:', buffer?.length, 'bytes');
+    
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${patientName || "Report"}_${templateName || "export"}.docx`;
+    console.log('[DEBUG] Triggering download:', a.download);
+    a.click();
+    URL.revokeObjectURL(url);
+    console.log('[DEBUG] Export complete!');
+  } catch (err) {
+    console.error('[DEBUG] DOCX export failed:', err);
+    throw err;
+  }
 }
 
 // ─── XLSX export (structured — preserves HTML as readable text with sheet names) ──

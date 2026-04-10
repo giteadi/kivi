@@ -14,11 +14,16 @@ const ExportDropdown = ({ onExportDocx, onExportXlsx, ghost = false }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleExport = (type) => {
-    if (type === 'docx' && onExportDocx) {
-      onExportDocx();
-    } else if (type === 'xlsx' && onExportXlsx) {
-      onExportXlsx();
+  const handleExport = async (type) => {
+    try {
+      if (type === 'docx' && onExportDocx) {
+        await onExportDocx();
+      } else if (type === 'xlsx' && onExportXlsx) {
+        await onExportXlsx();
+      }
+    } catch (err) {
+      console.error('Export failed:', err);
+      alert('Export failed: ' + err.message);
     }
     setIsOpen(false);
   };
@@ -91,7 +96,7 @@ const ExportDropdown = ({ onExportDocx, onExportXlsx, ghost = false }) => {
         <div style={dropdownStyle}>
           <div
             style={{ ...itemStyle, borderRadius: '6px 6px 0 0' }}
-            onClick={() => handleExport('docx')}
+            onClick={async () => await handleExport('docx')}
             onMouseEnter={(e) => { e.currentTarget.style.background = '#F3F4F6'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
           >
@@ -106,7 +111,7 @@ const ExportDropdown = ({ onExportDocx, onExportXlsx, ghost = false }) => {
           </div>
           <div
             style={{ ...itemStyle, borderRadius: '0 0 6px 6px', borderBottom: 'none' }}
-            onClick={() => handleExport('xlsx')}
+            onClick={async () => await handleExport('xlsx')}
             onMouseEnter={(e) => { e.currentTarget.style.background = '#F3F4F6'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
           >
