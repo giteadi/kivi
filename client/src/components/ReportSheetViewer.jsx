@@ -1,7 +1,5 @@
 // ReportSheetViewer.jsx — iframe designMode editor
-// Uses browser's native document.designMode = "on" inside an iframe.
-// This gives TRUE Word-like behavior: tables fully selectable, copyable,
-// pasteable, deletable — exactly like MS Word, no extra buttons needed.
+// Fixed: HTML table copy/paste, same-document paste working correctly
 
 import { useEffect, useRef, useCallback } from "react";
 
@@ -18,7 +16,6 @@ function arrayToHtml(data) {
 
     if (ne.length === 0) { html += "<p><br></p>"; i++; continue; }
 
-    // Multi-col → table
     if (ne.length >= 2) {
       const block = [];
       while (i < data.length) {
@@ -41,7 +38,6 @@ function arrayToHtml(data) {
       continue;
     }
 
-    // Single col
     const text = cells[0].trim();
     if (text === text.toUpperCase() && text.length > 3 && text.length < 120 && /[A-Z]{4,}/.test(text)) {
       html += `<h2>${esc(text)}</h2>`;
@@ -68,8 +64,8 @@ function getHtml(data) {
   return data[0]?.[0] === "__html__" ? (data[0][1] || "") : null;
 }
 
-// ─── Full iframe document with styles ────────────────────────────────────────
-function buildDoc(bodyHtml, readOnly) {
+// ─── Full iframe document with styles (NO inline script — injected separately) ─
+function buildDoc(bodyHtml) {
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -90,7 +86,6 @@ function buildDoc(bodyHtml, readOnly) {
     outline: none;
   }
 
-  /* Tables — fully Word-like */
   table {
     width: 100%;
     border-collapse: collapse;
@@ -112,15 +107,16 @@ function buildDoc(bodyHtml, readOnly) {
     background: #fafafa;
   }
 
-  /* Headings */
   h1 { font-size: 17px; font-weight: bold; text-decoration: underline; margin: 16px 0 8px; }
   h2 { font-size: 14px; font-weight: bold; text-decoration: underline; margin: 14px 0 6px; }
   h3 { font-size: 13px; font-weight: bold; margin: 12px 0 4px; }
   p  { margin: 0 0 8px; }
   ul, ol { padding-left: 24px; margin: 6px 0 10px; }
 
-  /* Selection */
-  ::selection { background: #B3D4FF; }
+  ::selection         { background: #3B82F6 !important; color: #fff !important; }
+  *::selection        { background: #3B82F6 !important; color: #fff !important; }
+  td::selection,
+  th::selection       { background: #3B82F6 !important; color: #fff !important; }
 </style>
 </head>
 <body>${bodyHtml}</body>
@@ -142,7 +138,6 @@ export default function ReportSheetViewer({
   onChgRef.current = onDataChange;
   const timerRef   = useRef(null);
 
-  // ── Write content into iframe ─────────────────────────────────────────────
   const writeContent = useCallback((html) => {
     const iframe = iframeRef.current;
     if (!iframe) return;
@@ -150,13 +145,136 @@ export default function ReportSheetViewer({
     if (!doc) return;
 
     doc.open();
-    doc.write(buildDoc(html, readOnly));
+    doc.write(buildDoc(html));
     doc.close();
 
     if (!readOnly) {
       doc.designMode = "on";
 
-      // Notify parent on every change (debounced 300ms)
+      // ── Inject clipboard handlers as a real script element (avoids regex parse errors in doc.write) ──
+      const script = doc.createElement("script");
+      script.textContent = `(function() {
+        var RE_BODY   = /<body[^>]*>([\\s\\S]*?)<\\/body>/i;
+        var RE_CMT    = /<!--[\\s\\S]*?-->/g;
+        var RE_NS     = /<\\/?(?:o|w|m|v):[^>]*>/gi;
+        var RE_MSO    = /\\s*style="[^"]*mso-[^"]*"/gi;
+        var RE_CLASS  = / class="[^"]*"/gi;
+        var RE_SPAN   = /<span[^>]*>(?:<span[^>]*>)*([^<]*?)(?:<\\/span>)*<\\/span>/gi;
+
+        // ── Ctrl+A: select ALL content in body ───────────────────────────────
+        document.addEventListener('keydown', function(e) {
+          if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+            e.preventDefault();
+            var range = document.createRange();
+            range.selectNodeContents(document.body);
+            var sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+          }
+        });
+
+        // ── Prevent mousedown on non-text areas from clearing selection ───────
+        // Only allow selection reset when actually clicking on content
+        var isSelecting = false;
+        document.addEventListener('mousedown', function(e) {
+          isSelecting = true;
+        });
+        document.addEventListener('mouseup', function(e) {
+          isSelecting = false;
+        });
+
+        document.addEventListener('copy', function(e) {
+          var sel = window.getSelection();
+          if (!sel || sel.isCollapsed) return;
+          var range = sel.getRangeAt(0);
+          var div = document.createElement('div');
+          div.appendChild(range.cloneContents());
+          try {
+            e.preventDefault();
+            e.clipboardData.setData('text/html', div.innerHTML);
+            e.clipboardData.setData('text/plain', sel.toString());
+          } catch(_) {}
+        });
+
+        document.addEventListener('cut', function(e) {
+          var sel = window.getSelection();
+          if (!sel || sel.isCollapsed) return;
+          var range = sel.getRangeAt(0);
+          var div = document.createElement('div');
+          div.appendChild(range.cloneContents());
+          try {
+            e.preventDefault();
+            e.clipboardData.setData('text/html', div.innerHTML);
+            e.clipboardData.setData('text/plain', sel.toString());
+            // Use execCommand so cut is in undo history
+            document.execCommand('delete');
+            document.dispatchEvent(new Event('input', { bubbles: true }));
+          } catch(_) {}
+        });
+
+        document.addEventListener('paste', function(e) {
+          e.preventDefault();
+          var html = e.clipboardData.getData('text/html');
+          var text = e.clipboardData.getData('text/plain');
+
+          if (html) {
+            // Clean up HTML
+            var bm = RE_BODY.exec(html);
+            if (bm) html = bm[1];
+            html = html
+              .replace(RE_CMT, '')
+              .replace(RE_NS, '')
+              .replace(RE_MSO, '')
+              .replace(RE_CLASS, '')
+              .replace(RE_SPAN, '$1');
+
+            // Use execCommand('insertHTML') so paste goes into undo stack
+            try {
+              document.execCommand('insertHTML', false, html);
+            } catch(_) {
+              // Fallback: manual insert (no undo, but at least it works)
+              var sel = window.getSelection();
+              if (sel && sel.rangeCount) {
+                var range = sel.getRangeAt(0);
+                range.deleteContents();
+                var tmp = document.createElement('div');
+                tmp.innerHTML = html;
+                var frag = document.createDocumentFragment();
+                var child;
+                while ((child = tmp.firstChild)) frag.appendChild(child);
+                range.insertNode(frag);
+                range.collapse(false);
+                sel.removeAllRanges();
+                sel.addRange(range);
+              }
+            }
+          } else if (text) {
+            // Plain text — execCommand insertText for undo support
+            try {
+              document.execCommand('insertText', false, text);
+            } catch(_) {
+              var sel = window.getSelection();
+              if (sel && sel.rangeCount) {
+                var range = sel.getRangeAt(0);
+                range.deleteContents();
+                var lines = text.split('\\n');
+                var frag = document.createDocumentFragment();
+                lines.forEach(function(line, idx) {
+                  if (idx > 0) frag.appendChild(document.createElement('br'));
+                  frag.appendChild(document.createTextNode(line));
+                });
+                range.insertNode(frag);
+                range.collapse(false);
+                sel.removeAllRanges();
+                sel.addRange(range);
+              }
+            }
+          }
+          document.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+      })();`;
+      doc.body.appendChild(script);
+
       const notify = () => {
         clearTimeout(timerRef.current);
         timerRef.current = setTimeout(() => {
@@ -170,14 +288,15 @@ export default function ReportSheetViewer({
       doc.addEventListener("keyup",   notify);
       doc.addEventListener("mouseup", notify);
 
-      // Focus iframe on click
       iframe.addEventListener("mousedown", () => {
-        setTimeout(() => iframe.contentWindow?.focus(), 0);
+        setTimeout(() => {
+          iframe.contentWindow?.focus();
+          iframe.contentDocument?.body?.focus();
+        }, 0);
       });
     }
   }, [readOnly]);
 
-  // ── Initialize on mount / data change ────────────────────────────────────
   useEffect(() => {
     const stored = getHtml(data);
     const html   = stored !== null ? stored : arrayToHtml(data);
@@ -190,7 +309,6 @@ export default function ReportSheetViewer({
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
-      {/* ── Info bar ── */}
       <div style={{
         background: topColor, color: "#fff",
         padding: "7px 16px", fontSize: 12, fontWeight: 500,
@@ -215,7 +333,6 @@ export default function ReportSheetViewer({
         )}
       </div>
 
-      {/* ── Page wrapper ── */}
       <div style={{ flex: 1, overflow: "auto", background: "#E8E8E4", padding: "28px 20px" }}>
         <div style={{
           maxWidth: 860, margin: "0 auto",
