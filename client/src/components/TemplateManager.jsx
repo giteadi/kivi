@@ -218,10 +218,16 @@ async function buildAndDownloadDocx(allData, sheetList, patientName, templateNam
 
     sheetList.forEach((name, idx) => {
       const sheetData = allData[name] || [];
-      console.log(`[DEBUG] Processing sheet ${name}:`, sheetData);
-      
       const html = getSheetHtml(sheetData);
-      console.log(`[DEBUG] HTML for sheet ${name}:`, html?.substring(0, 200));
+      
+      // Skip empty sheets (no content or just <p><br></p>)
+      const isEmpty = !html || html === "" || html === "<p><br></p>" || html.replace(/<[^>]+>/g, "").trim() === "";
+      if (isEmpty) {
+        console.log(`[DEBUG] Skipping empty sheet: ${name}`);
+        return;
+      }
+      
+      console.log(`[DEBUG] Processing sheet ${name}:`, html?.substring(0, 100));
       
       // Only export content, not sheet names (to avoid duplicate titles)
       const children = htmlToDocxElements(html);
