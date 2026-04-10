@@ -24,37 +24,24 @@ const MobileMenu = ({ isOpen, setIsOpen, activeItem, setActiveItem }) => {
     { id: 'dashboard', label: 'Dashboard', icon: FiHome, section: 'MAIN' },
     { 
       id: 'encounters', 
-      label: 'Assessments', 
+      label: 'Sessions', 
       icon: FiUsers, 
       section: 'MAIN',
       hasSubmenu: true,
       submenu: [
-        { id: 'encounters-list', label: 'Assessment List', icon: FiList },
-        { id: 'encounter-templates', label: 'Assessment Templates', icon: FiFileText }
-      ]
-    },
-    { 
-      id: 'services', 
-      label: 'Programs', 
-      icon: FiActivity, 
-      section: 'MAIN',
-      hasSubmenu: true,
-      submenu: [
-        { id: 'services-list', label: 'Program List', icon: FiList },
-        { id: 'service-cards', label: 'Program Cards', icon: FiActivity }
+        { id: 'assessment-list', label: 'Assessment List', icon: FiFileText },
+        { id: 'therapy-list', label: 'Therapy List', icon: FiActivity }
       ]
     },
     { id: 'patients', label: 'Examinees', icon: FiUser, section: 'USERS' },
-    { id: 'groups', label: 'Groups', icon: FiUsers, section: 'USERS' },
-    { id: 'examinee-group-report', label: 'Examinee/Group/Report', icon: FiFileText, section: 'USERS' },
     { id: 'doctors', label: 'Therapists', icon: FiUserCheck, section: 'USERS' },
+    { id: 'template-manager', label: 'Assessment Templates', icon: FiFileText, section: 'USERS' },
     // { id: 'receptionists', label: 'Staff', icon: FiUser, section: 'USERS' }, // Temporarily disabled
     { id: 'clinics', label: 'Centres', icon: FiMapPin, section: 'CENTRE' },
     { id: 'clinic-revenue', label: 'Centre Revenue', icon: FiTrendingUp, section: 'FINANCIAL' },
     // { id: 'doctor-revenue', label: 'Therapist Revenue', icon: FiDollarSign, section: 'FINANCIAL' }, // Temporarily disabled
     { id: 'taxes', label: 'Taxes', icon: FiPercent, section: 'FINANCIAL' },
     { id: 'billing-records', label: 'Billing Records', icon: FiCreditCard, section: 'FINANCIAL' },
-    { id: 'report', label: 'Reports', icon: FiFileText, section: 'FINANCIAL' },
   ];
 
   const sections = ['MAIN', 'USERS', 'CENTRE', 'FINANCIAL'];
@@ -77,10 +64,7 @@ const MobileMenu = ({ isOpen, setIsOpen, activeItem, setActiveItem }) => {
 
   const isActiveItem = (itemId) => {
     if (itemId === 'encounters') {
-      return activeItem === 'encounters-list' || activeItem === 'encounter-templates';
-    }
-    if (itemId === 'services') {
-      return activeItem === 'services-list' || activeItem === 'service-cards';
+      return activeItem === 'assessment-list' || activeItem === 'therapy-list';
     }
     return activeItem === itemId;
   };
