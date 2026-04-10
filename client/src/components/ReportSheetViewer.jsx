@@ -164,9 +164,9 @@ export default function ReportSheetViewer({
           var RE_BODY  = /<body[^>]*>([\\s\\S]*?)<\\/body>/i;
           var RE_CMT   = /<!--[\\s\\S]*?-->/g;
           var RE_NS    = /<\\/?(?:o|w|m|v):[^>]*>/gi;
-          var RE_MSO   = /\\s*style="[^"]*mso-[^"]*"/gi;
+          var RE_MSO   = /\\\\s*style="[^"]*mso-[^"]*"/gi;
           var RE_CLASS = / class="[^"]*"/gi;
-          var RE_SPAN  = /<span[^>]*>(?:<span[^>]*>)*([^<]*?)(?:<\/span>)*<\/span>/gi;
+          var RE_SPAN  = /<span[^>]*>(?:<span[^>]*>)*([^<]*?)<\\/span>/gi;
 
           // Use window.__savedRange to persist across script re-injections
           if (!window.__savedRange) window.__savedRange = null;
