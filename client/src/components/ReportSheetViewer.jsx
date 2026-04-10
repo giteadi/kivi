@@ -152,121 +152,182 @@ export default function ReportSheetViewer({
       doc.designMode = "on";
 
       // ── Inject clipboard handlers as a real script element (avoids regex parse errors in doc.write) ──
-      const script = doc.createElement("script");
-      script.textContent = `(function() {
-        var RE_BODY   = /<body[^>]*>([\\s\\S]*?)<\\/body>/i;
-        var RE_CMT    = /<!--[\\s\\S]*?-->/g;
-        var RE_NS     = /<\\/?(?:o|w|m|v):[^>]*>/gi;
-        var RE_MSO    = /\\s*style="[^"]*mso-[^"]*"/gi;
-        var RE_CLASS  = / class="[^"]*"/gi;
-        var RE_SPAN   = /<span[^>]*>(?:<span[^>]*>)*([^<]*?)(?:<\\/span>)*<\\/span>/gi;
+      // Prevent duplicate script injection using window.__clipboardScriptLoaded flag
+      if (doc.defaultView && doc.defaultView.__clipboardScriptLoaded) {
+        // Script already loaded, just restore designMode and focus
+        doc.body.focus();
+      } else {
+        if (doc.defaultView) doc.defaultView.__clipboardScriptLoaded = true;
 
-        // ── Ctrl+A: select ALL content in body ───────────────────────────────
+        const script = doc.createElement("script");
+        script.textContent = `(function() {
+          var RE_BODY  = /<body[^>]*>([\\s\\S]*?)<\\/body>/i;
+          var RE_CMT   = /<!--[\\s\\S]*?-->/g;
+          var RE_NS    = /<\\/?(?:o|w|m|v):[^>]*>/gi;
+          var RE_MSO   = /\\s*style="[^"]*mso-[^"]*"/gi;
+          var RE_CLASS = / class="[^"]*"/gi;
+          var RE_SPAN  = /<span[^>]*>(?:<span[^>]*>)*([^<]*?)(?:<\/span>)*<\/span>/gi;
+
+          // Use window.__savedRange to persist across script re-injections
+          if (!window.__savedRange) window.__savedRange = null;
+          var mouseIsDown = false;
+          var restoring   = false; // prevent re-entry
+          var scriptId    = Date.now(); // unique ID for this script injection
+
+          function log(label, data) {
+            console.log('[IFRAME-' + scriptId + '] ' + label, data || '');
+          }
+
+          // ── Track mouse state ─────────────────────────────────────────────────
+        document.addEventListener('mousedown', function(e) {
+          log('>> mousedown START', {target: e.target.tagName, button: e.button});
+          mouseIsDown = true;
+          // Only clear savedRange on LEFT click (button 0) - preserve for right-click copy
+          if (e.button === 0) {
+            window.__savedRange  = null;
+            log('<< mousedown END - savedRange cleared (left click)', getSelInfo());
+          } else {
+            log('<< mousedown END - savedRange PRESERVED (button ' + e.button + ')', getSelInfo());
+          }
+        });
+
+        document.addEventListener('mouseup', function(e) {
+          log('>> mouseup START', {target: e.target.tagName, mouseIsDown: mouseIsDown});
+          mouseIsDown = false;
+
+          // Wait one frame for browser to finalize selection
+          requestAnimationFrame(function() {
+            var sel = window.getSelection();
+            log('mouseup RAF - selection:', getSelInfo());
+            if (sel && !sel.isCollapsed && sel.rangeCount) {
+              window.__savedRange = sel.getRangeAt(0).cloneRange();
+              log('mouseup RAF - SAVED range', window.__savedRange.toString().slice(0,50));
+            } else if (window.__savedRange && !restoring) {
+              log('mouseup RAF - RESTORING saved range (browser collapsed)', window.__savedRange.toString().slice(0,50));
+              restoring = true;
+              sel.removeAllRanges();
+              sel.addRange(window.__savedRange);
+              restoring = false;
+              log('<< mouseup RAF - RESTORED');
+            } else {
+              log('<< mouseup RAF - no action (sel.collapsed=' + (sel?sel.isCollapsed:'null') + ', savedRange=' + !!window.__savedRange + ')');
+            }
+          });
+        });
+
+        // ── Ctrl+A ────────────────────────────────────────────────────────────
         document.addEventListener('keydown', function(e) {
+          log('>> keydown START', {key: e.key, ctrl: e.ctrlKey, meta: e.metaKey, savedRange: !!window.__savedRange});
           if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+            log('keydown - Ctrl+A detected, selecting all...');
             e.preventDefault();
+            // Ensure body has focus first
+            document.body.focus();
             var range = document.createRange();
             range.selectNodeContents(document.body);
             var sel = window.getSelection();
             sel.removeAllRanges();
             sel.addRange(range);
+            window.__savedRange = range.cloneRange();
+            log('<< keydown END - Ctrl+A done, savedRange set', getSelInfo());
+            return;
+          }
+          if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+            log('keydown - Ctrl+C detected, selection:', getSelInfo());
+          }
+          // Non-modifier keys move cursor — clear saved
+          if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+            window.__savedRange = null;
+            log('keydown - normal key pressed, cleared savedRange');
+          }
+          log('<< keydown END');
+        });
+
+        // ── COPY: use savedRange as fallback ──────────────────────────────────
+        document.addEventListener('copy', function(e) {
+          log('>> copy EVENT START');
+          log('copy - savedRange value:', window.__savedRange ? window.__savedRange.toString().slice(0,30) : 'NULL');
+          var sel      = window.getSelection();
+          var useRange = (sel && !sel.isCollapsed && sel.rangeCount)
+                           ? sel.getRangeAt(0) : window.__savedRange;
+          log('copy - sel.isCollapsed:', sel?.isCollapsed, 'sel.rangeCount:', sel?.rangeCount);
+          log('copy - useRange source:', (sel && !sel.isCollapsed && sel.rangeCount) ? 'LIVE' : 'SAVED');
+          log('copy - useRange exists:', !!useRange);
+          if (!useRange) {
+            log('<< copy END - NO range to copy');
+            return;
+          }
+          var div = document.createElement('div');
+          div.appendChild(useRange.cloneContents());
+          try {
+            e.preventDefault();
+            e.clipboardData.setData('text/html',  div.innerHTML);
+            e.clipboardData.setData('text/plain', useRange.toString());
+            log('<< copy END - SUCCESS copied', useRange.toString().slice(0,50));
+          } catch(err) {
+            log('<< copy END - ERROR', err);
           }
         });
 
-        // ── Prevent mousedown on non-text areas from clearing selection ───────
-        // Only allow selection reset when actually clicking on content
-        var isSelecting = false;
-        document.addEventListener('mousedown', function(e) {
-          isSelecting = true;
-        });
-        document.addEventListener('mouseup', function(e) {
-          isSelecting = false;
-        });
-
-        document.addEventListener('copy', function(e) {
-          var sel = window.getSelection();
-          if (!sel || sel.isCollapsed) return;
-          var range = sel.getRangeAt(0);
-          var div = document.createElement('div');
-          div.appendChild(range.cloneContents());
-          try {
-            e.preventDefault();
-            e.clipboardData.setData('text/html', div.innerHTML);
-            e.clipboardData.setData('text/plain', sel.toString());
-          } catch(_) {}
-        });
-
+        // ── CUT ───────────────────────────────────────────────────────────────
         document.addEventListener('cut', function(e) {
           var sel = window.getSelection();
           if (!sel || sel.isCollapsed) return;
           var range = sel.getRangeAt(0);
-          var div = document.createElement('div');
+          var div   = document.createElement('div');
           div.appendChild(range.cloneContents());
           try {
             e.preventDefault();
-            e.clipboardData.setData('text/html', div.innerHTML);
+            e.clipboardData.setData('text/html',  div.innerHTML);
             e.clipboardData.setData('text/plain', sel.toString());
-            // Use execCommand so cut is in undo history
             document.execCommand('delete');
+            window.__savedRange = null;
             document.dispatchEvent(new Event('input', { bubbles: true }));
           } catch(_) {}
         });
 
+        // ── PASTE ─────────────────────────────────────────────────────────────
         document.addEventListener('paste', function(e) {
           e.preventDefault();
+          window.__savedRange = null;
           var html = e.clipboardData.getData('text/html');
           var text = e.clipboardData.getData('text/plain');
 
           if (html) {
-            // Clean up HTML
             var bm = RE_BODY.exec(html);
             if (bm) html = bm[1];
             html = html
-              .replace(RE_CMT, '')
-              .replace(RE_NS, '')
-              .replace(RE_MSO, '')
-              .replace(RE_CLASS, '')
-              .replace(RE_SPAN, '$1');
-
-            // Use execCommand('insertHTML') so paste goes into undo stack
+              .replace(RE_CMT,'').replace(RE_NS,'')
+              .replace(RE_MSO,'').replace(RE_CLASS,'')
+              .replace(RE_SPAN,'$1');
             try {
               document.execCommand('insertHTML', false, html);
             } catch(_) {
-              // Fallback: manual insert (no undo, but at least it works)
-              var sel = window.getSelection();
-              if (sel && sel.rangeCount) {
-                var range = sel.getRangeAt(0);
-                range.deleteContents();
-                var tmp = document.createElement('div');
-                tmp.innerHTML = html;
-                var frag = document.createDocumentFragment();
-                var child;
-                while ((child = tmp.firstChild)) frag.appendChild(child);
-                range.insertNode(frag);
-                range.collapse(false);
-                sel.removeAllRanges();
-                sel.addRange(range);
+              var s = window.getSelection();
+              if (s && s.rangeCount) {
+                var r = s.getRangeAt(0); r.deleteContents();
+                var tmp = document.createElement('div'); tmp.innerHTML = html;
+                var frag = document.createDocumentFragment(), c;
+                while ((c = tmp.firstChild)) frag.appendChild(c);
+                r.insertNode(frag); r.collapse(false);
+                s.removeAllRanges(); s.addRange(r);
               }
             }
           } else if (text) {
-            // Plain text — execCommand insertText for undo support
             try {
               document.execCommand('insertText', false, text);
             } catch(_) {
-              var sel = window.getSelection();
-              if (sel && sel.rangeCount) {
-                var range = sel.getRangeAt(0);
-                range.deleteContents();
+              var s = window.getSelection();
+              if (s && s.rangeCount) {
+                var r = s.getRangeAt(0); r.deleteContents();
                 var lines = text.split('\\n');
-                var frag = document.createDocumentFragment();
-                lines.forEach(function(line, idx) {
-                  if (idx > 0) frag.appendChild(document.createElement('br'));
-                  frag.appendChild(document.createTextNode(line));
+                var frag  = document.createDocumentFragment();
+                lines.forEach(function(l, i) {
+                  if (i > 0) frag.appendChild(document.createElement('br'));
+                  frag.appendChild(document.createTextNode(l));
                 });
-                range.insertNode(frag);
-                range.collapse(false);
-                sel.removeAllRanges();
-                sel.addRange(range);
+                r.insertNode(frag); r.collapse(false);
+                s.removeAllRanges(); s.addRange(r);
               }
             }
           }
@@ -288,12 +349,16 @@ export default function ReportSheetViewer({
       doc.addEventListener("keyup",   notify);
       doc.addEventListener("mouseup", notify);
 
-      iframe.addEventListener("mousedown", () => {
+      iframe.addEventListener("mousedown", (e) => {
+        console.log('[PARENT] iframe mousedown', {target: e.target.tagName, buttons: e.buttons});
+        // Focus window only — don't call body.focus() as it clears selection
         setTimeout(() => {
+          console.log('[PARENT] focusing iframe.contentWindow');
           iframe.contentWindow?.focus();
-          iframe.contentDocument?.body?.focus();
+          console.log('[PARENT] focus done');
         }, 0);
       });
+      } // end of else block for script injection check
     }
   }, [readOnly]);
 
