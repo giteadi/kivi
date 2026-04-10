@@ -82,9 +82,23 @@ function htmlToPlainText(html) {
 // ─── Get HTML from sheet data ─────────────────────────────────────────────────
 function getSheetHtml(sheetData) {
   if (!sheetData || !sheetData.length) return "";
+  
+  // Case 1: Rich text HTML format
   if (sheetData[0]?.[0] === "__html__") return sheetData[0][1] || "";
-  // Raw array → join as text
-  return sheetData.map(row => row.join("\t")).join("\n");
+  
+  // Case 2: Raw array → proper HTML table banao (flat text nahi!)
+  const rows = sheetData.filter(row => row && row.length > 0);
+  if (!rows.length) return "";
+  
+  const tableRows = rows.map((row, rowIdx) => {
+    const tag = rowIdx === 0 ? "th" : "td";
+    const cells = row.map(cell => 
+      `<${tag} style="border:1px solid #ccc;padding:6px 10px;">${cell ?? ""}</${tag}>` 
+    ).join("");
+    return `<tr>${cells}</tr>`;
+  }).join("");
+  
+  return `<table style="border-collapse:collapse;width:100%;">${tableRows}</table>`;
 }
 
 // ─── HTML → docx elements ────────────────────────────────────────────────────
