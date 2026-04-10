@@ -266,11 +266,11 @@ async function buildAndDownloadDocx(allData, sheetList, patientName, templateNam
       sections,
     });
 
-    console.log('[DEBUG] Generating buffer...');
-    const buffer = await Packer.toBuffer(doc);
-    console.log('[DEBUG] Buffer generated:', buffer?.length, 'bytes');
+    console.log('[DEBUG] Generating blob...');
+    // Use toBlob() for browser compatibility (toBuffer() is Node.js only)
+    const blob = await Packer.toBlob(doc);
+    console.log('[DEBUG] Blob generated:', blob?.size, 'bytes');
     
-    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
