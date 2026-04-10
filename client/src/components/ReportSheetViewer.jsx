@@ -105,6 +105,17 @@ function buildDoc(bodyHtml) {
   ::selection, *::selection, td::selection, th::selection {
     background: #3B82F6 !important; color: #fff !important;
   }
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 8px 0;
+    cursor: pointer;
+  }
+  img.selected, img:focus {
+    outline: 2px solid #3B82F6;
+    outline-offset: 2px;
+  }
 </style>
 </head>
 <body>${bodyHtml}</body>
