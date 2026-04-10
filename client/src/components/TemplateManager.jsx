@@ -155,7 +155,10 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
           <button style={{ ...css.btn("ghost"), color: "#D1FAE5", borderColor: "#065F46" }} onClick={handleExport}>
             <Icon d={icons.download} size={14} /> Export XLSX
           </button>
-          <button style={css.btn("green")} onClick={() => onSave(reportData, sheetList, reportPatient)}>
+          <button style={css.btn("green")} onClick={() => {
+            console.log('[DEBUG] Save Report button clicked!');
+            onSave(reportData, sheetList, reportPatient);
+          }}>
             <Icon d={icons.save} size={14} /> Save Report
           </button>
         </div>
@@ -237,6 +240,12 @@ function ViewPanel({ template, onBack, onExport, onCreateReport }) {
   // Keep local copy of sheet data for edits in view mode
   const [localSheets, setLocalSheets] = useState(template.sheets);
 
+  // Update localSheets when template changes (e.g., when viewing a different report)
+  useEffect(() => {
+    setLocalSheets(template.sheets);
+    setActiveSheetIdx(0); // Reset to first sheet
+  }, [template.id, template.sheets]);
+
   return (
     <div style={css.panel}>
       <div style={css.panelHeader}>
@@ -288,8 +297,7 @@ function ViewPanel({ template, onBack, onExport, onCreateReport }) {
       </div>
 
       <ReportSheetViewer
-        key={currentSheet}
-        data={localSheets[currentSheet] || [[]]}
+        data={localSheets[currentSheet] || [["__html__", "<p><br></p>"]]}
         readOnly={false}
         onDataChange={(newData) => {
           setLocalSheets(prev => ({ ...prev, [currentSheet]: newData }));
@@ -314,9 +322,6 @@ export default function TemplateManager() {
   const [panel, setPanel]           = useState(null);
   const [activeTemplate, setActiveTemplate] = useState(null);
   const [reportPanel, setReportPanel]   = useState(null);
-  const [patientName, setPatientName]   = useState("");
-  const [showNewReportModal, setShowNewReportModal] = useState(false);
-  const [newReportTemplate, setNewReportTemplate]   = useState(null);
 
   const fileRef = useRef(null);
 
@@ -326,6 +331,7 @@ export default function TemplateManager() {
     setLoading(true); setError(null);
     try {
       const response = await api.getTemplates();
+      console.log('[DEBUG] fetchTemplates - response.data count:', response.data?.length, 'items:', response.data?.map(t => ({id: t.id, name: t.name, type: t.type})));
       if (response.success && response.data?.length > 0) {
         const transformed = response.data.map(t => {
           let parsedData = t.template_data;
@@ -334,6 +340,11 @@ export default function TemplateManager() {
           }
           const sheets     = parsedData?.sheets     || {};
           const sheetNames = parsedData?.sheetNames || Object.keys(sheets);
+          // Debug: log first sheet data for reports
+          if (t.type === 'report' && sheetNames.length > 0) {
+            const firstSheet = sheets[sheetNames[0]];
+            console.log('[DEBUG] fetchTemplates - report:', t.name, 'firstSheet:', firstSheet);
+          }
           return {
             id:         t.id,
             name:       t.name,
@@ -400,50 +411,51 @@ export default function TemplateManager() {
 
   const openView = (tpl) => { setActiveTemplate(tpl); setPanel("view"); };
 
-  // Open report creation modal
+  // Open report directly with blank sheets (Word-like behavior)
   const openCreateReport = (tpl) => {
-    setNewReportTemplate(tpl);
-    setPatientName("");
-    setShowNewReportModal(true);
-  };
-
-  // Start editing report — copy all sheets from template, each as HTML
-  const startReportEdit = () => {
-    if (!newReportTemplate) return;
-
-    // Deep copy all sheet data for the report
+    // Create blank sheets (empty pages) - user can copy-paste template content
     const allData = Object.fromEntries(
-      newReportTemplate.sheetNames.map(n => {
-        const sheetData = newReportTemplate.sheets[n];
-        // If already HTML, use it directly; otherwise keep raw (viewer will convert)
-        return [n, sheetData ? sheetData.map(r => [...r]) : [["__html__", "<p><br></p>"]]];
-      })
+      tpl.sheetNames.map(n => [n, [["__html__", "<p><br></p>"]]])
     );
 
     setReportPanel({
-      templateName: newReportTemplate.name,
-      allSheets:    newReportTemplate.sheetNames,
+      templateName: tpl.name,
+      allSheets: tpl.sheetNames,
       allData,
-      patientName,
+      patientName: "",
     });
-    setShowNewReportModal(false);
     setPanel("report");
   };
 
   const saveReport = async (allData, sheetList, activePatientName) => {
+    const firstSheet = sheetList[0];
+    const firstSheetData = allData[firstSheet];
+    console.log('[DEBUG] saveReport called:', { 
+      allDataKeys: Object.keys(allData), 
+      sheetList, 
+      activePatientName,
+      firstSheet,
+      firstSheetData 
+    });
     try {
       const name = `${activePatientName || "Patient"} — ${reportPanel.templateName} — ${new Date().toLocaleDateString("en-IN")}`;
-      await api.createTemplate({
+      const requestBody = {
         name,
         type: "report",
         description: `Patient report for ${activePatientName}`,
         template_data: { sheets: allData, sheetNames: sheetList },
-      });
+      };
+      console.log('[DEBUG] API request body:', JSON.stringify(requestBody, null, 2));
+      const result = await api.createTemplate(requestBody);
+      console.log('[DEBUG] API result:', result);
       await fetchTemplates();
       setPanel(null);
       setReportPanel(null);
       alert(`✅ Report "${name}" saved successfully!`);
-    } catch (err) { alert("Save failed: " + err.message); }
+    } catch (err) { 
+      console.error('[DEBUG] Save failed:', err);
+      alert("Save failed: " + err.message); 
+    }
   };
 
   const filtered = useMemo(() =>
@@ -611,6 +623,7 @@ export default function TemplateManager() {
       {/* ── VIEW PANEL ── */}
       {panel === "view" && activeTemplate && (
         <ViewPanel
+          key={activeTemplate.id}
           template={activeTemplate}
           onBack={() => setPanel(null)}
           onExport={doExport}
@@ -627,65 +640,6 @@ export default function TemplateManager() {
         />
       )}
 
-      {/* ── NEW REPORT MODAL ── */}
-      {showNewReportModal && newReportTemplate && (
-        <div style={css.overlay}>
-          <div style={css.modal}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>📋 Create New Patient Report</h2>
-              <button style={css.iconBtn} onClick={() => setShowNewReportModal(false)}>
-                <Icon d={icons.x} size={16} />
-              </button>
-            </div>
-            <p style={{ fontSize: 13, color: "#6B7280", marginBottom: 16 }}>
-              Template: <strong>{newReportTemplate.name}</strong> — {newReportTemplate.sheetNames.length} sheets will be copied
-            </p>
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 }}>Patient Name *</label>
-              <input
-                style={css.input}
-                placeholder="e.g. Aina Khan"
-                value={patientName}
-                onChange={e => setPatientName(e.target.value)}
-                autoFocus
-                onKeyDown={e => { if (e.key === "Enter" && patientName.trim()) startReportEdit(); }}
-              />
-            </div>
-
-            {/* Sheet preview */}
-            <div style={{ background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 8, padding: "10px 14px", marginBottom: 20 }}>
-              <p style={{ fontSize: 12, color: "#166534", margin: "0 0 8px 0", fontWeight: 600 }}>
-                📑 Sheets that will be included:
-              </p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {newReportTemplate.sheetNames.map(name => (
-                  <span key={name} style={{
-                    padding: "3px 10px", borderRadius: 12,
-                    background: "#fff", color: "#374151",
-                    fontSize: 11, border: "1px solid #D1D5DB",
-                  }}>
-                    {name}
-                  </span>
-                ))}
-              </div>
-              <p style={{ fontSize: 11, color: "#6B7280", margin: "8px 0 0", lineHeight: 1.5 }}>
-                💡 Each sheet opens as a fully editable document — select all, delete, paste from Word/Excel freely.
-              </p>
-            </div>
-
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-              <button style={css.btn("ghost")} onClick={() => setShowNewReportModal(false)}>Cancel</button>
-              <button
-                style={{ ...css.btn("green"), opacity: patientName.trim() ? 1 : 0.5 }}
-                disabled={!patientName.trim()}
-                onClick={startReportEdit}
-              >
-                <Icon d={icons.patient} size={14} /> Start Editing Report
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
