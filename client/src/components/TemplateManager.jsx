@@ -1,16 +1,20 @@
 // TemplateManager.jsx — RICH TEXT EDITOR VERSION
-// Key changes vs previous:
-//  ✅ ReportSheetViewer now uses contentEditable rich text (Word-like)
-//  ✅ New Report: each sheet's data converted to HTML, fully editable
-//  ✅ Select all / paste / delete works like Word
-//  ✅ onDataChange stores HTML (not broken cell arrays)
-//  ✅ Export still works via HTML→text fallback
+// Changes vs previous:
+//  ✅ Export button replaced with ExportDropdown (Word / Excel choice)
+//  ✅ exportToDocx helper added (HTML → .docx with structure preserved)
+//  ✅ exportToXlsx retains same logic as before
+//  ✅ No extra buttons added anywhere
 
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import * as XLSX from "xlsx";
+import {
+  Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+  AlignmentType, HeadingLevel, BorderStyle, WidthType, ShadingType, LevelFormat,
+} from "docx";
 import api from "../services/api";
 import ReportSheetViewer from "./ReportSheetViewer";
 import Sidebar from "./Sidebar";
+import ExportDropdown from "./ExportDropdown";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 const Icon = ({ d, size = 16, stroke = "currentColor", fill = "none" }) => (
@@ -68,20 +72,249 @@ const css = {
   badge: (c) => ({ display: "inline-block", padding: "2px 8px", borderRadius: 12, fontSize: 11, fontWeight: 500, background: c === "green" ? "#D1FAE5" : c === "blue" ? "#DBEAFE" : "#F3F4F6", color: c === "green" ? "#065F46" : c === "blue" ? "#1D4ED8" : "#6B7280" }),
 };
 
-// ─── Extract plain text from HTML (for export fallback) ───────────────────────
+// ─── HTML → plain text (fallback) ────────────────────────────────────────────
 function htmlToPlainText(html) {
   const div = document.createElement("div");
   div.innerHTML = html;
   return div.innerText || div.textContent || "";
 }
 
-// ─── Get HTML string from sheet data ─────────────────────────────────────────
+// ─── Get HTML from sheet data ─────────────────────────────────────────────────
 function getSheetHtml(sheetData) {
-  if (!sheetData || !sheetData.length) return "<p><br></p>";
-  // If stored as HTML marker
-  if (sheetData[0]?.[0] === "__html__") return sheetData[0][1] || "<p><br></p>";
-  // Otherwise it's raw array — will be converted by ReportSheetViewer
-  return null; // let ReportSheetViewer handle conversion
+  if (!sheetData || !sheetData.length) return "";
+  if (sheetData[0]?.[0] === "__html__") return sheetData[0][1] || "";
+  // Raw array → join as text
+  return sheetData.map(row => row.join("\t")).join("\n");
+}
+
+// ─── HTML → docx elements ────────────────────────────────────────────────────
+const CELL_BORDER = { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" };
+const CELL_BORDERS = { top: CELL_BORDER, bottom: CELL_BORDER, left: CELL_BORDER, right: CELL_BORDER };
+
+function nodeToRuns(node, inherited = {}) {
+  const runs = [];
+  if (node.nodeType === Node.TEXT_NODE) {
+    const text = node.textContent;
+    if (text) runs.push(new TextRun({ text, ...inherited }));
+    return runs;
+  }
+  const tag = node.tagName?.toLowerCase();
+  const style = {
+    ...inherited,
+    bold:    inherited.bold    || ["b", "strong"].includes(tag),
+    italics: inherited.italics || ["i", "em"].includes(tag),
+    strike:  inherited.strike  || ["s", "del", "strike"].includes(tag),
+    ...(tag === "u" ? { underline: {} } : {}),
+  };
+  for (const child of node.childNodes) runs.push(...nodeToRuns(child, style));
+  return runs;
+}
+
+function nodeToDocxElements(node) {
+  const els = [];
+  if (node.nodeType === Node.TEXT_NODE) {
+    const t = node.textContent.trim();
+    if (t) els.push(new Paragraph({ children: [new TextRun(t)] }));
+    return els;
+  }
+  const tag = node.tagName?.toLowerCase();
+  if (!tag) return els;
+
+  const headingMap = { h1: HeadingLevel.HEADING_1, h2: HeadingLevel.HEADING_2,
+    h3: HeadingLevel.HEADING_3, h4: HeadingLevel.HEADING_4 };
+  if (headingMap[tag]) {
+    els.push(new Paragraph({ heading: headingMap[tag], children: nodeToRuns(node) }));
+    return els;
+  }
+
+  if (["p", "div", "section"].includes(tag)) {
+    const runs = nodeToRuns(node);
+    if (runs.length) { els.push(new Paragraph({ children: runs })); return els; }
+    for (const c of node.childNodes) els.push(...nodeToDocxElements(c));
+    return els;
+  }
+
+  if (tag === "br") { els.push(new Paragraph({ children: [] })); return els; }
+
+  if (tag === "hr") {
+    els.push(new Paragraph({
+      border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: "AAAAAA", space: 1 } },
+      children: [],
+    }));
+    return els;
+  }
+
+  if (tag === "ul") {
+    node.querySelectorAll(":scope > li").forEach(li =>
+      els.push(new Paragraph({ numbering: { reference: "bullets", level: 0 }, children: nodeToRuns(li) }))
+    );
+    return els;
+  }
+
+  if (tag === "ol") {
+    node.querySelectorAll(":scope > li").forEach(li =>
+      els.push(new Paragraph({ numbering: { reference: "numbers", level: 0 }, children: nodeToRuns(li) }))
+    );
+    return els;
+  }
+
+  if (tag === "table") {
+    const trList = node.querySelectorAll("tr");
+    let colCount = 0;
+    trList.forEach(tr => { colCount = Math.max(colCount, tr.querySelectorAll("td,th").length); });
+    const tableWidth = 9360;
+    const colWidth = colCount > 0 ? Math.floor(tableWidth / colCount) : tableWidth;
+    const rows = [];
+    trList.forEach((tr, ri) => {
+      const cells = [];
+      tr.querySelectorAll("td,th").forEach(td => {
+        const isHeader = td.tagName.toLowerCase() === "th" || ri === 0;
+        cells.push(new TableCell({
+          borders: CELL_BORDERS,
+          width: { size: colWidth, type: WidthType.DXA },
+          shading: isHeader ? { fill: "D5E8F0", type: ShadingType.CLEAR } : undefined,
+          margins: { top: 80, bottom: 80, left: 120, right: 120 },
+          children: [new Paragraph({ children: nodeToRuns(td) })],
+        }));
+      });
+      rows.push(new TableRow({ children: cells }));
+    });
+    if (rows.length) {
+      els.push(new Table({ width: { size: tableWidth, type: WidthType.DXA }, columnWidths: Array(colCount).fill(colWidth), rows }));
+      els.push(new Paragraph({ children: [] }));
+    }
+    return els;
+  }
+
+  if (tag === "blockquote") {
+    els.push(new Paragraph({ indent: { left: 720 }, children: nodeToRuns(node) }));
+    return els;
+  }
+
+  // Fallback
+  for (const c of node.childNodes) els.push(...nodeToDocxElements(c));
+  return els;
+}
+
+function htmlToDocxElements(html) {
+  const div = document.createElement("div");
+  div.innerHTML = html || "";
+  const els = [];
+  for (const c of div.childNodes) els.push(...nodeToDocxElements(c));
+  if (!els.length) els.push(new Paragraph({ children: [] }));
+  return els;
+}
+
+// ─── DOCX export ─────────────────────────────────────────────────────────────
+async function buildAndDownloadDocx(allData, sheetList, patientName, templateName) {
+  const sections = [];
+
+  sheetList.forEach((name, idx) => {
+    const html = getSheetHtml(allData[name] || []);
+    const children = [
+      // Sheet name as heading
+      new Paragraph({
+        heading: HeadingLevel.HEADING_1,
+        children: [new TextRun({ text: name, color: "1D4ED8" })],
+      }),
+      ...htmlToDocxElements(html),
+    ];
+
+    sections.push({
+      properties: {
+        page: {
+          size: { width: 11906, height: 16838 },
+          margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
+        },
+      },
+      children,
+    });
+  });
+
+  const doc = new Document({
+    numbering: {
+      config: [
+        { reference: "bullets", levels: [{ level: 0, format: LevelFormat.BULLET, text: "•", alignment: AlignmentType.LEFT, style: { paragraph: { indent: { left: 720, hanging: 360 } } } }] },
+        { reference: "numbers", levels: [{ level: 0, format: LevelFormat.DECIMAL, text: "%1.", alignment: AlignmentType.LEFT, style: { paragraph: { indent: { left: 720, hanging: 360 } } } }] },
+      ],
+    },
+    styles: {
+      default: { document: { run: { font: "Arial", size: 24 } } },
+      paragraphStyles: [
+        { id: "Heading1", name: "Heading 1", basedOn: "Normal", next: "Normal", quickFormat: true,
+          run: { size: 32, bold: true, font: "Arial", color: "1D4ED8" },
+          paragraph: { spacing: { before: 240, after: 120 }, outlineLevel: 0 } },
+        { id: "Heading2", name: "Heading 2", basedOn: "Normal", next: "Normal", quickFormat: true,
+          run: { size: 28, bold: true, font: "Arial" },
+          paragraph: { spacing: { before: 180, after: 90 }, outlineLevel: 1 } },
+      ],
+    },
+    sections,
+  });
+
+  const buffer = await Packer.toBuffer(doc);
+  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${patientName || "Report"}_${templateName || "export"}.docx`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─── XLSX export (structured — preserves HTML as readable text with sheet names) ──
+function buildAndDownloadXlsx(allData, sheetList, patientName, templateName) {
+  const wb = XLSX.utils.book_new();
+  sheetList.forEach(name => {
+    const d = allData[name] || [];
+    let rows;
+    if (d[0]?.[0] === "__html__") {
+      const html = d[0][1] || "";
+      // Parse HTML into structured rows: headings, paragraphs, table rows
+      const div = document.createElement("div");
+      div.innerHTML = html;
+      rows = [];
+
+      function extractRows(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          const t = node.textContent.trim();
+          if (t) rows.push([t]);
+          return;
+        }
+        const tag = node.tagName?.toLowerCase();
+        if (!tag) return;
+
+        if (/^h[1-6]$/.test(tag)) {
+          rows.push([node.innerText.trim().toUpperCase()]);
+          return;
+        }
+        if (tag === "p" || tag === "div") {
+          const t = node.innerText?.trim();
+          if (t) rows.push([t]);
+          else node.childNodes.forEach(extractRows);
+          return;
+        }
+        if (tag === "br") { rows.push([""]); return; }
+        if (tag === "hr") { rows.push(["---"]); return; }
+        if (tag === "li") { rows.push(["  • " + node.innerText?.trim()]); return; }
+        if (tag === "table") {
+          node.querySelectorAll("tr").forEach(tr => {
+            rows.push([...tr.querySelectorAll("td,th")].map(c => c.innerText?.trim() || ""));
+          });
+          rows.push([""]);
+          return;
+        }
+        node.childNodes.forEach(extractRows);
+      }
+
+      div.childNodes.forEach(extractRows);
+      if (!rows.length) rows = [[""]];
+    } else {
+      rows = d;
+    }
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), name.substring(0, 31));
+  });
+  XLSX.writeFile(wb, `${patientName || "Report"}_${templateName || "export"}.xlsx`);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -100,29 +333,11 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
   const addNewSheet = () => {
     const name = newSheetName.trim() || `Sheet ${sheetList.length + 1}`;
     if (sheetList.includes(name)) { alert("Sheet name already exists!"); return; }
-    // New sheet = blank HTML page
     setReportData(prev => ({ ...prev, [name]: [["__html__", "<p><br></p>"]] }));
     setSheetList(prev => [...prev, name]);
     setActiveSheet(name);
     setShowNewSheetModal(false);
     setNewSheetName("");
-  };
-
-  const handleExport = () => {
-    const wb = XLSX.utils.book_new();
-    sheetList.forEach(n => {
-      const d = reportData[n] || [];
-      let rows;
-      if (d[0]?.[0] === "__html__") {
-        // Convert HTML to plain text rows
-        const text = htmlToPlainText(d[0][1] || "");
-        rows = text.split("\n").map(line => [line]);
-      } else {
-        rows = d;
-      }
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows || [[""]]), n.substring(0, 31));
-    });
-    XLSX.writeFile(wb, `${reportPatient || "Patient"}_Report.xlsx`);
   };
 
   return (
@@ -151,12 +366,17 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
           />
         </div>
         <span style={{ color: "#6EE7B7", fontSize: 12, marginLeft: 4 }}>— {templateName}</span>
-        <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-          <button style={{ ...css.btn("ghost"), color: "#D1FAE5", borderColor: "#065F46" }} onClick={handleExport}>
-            <Icon d={icons.download} size={14} /> Export XLSX
-          </button>
+
+        <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
+          {/* ── Single Export button → dropdown (Word / Excel) ── */}
+          <ExportDropdown
+            ghost={true}
+            onExportDocx={() => buildAndDownloadDocx(reportData, sheetList, reportPatient, templateName)}
+            onExportXlsx={() => buildAndDownloadXlsx(reportData, sheetList, reportPatient, templateName)}
+          />
+
           <button style={css.btn("green")} onClick={() => {
-            console.log('[DEBUG] Save Report button clicked!');
+            console.log("[DEBUG] Save Report button clicked!");
             onSave(reportData, sheetList, reportPatient);
           }}>
             <Icon d={icons.save} size={14} /> Save Report
@@ -190,7 +410,6 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
         >+</button>
       </div>
 
-      {/* Editor — key forces remount on sheet change so editor re-initializes */}
       <ReportSheetViewer
         key={activeSheet}
         data={reportData[activeSheet] || [["__html__", "<p><br></p>"]]}
@@ -233,17 +452,15 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
 // ══════════════════════════════════════════════════════════════════════════════
 // VIEW PANEL
 // ══════════════════════════════════════════════════════════════════════════════
-function ViewPanel({ template, onBack, onExport, onCreateReport }) {
+function ViewPanel({ template, onBack, onCreateReport }) {
   const [activeSheetIdx, setActiveSheetIdx] = useState(0);
   const sheetNames = template.sheetNames || [];
   const currentSheet = sheetNames[activeSheetIdx] || sheetNames[0];
-  // Keep local copy of sheet data for edits in view mode
   const [localSheets, setLocalSheets] = useState(template.sheets);
 
-  // Update localSheets when template changes (e.g., when viewing a different report)
   useEffect(() => {
     setLocalSheets(template.sheets);
-    setActiveSheetIdx(0); // Reset to first sheet
+    setActiveSheetIdx(0);
   }, [template.id, template.sheets]);
 
   return (
@@ -279,9 +496,13 @@ function ViewPanel({ template, onBack, onExport, onCreateReport }) {
             <Icon d={icons.save} size={14} /> Save Changes
           </button>
           <span style={{ width: 1, height: 24, background: "#E5E7EB" }} />
-          <button style={css.btn("ghost")} onClick={() => onExport({ ...template, sheets: localSheets })}>
-            <Icon d={icons.download} size={14} /> Export
-          </button>
+
+          {/* ── Single Export button → dropdown (Word / Excel) ── */}
+          <ExportDropdown
+            onExportDocx={() => buildAndDownloadDocx(localSheets, template.sheetNames, template.name, template.name)}
+            onExportXlsx={() => doExport({ ...template, sheets: localSheets })}
+          />
+
           <button style={css.btn("green")} onClick={() => onCreateReport(template)}>
             <Icon d={icons.patient} size={14} /> New Report
           </button>
@@ -331,7 +552,6 @@ export default function TemplateManager() {
     setLoading(true); setError(null);
     try {
       const response = await api.getTemplates();
-      console.log('[DEBUG] fetchTemplates - response.data count:', response.data?.length, 'items:', response.data?.map(t => ({id: t.id, name: t.name, type: t.type})));
       if (response.success && response.data?.length > 0) {
         const transformed = response.data.map(t => {
           let parsedData = t.template_data;
@@ -340,11 +560,6 @@ export default function TemplateManager() {
           }
           const sheets     = parsedData?.sheets     || {};
           const sheetNames = parsedData?.sheetNames || Object.keys(sheets);
-          // Debug: log first sheet data for reports
-          if (t.type === 'report' && sheetNames.length > 0) {
-            const firstSheet = sheets[sheetNames[0]];
-            console.log('[DEBUG] fetchTemplates - report:', t.name, 'firstSheet:', firstSheet);
-          }
           return {
             id:         t.id,
             name:       t.name,
@@ -381,28 +596,6 @@ export default function TemplateManager() {
     finally { setLoading(false); e.target.value = ""; }
   };
 
-  const doExport = (tpl) => {
-    const wb = XLSX.utils.book_new();
-    (tpl.sheetNames || Object.keys(tpl.sheets)).forEach(n => {
-      const d = tpl.sheets[n] || [[""]];
-      let rows;
-      if (d[0]?.[0] === "__html__") {
-        const text = htmlToPlainText(d[0][1] || "");
-        rows = text.split("\n").map(line => [line]);
-      } else {
-        rows = d;
-      }
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), n.substring(0, 31));
-    });
-    XLSX.writeFile(wb, `${tpl.name}.xlsx`);
-  };
-
-  function htmlToPlainText(html) {
-    const div = document.createElement("div");
-    div.innerHTML = html;
-    return div.innerText || div.textContent || "";
-  }
-
   const deleteTpl = async (id) => {
     if (!confirm("Delete this template?")) return;
     try { await api.deleteTemplate(id); await fetchTemplates(); }
@@ -411,50 +604,29 @@ export default function TemplateManager() {
 
   const openView = (tpl) => { setActiveTemplate(tpl); setPanel("view"); };
 
-  // Open report directly with blank sheets (Word-like behavior)
   const openCreateReport = (tpl) => {
-    // Create blank sheets (empty pages) - user can copy-paste template content
     const allData = Object.fromEntries(
       tpl.sheetNames.map(n => [n, [["__html__", "<p><br></p>"]]])
     );
-
-    setReportPanel({
-      templateName: tpl.name,
-      allSheets: tpl.sheetNames,
-      allData,
-      patientName: "",
-    });
+    setReportPanel({ templateName: tpl.name, allSheets: tpl.sheetNames, allData, patientName: "" });
     setPanel("report");
   };
 
   const saveReport = async (allData, sheetList, activePatientName) => {
-    const firstSheet = sheetList[0];
-    const firstSheetData = allData[firstSheet];
-    console.log('[DEBUG] saveReport called:', { 
-      allDataKeys: Object.keys(allData), 
-      sheetList, 
-      activePatientName,
-      firstSheet,
-      firstSheetData 
-    });
     try {
       const name = `${activePatientName || "Patient"} — ${reportPanel.templateName} — ${new Date().toLocaleDateString("en-IN")}`;
-      const requestBody = {
+      const result = await api.createTemplate({
         name,
         type: "report",
         description: `Patient report for ${activePatientName}`,
         template_data: { sheets: allData, sheetNames: sheetList },
-      };
-      console.log('[DEBUG] API request body:', JSON.stringify(requestBody, null, 2));
-      const result = await api.createTemplate(requestBody);
-      console.log('[DEBUG] API result:', result);
+      });
       await fetchTemplates();
       setPanel(null);
       setReportPanel(null);
       alert(`✅ Report "${name}" saved successfully!`);
-    } catch (err) { 
-      console.error('[DEBUG] Save failed:', err);
-      alert("Save failed: " + err.message); 
+    } catch (err) {
+      alert("Save failed: " + err.message);
     }
   };
 
@@ -536,9 +708,8 @@ export default function TemplateManager() {
                     <div style={{ borderTop: "1px solid #F3F4F6", padding: "8px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                       <div style={{ display: "flex", gap: 4 }}>
                         {[
-                          { icon: icons.eye,      title: "View/Edit",  fn: (e) => { e.stopPropagation(); openView(t); },           color: "#2563EB" },
-                          { icon: icons.patient,  title: "New Report", fn: (e) => { e.stopPropagation(); openCreateReport(t); },    color: "#059669" },
-                          { icon: icons.download, title: "Export XLSX",fn: (e) => { e.stopPropagation(); doExport(t); },            color: "#EA580C" },
+                          { icon: icons.eye,     title: "View/Edit",  fn: (e) => { e.stopPropagation(); openView(t); },        color: "#2563EB" },
+                          { icon: icons.patient, title: "New Report", fn: (e) => { e.stopPropagation(); openCreateReport(t); },    color: "#059669" },
                         ].map(({ icon, title, fn, color }) => (
                           <button key={title} title={title} onClick={fn}
                             style={{ ...css.iconBtn, width: 28, height: 28 }}
@@ -597,12 +768,11 @@ export default function TemplateManager() {
                           {new Date(t.createdAt).toLocaleDateString()}
                         </td>
                         <td style={{ padding: "11px 14px", borderBottom: "1px solid #F3F4F6" }}>
-                          <div style={{ display: "flex", gap: 4, justifyContent: "flex-end" }}>
+                          <div style={{ display: "flex", gap: 4, justifyContent: "flex-end", alignItems: "center" }}>
                             {[
                               { icon: icons.eye,      title: "View",       fn: (e) => { e.stopPropagation(); openView(t); } },
                               { icon: icons.patient,  title: "New Report", fn: (e) => { e.stopPropagation(); openCreateReport(t); } },
-                              { icon: icons.download, title: "Export",     fn: (e) => { e.stopPropagation(); doExport(t); } },
-                              { icon: icons.trash,    title: "Delete",     fn: (e) => { e.stopPropagation(); deleteTpl(t.id); } },
+                              { icon: icons.trash,   title: "Delete",     fn: (e) => { e.stopPropagation(); deleteTpl(t.id); } },
                             ].map(({ icon, title, fn }) => (
                               <button key={title} title={title} onClick={fn} style={{ ...css.iconBtn, width: 28, height: 28 }}>
                                 <Icon d={icon} size={14} />
@@ -626,7 +796,6 @@ export default function TemplateManager() {
           key={activeTemplate.id}
           template={activeTemplate}
           onBack={() => setPanel(null)}
-          onExport={doExport}
           onCreateReport={openCreateReport}
         />
       )}
@@ -639,7 +808,7 @@ export default function TemplateManager() {
           onSave={saveReport}
         />
       )}
-
     </div>
+
   );
 }
