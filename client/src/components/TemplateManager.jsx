@@ -223,14 +223,8 @@ async function buildAndDownloadDocx(allData, sheetList, patientName, templateNam
       const html = getSheetHtml(sheetData);
       console.log(`[DEBUG] HTML for sheet ${name}:`, html?.substring(0, 200));
       
-      const children = [
-        // Sheet name as heading
-        new Paragraph({
-          heading: HeadingLevel.HEADING_1,
-          children: [new TextRun({ text: name, color: "1D4ED8" })],
-        }),
-        ...htmlToDocxElements(html),
-      ];
+      // Only export content, not sheet names (to avoid duplicate titles)
+      const children = htmlToDocxElements(html);
 
       sections.push({
         properties: {
