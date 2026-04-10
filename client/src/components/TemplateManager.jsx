@@ -541,6 +541,7 @@ function ViewPanel({ template, onBack, onCreateReport }) {
       </div>
 
       <ReportSheetViewer
+        key={currentSheet}
         data={localSheets[currentSheet] || [["__html__", "<p><br></p>"]]}
         readOnly={false}
         onDataChange={(newData) => {
