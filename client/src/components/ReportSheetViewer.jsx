@@ -125,7 +125,8 @@ export default function ReportSheetViewer({
   const timerRef   = useRef(null);
 
   // KEY FIX: Store live doc reference so notify() always reads current doc, never stale
-  const docRef = useRef(null);
+  const docRef     = useRef(null);
+  const mountedRef = useRef(false); // track if iframe already initialized
 
   // notify reads from docRef.current — always fresh, never a stale closure
   const notify = useCallback(() => {
@@ -134,10 +135,8 @@ export default function ReportSheetViewer({
       const doc = docRef.current;
       if (!doc || !onChgRef.current) return;
       const clone = doc.body.cloneNode(true);
-      // Remove injected script tags before saving
       clone.querySelectorAll("script").forEach(s => s.remove());
       const html = clone.innerHTML;
-      // Skip saving if blank
       if (!html || html === "<p><br></p>" || html.trim() === "") return;
       onChgRef.current(htmlToData(html));
     }, 300);
@@ -147,13 +146,13 @@ export default function ReportSheetViewer({
     const iframe = iframeRef.current;
     if (!iframe) return;
 
+    // FIX: Sirf first mount pe doc.write() karo
+    // Har data change pe rewrite karne se undo stack wipe hota tha
+    if (mountedRef.current) return;
+    mountedRef.current = true;
+
     const stored = getHtml(data);
     const html   = stored !== null ? stored : arrayToHtml(data);
-
-    console.log('[ReportSheetViewer] loading:', {
-      storedHtml: stored ? stored.slice(0, 60) + '...' : 'NULL → arrayToHtml',
-      htmlPreview: html.slice(0, 60),
-    });
 
     const doc = iframe.contentDocument || iframe.contentWindow?.document;
     if (!doc) return;
@@ -162,7 +161,7 @@ export default function ReportSheetViewer({
     doc.write(buildDoc(html));
     doc.close();
 
-    // Store fresh doc reference AFTER write so notify() always has correct doc
+    // Store fresh doc reference AFTER write
     docRef.current = doc;
 
     if (!readOnly) {
@@ -201,7 +200,6 @@ export default function ReportSheetViewer({
         document.addEventListener('keydown', function(e) {
           if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
             e.preventDefault();
-            document.body.focus();
             var range = document.createRange();
             range.selectNodeContents(document.body);
             var sel = window.getSelection();
@@ -295,9 +293,9 @@ export default function ReportSheetViewer({
       doc.body.appendChild(script);
 
       // Attach notify to this doc — notify reads docRef so always current
-      doc.addEventListener("input",   notify);
-      doc.addEventListener("keyup",   notify);
-      doc.addEventListener("mouseup", notify);
+      // mouseup intentionally removed — triggers re-render which clears selection
+      doc.addEventListener("input", notify);
+      doc.addEventListener("keyup", notify);
 
       iframe.addEventListener("mousedown", () => {
         setTimeout(() => iframe.contentWindow?.focus(), 0);
@@ -305,8 +303,10 @@ export default function ReportSheetViewer({
     }
 
     return () => clearTimeout(timerRef.current);
-  }, [data, readOnly, notify]);
-  // data change (sheet switch) → full re-run → fresh doc, fresh listeners, fresh docRef
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [readOnly, notify]);
+  // data intentionally NOT in deps — sirf mount pe doc.write() hona chahiye
+  // sheet switch ke liye parent mein key={activeSheet} already hai, jo remount karta hai
 
   const topColor = reportMode ? "#064E3B" : "#1E40AF";
 
