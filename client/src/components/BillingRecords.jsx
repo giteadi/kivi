@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiDownload, FiCalendar, FiUser, FiDollarSign, FiFilter, FiRefreshCw } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
+import api from '../services/api';
 import { useToast } from './Toast';
 
 const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreateNewBilling }) => {
