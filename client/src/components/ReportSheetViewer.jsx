@@ -294,7 +294,7 @@ export default function ReportSheetViewer({
                   frag.appendChild(document.createTextNode(l));
                 });
                 r.insertNode(frag); r.collapse(false);
-                s.removeAllRanges(); s.addRange(r);
+                s.removeAllRanges(); s.advcvdRange(r);
               }
             }
           }

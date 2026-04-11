@@ -126,7 +126,7 @@ class ExamineeController {
     try {
       const {
         firstName, middleName, lastName, examineeId, gender, dob, email,
-        custom1, custom2, custom3, custom4, comment, documents
+        custom1, custom2, custom3, custom4, comment, documents, languageOfTesting
       } = req.body;
 
       const studentData = {
@@ -140,6 +140,7 @@ class ExamineeController {
         customField2: custom2,
         customField3: custom3,
         customField4: custom4,
+        language_of_testing: languageOfTesting,
         learning_needs: comment
       };
 

@@ -90,6 +90,7 @@ CREATE TABLE kivi_students (
   date_of_birth DATE,
   age INT,
   gender ENUM('male', 'female', 'other'),
+  language_of_testing VARCHAR(50) DEFAULT NULL COMMENT 'Language used for testing (English, Hindi, Demographics, etc.)',
   address TEXT,
   city VARCHAR(100),
   state VARCHAR(100),

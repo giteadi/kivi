@@ -8,7 +8,8 @@ ALTER TABLE kivi_students
 ADD COLUMN IF NOT EXISTS custom_field_1 VARCHAR(255) DEFAULT NULL COMMENT 'Custom field 1 for examinee details',
 ADD COLUMN IF NOT EXISTS custom_field_2 VARCHAR(255) DEFAULT NULL COMMENT 'Custom field 2 for examinee details',
 ADD COLUMN IF NOT EXISTS custom_field_3 VARCHAR(255) DEFAULT NULL COMMENT 'Custom field 3 for examinee details',
-ADD COLUMN IF NOT EXISTS custom_field_4 VARCHAR(255) DEFAULT NULL COMMENT 'Custom field 4 for examinee details';
+ADD COLUMN IF NOT EXISTS custom_field_4 VARCHAR(255) DEFAULT NULL COMMENT 'Custom field 4 for examinee details',
+ADD COLUMN IF NOT EXISTS language_of_testing VARCHAR(50) DEFAULT NULL COMMENT 'Language used for testing (English, Hindi, Demographics, etc.)';
 
 -- Add groups column for examinee categorization
 ALTER TABLE kivi_students 
