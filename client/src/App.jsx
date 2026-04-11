@@ -76,6 +76,9 @@ import TemplateManager from './components/TemplateManager';
 import ExamineesManagement from './components/ExamineesManagement';
 import AssessmentList from './components/AssessmentList';
 import TherapyList from './components/TherapyList';
+import Queries from './components/Queries';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import TermsOfService from './components/TermsOfService';
 
 function App() {
   const dispatch = useDispatch();
@@ -87,6 +90,8 @@ function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
   const [showHomepage, setShowHomepage] = useState(true); // Show homepage by default
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [showTermsOfService, setShowTermsOfService] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [activeItem, setActiveItem] = useState('dashboard');
@@ -236,12 +241,44 @@ function App() {
     setShowLogin(true);
   };
 
+  const handleShowPrivacyPolicy = () => {
+    setShowHomepage(false);
+    setShowPrivacyPolicy(true);
+    setShowTermsOfService(false);
+  };
+
+  const handleShowTermsOfService = () => {
+    setShowHomepage(false);
+    setShowTermsOfService(true);
+    setShowPrivacyPolicy(false);
+  };
+
+  const handleBackToHome = () => {
+    setShowHomepage(true);
+    setShowPrivacyPolicy(false);
+    setShowTermsOfService(false);
+    setShowLogin(false);
+    setShowRegister(false);
+  };
+
+  // Show Privacy Policy
+  if (showPrivacyPolicy) {
+    return <PrivacyPolicy />;
+  }
+
+  // Show Terms of Service
+  if (showTermsOfService) {
+    return <TermsOfService />;
+  }
+
   // Show homepage first for non-authenticated users
   if (!isAuthenticated && showHomepage && !showLogin && !showRegister) {
     return (
       <Homepage 
         onSelectPlan={handleSelectPlan}
         onShowLogin={handleShowLogin}
+        onShowPrivacyPolicy={handleShowPrivacyPolicy}
+        onShowTermsOfService={handleShowTermsOfService}
       />
     );
   }
@@ -1226,6 +1263,9 @@ ${service.target_age_group || 'Not specified'}
       
       case 'admin-sessions':
         return <AdminSessionsList />;
+      
+      case 'queries':
+        return <Queries />;
       
       default:
         // Other menu items

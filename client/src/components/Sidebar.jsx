@@ -16,7 +16,8 @@ import {
   FiTrendingUp,
   FiActivity,
   FiMenu,
-  FiX
+  FiX,
+  FiMessageSquare
 } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
@@ -59,6 +60,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
     // { id: 'doctor-revenue', label: 'Therapist Revenue', icon: FiDollarSign, section: 'FINANCIAL' }, // Temporarily disabled 
     { id: 'taxes', label: 'Taxes', icon: FiPercent, section: 'FINANCIAL' },
     { id: 'billing-records', label: 'Billing Records', icon: FiCreditCard, section: 'FINANCIAL' },
+    { id: 'queries', label: 'Queries', icon: FiMessageSquare, section: 'ADMIN' },
   ];
 
   const therapistMenuItems = [
@@ -93,7 +95,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
 };
 
   const menuItems = getMenuItems();
-  const sections = ['MAIN', 'USERS', 'CENTRE', 'FINANCIAL'];
+  const sections = ['MAIN', 'USERS', 'CENTRE', 'FINANCIAL', 'ADMIN'];
 
   const toggleSection = (itemId) => {
     setExpandedSections(prev => ({

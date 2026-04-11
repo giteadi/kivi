@@ -53,6 +53,26 @@ const authenticateToken = async (req, res, next) => {
   }
 };
 
+// Admin authorization middleware - requires user to be admin
+const isAdmin = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: 'Authentication required'
+    });
+  }
+
+  // Check if user has admin role
+  if (req.user.role !== 'admin' && req.user.role !== 'superadmin') {
+    return res.status(403).json({
+      success: false,
+      message: 'Admin access required'
+    });
+  }
+
+  next();
+};
+
 // Optional authentication - doesn't fail if no token
 const optionalAuth = async (req, res, next) => {
   try {
@@ -81,5 +101,6 @@ const optionalAuth = async (req, res, next) => {
 
 module.exports = {
   authenticateToken,
-  optionalAuth
+  optionalAuth,
+  isAdmin
 };

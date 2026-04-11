@@ -3,8 +3,9 @@ import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { FiCheck, FiArrowRight, FiUsers, FiActivity, FiShield, FiBarChart2, FiFileText, FiCalendar } from 'react-icons/fi';
 import LogoImage from './LogoImage';
+import ContactForm from './ContactForm';
 
-const Homepage = ({ onShowLogin }) => {
+const Homepage = ({ onShowLogin, onShowPrivacyPolicy, onShowTermsOfService }) => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
 
   const features = [
@@ -295,6 +296,9 @@ const Homepage = ({ onShowLogin }) => {
         </div>
       </section>
 
+      {/* Contact Form Section */}
+      <ContactForm />
+
       {/* Footer */}
       <footer id="contact" className="bg-slate-900 text-slate-300 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -342,9 +346,7 @@ const Homepage = ({ onShowLogin }) => {
             <div>
               <h4 className="text-white font-semibold mb-4">Contact</h4>
               <ul className="space-y-3 text-slate-400">
-                <li>support@centrix.io</li>
-                <li>+91 98765 43210</li>
-                <li>New Delhi, India</li>
+                <li>iplanbymsl@gmail.com</li>
               </ul>
             </div>
           </div>
@@ -354,8 +356,8 @@ const Homepage = ({ onShowLogin }) => {
               &copy; 2026 Centrix. All rights reserved.
             </p>
             <div className="flex space-x-6 mt-4 md:mt-0 text-sm text-slate-500">
-              <a href="#" className="hover:text-slate-300 transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-slate-300 transition-colors">Terms of Service</a>
+              <button onClick={onShowPrivacyPolicy} className="hover:text-slate-300 transition-colors">Privacy Policy</button>
+              <button onClick={onShowTermsOfService} className="hover:text-slate-300 transition-colors">Terms of Service</button>
             </div>
           </div>
         </div>
