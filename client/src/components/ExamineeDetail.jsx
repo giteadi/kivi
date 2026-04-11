@@ -29,6 +29,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
     examineeId: '',
     gender: '',
     birthDate: '',
+    languageOfTesting: '',
     email: '',
     comment: '',
     account: 'MINDSAID LEARNING CENTRE',
@@ -130,6 +131,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
         examineeId: currentPatient.student_id || '',
         gender: currentPatient.gender ? currentPatient.gender.charAt(0).toUpperCase() + currentPatient.gender.slice(1) : '',
         birthDate: currentPatient.date_of_birth ? new Date(currentPatient.date_of_birth).toISOString().split('T')[0] : '',
+        languageOfTesting: currentPatient.language_of_testing || '',
         email: currentPatient.email || '',
         comment: currentPatient.comment || '',
         account: currentPatient.centre_name || 'MINDSAID LEARNING CENTRE',
@@ -263,6 +265,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
         studentId: formData.examineeId,
         gender: formData.gender.toLowerCase(),
         dateOfBirth: formData.birthDate,
+        languageOfTesting: formData.languageOfTesting,
         email: formData.email,
         comment: formData.comment,
         centreName: formData.account,
@@ -969,6 +972,25 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                           <span>Age: {age.years} years {age.months} months</span>
                         </div>
                       )}
+
+                      <div>
+                        <label className={labelClass}>Language of Testing</label>
+                        <div className="relative">
+                          <select
+                            value={formData.languageOfTesting}
+                            onChange={(e) => handleChange('languageOfTesting', e.target.value)}
+                            className={`${inputClass('languageOfTesting')} appearance-none`}
+                          >
+                            <option value="">Please Select...</option>
+                            <option value="English">English</option>
+                            <option value="Hindi">Hindi</option>
+                            <option value="Demographics">Demographics</option>
+                            <option value="Bilingual">Bilingual</option>
+                            <option value="Other">Other</option>
+                          </select>
+                          <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                        </div>
+                      </div>
 
                       <div>
                         <label className={labelClass}>Email</label>

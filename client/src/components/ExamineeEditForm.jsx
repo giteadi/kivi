@@ -16,6 +16,7 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
     phone: '',
     dateOfBirth: '',
     gender: '',
+    languageOfTesting: '',
     address: '',
     city: '',
     state: '',
@@ -397,6 +398,26 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
                   {errors.gender && (
                     <p className="mt-1 text-sm text-red-600">{errors.gender}</p>
                   )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Language of Testing
+                  </label>
+                  <select
+                    value={formData.languageOfTesting}
+                    onChange={(e) => handleInputChange('languageOfTesting', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      errors.languageOfTesting ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  >
+                    <option value="">Select language</option>
+                    <option value="English">English</option>
+                    <option value="Hindi">Hindi</option>
+                    <option value="Demographics">Demographics</option>
+                    <option value="Bilingual">Bilingual</option>
+                    <option value="Other">Other</option>
+                  </select>
                 </div>
               </div>
             </div>
