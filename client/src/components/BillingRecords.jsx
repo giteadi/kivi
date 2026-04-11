@@ -38,7 +38,7 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
             name: `Dr. ${record.therapist_first_name} ${record.therapist_last_name}`,
             initials: (record.therapist_first_name?.[0] || '') + (record.therapist_last_name?.[0] || '')
           },
-          clinic: 'MindSaid Learning Centre', // Default clinic name
+          clinic: 'Centrix Centre', // Default clinic name
           service: 'Session', // Default service name
           amount: parseFloat(record.amount) || 0,
           tax: 0, // Calculate tax if needed

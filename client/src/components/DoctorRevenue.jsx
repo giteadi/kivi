@@ -36,7 +36,7 @@ const DoctorRevenue = () => {
             badgeColor: 'bg-blue-100 text-blue-800'
           },
           clinic: {
-            name: 'MindSaid Learning Centre', // Default clinic name
+            name: 'Centrix Centre', // Default clinic name
             initials: 'ML',
             email: 'Not provided',
             badge: 'MS',

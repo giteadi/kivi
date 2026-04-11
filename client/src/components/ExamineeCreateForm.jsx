@@ -94,7 +94,7 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
     languageOfTesting: '',
     email: '',
     comment: '',
-    account: 'MINDSAID LEARNING CENTRE',
+    account: 'CENTRIX CENTRE',
     center1: '',
     center2: '',
     center3: '',

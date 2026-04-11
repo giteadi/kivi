@@ -25,7 +25,7 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
 
   const centres = [
     'All Centres',
-    'MindSaid Learning Centre',
+    'Centrix Centre',
     'Green Valley Learning Centre', 
     'Sunrise Learning Centre',
     'Downtown Learning Centre'

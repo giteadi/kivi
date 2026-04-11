@@ -124,7 +124,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
       year: 'numeric'
     }) : '-',
     gender: patient.gender ? patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1) : '-',
-    center: patient.centre_name || 'MindSaid Learning Centre',
+    center: patient.centre_name || 'Centrix Centre',
     status: patient.status === 'active' ? 'Active' : 'Inactive'
   }));
 
@@ -723,7 +723,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
           </tbody>
         </table>
         <div class="footer">
-          MindSaid Learning Centre - Examinees Management System
+          Centrix Centre - Examinees Management System
         </div>
       </body>
       </html>
@@ -893,7 +893,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                 <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-lg">
                 </div>
                 <div className="h-6 w-px bg-gray-200" />
-                <span className="text-gray-600 font-medium">MindSaid Learning Centre</span>
+                <span className="text-gray-600 font-medium">Centrix Centre</span>
               </div>
               <div className="flex items-center space-x-4">
                 <button className="text-gray-500 hover:text-gray-700 transition-colors">
@@ -1137,7 +1137,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                         className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                       >
                         <option value="all">All Centers</option>
-                        <option value="MindSaid Learning Centre">MindSaid Learning Centre</option>
+                        <option value="Centrix Centre">Centrix Centre</option>
                       </select>
                     </div>
                     <div>
@@ -2408,7 +2408,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                       age: '25 years 10 months',
                       gender: 'Male',
                       examineeId: 'as/msl/260331',
-                      centre: 'MindSaid Learning Centre',
+                      centre: 'Centrix Centre',
                       diagnosisData: {},
                       evaluationData: {},
                       historyData: {}

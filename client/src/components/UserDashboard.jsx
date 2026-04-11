@@ -96,7 +96,7 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
         therapist_first_name: 'Dr. Sarah',
         therapist_last_name: 'Johnson',
         therapist_specialty: 'Learning Therapy',
-        centre_name: 'MindSaid Learning Centre',
+        centre_name: 'Centrix Centre',
         features: [
           'Professional therapy session',
           'Customized learning approach',
@@ -114,7 +114,7 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
         therapist_first_name: 'Dr. Michael',
         therapist_last_name: 'Chen',
         therapist_specialty: 'Group Therapy',
-        centre_name: 'MindSaid Learning Centre',
+        centre_name: 'Centrix Centre',
         features: [
           'Group interaction activities',
           'Social skill building',
@@ -132,7 +132,7 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
         therapist_first_name: 'Dr. Emma',
         therapist_last_name: 'Williams',
         therapist_specialty: 'Special Education',
-        centre_name: 'MindSaid Learning Centre',
+        centre_name: 'Centrix Centre',
         features: [
           'Specialized curriculum',
           'One-on-one attention',
@@ -179,7 +179,7 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
         therapist_first_name: 'Dr. Robert',
         therapist_last_name: 'Davis',
         therapist_specialty: 'Assessment Specialist',
-        centre_name: 'MindSaid Learning Centre',
+        centre_name: 'Centrix Centre',
         features: [
           'Comprehensive assessment',
           'Detailed report',
@@ -197,7 +197,7 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
         therapist_first_name: 'Dr. Lisa',
         therapist_last_name: 'Brown',
         therapist_specialty: 'Neuropsychology',
-        centre_name: 'MindSaid Learning Centre',
+        centre_name: 'Centrix Centre',
         features: [
           'Specialized testing',
           'Detailed diagnosis',
@@ -215,7 +215,7 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
         therapist_first_name: 'Dr. James',
         therapist_last_name: 'Wilson',
         therapist_specialty: 'Behavioral Therapy',
-        centre_name: 'MindSaid Learning Centre',
+        centre_name: 'Centrix Centre',
         features: [
           'Behavior analysis',
           'Intervention strategies',

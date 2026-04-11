@@ -68,7 +68,7 @@ const Login = ({ onLoginSuccess, onShowRegister, selectedPlan }) => {
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 overflow-hidden">
             <LogoImage />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">Welcome to MindSaid Learning</h1>
+          <h1 className="text-2xl font-bold text-gray-800">Welcome to Centrix</h1>
           <p className="text-gray-600 mt-2">Sign in to your account</p>
           {selectedPlan && (
             <div className="mt-4 p-3 bg-blue-50 rounded-lg">

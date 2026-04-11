@@ -131,12 +131,12 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
           <div className={`flex items-center space-x-3 ${sidebarCollapsed ? 'hidden' : ''}`}>
             <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
               <img 
-                src="https://res.cloudinary.com/bazeercloud/image/upload/v1765087953/Gemini_Generated_Image_o8ciwko8ciwko8ci-removebg-preview_l4nnui.png" 
-                alt="MindSaid Learning Logo" 
+                src="https://res.cloudinary.com/bazeercloud/image/upload/q_auto/f_auto/v1775895427/ChatGPT_Image_Apr_11_2026_01_45_49_PM_trwcph.png" 
+                alt="Centrix Logo" 
                 className="w-full h-full object-contain"
               />
             </div>
-            <span className="text-xl font-semibold text-gray-800">MindSaid Learning</span>
+            <span className="text-xl font-semibold text-gray-800">Centrix</span>
           </div>
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}

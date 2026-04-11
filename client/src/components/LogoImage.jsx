@@ -1,10 +1,10 @@
 import { useState } from 'react';
 
-const LogoImage = ({ className = "w-full h-full object-contain", alt = "MindSaid Learning Logo" }) => {
+const LogoImage = ({ className = "w-full h-full object-contain", alt = "Centrix Logo" }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  const logoUrl = "https://res.cloudinary.com/bazeercloud/image/upload/v1765087953/Gemini_Generated_Image_o8ciwko8ciwko8ci-removebg-preview_l4nnui.png";
+  const logoUrl = "https://res.cloudinary.com/bazeercloud/image/upload/q_auto/f_auto/v1775895427/ChatGPT_Image_Apr_11_2026_01_45_49_PM_trwcph.png";
 
   const handleImageLoad = () => {
     setImageLoaded(true);

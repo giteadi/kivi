@@ -35,7 +35,7 @@ const ServiceEditForm = ({ serviceId, onSave, onCancel }) => {
   ];
 
   const centres = [
-    { id: 1, name: 'MindSaid Learning Centre' },
+    { id: 1, name: 'Centrix Centre' },
     { id: 2, name: 'Green Valley Learning Centre' }, 
     { id: 3, name: 'Sunrise Learning Centre' },
     { id: 4, name: 'Downtown Learning Centre' }

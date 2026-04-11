@@ -45,7 +45,7 @@ const TherapistCreateForm = ({ onSave, onCancel }) => {
   ];
 
   const centres = [
-    'MindSaid Learning Centre',
+    'Centrix Centre',
     'Green Valley Learning Centre', 
     'Sunrise Learning Centre',
     'Downtown Learning Centre'
@@ -54,7 +54,7 @@ const TherapistCreateForm = ({ onSave, onCancel }) => {
   // Map centre names to IDs (assuming these are the IDs in database)
   const getCentreId = (centreName) => {
     const centreMap = {
-      'MindSaid Learning Centre': 1,
+      'Centrix Centre': 1,
       'Green Valley Learning Centre': 2,
       'Sunrise Learning Centre': 3,
       'Downtown Learning Centre': 4

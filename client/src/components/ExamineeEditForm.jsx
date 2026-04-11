@@ -36,7 +36,7 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
   const [loading, setLoading] = useState(true);
 
   const centres = [
-    { id: 1, name: 'MindSaid Learning Centre' },
+    { id: 1, name: 'Centrix Centre' },
     { id: 5, name: 'Test' }
   ];
 

@@ -39,7 +39,7 @@ const PatientProfile = ({ patientId, onBack }) => {
             initials: `${(patient.first_name || '')[0] || ''}${(patient.last_name || '')[0] || ''}`.toUpperCase(),
             email: patient.email || 'Not provided',
             phone: patient.phone || 'Not provided',
-            clinic: 'MindSaid Learning Centre', // Default clinic name
+            clinic: 'Centrix Centre', // Default clinic name
             status: patient.status ? patient.status.charAt(0).toUpperCase() + patient.status.slice(1) : 'Unknown',
             registrationDate: patient.registration_date ? new Date(patient.registration_date).toLocaleDateString('en-US', {
               year: 'numeric',
