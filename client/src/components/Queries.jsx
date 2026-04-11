@@ -14,8 +14,11 @@ import {
   FiFilter
 } from 'react-icons/fi';
 import api from '../services/api';
+import Sidebar from './Sidebar';
 
 const Queries = () => {
+  const [activeItem, setActiveItem] = useState('queries');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [queries, setQueries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedQuery, setSelectedQuery] = useState(null);
@@ -140,17 +143,24 @@ const Queries = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-7xl mx-auto"
-      >
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Contact Queries</h1>
-          <p className="text-gray-600">Manage and respond to contact form submissions</p>
-        </div>
+    <div className="flex">
+      <Sidebar 
+        activeItem={activeItem}
+        setActiveItem={setActiveItem}
+        sidebarCollapsed={sidebarCollapsed}
+        setSidebarCollapsed={setSidebarCollapsed}
+      />
+      <div className="flex-1 min-h-screen bg-slate-50 p-6 lg:ml-64">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-7xl mx-auto"
+        >
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Contact Queries</h1>
+            <p className="text-gray-600">Manage and respond to contact form submissions</p>
+          </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
@@ -362,8 +372,9 @@ const Queries = () => {
               </table>
             </div>
           )}
-        </div>
-      </motion.div>
+          </div>
+        </motion.div>
+      </div>
 
       {/* Query Detail Modal */}
       {selectedQuery && (
