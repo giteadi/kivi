@@ -104,6 +104,7 @@ function getSheetHtml(sheetData) {
 // ─── HTML → docx elements ────────────────────────────────────────────────────
 const CELL_BORDER = { style: BorderStyle.SINGLE, size: 4, color: "AAAAAA" };
 const CELL_BORDERS = { top: CELL_BORDER, bottom: CELL_BORDER, left: CELL_BORDER, right: CELL_BORDER };
+const PAGE_CONTENT_WIDTH = 8640; // twips — A4 with standard margins
 
 function nodeToRuns(node, inherited = {}) {
   const runs = [];
@@ -131,16 +132,46 @@ function nodeToRuns(node, inherited = {}) {
   return runs;
 }
 
+// ── Estimate column widths based on content ──
+function estimateColWidths(trList, totalWidth) {
+  let colCount = 0;
+  trList.forEach(tr => {
+    let c = 0;
+    tr.querySelectorAll("td,th").forEach(cell => {
+      c += parseInt(cell.getAttribute("colspan") || "1");
+    });
+    colCount = Math.max(colCount, c);
+  });
+  if (colCount <= 1) return [totalWidth];
+
+  const colLengths = Array(colCount).fill(0);
+  trList.slice(0, 5).forEach(tr => {
+    [...tr.querySelectorAll("td,th")].forEach((cell, i) => {
+      if (i < colCount) {
+        colLengths[i] = Math.max(colLengths[i], (cell.textContent||"").trim().length);
+      }
+    });
+  });
+
+  const MIN_FRAC = 0.08;
+  const remaining = Math.max(0, 1 - MIN_FRAC * colCount);
+  const totalLen = colLengths.reduce((a,b) => a+b, 0) || 1;
+  const fracs = colLengths.map(len => MIN_FRAC + (len/totalLen) * remaining);
+  const fracSum = fracs.reduce((a,b) => a+b, 0);
+  return fracs.map(f => Math.max(400, Math.floor((f/fracSum) * totalWidth)));
+}
+
 // ── Cell content → Paragraphs (handles nested p/div/br inside td) ──
 function cellToParagraphs(tdNode) {
   const paragraphs = [];
+  const isTh = tdNode.tagName?.toLowerCase() === "th";
 
-  function processNode(node) {
+  function processNode(node, inherited = {}) {
     if (node.nodeType === Node.TEXT_NODE) {
       const t = node.textContent;
-      if (t.trim()) {
+      if (t && t.trim()) {
         paragraphs.push(new Paragraph({
-          children: [new TextRun({ text: t })],
+          children: [new TextRun({ text: t, ...inherited })],
           spacing: { after: 0 },
         }));
       }
@@ -148,67 +179,39 @@ function cellToParagraphs(tdNode) {
     }
     const tag = node.tagName?.toLowerCase();
     if (!tag) return;
-
-    if (tag === "p" || tag === "div") {
-      const runs = nodeToRuns(node);
-      if (runs.length) {
-        paragraphs.push(new Paragraph({ children: runs, spacing: { after: 60 } }));
-      } else {
-        // Empty p/div = blank line
-        paragraphs.push(new Paragraph({ children: [], spacing: { after: 60 } }));
-      }
-      return;
-    }
-
     if (tag === "br") {
       paragraphs.push(new Paragraph({ children: [], spacing: { after: 0 } }));
       return;
     }
-
+    if (["p","div","span"].includes(tag)) {
+      const runs = nodeToRuns(node, inherited);
+      if (runs.length) {
+        paragraphs.push(new Paragraph({ children: runs, spacing: { after: 60 } }));
+      } else {
+        for (const child of node.childNodes) processNode(child, inherited);
+      }
+      return;
+    }
     if (/^h[1-6]$/.test(tag)) {
-      const headingMap = { h1: HeadingLevel.HEADING_1, h2: HeadingLevel.HEADING_2,
-        h3: HeadingLevel.HEADING_3, h4: HeadingLevel.HEADING_4 };
+      const hmap = { h1: HeadingLevel.HEADING_1, h2: HeadingLevel.HEADING_2,
+                     h3: HeadingLevel.HEADING_3, h4: HeadingLevel.HEADING_4 };
       paragraphs.push(new Paragraph({
-        heading: headingMap[tag] || HeadingLevel.HEADING_3,
+        heading: hmap[tag] || HeadingLevel.HEADING_3,
         children: nodeToRuns(node),
         spacing: { after: 60 },
       }));
       return;
     }
-
-    if (tag === "ul") {
-      node.querySelectorAll(":scope > li").forEach(li =>
-        paragraphs.push(new Paragraph({
-          numbering: { reference: "bullets", level: 0 },
-          children: nodeToRuns(li),
-          spacing: { after: 40 },
-        }))
-      );
-      return;
-    }
-
-    if (tag === "ol") {
-      node.querySelectorAll(":scope > li").forEach(li =>
-        paragraphs.push(new Paragraph({
-          numbering: { reference: "numbers", level: 0 },
-          children: nodeToRuns(li),
-          spacing: { after: 40 },
-        }))
-      );
-      return;
-    }
-
-    // Fallback: process children
-    for (const child of node.childNodes) processNode(child);
+    const newInherited = {
+      ...inherited,
+      bold: inherited.bold || ["b","strong","th"].includes(tag),
+      italics: inherited.italics || ["i","em"].includes(tag),
+    };
+    for (const child of node.childNodes) processNode(child, newInherited);
   }
 
-  for (const child of tdNode.childNodes) processNode(child);
-
-  // Always at least one paragraph in cell
-  if (!paragraphs.length) {
-    paragraphs.push(new Paragraph({ children: [], spacing: { after: 0 } }));
-  }
-
+  for (const child of tdNode.childNodes) processNode(child, { bold: isTh });
+  if (!paragraphs.length) paragraphs.push(new Paragraph({ children: [], spacing: { after: 0 } }));
   return paragraphs;
 }
 
@@ -276,35 +279,34 @@ function nodeToDocxElements(node) {
     });
     if (colCount === 0) return els;
 
-    const PAGE_WIDTH = 9360; // twips (A4 with margins)
-    const colWidth = Math.floor(PAGE_WIDTH / colCount);
+    const colWidths = estimateColWidths(trList, PAGE_CONTENT_WIDTH);
+    const finalColCount = colWidths.length;
 
     const rows = trList.map((tr, rowIdx) => {
       const tdList = Array.from(tr.querySelectorAll("td,th"));
       const cells = tdList.map((td, colIdx) => {
         const isHeader = td.tagName.toLowerCase() === "th" || rowIdx === 0;
         const colspan = parseInt(td.getAttribute("colspan") || "1");
+        const cellWidth = colspan > 1
+          ? colWidths.slice(colIdx, colIdx + colspan).reduce((a,b) => a+b, 0)
+          : (colWidths[colIdx] || Math.floor(PAGE_CONTENT_WIDTH / finalColCount));
 
         return new TableCell({
           borders: CELL_BORDERS,
           columnSpan: colspan > 1 ? colspan : undefined,
-          width: { size: colWidth * colspan, type: WidthType.DXA },
+          width: { size: cellWidth, type: WidthType.DXA },
           shading: isHeader ? { fill: "D5E8F0", type: ShadingType.CLEAR } : undefined,
-          margins: { top: 100, bottom: 100, left: 150, right: 150 },
-          // Use cellToParagraphs to properly parse nested HTML inside each cell
+          margins: { top: 80, bottom: 80, left: 120, right: 120 },
           children: cellToParagraphs(td),
         });
       });
 
-      return new TableRow({
-        children: cells,
-        tableHeader: rowIdx === 0, // First row as header
-      });
+      return new TableRow({ children: cells, tableHeader: rowIdx === 0 });
     });
 
     els.push(new Table({
-      width: { size: PAGE_WIDTH, type: WidthType.DXA },
-      columnWidths: Array(colCount).fill(colWidth),
+      width: { size: PAGE_CONTENT_WIDTH, type: WidthType.DXA },
+      columnWidths: colWidths,
       rows,
     }));
     els.push(new Paragraph({ children: [], spacing: { after: 120 } }));
@@ -361,7 +363,7 @@ async function buildAndDownloadDocx(allData, sheetList, patientName, templateNam
         properties: {
           page: {
             size: { width: 11906, height: 16838 },
-            margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
+            margin: { top: 720, right: 720, bottom: 720, left: 720 },
           },
         },
         children,
@@ -519,8 +521,26 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
           {/* ── Single Export button → dropdown (Word / Excel) ── */}
           <ExportDropdown
             ghost={true}
-            onExportDocx={() => buildAndDownloadDocx(reportData, sheetList, reportPatient, templateName)}
-            onExportXlsx={() => buildAndDownloadXlsx(reportData, sheetList, reportPatient, templateName)}
+            onExportDocx={() => buildAndDownloadDocx(
+              reportData,
+              [activeSheet],
+              reportPatient,
+              activeSheet
+            )}
+            onExportXlsx={() => {
+              const wb = XLSX.utils.book_new();
+              const d = reportData[activeSheet] || [];
+              let rows;
+              if (d[0]?.[0] === "__html__") {
+                const div = document.createElement("div");
+                div.innerHTML = d[0][1] || "";
+                rows = [[div.innerText || ""]];
+              } else {
+                rows = d;
+              }
+              XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), activeSheet.substring(0, 31));
+              XLSX.writeFile(wb, `${reportPatient || "Report"}_${activeSheet}.xlsx`);
+            }}
           />
 
           <button style={css.btn("green")} onClick={() => {
@@ -647,8 +667,26 @@ function ViewPanel({ template, onBack, onCreateReport }) {
 
           {/* ── Single Export button → dropdown (Word / Excel) ── */}
           <ExportDropdown
-            onExportDocx={() => buildAndDownloadDocx(localSheets, template.sheetNames, template.name, template.name)}
-            onExportXlsx={() => doExport({ ...template, sheets: localSheets })}
+            onExportDocx={() => buildAndDownloadDocx(
+              localSheets,
+              [currentSheet],
+              template.name,
+              currentSheet
+            )}
+            onExportXlsx={() => {
+              const wb = XLSX.utils.book_new();
+              const d = localSheets[currentSheet] || [];
+              let rows;
+              if (d[0]?.[0] === "__html__") {
+                const div = document.createElement("div");
+                div.innerHTML = d[0][1] || "";
+                rows = [[div.innerText || ""]];
+              } else {
+                rows = d;
+              }
+              XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), currentSheet.substring(0, 31));
+              XLSX.writeFile(wb, `${template.name}_${currentSheet}.xlsx`);
+            }}
           />
 
           <button style={css.btn("green")} onClick={() => onCreateReport(template)}>
@@ -754,10 +792,15 @@ export default function TemplateManager() {
   const openView = (tpl) => { setActiveTemplate(tpl); setPanel("view"); };
 
   const openCreateReport = (tpl) => {
-    const allData = Object.fromEntries(
-      tpl.sheetNames.map(n => [n, [["__html__", "<p><br></p>"]]])
-    );
-    setReportPanel({ templateName: tpl.name, allSheets: tpl.sheetNames, allData, patientName: "" });
+    const defaultSheetName = tpl.sheetNames[0] || "Report";
+    setReportPanel({
+      templateName: tpl.name,
+      allSheets: [defaultSheetName],
+      allData: {
+        [defaultSheetName]: [["__html__", "<p><br></p>"]]
+      },
+      patientName: ""
+    });
     setPanel("report");
   };
 
@@ -942,7 +985,7 @@ export default function TemplateManager() {
       {/* ── VIEW PANEL ── */}
       {panel === "view" && activeTemplate && (
         <ViewPanel
-          key={activeTemplate.id}
+          key={`${activeTemplate.id}_${activeTemplate.name}`}
           template={activeTemplate}
           onBack={() => setPanel(null)}
           onCreateReport={openCreateReport}
