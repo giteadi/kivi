@@ -79,6 +79,7 @@ import TherapyList from './components/TherapyList';
 import Queries from './components/Queries';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
+import CenterVisibilitySettings from './components/CenterVisibilitySettings';
 
 function App() {
   const dispatch = useDispatch();
@@ -1266,6 +1267,9 @@ ${service.target_age_group || 'Not specified'}
       
       case 'queries':
         return <Queries />;
+      
+      case 'center-visibility':
+        return <CenterVisibilitySettings />;
       
       default:
         // Other menu items

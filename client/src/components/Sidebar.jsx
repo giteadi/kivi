@@ -17,7 +17,8 @@ import {
   FiActivity,
   FiMenu,
   FiX,
-  FiMessageSquare
+  FiMessageSquare,
+  FiShield
 } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
@@ -61,6 +62,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
     { id: 'taxes', label: 'Taxes', icon: FiPercent, section: 'FINANCIAL' },
     { id: 'billing-records', label: 'Billing Records', icon: FiCreditCard, section: 'FINANCIAL' },
     { id: 'queries', label: 'Queries', icon: FiMessageSquare, section: 'ADMIN' },
+    { id: 'center-visibility', label: 'Center Visibility', icon: FiShield, section: 'ADMIN' },
   ];
 
   const therapistMenuItems = [
