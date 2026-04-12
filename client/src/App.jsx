@@ -1,6 +1,7 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, Link } from 'react-router-dom';
 import { setCredentials } from './store/slices/authSlice';
 import { fetchDoctors } from './store/slices/doctorSlice';
 import { fetchServices } from './store/slices/serviceSlice';
@@ -113,6 +114,47 @@ function App() {
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [navigationHistory, setNavigationHistory] = useState(['dashboard']);
+  
+  // React Router hooks
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Sync activeItem with URL path
+  useEffect(() => {
+    const pathToItem = {
+      '/dashboard': 'dashboard',
+      '/examinees': 'patients',
+      '/therapists': 'doctors',
+      '/templates': 'template-manager',
+      '/centres': 'clinics',
+      '/centres/revenue': 'clinic-revenue',
+      '/taxes': 'taxes',
+      '/billing': 'billing-records',
+      '/admin/queries': 'queries',
+      '/admin/center-visibility': 'center-visibility',
+      '/groups': 'groups',
+      '/reports': 'report',
+      '/plans': 'plans',
+      '/encounters': 'encounters-list',
+      '/staff': 'receptionists',
+      '/services': 'services',
+      '/profile': 'profile',
+      '/admin/sessions': 'admin-sessions',
+    };
+    // Note: Detail routes like /examinees/:id, /therapists/:id, etc. 
+    // will match their parent routes above and highlight correctly
+    
+    const path = location.pathname;
+    // Find matching route (exact match or parent route)
+    for (const [route, itemId] of Object.entries(pathToItem)) {
+      if (path === route || path.startsWith(route + '/')) {
+        if (activeItem !== itemId) {
+          setActiveItem(itemId);
+        }
+        break;
+      }
+    }
+  }, [location.pathname]);
 
   // Check authentication on app load
   useEffect(() => {
@@ -162,21 +204,42 @@ function App() {
     );
   }
 
-  // Handle back navigation
+  // Handle back button navigation
   const handleBackNavigation = () => {
     if (navigationHistory.length > 1) {
+      // Remove current page from history
       const newHistory = [...navigationHistory];
-      newHistory.pop(); // Remove current page
+      newHistory.pop();
+      
+      // Get the previous page
       const previousPage = newHistory[newHistory.length - 1];
       
       setNavigationHistory(newHistory);
       setActiveItem(previousPage);
       setCurrentView(previousPage);
+      // Clear all selected states when navigating back
+      setSelectedAppointmentId(null);
+      setSelectedPatientId(null);
+      setSelectedDoctorId(null);
+      setSelectedReceptionistId(null);
+      setSelectedClinicId(null);
+      setSelectedTemplate(null);
+      setSelectedEncounterId(null);
+      setSelectedExamineeId(null);
     } else {
       // If no history, go to dashboard
       setActiveItem('dashboard');
       setCurrentView('dashboard');
       setNavigationHistory(['dashboard']);
+      // Clear all selected states
+      setSelectedAppointmentId(null);
+      setSelectedPatientId(null);
+      setSelectedDoctorId(null);
+      setSelectedReceptionistId(null);
+      setSelectedClinicId(null);
+      setSelectedTemplate(null);
+      setSelectedEncounterId(null);
+      setSelectedExamineeId(null);
     }
   };
 
@@ -193,11 +256,45 @@ function App() {
 
   // Enhanced setActiveItem to track navigation
   const handleSetActiveItem = (item) => {
-    setActiveItem(item);
-    // Reset currentView when navigating to main sections to avoid conflicts
-    if (item === 'sessions' || item === 'dashboard' || item === 'patients' || item === 'doctors' || item === 'clinics' || item === 'services' || item === 'assessment-list' || item === 'therapy-list') {
-      setCurrentView(item);
+    // Map item to route and navigate
+    const itemToRoute = {
+      'dashboard': '/dashboard',
+      'patients': '/examinees',
+      'doctors': '/therapists',
+      'template-manager': '/templates',
+      'clinics': '/centres',
+      'clinic-revenue': '/centres/revenue',
+      'taxes': '/taxes',
+      'billing-records': '/billing',
+      'queries': '/admin/queries',
+      'center-visibility': '/admin/center-visibility',
+      'groups': '/groups',
+      'report': '/reports',
+      'plans': '/plans',
+      'encounters-list': '/encounters',
+      'receptionists': '/staff',
+      'services': '/services',
+      'profile': '/profile',
+      'admin-sessions': '/admin/sessions',
+    };
+    
+    const route = itemToRoute[item];
+    if (route && location.pathname !== route) {
+      navigate(route);
     }
+    
+    setActiveItem(item);
+    // Always reset currentView to match the active item for smooth navigation
+    setCurrentView(item);
+    // Clear all selected states when navigating to avoid confusion
+    setSelectedAppointmentId(null);
+    setSelectedPatientId(null);
+    setSelectedDoctorId(null);
+    setSelectedReceptionistId(null);
+    setSelectedClinicId(null);
+    setSelectedTemplate(null);
+    setSelectedEncounterId(null);
+    setSelectedExamineeId(null);
     updateNavigationHistory(item);
   };
 
@@ -323,6 +420,7 @@ function App() {
     setSelectedAppointmentId(appointmentId);
     setCurrentView('appointment-detail');
     setActiveItem('encounters-list'); // Set to encounters section
+    navigate(`/encounters/appointments/${appointmentId}`);
   };
 
   const handleViewAllAppointments = () => {
@@ -340,6 +438,9 @@ function App() {
     setSelectedEncounterId(encounterId);
     setActiveItem('encounters-list');
     setCurrentView('encounter-detail');
+    if (encounterId) {
+      navigate(`/encounters/${encounterId}/detail`);
+    }
   };
 
   const handleBackToDashboard = () => {
@@ -367,16 +468,19 @@ function App() {
   const handleCreateTemplate = () => {
     setSelectedTemplate(null);
     setCurrentView('template-builder');
+    navigate('/templates/create');
   };
 
   const handleEditTemplate = (template) => {
     setSelectedTemplate(template);
     setCurrentView('template-builder');
+    navigate(`/templates/${template.id}/edit`);
   };
 
   const handleViewTemplate = (template) => {
     setSelectedTemplate(template);
     setCurrentView('template-viewer');
+    navigate(`/templates/${template.id}`);
   };
 
   const handleDuplicateTemplate = (template) => {
@@ -450,6 +554,8 @@ function App() {
     setSelectedExamineeId(patientId);
     setCurrentView('examinee-detail');
     setActiveItem('patients');
+    // Navigate to detail URL
+    navigate(`/examinees/${patientId}`);
   };
 
   const handleBackToPatients = () => {
@@ -457,42 +563,49 @@ function App() {
     setSelectedExamineeId(null);
     setCurrentView('patients-list');
     setActiveItem('patients');
+    navigate('/examinees');
   };
 
   const handleViewDoctor = (doctorId) => {
     setSelectedDoctorId(doctorId);
     setCurrentView('doctor-profile');
     setActiveItem('doctors');
+    navigate(`/therapists/${doctorId}`);
   };
 
   const handleBackToDoctors = () => {
     setSelectedDoctorId(null);
     setCurrentView('doctors-list');
     setActiveItem('doctors');
+    navigate('/therapists');
   };
 
   const handleViewReceptionist = (receptionistId) => {
     setSelectedReceptionistId(receptionistId);
     setCurrentView('receptionist-profile');
     setActiveItem('receptionists');
+    navigate(`/staff/${receptionistId}`);
   };
 
   const handleBackToReceptionists = () => {
     setSelectedReceptionistId(null);
     setCurrentView('receptionists-list');
     setActiveItem('receptionists');
+    navigate('/staff');
   };
 
   const handleViewClinic = (clinicId) => {
     setSelectedClinicId(clinicId);
     setCurrentView('clinic-profile');
     setActiveItem('clinics');
+    navigate(`/centres/${clinicId}`);
   };
 
   const handleBackToClinics = () => {
     setSelectedClinicId(null);
     setCurrentView('clinics-list');
     setActiveItem('clinics');
+    navigate('/centres');
   };
 
   const handleSaveReceptionist = (updatedData) => {
@@ -1323,7 +1436,82 @@ ${service.target_age_group || 'Not specified'}
           animate={{ opacity: 1 }}
           className={`transition-all duration-300 ${activeItem === 'template-manager' ? 'ml-0' : ''}`}
         >
-          {renderContent()}
+          <Routes>
+            <Route path="/dashboard" element={
+              currentView === 'dashboard' ? (
+                <Dashboard 
+                  onAppointmentClick={handleAppointmentClick} 
+                  onCreateNewEncounter={handleCreateNewEncounter} 
+                  onViewAllAppointments={handleViewAllAppointments} 
+                  setActiveItem={handleSetActiveItem}
+                />
+              ) : renderContent()
+            } />
+            <Route path="/examinees" element={
+              currentView === 'patients' || currentView === 'patients-list' ? (
+                <ExamineesManagement 
+                  onViewPatient={handleViewPatient} 
+                  onEditPatient={handleEditPatient} 
+                  onDeletePatient={handleDeletePatient} 
+                  onCreateNewPatient={handleCreateNewPatient} 
+                />
+              ) : renderContent()
+            } />
+            <Route path="/examinees/:id" element={renderContent()} />
+            <Route path="/examinees/create" element={renderContent()} />
+            <Route path="/examinees/:id/edit" element={renderContent()} />
+            <Route path="/therapists" element={
+              currentView === 'doctors' || currentView === 'doctors-list' ? (
+                <DoctorsList 
+                  onViewDoctor={handleViewDoctor} 
+                  onEditDoctor={handleEditDoctor} 
+                  onDeleteDoctor={handleDeleteDoctor} 
+                  onCreateNewDoctor={handleCreateNewDoctor} 
+                />
+              ) : renderContent()
+            } />
+            <Route path="/therapists/:id" element={renderContent()} />
+            <Route path="/therapists/create" element={renderContent()} />
+            <Route path="/therapists/:id/edit" element={renderContent()} />
+            <Route path="/templates" element={<TemplateManager />} />
+            <Route path="/templates/create" element={renderContent()} />
+            <Route path="/templates/:id" element={renderContent()} />
+            <Route path="/templates/:id/edit" element={renderContent()} />
+            <Route path="/centres" element={
+              currentView === 'clinics' || currentView === 'clinics-list' ? (
+                <ClinicsList 
+                  onViewClinic={handleViewClinic} 
+                  onEditClinic={handleEditClinic} 
+                  onCreateNewClinic={handleCreateNewClinic} 
+                />
+              ) : renderContent()
+            } />
+            <Route path="/centres/:id" element={renderContent()} />
+            <Route path="/centres/:id/edit" element={renderContent()} />
+            <Route path="/centres/create" element={renderContent()} />
+            <Route path="/centres/revenue" element={<ClinicRevenue />} />
+            <Route path="/taxes" element={<TaxList />} />
+            <Route path="/billing" element={<BillingRecords />} />
+            <Route path="/admin/queries" element={<Queries />} />
+            <Route path="/admin/center-visibility" element={<CenterVisibilitySettings />} />
+            <Route path="/groups" element={<GroupAdministration />} />
+            <Route path="/reports" element={<Report />} />
+            <Route path="/plans" element={<PlansList />} />
+            <Route path="/encounters" element={renderContent()} />
+            <Route path="/encounters/appointments/:id" element={renderContent()} />
+            <Route path="/encounters/:id/detail" element={renderContent()} />
+            <Route path="/encounters/*" element={renderContent()} />
+            <Route path="/staff" element={<ReceptionistsList />} />
+            <Route path="/staff/:id" element={renderContent()} />
+            <Route path="/staff/:id/edit" element={renderContent()} />
+            <Route path="/services" element={<ServicesList />} />
+            <Route path="/services/:id" element={renderContent()} />
+            <Route path="/services/:id/edit" element={renderContent()} />
+            <Route path="/services/create" element={renderContent()} />
+            <Route path="/profile" element={<UserDashboard />} />
+            <Route path="/admin/sessions" element={<AdminSessionsList />} />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
         </motion.main>
 
         {/* Session Create Modal */}

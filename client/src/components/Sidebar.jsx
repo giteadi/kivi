@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   FiHome, 
   FiCalendar, 
@@ -23,9 +24,62 @@ import {
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 
+// Route mapping for navigation
+const routeMapping = {
+  'dashboard': '/dashboard',
+  'sessions': '/sessions',
+  'encounters': '/encounters',
+  'encounters-list': '/encounters/list',
+  'encounter-templates': '/encounters/templates',
+  'assessment-list': '/encounters/assessments',
+  'therapy-list': '/encounters/therapies',
+  'patients': '/examinees',
+  'doctors': '/therapists',
+  'template-manager': '/templates',
+  'clinics': '/centres',
+  'clinic-revenue': '/centres/revenue',
+  'taxes': '/taxes',
+  'billing-records': '/billing',
+  'queries': '/admin/queries',
+  'center-visibility': '/admin/center-visibility',
+  'groups': '/groups',
+  'report': '/reports',
+  'plans': '/plans',
+  'receptionists': '/staff',
+  'services': '/services',
+  'profile': '/profile',
+  'user-dashboard': '/user/dashboard',
+  'appointments': '/appointments',
+  'my-therapist': '/my-therapist',
+  'payments': '/payments',
+  'admin-sessions': '/admin/sessions',
+  'service-create': '/services/create',
+  'service-edit': '/services/:id/edit',
+  'clinic-create': '/centres/create',
+  'clinic-edit': '/centres/:id/edit',
+  'doctor-create': '/therapists/create',
+  'doctor-edit': '/therapists/:id/edit',
+  'receptionist-edit': '/staff/:id/edit',
+  'patient-create': '/examinees/create',
+  'patient-edit': '/examinees/:id/edit'
+};
+
 const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCollapsed, setSidebarCollapsed }) => {
   const [expandedSections, setExpandedSections] = useState({});
   const { user } = useSelector((state) => state.auth);
+  const location = useLocation();
+  
+  // Get current route from URL
+  const getCurrentRoute = () => {
+    const path = location.pathname;
+    // Find the key that matches the current path
+    for (const [key, route] of Object.entries(routeMapping)) {
+      if (path === route || path.startsWith(route + '/')) {
+        return key;
+      }
+    }
+    return activeItem;
+  };
 
   // Auto-expand encounters section when needed
   useEffect(() => {
@@ -123,11 +177,10 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
 
   return (
     <motion.div 
-      initial={{ x: -250 }}
-      animate={{ x: 0 }}
-      className={`hidden lg:block bg-white shadow-lg h-screen fixed left-0 top-0 z-10 overflow-y-auto transition-all duration-300 ${
-        sidebarCollapsed ? 'w-16' : 'w-64'
-      }`}
+      initial={false}
+      animate={{ width: sidebarCollapsed ? 64 : 256 }}
+      transition={{ type: "tween", duration: 0.2, ease: "easeInOut" }}
+      className="hidden lg:block bg-white shadow-lg h-screen fixed left-0 top-0 z-10 overflow-y-auto will-change-[width]"
     >
       {/* Logo */}
       <div className="p-6 border-b">
@@ -168,12 +221,19 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
               .filter(item => item.section === section)
               .map((item) => (
                 <div key={item.id}>
-                  <motion.button
-                    whileHover={{ x: 4 }}
-                    onClick={() => handleItemClick(item.id, item.hasSubmenu)}
+                  <Link
+                    to={routeMapping[item.id] || `/`}
+                    onClick={(e) => {
+                      if (item.hasSubmenu) {
+                        e.preventDefault();
+                        handleItemClick(item.id, true);
+                      } else {
+                        setActiveItem(item.id);
+                      }
+                    }}
                     className={`w-full flex items-center justify-between ${
                       sidebarCollapsed ? 'px-2' : 'px-6'
-                    } py-2.5 text-left transition-colors ${
+                    } py-2.5 text-left duration-150 ease-out ${
                       isActiveItem(item.id)
                         ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600'
                         : 'text-gray-600 hover:bg-gray-50'
@@ -187,28 +247,33 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
                       <motion.div
                         animate={{ rotate: expandedSections[item.id] ? 90 : 0 }}
                         transition={{ duration: 0.2 }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleSection(item.id);
+                        }}
                       >
                         <FiChevronRight className="w-4 h-4" />
                       </motion.div>
                     )}
-                  </motion.button>
+                  </Link>
 
                   {/* Submenu */}
-                  <AnimatePresence>
+                  <AnimatePresence initial={false}>
                     {item.hasSubmenu && expandedSections[item.id] && !sidebarCollapsed && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="overflow-hidden"
+                        transition={{ type: "tween", duration: 0.15, ease: "easeOut" }}
+                        className="overflow-hidden will-change-[height,opacity]"
                       >
                         {item.submenu.map((subItem) => (
-                          <motion.button
+                          <Link
                             key={subItem.id}
-                            whileHover={{ x: 4 }}
+                            to={routeMapping[subItem.id] || `/`}
                             onClick={() => setActiveItem(subItem.id)}
-                            className={`w-full flex items-center px-12 py-2 text-left transition-colors ${
+                            className={`w-full flex items-center px-12 py-2 text-left duration-150 ease-out ${
                               activeItem === subItem.id
                                 ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600'
                                 : 'text-gray-600 hover:bg-gray-50'
@@ -216,7 +281,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
                           >
                             <subItem.icon className="w-4 h-4 mr-3" />
                             <span className="font-medium text-sm">{subItem.label}</span>
-                          </motion.button>
+                          </Link>
                         ))}
                       </motion.div>
                     )}
