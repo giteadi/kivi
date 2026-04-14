@@ -19,7 +19,8 @@ import {
   FiMenu,
   FiX,
   FiMessageSquare,
-  FiShield
+  FiShield,
+  FiUpload
 } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
@@ -36,6 +37,7 @@ const routeMapping = {
   'patients': '/examinees',
   'doctors': '/therapists',
   'template-manager': '/templates',
+  'forms': '/forms',
   'clinics': '/centres',
   'clinic-revenue': '/centres/revenue',
   'taxes': '/taxes',
@@ -109,6 +111,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
       { id: 'patients', label: 'Examinees', icon: FiUser, section: 'USERS' },
     { id: 'doctors', label: 'Therapists', icon: FiUserCheck, section: 'USERS' },
     { id: 'template-manager', label: 'Assessment Templates', icon: FiFileText, section: 'USERS' },
+    { id: 'forms', label: 'Forms', icon: FiUpload, section: 'USERS' },
     // { id: 'receptionists', label: 'Staff', icon: FiUser, section: 'USERS' }, // Temporarily disabled for future use
     { id: 'clinics', label: 'Centres', icon: FiMapPin, section: 'CENTRE' },
     { id: 'clinic-revenue', label: 'Centre Revenue', icon: FiTrendingUp, section: 'FINANCIAL' },

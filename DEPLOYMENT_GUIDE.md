@@ -6,8 +6,9 @@ This guide provides complete instructions for deploying the Kivi Educational The
 ## 🖥️ Server Information
 - **Domain:** `dashboard.iplanbymsl.in`
 - **IP Address:** `195.35.45.17`
-- **SSH Access:** `root@195.35.45.17`
-- **SSH Password:** `Bazeer@12345`
+- **SSH Access:** `aditya@195.35.45.17` (use SSH key)
+- **SSH Key:** `~/.ssh/id_ed25519` (passphrase: `1234`)
+- **Sudo Password:** `RuhiRiya@12345`
 - **Database Password:** `Tiger@123`
 - **Operating System:** Ubuntu 22.04 LTS
 - **Web Server:** Nginx
@@ -16,14 +17,19 @@ This guide provides complete instructions for deploying the Kivi Educational The
 
 ## 📁 Folder Structure
 ```
-/var/www/dashboard/          # Frontend (Nginx root)
+/var/www/dashboard/          # Frontend (Nginx root) - Production build
 /root/dashboard/             # Backend & Server files
 ├── server/                  # Node.js application
+│   ├── index.js            # Main server file (PORT 3005)
 │   ├── database.js          # Database configuration
-│   ├── index.js            # Main server file
+│   ├── routes/              # API routes
+│   │   └── formRoutes.js    # Forms API
+│   ├── migrations/          # SQL migrations
+│   │   └── create_forms_table.sql
 │   ├── package.json        # Dependencies
 │   └── .env                # Environment variables
-├── client/                  # Source files
+├── client/                  # React source files
+│   └── dist/               # Build output (copy to /var/www/dashboard/)
 └── kivi_local_dump.sql     # Database backup
 ```
 
@@ -57,8 +63,13 @@ sshpass -p Bazeer@12345 scp kivi_local_dump.sql root@195.35.45.17:/root/dashboar
 
 ### 3. Server Database Setup
 ```bash
-# Connect to server
-sshpass -p Bazeer@12345 ssh root@195.35.45.17
+# Connect to server (using SSH key)
+ssh aditya@195.35.45.17
+# Enter passphrase: 1234
+
+# Switch to root (if needed)
+sudo -i
+# Password: RuhiRiya@12345
 
 # Create database
 mysql -u root -pTiger@123 -e "CREATE DATABASE IF NOT EXISTS kivi;"
@@ -69,21 +80,21 @@ mysql -u root -pTiger@123 kivi < /root/dashboard/kivi_local_dump.sql
 
 ### 4. Backend Deployment
 ```bash
-# Upload backend files
+# Upload backend files (using SSH key)
 tar -czf server-files.tar.gz server/
-sshpass -p Bazeer@12345 scp server-files.tar.gz root@195.35.45.17:/root/dashboard/
+scp server-files.tar.gz aditya@195.35.45.17:/tmp/
 
 # Extract on server
-sshpass -p Bazeer@12345 ssh root@195.35.45.17 "cd /root/dashboard && tar -xzf server-files.tar.gz"
+ssh aditya@195.35.45.17 "sudo tar -xzf /tmp/server-files.tar.gz -C /root/dashboard/"
 
 # Install dependencies
-sshpass -p Bazeer@12345 ssh root@195.35.45.17 "cd /root/dashboard/server && npm install"
+ssh aditya@195.35.45.17 "cd /root/dashboard/server && sudo npm install"
 
-# Start with PM2
-sshpass -p Bazeer@12345 ssh root@195.35.45.17 "cd /root/dashboard/server && pm2 start npm --name kivi -- run dev"
+# Start with PM2 (name: dashboard)
+ssh aditya@195.35.45.17 "cd /root/dashboard/server && sudo pm2 start index.js --name dashboard"
 
 # Save PM2 configuration
-sshpass -p Bazeer@12345 ssh root@195.35.45.17 "pm2 save"
+ssh aditya@195.35.45.17 "sudo pm2 save"
 ```
 
 ### 5. Frontend Deployment
@@ -91,11 +102,12 @@ sshpass -p Bazeer@12345 ssh root@195.35.45.17 "pm2 save"
 # Build frontend
 cd client && npm run build
 
-# Upload build
-sshpass -p Bazeer@12345 scp -r dist/ root@195.35.45.17:/var/www/dashboard/
+# Create tar archive and upload
+tar -czf /tmp/kivi-dist.tar.gz -C dist .
+scp /tmp/kivi-dist.tar.gz aditya@195.35.45.17:/tmp/
 
-# Set proper permissions
-sshpass -p Bazeer@12345 ssh root@195.35.45.17 "chown -R www-data:www-data /var/www/dashboard"
+# Extract on server with proper permissions
+ssh aditya@195.35.45.17 "sudo rm -rf /var/www/dashboard/* && sudo tar -xzf /tmp/kivi-dist.tar.gz -C /var/www/dashboard/ && sudo chown -R www-data:www-data /var/www/dashboard"
 ```
 
 ### 6. Nginx Configuration
@@ -175,28 +187,46 @@ certbot renew --dry-run
 
 ## 🔧 SSH Commands Reference
 
-### File Operations
+### File Operations (SSH Key Auth)
 ```bash
 # Upload files
-sshpass -p Bazeer@12345 scp file.txt root@195.35.45.17:/path/
+scp file.txt aditya@195.35.45.17:/tmp/
 
 # Download files
-sshpass -p Bazeer@12345 scp root@195.35.45.17:/path/file.txt .
+scp aditya@195.35.45.17:/path/file.txt .
 
 # Upload directory
-sshpass -p Bazeer@12345 scp -r folder/ root@195.35.45.17:/path/
+tar -czf archive.tar.gz folder/
+scp archive.tar.gz aditya@195.35.45.17:/tmp/
+
+# On server: sudo tar -xzf /tmp/archive.tar.gz -C /destination/
+```
+
+### Server Access
+```bash
+# SSH with key
+ssh aditya@195.35.45.17
+# Enter passphrase: 1234
+
+# Switch to root
+sudo -i
+# Password: RuhiRiya@12345
 ```
 
 ### Server Management
 ```bash
 # Check services
 pm2 status
-pm2 logs kivi
+pm2 logs dashboard
 systemctl status nginx
 systemctl status mysql
 
 # Restart services
-pm2 restart kivi
+pm2 restart dashboard
+pm2 restart ashoka
+pm2 restart iep
+pm2 restart lakhera
+pm2 restart ngo
 systemctl reload nginx
 systemctl restart mysql
 
@@ -314,24 +344,32 @@ mysql -u root -pTiger@123 -e "SELECT COUNT(*) FROM kivi_sessions;"
 ```bash
 # Upload new files
 tar -czf server-update.tar.gz server/
-sshpass -p Bazeer@12345 scp server-update.tar.gz root@195.35.45.17:/root/dashboard/
+scp server-update.tar.gz aditya@195.35.45.17:/tmp/
 
 # Extract and restart
-sshpass -p Bazeer@12345 ssh root@195.35.45.17 "cd /root/dashboard && tar -xzf server-update.tar.gz && cd server && npm install && pm2 restart kivi"
+ssh aditya@195.35.45.17 "sudo -i"  # Then:
+cd /root/dashboard && tar -xzf /tmp/server-update.tar.gz && cd server && npm install && pm2 restart dashboard
 ```
 
 ### Frontend Updates
 ```bash
 # Build and deploy
-npm run build
-sshpass -p Bazeer@12345 scp -r dist/ root@195.35.45.17:/var/www/dashboard/
-sshpass -p Bazeer@12345 ssh root@195.35.45.17 "chown -R www-data:www-data /var/www/dashboard"
+cd client && npm run build
+
+# Create archive
+tar -czf /tmp/kivi-dist.tar.gz -C dist .
+scp /tmp/kivi-dist.tar.gz aditya@195.35.45.17:/tmp/
+
+# On server:
+sudo rm -rf /var/www/dashboard/* && sudo tar -xzf /tmp/kivi-dist.tar.gz -C /var/www/dashboard/ && sudo chown -R www-data:www-data /var/www/dashboard
 ```
 
 ### Database Updates
 ```bash
 # Export local changes
 mysqldump -u root kivi > kivi_updated.sql
+scp kivi_updated.sql aditya@195.35.45.17:/root/dashboard/
+ssh aditya@195.35.45.17 "mysql -u root -pTiger@123 kivi < /root/dashboard/kivi_updated.sql"
 sshpass -p Bazeer@12345 scp kivi_updated.sql root@195.35.45.17:/root/dashboard/
 sshpass -p Bazeer@12345 ssh root@195.35.45.17 "mysql -u root -pTiger@123 kivi < /root/dashboard/kivi_updated.sql"
 ```
@@ -351,6 +389,38 @@ sshpass -p Bazeer@12345 ssh root@195.35.45.17 "mysql -u root -pTiger@123 kivi < 
 
 ---
 
-**Last Updated:** March 12, 2026
-**Version:** 1.0
-**Status:** Production Ready
+## 🚀 Quick Deployment Checklist
+
+### Frontend Only Changes
+```bash
+# 1. Local build
+cd /Users/adityasharma/Desktop/kivi/client && npm run build
+
+# 2. Create archive
+tar -czf /tmp/kivi-dist.tar.gz -C dist .
+
+# 3. Upload
+scp /tmp/kivi-dist.tar.gz aditya@195.35.45.17:/tmp/
+
+# 4. Server extract
+ssh aditya@195.35.45.17 "sudo rm -rf /var/www/dashboard/* && sudo tar -xzf /tmp/kivi-dist.tar.gz -C /var/www/dashboard/ && sudo chown -R www-data:www-data /var/www/dashboard"
+```
+
+### Backend + Frontend Changes
+```bash
+# Frontend
+cd client && npm run build && tar -czf /tmp/kivi-dist.tar.gz -C dist . && scp /tmp/kivi-dist.tar.gz aditya@195.35.45.17:/tmp/
+
+# Backend files (routes, controllers)
+scp /Users/adityasharma/Desktop/kivi/server/routes/newRoute.js aditya@195.35.45.17:/tmp/
+
+# On server:
+sudo cp /tmp/newRoute.js /root/dashboard/server/routes/
+sudo pm2 restart dashboard
+```
+
+---
+
+**Last Updated:** April 14, 2026
+**Version:** 2.0
+**Status:** Production Ready - SSH Key Auth

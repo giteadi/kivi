@@ -74,6 +74,7 @@ import SessionList from './components/SessionList';
 import PlansList from './components/PlansList';
 import AdminSessionsList from './components/AdminSessionsList';
 import TemplateManager from './components/TemplateManager';
+import FormsManagement from './components/FormsManagement';
 import ExamineesManagement from './components/ExamineesManagement';
 import AssessmentList from './components/AssessmentList';
 import TherapyList from './components/TherapyList';
@@ -1477,6 +1478,7 @@ ${service.target_age_group || 'Not specified'}
             <Route path="/templates/create" element={renderContent()} />
             <Route path="/templates/:id" element={renderContent()} />
             <Route path="/templates/:id/edit" element={renderContent()} />
+            <Route path="/forms" element={<FormsManagement />} />
             <Route path="/centres" element={
               currentView === 'clinics' || currentView === 'clinics-list' ? (
                 <ClinicsList 
