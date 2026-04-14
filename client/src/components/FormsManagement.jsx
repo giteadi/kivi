@@ -190,6 +190,9 @@ export default function FormsManagement() {
   const [showCreateFolder, setShowCreateFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [creatingFolder, setCreatingFolder] = useState(false);
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [renameFolderName, setRenameFolderName] = useState("");
+  const [selectedFolderId, setSelectedFolderId] = useState(null);
 
   // Load forms
   const loadForms = useCallback(async () => {
@@ -199,27 +202,54 @@ export default function FormsManagement() {
         url = `/forms/folder/${currentFolderId}`;
       }
       const res = await api.get(url);
-      if (currentFolderId && res.data?.data) {
-        setForms(res.data.data.forms || []);
-        // Also update child folders if available
-        if (res.data.data.folders) {
-          // Merge with existing folders
-          const otherFolders = folders.filter(f => f.parent_id !== currentFolderId);
-          setFolders([...otherFolders, ...res.data.data.folders]);
+      console.log("📄 Forms RAW response:", res);
+
+      let formList = [];
+      if (currentFolderId) {
+        // Backend: { success, data: { folder, forms: [...], folders: [...] } }
+        if (Array.isArray(res?.data?.forms)) {
+          formList = res.data.forms;
+        } else if (Array.isArray(res?.data?.data?.forms)) {
+          formList = res.data.data.forms;
         }
       } else {
-        setForms(res.data || []);
+        // Root: backend returns array directly OR { data: [...] }
+        if (Array.isArray(res)) {
+          formList = res;
+        } else if (Array.isArray(res?.data)) {
+          formList = res.data;
+        } else if (Array.isArray(res?.data?.data)) {
+          formList = res.data.data;
+        }
       }
+
+      console.log("📄 Parsed forms:", formList);
+      setForms(formList);
     } catch (e) {
       console.error("Load forms error:", e);
+      setForms([]);
     }
-  }, [currentFolderId, folders]);
+  }, [currentFolderId]);
 
   // Load folders
   const loadFolders = useCallback(async () => {
     try {
       const res = await api.get("/forms/folders");
-      setFolders(res.data?.data || res.data || []);
+      console.log("📁 Folders RAW response:", res);
+      
+      // api.js directly response body return karta hai
+      // Backend sends: { success: true, data: [...] }
+      let folderList = [];
+      if (Array.isArray(res)) {
+        folderList = res;
+      } else if (Array.isArray(res?.data)) {
+        folderList = res.data;
+      } else if (Array.isArray(res?.data?.data)) {
+        folderList = res.data.data;
+      }
+      
+      console.log("📁 Parsed folders:", folderList);
+      setFolders(folderList);
     } catch (e) {
       console.error("Load folders error:", e);
     }
@@ -253,6 +283,44 @@ export default function FormsManagement() {
     }
   };
 
+  // Rename folder
+  const handleRenameFolder = async () => {
+    if (!renameFolderName.trim() || !selectedFolderId) return;
+    try {
+      await api.put(`/forms/folders/${selectedFolderId}`, {
+        name: renameFolderName
+      });
+      setShowRenameModal(false);
+      setRenameFolderName("");
+      setSelectedFolderId(null);
+      await loadFolders();
+    } catch (e) {
+      alert("Failed to rename folder: " + (e.message || "Unknown error"));
+    }
+  };
+
+  // Delete folder
+  const handleDeleteFolder = async (folderId) => {
+    if (!confirm("Delete this folder and all its contents?")) return;
+    try {
+      await api.delete(`/forms/folders/${folderId}`);
+      if (currentFolderId === folderId) {
+        setCurrentFolderId(null);
+      }
+      await loadFolders();
+      await loadForms();
+    } catch (e) {
+      alert("Failed to delete folder: " + (e.message || "Unknown error"));
+    }
+  };
+
+  // Open rename modal
+  const openRenameModal = (folder) => {
+    setSelectedFolderId(folder.id);
+    setRenameFolderName(folder.name);
+    setShowRenameModal(true);
+  };
+
   // Toggle folder expand
   const toggleFolder = (folderId) => {
     const newExpanded = new Set(expandedFolders);
@@ -277,7 +345,10 @@ export default function FormsManagement() {
 
   // Build folder tree
   const buildFolderTree = (parentId = null, level = 0) => {
-    const children = folders.filter(f => f.parent_id === parentId && f.deleted_at === null);
+    const children = folders.filter(f => 
+      (f.parent_id === parentId || (parentId === null && !f.parent_id)) 
+      && !f.deleted_at  // handle string "null" as well
+    );
     return children.map(folder => ({
       ...folder,
       level,
@@ -599,6 +670,22 @@ export default function FormsManagement() {
                     {!folder.hasChildren && <span style={{ width: 18 }} />}
                     <Icon d={expandedFolders.has(folder.id) ? folderIcons.folderOpen : folderIcons.folder} size={16} style={css.folderIcon} />
                     <span style={css.folderName}>{folder.name}</span>
+                    <div style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
+                      <button
+                        style={{ ...css.iconBtn, width: 24, height: 24, padding: 0 }}
+                        onClick={(e) => { e.stopPropagation(); openRenameModal(folder); }}
+                        title="Rename"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        style={{ ...css.iconBtn, width: 24, height: 24, padding: 0 }}
+                        onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder.id); }}
+                        title="Delete"
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </div>
                   {expandedFolders.has(folder.id) && folder.children.length > 0 && (
                     folder.children.map(child => (
@@ -610,6 +697,22 @@ export default function FormsManagement() {
                         <span style={{ width: 18 }} />
                         <Icon d={folderIcons.folder} size={16} style={css.folderIcon} />
                         <span style={css.folderName}>{child.name}</span>
+                        <div style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
+                          <button
+                            style={{ ...css.iconBtn, width: 24, height: 24, padding: 0 }}
+                            onClick={(e) => { e.stopPropagation(); openRenameModal(child); }}
+                            title="Rename"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            style={{ ...css.iconBtn, width: 24, height: 24, padding: 0 }}
+                            onClick={(e) => { e.stopPropagation(); handleDeleteFolder(child.id); }}
+                            title="Delete"
+                          >
+                            🗑️
+                          </button>
+                        </div>
                       </div>
                     ))
                   )}
@@ -706,6 +809,35 @@ export default function FormsManagement() {
                 disabled={!newFolderName.trim() || creatingFolder}
               >
                 {creatingFolder ? "Creating..." : "Create"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rename Folder Modal */}
+      {showRenameModal && (
+        <div style={css.overlay} onClick={() => setShowRenameModal(false)}>
+          <div style={css.modal} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: "0 0 20px", fontSize: 18 }}>Rename Folder</h3>
+            <input
+              type="text"
+              placeholder="Folder name"
+              value={renameFolderName}
+              onChange={(e) => setRenameFolderName(e.target.value)}
+              style={{ ...css.input, marginBottom: 20 }}
+              onKeyPress={(e) => e.key === "Enter" && handleRenameFolder()}
+            />
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button style={css.btn("ghost")} onClick={() => setShowRenameModal(false)}>
+                Cancel
+              </button>
+              <button 
+                style={css.btn("primary")} 
+                onClick={handleRenameFolder}
+                disabled={!renameFolderName.trim()}
+              >
+                Rename
               </button>
             </div>
           </div>
