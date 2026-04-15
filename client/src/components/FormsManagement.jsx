@@ -197,33 +197,23 @@ export default function FormsManagement() {
   // Load forms
   const loadForms = useCallback(async () => {
     try {
-      let url = "/forms";
-      if (currentFolderId) {
-        url = `/forms/folder/${currentFolderId}`;
-      }
+      let url = currentFolderId ? `/forms/folder/${currentFolderId}` : "/forms";
       const res = await api.get(url);
       console.log("📄 Forms RAW response:", res);
 
       let formList = [];
-      if (currentFolderId) {
-        // Backend: { success, data: { folder, forms: [...], folders: [...] } }
-        if (Array.isArray(res?.data?.forms)) {
+      if (Array.isArray(res)) {
+        // Root: direct array
+        formList = res;
+      } else if (res?.success && res?.data) {
+        // Folder response: { success, data: { folder, forms, folders } }
+        if (Array.isArray(res.data.forms)) {
           formList = res.data.forms;
-        } else if (Array.isArray(res?.data?.data?.forms)) {
-          formList = res.data.data.forms;
-        }
-      } else {
-        // Root: backend returns array directly OR { data: [...] }
-        if (Array.isArray(res)) {
-          formList = res;
-        } else if (Array.isArray(res?.data)) {
+        } else if (Array.isArray(res.data)) {
           formList = res.data;
-        } else if (Array.isArray(res?.data?.data)) {
-          formList = res.data.data;
         }
       }
 
-      console.log("📄 Parsed forms:", formList);
       setForms(formList);
     } catch (e) {
       console.error("Load forms error:", e);
@@ -367,19 +357,20 @@ export default function FormsManagement() {
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Reset input so same file can be re-uploaded
+    e.target.value = "";
 
     setLoading(true);
     const formData = new FormData();
     formData.append("file", file);
     formData.append("name", file.name);
     if (currentFolderId) {
-      formData.append("folder_id", currentFolderId);
+      formData.append("folder_id", String(currentFolderId));
     }
 
     try {
-      await api.post("/forms/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" }
-      });
+      await api.post("/forms/upload", formData);
+      // ← headers bilkul mat do, FormData ke saath browser khud set karta hai
       setShowUpload(false);
       loadForms();
     } catch (err) {
@@ -389,36 +380,184 @@ export default function FormsManagement() {
     }
   };
 
+  // Formula cache for re-evaluation
+  const formulaCacheRef = useRef({});
+
+  function buildFormulaCache(sheetData) {
+    const cache = {};
+    sheetData.forEach((row, rIdx) => {
+      row.forEach((cell, cIdx) => {
+        if (typeof cell === 'string' && cell.startsWith('=')) {
+          cache[`${rIdx}_${cIdx}`] = cell;
+        }
+      });
+    });
+    return cache;
+  }
+
+  function reEvaluateFormulas(sheetData) {
+    return sheetData.map((row, rIdx) =>
+      row.map((cell, cIdx) => {
+        const key = `${rIdx}_${cIdx}`;
+        const formula = formulaCacheRef.current[key] || (typeof cell === 'string' && cell.startsWith('=') ? cell : null);
+        if (formula) {
+          try {
+            return evalSimpleIF(formula, sheetData);
+          } catch {
+            return cell;
+          }
+        }
+        return cell;
+      })
+    );
+  }
+
+  // Evaluate IF formulas in Excel data
+  function evaluateIfFormulas(sheetData) {
+    return sheetData.map((row, rIdx) => 
+      row.map((cell, cIdx) => {
+        if (typeof cell === 'string' && cell.startsWith('=')) {
+          try {
+            return evalSimpleIF(cell, sheetData);
+          } catch {
+            return cell;
+          }
+        }
+        return cell;
+      })
+    );
+  }
+
+  function evalSimpleIF(formula, grid) {
+    const resolveRef = (ref) => {
+      const match = ref.trim().match(/^([A-Z]+)(\d+)$/);
+      if (!match) return parseFloat(ref) || 0;
+      const col = match[1].charCodeAt(0) - 65;
+      const row = parseInt(match[2]) - 1;
+      return parseFloat(grid[row]?.[col]) || 0;
+    };
+
+    const evalIF = (expr) => {
+      expr = expr.trim();
+      if (!expr.toUpperCase().startsWith('IF(')) return expr.replace(/"/g, '');
+      
+      const inner = expr.slice(3, -1);
+      
+      let depth = 0, commas = [];
+      for (let i = 0; i < inner.length; i++) {
+        if (inner[i] === '(') depth++;
+        else if (inner[i] === ')') depth--;
+        else if (inner[i] === ',' && depth === 0) commas.push(i);
+      }
+      
+      if (commas.length < 2) return '';
+      
+      const condStr = inner.slice(0, commas[0]).trim();
+      const trueVal = inner.slice(commas[0]+1, commas[1]).trim().replace(/"/g, '');
+      const falseExpr = inner.slice(commas[1]+1).trim();
+      
+      const condMatch = condStr.match(/^(.+?)\s*([<>!=]+)\s*(.+)$/);
+      if (!condMatch) return '';
+      
+      const left = resolveRef(condMatch[1]);
+      const op = condMatch[2];
+      const right = parseFloat(condMatch[3]);
+      
+      let result = false;
+      if (op === '<')  result = left < right;
+      if (op === '>')  result = left > right;
+      if (op === '<=') result = left <= right;
+      if (op === '>=') result = left >= right;
+      if (op === '=')  result = left === right;
+      if (op === '<>') result = left !== right;
+      
+      if (result) return trueVal;
+      
+      if (falseExpr.toUpperCase().startsWith('IF(')) {
+        return evalIF(falseExpr);
+      }
+      return falseExpr.replace(/"/g, '') || '';
+    };
+
+    const formulaBody = formula.startsWith('=') ? formula.slice(1) : formula;
+    return evalIF(formulaBody);
+  }
+
   // Parse file and open viewer
   const handleViewForm = async (form) => {
     setSelectedForm(form);
     setLoading(true);
     
     try {
-      const response = await api.get(`/forms/${form.id}/download`, {
-        responseType: 'blob'
-      });
-      
-      const file = new File([response.data], form.name, { type: response.headers['content-type'] });
-      
-      if (form.name.match(/\.(xlsx?|csv)$/i)) {
-        const data = await file.arrayBuffer();
-        const workbook = XLSX.read(data, { type: "array" });
-        const loadedSheets = workbook.SheetNames.map(name => ({
-          name,
-          data: XLSX.utils.sheet_to_json(workbook.Sheets[name], { header: 1 })
+      const token = localStorage.getItem('token');
+      const response = await fetch(
+        `https://dashboard.iplanbymsl.in/api/forms/${form.id}/download`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (!response.ok) throw new Error(`Server error: ${response.status}`);
+
+      const blob = await response.blob();
+      const ext = form.name.match(/\.([^.]+)$/)?.[1]?.toLowerCase();
+
+      if (['xlsx', 'xls', 'csv'].includes(ext)) {
+        const data = await blob.arrayBuffer();
+        const workbook = XLSX.read(data, { 
+          type: "array",
+          cellFormula: true,
+          cellNF: true,
+          cellStyles: true,
+          cellDates: true,
+          WTF: false,
+        });
+        
+        const loadedSheets = workbook.SheetNames.map(sheetName => {
+          const ws = workbook.Sheets[sheetName];
+          
+          // Step 1: Raw values lo (display ke liye)
+          const data2d = XLSX.utils.sheet_to_json(ws, { 
+            header: 1,
+            raw: true,
+            defval: "",
+            blankrows: true,
+          });
+
+          // Step 2: Formulas alag se extract karo directly cell objects se
+          const formulaCache = {};
+          const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+          for (let r = range.s.r; r <= range.e.r; r++) {
+            for (let c = range.s.c; c <= range.e.c; c++) {
+              const cellAddr = XLSX.utils.encode_cell({ r, c });
+              const cell = ws[cellAddr];
+              if (cell && cell.f) {
+                formulaCache[`${r}_${c}`] = '=' + cell.f;
+              }
+            }
+          }
+
+          return { name: sheetName, data: data2d, formulaCache };
+        });
+
+        // Pehli sheet ka formula cache set karo
+        formulaCacheRef.current = loadedSheets[0]?.formulaCache || {};
+
+        // Evaluate karo
+        const evaluatedSheets = loadedSheets.map(s => ({
+          ...s,
+          data: reEvaluateFormulas(s.data)
         }));
-        setSheets(loadedSheets);
-        setSheetData(loadedSheets[0]?.data || []);
+
+        setSheets(evaluatedSheets);
+        setSheetData(evaluatedSheets[0]?.data || []);
         setActiveSheet(0);
-      } else if (form.name.match(/\.docx?$/i)) {
+      } else if (['doc', 'docx'].includes(ext)) {
         setSheetData([["__html__", "<p>Word documents can be downloaded and edited locally.</p>"]]);
         setSheets([{ name: "Document", data: [] }]);
       } else {
         setSheetData([["__html__", "<p>Preview not available. Download to view.</p>"]]);
         setSheets([{ name: "Preview", data: [] }]);
       }
-      
+
       setShowViewer(true);
     } catch (err) {
       alert("Failed to load form: " + err.message);
@@ -444,7 +583,8 @@ export default function FormsManagement() {
       const next = prev.map(r => [...r]);
       if (!next[rowIdx]) next[rowIdx] = [];
       next[rowIdx][colIdx] = value;
-      return next;
+      // Answer badalne ke baad formulas re-evaluate karo
+      return reEvaluateFormulas(next);
     });
   };
 
@@ -526,7 +666,11 @@ export default function FormsManagement() {
                 <div 
                   key={i} 
                   style={css.tab(activeSheet === i)} 
-                  onClick={() => { setActiveSheet(i); setSheetData(s.data); }}
+                  onClick={() => { 
+                    setActiveSheet(i); 
+                    formulaCacheRef.current = sheets[i]?.formulaCache || buildFormulaCache(s.data);
+                    setSheetData(reEvaluateFormulas(s.data)); 
+                  }}
                 >
                   {s.name}
                 </div>
@@ -555,40 +699,100 @@ export default function FormsManagement() {
                 dangerouslySetInnerHTML={{ __html: sheetData[0][1] }}
               />
             ) : (
-              <table style={{ borderCollapse: "collapse", background: "#fff", width: "100%" }}>
-                <tbody>
-                  {sheetData.map((row, rIdx) => (
-                    <tr key={rIdx}>
-                      {row.map((cell, cIdx) => (
-                        <td key={cIdx} style={{ border: "1px solid #E5E7EB", padding: 0 }}>
-                          <input
-                            value={cell ?? ""}
-                            onChange={(e) => handleCellChange(rIdx, cIdx, e.target.value)}
-                            style={{ 
-                              width: "100%", 
-                              padding: "8px 12px", 
-                              border: "none", 
-                              outline: "none",
-                              fontSize: 14,
-                              background: rIdx === 0 ? "#F3F4F6" : "#fff",
-                              fontWeight: rIdx === 0 ? 600 : 400
-                            }}
-                          />
-                        </td>
+              <div style={{ overflow: "auto", borderRadius: 8, border: "1px solid #E5E7EB", background: "#fff" }}>
+                <table style={{ borderCollapse: "collapse", width: "max-content", minWidth: "100%" }}>
+                  <thead>
+                    <tr style={{ background: "#F3F4F6", position: "sticky", top: 0, zIndex: 2 }}>
+                      {/* Row number header */}
+                      <th style={{ 
+                        border: "1px solid #E5E7EB", padding: "8px 6px", 
+                        fontSize: 12, color: "#9CA3AF", width: 40, minWidth: 40,
+                        textAlign: "center", fontWeight: 500
+                      }}>#</th>
+                      {(sheetData[0] || []).map((cell, cIdx) => (
+                        <th key={cIdx} style={{ 
+                          border: "1px solid #E5E7EB", padding: 0,
+                          minWidth: 120, maxWidth: 240,
+                          position: "relative"
+                        }}>
+                          <div style={{ display: "flex", alignItems: "center" }}>
+                            <input
+                              value={cell ?? ""}
+                              onChange={(e) => handleCellChange(0, cIdx, e.target.value)}
+                              style={{ 
+                                flex: 1,
+                                padding: "8px 10px", 
+                                border: "none", 
+                                outline: "none",
+                                fontSize: 13,
+                                background: "transparent",
+                                fontWeight: 700,
+                                color: "#1F2937",
+                                width: "100%",
+                                minWidth: 100,
+                              }}
+                            />
+                            <button 
+                              style={{ 
+                                flexShrink: 0, padding: "4px 6px",
+                                background: "transparent", border: "none",
+                                cursor: "pointer", color: "#DC2626", fontSize: 14,
+                                opacity: 0.5,
+                              }}
+                              onClick={() => handleDeleteCol(cIdx)}
+                              title="Delete column"
+                            >×</button>
+                          </div>
+                        </th>
                       ))}
-                      <td style={{ border: "none", padding: 4 }}>
-                        <button 
-                          style={{ ...css.iconBtn, width: 24, height: 24 }} 
-                          onClick={() => handleDeleteRow(rIdx)}
-                          title="Delete row"
-                        >
-                          <Icon d={icons.x} size={14} />
-                        </button>
-                      </td>
+                      {/* Add column placeholder */}
+                      <th style={{ border: "1px solid #E5E7EB", width: 40, minWidth: 40 }} />
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {sheetData.slice(1).map((row, rIdx) => (
+                      <tr key={rIdx} style={{ background: rIdx % 2 === 0 ? "#fff" : "#F9FAFB" }}>
+                        {/* Row number */}
+                        <td style={{ 
+                          border: "1px solid #E5E7EB", padding: "4px 6px",
+                          fontSize: 12, color: "#9CA3AF", textAlign: "center",
+                          background: "#F9FAFB", userSelect: "none"
+                        }}>{rIdx + 1}</td>
+                        {/* Pad row to match header column count */}
+                        {Array.from({ length: sheetData[0]?.length || 0 }).map((_, cIdx) => (
+                          <td key={cIdx} style={{ border: "1px solid #E5E7EB", padding: 0 }}>
+                            <input
+                              value={row[cIdx] ?? ""}
+                              onChange={(e) => handleCellChange(rIdx + 1, cIdx, e.target.value)}
+                              style={{ 
+                                width: "100%", 
+                                padding: "7px 10px", 
+                                border: "none", 
+                                outline: "none",
+                                fontSize: 13,
+                                background: "transparent",
+                                color: "#374151",
+                              }}
+                            />
+                          </td>
+                        ))}
+                        {/* Delete row button */}
+                        <td style={{ border: "1px solid #E5E7EB", padding: "0 4px", textAlign: "center" }}>
+                          <button 
+                            style={{ 
+                              background: "transparent", border: "none",
+                              cursor: "pointer", color: "#DC2626", fontSize: 16,
+                              opacity: 0.4, padding: "2px 4px"
+                            }}
+                            onClick={() => handleDeleteRow(rIdx + 1)}
+                            title="Delete row"
+                          >×</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </div>
