@@ -399,10 +399,10 @@ export default function FormsManagement() {
     return sheetData.map((row, rIdx) =>
       row.map((cell, cIdx) => {
         const key = `${rIdx}_${cIdx}`;
-        const formula = formulaCacheRef.current[key] || (typeof cell === 'string' && cell.startsWith('=') ? cell : null);
+        const formula = formulaCacheRef.current[key];
         if (formula) {
           try {
-            return evalSimpleIF(formula, sheetData);
+            return evalFormula(formula, sheetData);
           } catch {
             return cell;
           }
@@ -428,59 +428,90 @@ export default function FormsManagement() {
     );
   }
 
-  function evalSimpleIF(formula, grid) {
+  function evalFormula(formula, grid) {
     const resolveRef = (ref) => {
-      const match = ref.trim().match(/^([A-Z]+)(\d+)$/);
-      if (!match) return parseFloat(ref) || 0;
-      const col = match[1].charCodeAt(0) - 65;
-      const row = parseInt(match[2]) - 1;
-      return parseFloat(grid[row]?.[col]) || 0;
+      ref = ref.trim();
+      const rangeMatch = ref.match(/^([A-Z]+)(\d+):([A-Z]+)(\d+)$/);
+      if (rangeMatch) {
+        const c1 = rangeMatch[1].charCodeAt(0) - 65;
+        const r1 = parseInt(rangeMatch[2]) - 1;
+        const c2 = rangeMatch[3].charCodeAt(0) - 65;
+        const r2 = parseInt(rangeMatch[4]) - 1;
+        const vals = [];
+        for (let r = r1; r <= r2; r++) {
+          for (let c = c1; c <= c2; c++) {
+            vals.push(parseFloat(grid[r]?.[c]) || 0);
+          }
+        }
+        return vals;
+      }
+      const cellMatch = ref.match(/^([A-Z]+)(\d+)$/);
+      if (cellMatch) {
+        const col = cellMatch[1].charCodeAt(0) - 65;
+        const row = parseInt(cellMatch[2]) - 1;
+        return parseFloat(grid[row]?.[col]) || 0;
+      }
+      return parseFloat(ref) || 0;
     };
 
-    const evalIF = (expr) => {
+    const evalSUM = (inner) => {
+      const parts = inner.split(/[+,]/);
+      let total = 0;
+      parts.forEach(part => {
+        const val = resolveRef(part.trim());
+        if (Array.isArray(val)) {
+          total += val.reduce((a, b) => a + b, 0);
+        } else {
+          total += val;
+        }
+      });
+      return total;
+    };
+
+    const evalExpr = (expr) => {
       expr = expr.trim();
-      if (!expr.toUpperCase().startsWith('IF(')) return expr.replace(/"/g, '');
       
-      const inner = expr.slice(3, -1);
-      
-      let depth = 0, commas = [];
-      for (let i = 0; i < inner.length; i++) {
-        if (inner[i] === '(') depth++;
-        else if (inner[i] === ')') depth--;
-        else if (inner[i] === ',' && depth === 0) commas.push(i);
+      if (expr.toUpperCase().startsWith('IF(')) {
+        const inner = expr.slice(3, -1);
+        let depth = 0, commas = [];
+        for (let i = 0; i < inner.length; i++) {
+          if (inner[i] === '(') depth++;
+          else if (inner[i] === ')') depth--;
+          else if (inner[i] === ',' && depth === 0) commas.push(i);
+        }
+        if (commas.length < 2) return '';
+        const condStr = inner.slice(0, commas[0]).trim();
+        const trueVal = inner.slice(commas[0]+1, commas[1]).trim().replace(/"/g, '');
+        const falseExpr = inner.slice(commas[1]+1).trim();
+        const condMatch = condStr.match(/^(.+?)\s*([<>!=]+)\s*(.+)$/);
+        if (!condMatch) return '';
+        const leftRaw = resolveRef(condMatch[1]);
+        const left = Array.isArray(leftRaw) ? leftRaw[0] : leftRaw;
+        const op = condMatch[2];
+        const right = parseFloat(condMatch[3]);
+        let result = false;
+        if (op === '<')  result = left < right;
+        if (op === '>')  result = left > right;
+        if (op === '<=') result = left <= right;
+        if (op === '>=') result = left >= right;
+        if (op === '=')  result = left === right;
+        if (op === '<>') result = left !== right;
+        if (result) return trueVal;
+        if (falseExpr.toUpperCase().startsWith('IF(')) return evalExpr(falseExpr);
+        return falseExpr.replace(/"/g, '') || '';
       }
-      
-      if (commas.length < 2) return '';
-      
-      const condStr = inner.slice(0, commas[0]).trim();
-      const trueVal = inner.slice(commas[0]+1, commas[1]).trim().replace(/"/g, '');
-      const falseExpr = inner.slice(commas[1]+1).trim();
-      
-      const condMatch = condStr.match(/^(.+?)\s*([<>!=]+)\s*(.+)$/);
-      if (!condMatch) return '';
-      
-      const left = resolveRef(condMatch[1]);
-      const op = condMatch[2];
-      const right = parseFloat(condMatch[3]);
-      
-      let result = false;
-      if (op === '<')  result = left < right;
-      if (op === '>')  result = left > right;
-      if (op === '<=') result = left <= right;
-      if (op === '>=') result = left >= right;
-      if (op === '=')  result = left === right;
-      if (op === '<>') result = left !== right;
-      
-      if (result) return trueVal;
-      
-      if (falseExpr.toUpperCase().startsWith('IF(')) {
-        return evalIF(falseExpr);
+
+      if (expr.toUpperCase().startsWith('SUM(')) {
+        const inner = expr.slice(4, -1);
+        return evalSUM(inner);
       }
-      return falseExpr.replace(/"/g, '') || '';
+
+      const val = resolveRef(expr);
+      return Array.isArray(val) ? val[0] : val;
     };
 
     const formulaBody = formula.startsWith('=') ? formula.slice(1) : formula;
-    return evalIF(formulaBody);
+    return evalExpr(formulaBody);
   }
 
   // Parse file and open viewer
@@ -574,6 +605,114 @@ export default function FormsManagement() {
       loadForms();
     } catch (e) {
       alert("Delete failed: " + e.message);
+    }
+  };
+
+  // Duplicate form - exact copy download
+  const handleDuplicateForm = async (form, e) => {
+    e.stopPropagation();
+    const newName = prompt(`Duplicate ka naam:`, `Copy of ${form.name}`);
+    if (!newName?.trim()) return;
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(
+        `https://dashboard.iplanbymsl.in/api/forms/${form.id}/download`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!response.ok) throw new Error(`Server error: ${response.status}`);
+
+      const blob = await response.blob();
+      const ext = form.name.match(/\.([^.]+)$/)?.[1]?.toLowerCase();
+      const fileName = newName.endsWith('.' + ext) ? newName : `${newName}.${ext}`;
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("Duplicate failed: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // New from template - blank form in viewer
+  const handleNewFromTemplate = async (form, e) => {
+    e.stopPropagation();
+    const studentName = prompt(`New blank form\nStudent ka naam:`);
+    if (!studentName?.trim()) return;
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(
+        `https://dashboard.iplanbymsl.in/api/forms/${form.id}/download`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!response.ok) throw new Error(`Server error: ${response.status}`);
+
+      const blob = await response.blob();
+      const data = await blob.arrayBuffer();
+      const workbook = XLSX.read(data, { type: "array", cellFormula: true });
+
+      const clearedSheets = workbook.SheetNames.map(sheetName => {
+        const ws = workbook.Sheets[sheetName];
+        if (!ws['!ref']) return { name: sheetName, data: [], formulaCache: {} };
+        
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        
+        const formulaCache = {};
+        for (let r = range.s.r; r <= range.e.r; r++) {
+          for (let c = range.s.c; c <= range.e.c; c++) {
+            const cellAddr = XLSX.utils.encode_cell({ r, c });
+            const cell = ws[cellAddr];
+            if (cell?.f) formulaCache[`${r}_${c}`] = '=' + cell.f;
+          }
+        }
+
+        for (let r = range.s.r + 1; r <= range.e.r; r++) {
+          const cellAddr = XLSX.utils.encode_cell({ r, c: 1 });
+          const cell = ws[cellAddr];
+          if (cell && !cell.f) {
+            ws[cellAddr] = { t: 'n', v: 0 };
+          }
+        }
+
+        const data2d = XLSX.utils.sheet_to_json(ws, {
+          header: 1, raw: true, defval: "", blankrows: true,
+        });
+
+        return { name: sheetName, data: data2d, formulaCache };
+      });
+
+      formulaCacheRef.current = clearedSheets[0]?.formulaCache || {};
+
+      const evaluatedSheets = clearedSheets.map(s => ({
+        ...s,
+        data: reEvaluateFormulas(s.data)
+      }));
+
+      setSelectedForm({ 
+        ...form, 
+        name: `${studentName} - ${form.name}`,
+        id: form.id,
+        isNew: true
+      });
+      setSheets(evaluatedSheets);
+      setSheetData(evaluatedSheets[0]?.data || []);
+      setActiveSheet(0);
+      setShowViewer(true);
+
+    } catch (err) {
+      alert("New form failed: " + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -974,13 +1113,29 @@ export default function FormsManagement() {
                         {new Date(form.created_at).toLocaleDateString()}
                       </p>
                     </div>
-                    <button 
-                      style={{ ...css.iconBtn, flexShrink: 0 }}
-                      onClick={(e) => { e.stopPropagation(); handleDeleteForm(form.id); }}
-                      title="Delete"
-                    >
-                      <Icon d={icons.trash} size={16} />
-                    </button>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
+                      <button 
+                        style={{ ...css.iconBtn, flexShrink: 0 }}
+                        onClick={(e) => handleDuplicateForm(form, e)}
+                        title="Duplicate (exact copy download)"
+                      >
+                        📋
+                      </button>
+                      <button 
+                        style={{ ...css.iconBtn, flexShrink: 0 }}
+                        onClick={(e) => handleNewFromTemplate(form, e)}
+                        title="New from Template (blank form)"
+                      >
+                        ✨
+                      </button>
+                      <button 
+                        style={{ ...css.iconBtn, flexShrink: 0 }}
+                        onClick={(e) => { e.stopPropagation(); handleDeleteForm(form.id); }}
+                        title="Delete"
+                      >
+                        <Icon d={icons.trash} size={16} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
