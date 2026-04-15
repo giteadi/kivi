@@ -147,14 +147,7 @@ async function exportSheetToDocx(sheetData, fileName) {
   });
 
   const blob = await Packer.toBlob(doc);
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = fileName.replace(/\.[^/.]+$/, "") + ".docx";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  return blob;
 }
 
 // ─── Sheet data → .xlsx ─────────────────────────────────────────────────────────
@@ -167,7 +160,9 @@ function exportSheetToXlsx(sheetData, fileName) {
   const ws = XLSX.utils.aoa_to_sheet(plainRows);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-  XLSX.writeFile(wb, fileName.replace(/\.[^/.]+$/, "") + ".xlsx");
+  const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  return blob;
 }
 
 // ─── Main Component ──────────────────────────────────────────────────────────────
@@ -593,7 +588,7 @@ export default function ConersManagement() {
 
   // Delete form
   const handleDeleteForm = async (id) => {
-    if (!confirm("Delete this coner?")) return;
+    if (!confirm("Are you sure you want to delete this conor?")) return;
     try {
       await api.delete(`/coners/${id}`);
       loadForms();
@@ -602,10 +597,10 @@ export default function ConersManagement() {
     }
   };
 
-  // Duplicate form - exact copy download
+  // Duplicate form - upload as new file
   const handleDuplicateForm = async (form, e) => {
     e.stopPropagation();
-    const newName = prompt(`Duplicate ka naam:`, `Copy of ${form.name}`);
+    const newName = prompt(`Enter name for duplicate:`, `Copy of ${form.name}`);
     if (!newName?.trim()) return;
 
     setLoading(true);
@@ -618,17 +613,15 @@ export default function ConersManagement() {
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
 
       const blob = await response.blob();
-      const ext = form.name.match(/\.([^.]+)$/)?.[1]?.toLowerCase();
-      const fileName = newName.endsWith('.' + ext) ? newName : `${newName}.${ext}`;
+      const formData = new FormData();
+      formData.append('file', blob, newName);
+      formData.append('name', newName);
+      if (currentFolderId) {
+        formData.append('folder_id', String(currentFolderId));
+      }
 
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      const uploadResponse = await api.post('/coners/upload', formData);
+      loadForms();
     } catch (err) {
       alert("Duplicate failed: " + err.message);
     } finally {
@@ -639,8 +632,8 @@ export default function ConersManagement() {
   // New from template - blank form in viewer
   const handleNewFromTemplate = async (form, e) => {
     e.stopPropagation();
-    const studentName = prompt(`New blank form\nStudent ka naam:`);
-    if (!studentName?.trim()) return;
+    const sheetName = prompt(`New blank form\nEnter sheet name:`);
+    if (!sheetName?.trim()) return;
 
     setLoading(true);
     try {
@@ -655,10 +648,10 @@ export default function ConersManagement() {
       const data = await blob.arrayBuffer();
       const workbook = XLSX.read(data, { type: "array", cellFormula: true });
 
-      // Rename first sheet to student name
+      // Rename first sheet to sheet name
       if (workbook.SheetNames.length > 0) {
-        XLSX.utils.book_append_sheet(workbook, workbook.Sheets[workbook.SheetNames[0]], studentName);
-        XLSX.utils.book_set_sheet_name(workbook, 0, studentName);
+        XLSX.utils.book_append_sheet(workbook, workbook.Sheets[workbook.SheetNames[0]], sheetName);
+        XLSX.utils.book_set_sheet_name(workbook, 0, sheetName);
       }
 
       const clearedSheets = workbook.SheetNames.map(sheetName => {
@@ -700,7 +693,7 @@ export default function ConersManagement() {
 
       setSelectedForm({ 
         ...form, 
-        name: `${studentName} - ${form.name}`,
+        name: `${sheetName} - ${form.name}`,
         id: form.id,
         isNew: true
       });
@@ -762,11 +755,30 @@ export default function ConersManagement() {
   };
 
   // Export
-  const handleExport = (type) => {
+  const handleExport = async (type) => {
+    let blob;
     if (type === "docx") {
-      exportSheetToDocx(sheetData, selectedForm?.name || "form.docx");
+      blob = await exportSheetToDocx(sheetData, selectedForm?.name || "form.docx");
     } else {
-      exportSheetToXlsx(sheetData, selectedForm?.name || "form.xlsx");
+      blob = exportSheetToXlsx(sheetData, selectedForm?.name || "form.xlsx");
+    }
+    
+    // Upload as new file instead of downloading
+    const formData = new FormData();
+    const ext = type === "docx" ? "docx" : "xlsx";
+    const fileName = `${selectedForm?.name || "exported"}.${ext}`;
+    formData.append('file', blob, fileName);
+    formData.append('name', fileName);
+    if (currentFolderId) {
+      formData.append('folder_id', String(currentFolderId));
+    }
+    
+    try {
+      await api.post('/coners/upload', formData);
+      loadForms();
+      alert("Exported successfully!");
+    } catch (err) {
+      alert("Export failed: " + err.message);
     }
   };
 
@@ -954,7 +966,7 @@ export default function ConersManagement() {
               if (selectedForm || forms.length > 0) {
                 handleNewFromTemplate(selectedForm || forms[0], { stopPropagation: () => {} });
               } else {
-                alert("Pehle ek template form select/upload karo");
+                alert("Please select or upload a template conor first.");
               }
             }}>
               ✨ New Conor from Template
