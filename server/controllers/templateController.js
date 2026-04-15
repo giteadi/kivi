@@ -334,7 +334,7 @@ class TemplateController {
 
       // Create template data
       const templateData = {
-        name: fileName.replace(/\.(xlsx?|csv)$/i, ""),
+        name: fileName.replace(/\.(xlsx?|csv|docx)$/i, ""),
         type: "import",
         description: `${parsedData.names.length} sheet(s) • ${fileName}`,
         template_data: {

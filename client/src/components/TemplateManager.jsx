@@ -864,9 +864,9 @@ export default function TemplateManager() {
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             {loading && <span style={{ fontSize: 12, color: "#6B7280" }}>⏳</span>}
-            <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleUpload} style={{ display: "none" }} />
+            <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.docx" onChange={handleUpload} style={{ display: "none" }} />
             <button style={css.btn("primary")} onClick={() => fileRef.current?.click()}>
-              <Icon d={icons.upload} size={14} /> Upload Excel
+              <Icon d={icons.upload} size={14} /> Upload File
             </button>
           </div>
         </div>
@@ -894,9 +894,9 @@ export default function TemplateManager() {
             <div style={{ textAlign: "center", padding: "60px 20px", color: "#9CA3AF" }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>📂</div>
               <p style={{ fontSize: 16, fontWeight: 500, marginBottom: 4 }}>No templates yet</p>
-              <p style={{ fontSize: 13, marginBottom: 20 }}>Upload an Excel assessment template to get started</p>
+              <p style={{ fontSize: 13, marginBottom: 20 }}>Upload an Excel or Word document template to get started</p>
               <button style={css.btn("primary")} onClick={() => fileRef.current?.click()}>
-                <Icon d={icons.upload} size={14} /> Upload Excel
+                <Icon d={icons.upload} size={14} /> Upload File
               </button>
             </div>
           ) : view === "grid" ? (
