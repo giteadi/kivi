@@ -1606,6 +1606,12 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                       >
                         Language/Development
                       </button>
+                      <button 
+                        onClick={() => window.location.href = '/coners'}
+                        className="px-4 py-2 rounded-md text-sm font-medium transition-all bg-green-500 text-white hover:bg-green-600 shadow-sm ml-4"
+                      >
+                        Conors
+                      </button>
                     </div>
 
                     {historySubTab === 'referral' && (

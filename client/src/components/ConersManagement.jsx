@@ -171,7 +171,7 @@ function exportSheetToXlsx(sheetData, fileName) {
 }
 
 // ─── Main Component ──────────────────────────────────────────────────────────────
-export default function FormsManagement() {
+export default function ConersManagement() {
   const [forms, setForms] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
@@ -197,18 +197,16 @@ export default function FormsManagement() {
   // Load forms
   const loadForms = useCallback(async () => {
     try {
-      let url = currentFolderId ? `/forms/folder/${currentFolderId}` : "/forms";
+      let url = currentFolderId ? `/coners/folder/${currentFolderId}` : "/coners";
       const res = await api.get(url);
-      console.log("📄 Forms RAW response:", res);
+      console.log("📄 Coners RAW response:", res);
 
       let formList = [];
       if (Array.isArray(res)) {
-        // Root: direct array
         formList = res;
       } else if (res?.success && res?.data) {
-        // Folder response: { success, data: { folder, forms, folders } }
-        if (Array.isArray(res.data.forms)) {
-          formList = res.data.forms;
+        if (Array.isArray(res.data.coners)) {
+          formList = res.data.coners;
         } else if (Array.isArray(res.data)) {
           formList = res.data;
         }
@@ -216,7 +214,7 @@ export default function FormsManagement() {
 
       setForms(formList);
     } catch (e) {
-      console.error("Load forms error:", e);
+      console.error("Load coners error:", e);
       setForms([]);
     }
   }, [currentFolderId]);
@@ -224,11 +222,9 @@ export default function FormsManagement() {
   // Load folders
   const loadFolders = useCallback(async () => {
     try {
-      const res = await api.get("/forms/folders");
-      console.log("📁 Folders RAW response:", res);
+      const res = await api.get("/coners/folders");
+      console.log("📁 Coner folders RAW response:", res);
       
-      // api.js directly response body return karta hai
-      // Backend sends: { success: true, data: [...] }
       let folderList = [];
       if (Array.isArray(res)) {
         folderList = res;
@@ -238,10 +234,10 @@ export default function FormsManagement() {
         folderList = res.data.data;
       }
       
-      console.log("📁 Parsed folders:", folderList);
+      console.log("📁 Parsed coner folders:", folderList);
       setFolders(folderList);
     } catch (e) {
-      console.error("Load folders error:", e);
+      console.error("Load coner folders error:", e);
     }
   }, []);
 
@@ -250,24 +246,24 @@ export default function FormsManagement() {
 
   // Create folder
   const handleCreateFolder = async () => {
-    console.log("🔵 [DEBUG] Create folder called:", { newFolderName, currentFolderId });
+    console.log("🔵 [DEBUG] Create coner folder called:", { newFolderName, currentFolderId });
     if (!newFolderName.trim()) return;
     setCreatingFolder(true);
     try {
-      console.log("🔵 [DEBUG] Sending API request to /forms/folders");
-      const response = await api.post("/forms/folders", {
+      console.log("🔵 [DEBUG] Sending API request to /coners/folders");
+      const response = await api.post("/coners/folders", {
         name: newFolderName,
         parent_id: currentFolderId
       });
-      console.log("🔵 [DEBUG] Folder creation response:", response);
+      console.log("🔵 [DEBUG] Coner folder creation response:", response);
       setNewFolderName("");
       setShowCreateFolder(false);
       await loadFolders();
     } catch (e) {
-      console.error("❌ [DEBUG] Create folder error:", e);
+      console.error("❌ [DEBUG] Create coner folder error:", e);
       console.error("❌ [DEBUG] Error status:", e.status);
       console.error("❌ [DEBUG] Error message:", e.message);
-      alert("Failed to create folder: " + (e.message || "Unknown error"));
+      alert("Failed to create coner folder: " + (e.message || "Unknown error"));
     } finally {
       setCreatingFolder(false);
     }
@@ -277,7 +273,7 @@ export default function FormsManagement() {
   const handleRenameFolder = async () => {
     if (!renameFolderName.trim() || !selectedFolderId) return;
     try {
-      await api.put(`/forms/folders/${selectedFolderId}`, {
+      await api.put(`/coners/folders/${selectedFolderId}`, {
         name: renameFolderName
       });
       setShowRenameModal(false);
@@ -285,7 +281,7 @@ export default function FormsManagement() {
       setSelectedFolderId(null);
       await loadFolders();
     } catch (e) {
-      alert("Failed to rename folder: " + (e.message || "Unknown error"));
+      alert("Failed to rename coner folder: " + (e.message || "Unknown error"));
     }
   };
 
@@ -293,14 +289,14 @@ export default function FormsManagement() {
   const handleDeleteFolder = async (folderId) => {
     if (!confirm("Delete this folder and all its contents?")) return;
     try {
-      await api.delete(`/forms/folders/${folderId}`);
+      await api.delete(`/coners/folders/${folderId}`);
       if (currentFolderId === folderId) {
         setCurrentFolderId(null);
       }
       await loadFolders();
       await loadForms();
     } catch (e) {
-      alert("Failed to delete folder: " + (e.message || "Unknown error"));
+      alert("Failed to delete coner folder: " + (e.message || "Unknown error"));
     }
   };
 
@@ -357,7 +353,6 @@ export default function FormsManagement() {
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // Reset input so same file can be re-uploaded
     e.target.value = "";
 
     setLoading(true);
@@ -369,8 +364,7 @@ export default function FormsManagement() {
     }
 
     try {
-      await api.post("/forms/upload", formData);
-      // ← headers bilkul mat do, FormData ke saath browser khud set karta hai
+      await api.post("/coners/upload", formData);
       setShowUpload(false);
       loadForms();
     } catch (err) {
@@ -522,7 +516,7 @@ export default function FormsManagement() {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(
-        `https://dashboard.iplanbymsl.in/api/forms/${form.id}/download`,
+        `https://dashboard.iplanbymsl.in/api/coners/${form.id}/download`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -599,9 +593,9 @@ export default function FormsManagement() {
 
   // Delete form
   const handleDeleteForm = async (id) => {
-    if (!confirm("Delete this form?")) return;
+    if (!confirm("Delete this coner?")) return;
     try {
-      await api.delete(`/forms/${id}`);
+      await api.delete(`/coners/${id}`);
       loadForms();
     } catch (e) {
       alert("Delete failed: " + e.message);
@@ -618,7 +612,7 @@ export default function FormsManagement() {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(
-        `https://dashboard.iplanbymsl.in/api/forms/${form.id}/download`,
+        `https://dashboard.iplanbymsl.in/api/coners/${form.id}/download`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
@@ -652,7 +646,7 @@ export default function FormsManagement() {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(
-        `https://dashboard.iplanbymsl.in/api/forms/${form.id}/download`,
+        `https://dashboard.iplanbymsl.in/api/coners/${form.id}/download`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
@@ -758,7 +752,7 @@ export default function FormsManagement() {
     if (!selectedForm) return;
     
     try {
-      await api.put(`/forms/${selectedForm.id}/data`, {
+      await api.put(`/coners/${selectedForm.id}/data`, {
         sheetData: sheetData
       });
       alert("Changes saved!");
@@ -952,8 +946,8 @@ export default function FormsManagement() {
         {/* Header */}
         <div style={css.header}>
           <div>
-            <h1 style={css.h1}>Forms</h1>
-            <p style={css.subtitle}>Upload, edit and export forms (Excel, Word, PDF)</p>
+            <h1 style={css.h1}>Conors</h1>
+            <p style={css.subtitle}>Upload, edit and export conors (Excel, Word, PDF)</p>
           </div>
           <div style={{ display: "flex", gap: 10 }}>
             <button style={css.btn("ghost")} onClick={() => {
@@ -963,10 +957,10 @@ export default function FormsManagement() {
                 alert("Pehle ek template form select/upload karo");
               }
             }}>
-              ✨ New from Template
+              ✨ New Conor from Template
             </button>
             <button style={css.btn("primary")} onClick={() => fileInputRef.current?.click()}>
-              <Icon d={icons.upload} /> Upload Form
+              <Icon d={icons.upload} /> Upload Conor
             </button>
             <input 
               ref={fileInputRef}
@@ -981,7 +975,7 @@ export default function FormsManagement() {
         {/* Search */}
         <div style={css.toolbar}>
           <input
-            placeholder="Search forms..."
+            placeholder="Search conors..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{ ...css.searchInput, maxWidth: 300 }}
