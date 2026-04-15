@@ -2,7 +2,7 @@
 // Fixed: script tag pollution in saved HTML
 // Fixed: stale closure on notify — doc ref stored in useRef
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from "react";
 
 // ─── Convert 2D array → HTML ──────────────────────────────────────────────────
 function arrayToHtml(data) {
@@ -123,13 +123,13 @@ function buildDoc(bodyHtml) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-export default function ReportSheetViewer({
+const ReportSheetViewer = forwardRef(function ReportSheetViewer({
   data,
   readOnly = false,
   onDataChange,
   onCreateReport,
   reportMode = false,
-}) {
+}, ref) {
   const iframeRef  = useRef(null);
   const onChgRef   = useRef(onDataChange);
   onChgRef.current = onDataChange;
@@ -152,6 +152,19 @@ export default function ReportSheetViewer({
       onChgRef.current(htmlToData(html));
     }, 300);
   }, []);
+
+  useImperativeHandle(ref, () => ({
+    getCurrentData: (opts = {}) => {
+      const allowEmpty = !!opts.allowEmpty;
+      const doc = docRef.current;
+      if (!doc) return null;
+      const clone = doc.body.cloneNode(true);
+      clone.querySelectorAll("script").forEach(s => s.remove());
+      const html = clone.innerHTML;
+      if (!allowEmpty && (!html || html === "<p><br></p>" || html.trim() === "")) return null;
+      return htmlToData(html || "<p><br></p>");
+    },
+  }), []);
 
   useEffect(() => {
     const iframe = iframeRef.current;
@@ -362,4 +375,6 @@ export default function ReportSheetViewer({
       </div>
     </div>
   );
-}
+});
+
+export default ReportSheetViewer;

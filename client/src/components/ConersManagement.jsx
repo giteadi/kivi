@@ -2,10 +2,11 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import * as XLSX from "xlsx";
 import {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
-  AlignmentType, BorderStyle, WidthType,
+  AlignmentType, HeadingLevel, BorderStyle, WidthType, ShadingType, LevelFormat,
 } from "docx";
 import api from "../services/api";
 import Sidebar from "./Sidebar";
+import ReportSheetViewer from "./ReportSheetViewer";
 
 // Folder icons
 const folderIcons = {
@@ -101,6 +102,231 @@ function htmlToPlainText(html) {
   return div.innerText || div.textContent || "";
 }
 
+// ─── HTML → docx elements (from TemplateManager) ─────────────────────────────
+const CELL_BORDER = { style: BorderStyle.SINGLE, size: 4, color: "AAAAAA" };
+const CELL_BORDERS = { top: CELL_BORDER, bottom: CELL_BORDER, left: CELL_BORDER, right: CELL_BORDER };
+const PAGE_CONTENT_WIDTH = 8640;
+
+function nodeToRuns(node, inherited = {}) {
+  const runs = [];
+  if (node.nodeType === Node.TEXT_NODE) {
+    const text = node.textContent;
+    if (text) runs.push(new TextRun({ text, ...inherited }));
+    return runs;
+  }
+  const tag = node.tagName?.toLowerCase();
+  const style = {
+    ...inherited,
+    bold:    inherited.bold    || ["b", "strong", "th"].includes(tag),
+    italics: inherited.italics || ["i", "em"].includes(tag),
+    strike:  inherited.strike  || ["s", "del", "strike"].includes(tag),
+    ...(tag === "u" ? { underline: {} } : {}),
+  };
+
+  if (tag === "br") {
+    runs.push(new TextRun({ text: "", break: 1 }));
+    return runs;
+  }
+
+  for (const child of node.childNodes) runs.push(...nodeToRuns(child, style));
+  return runs;
+}
+
+function estimateColWidths(trList, totalWidth) {
+  let colCount = 0;
+  trList.forEach(tr => {
+    let c = 0;
+    tr.querySelectorAll("td,th").forEach(cell => {
+      c += parseInt(cell.getAttribute("colspan") || "1");
+    });
+    colCount = Math.max(colCount, c);
+  });
+  if (colCount <= 1) return [totalWidth];
+
+  const colLengths = Array(colCount).fill(0);
+  trList.slice(0, 5).forEach(tr => {
+    [...tr.querySelectorAll("td,th")].forEach((cell, i) => {
+      if (i < colCount) {
+        colLengths[i] = Math.max(colLengths[i], (cell.textContent||"").trim().length);
+      }
+    });
+  });
+
+  const MIN_FRAC = 0.08;
+  const remaining = Math.max(0, 1 - MIN_FRAC * colCount);
+  const totalLen = colLengths.reduce((a,b) => a+b, 0) || 1;
+  const fracs = colLengths.map(len => MIN_FRAC + (len/totalLen) * remaining);
+  const fracSum = fracs.reduce((a,b) => a+b, 0);
+  return fracs.map(f => Math.max(400, Math.floor((f/fracSum) * totalWidth)));
+}
+
+function cellToParagraphs(tdNode) {
+  const paragraphs = [];
+  const isTh = tdNode.tagName?.toLowerCase() === "th";
+
+  function processNode(node, inherited = {}) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const t = node.textContent;
+      if (t && t.trim()) {
+        paragraphs.push(new Paragraph({
+          children: [new TextRun({ text: t, ...inherited })],
+          spacing: { after: 0 },
+        }));
+      }
+      return;
+    }
+    const tag = node.tagName?.toLowerCase();
+    if (!tag) return;
+    if (tag === "br") {
+      paragraphs.push(new Paragraph({ children: [], spacing: { after: 0 } }));
+      return;
+    }
+    if (["p","div","span"].includes(tag)) {
+      const runs = nodeToRuns(node, inherited);
+      if (runs.length) {
+        paragraphs.push(new Paragraph({ children: runs, spacing: { after: 60 } }));
+      } else {
+        for (const child of node.childNodes) processNode(child, inherited);
+      }
+      return;
+    }
+    if (/^h[1-6]$/.test(tag)) {
+      const hmap = { h1: HeadingLevel.HEADING_1, h2: HeadingLevel.HEADING_2,
+                     h3: HeadingLevel.HEADING_3, h4: HeadingLevel.HEADING_4 };
+      paragraphs.push(new Paragraph({
+        heading: hmap[tag] || HeadingLevel.HEADING_3,
+        children: nodeToRuns(node),
+        spacing: { after: 60 },
+      }));
+      return;
+    }
+    const newInherited = {
+      ...inherited,
+      bold: inherited.bold || ["b","strong","th"].includes(tag),
+      italics: inherited.italics || ["i","em"].includes(tag),
+    };
+    for (const child of node.childNodes) processNode(child, newInherited);
+  }
+
+  for (const child of tdNode.childNodes) processNode(child, { bold: isTh });
+  if (!paragraphs.length) paragraphs.push(new Paragraph({ children: [], spacing: { after: 0 } }));
+  return paragraphs;
+}
+
+function nodeToDocxElements(node) {
+  const els = [];
+  if (node.nodeType === Node.TEXT_NODE) {
+    const t = node.textContent.trim();
+    if (t) els.push(new Paragraph({ children: [new TextRun(t)] }));
+    return els;
+  }
+  const tag = node.tagName?.toLowerCase();
+  if (!tag) return els;
+
+  const headingMap = { h1: HeadingLevel.HEADING_1, h2: HeadingLevel.HEADING_2,
+    h3: HeadingLevel.HEADING_3, h4: HeadingLevel.HEADING_4 };
+  if (headingMap[tag]) {
+    els.push(new Paragraph({ heading: headingMap[tag], children: nodeToRuns(node) }));
+    return els;
+  }
+
+  if (["p", "div", "section"].includes(tag)) {
+    const runs = nodeToRuns(node);
+    if (runs.length) { els.push(new Paragraph({ children: runs })); return els; }
+    for (const c of node.childNodes) els.push(...nodeToDocxElements(c));
+    return els;
+  }
+
+  if (tag === "br") { els.push(new Paragraph({ children: [] })); return els; }
+
+  if (tag === "hr") {
+    els.push(new Paragraph({
+      border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: "AAAAAA", space: 1 } },
+      children: [],
+    }));
+    return els;
+  }
+
+  if (tag === "ul") {
+    node.querySelectorAll(":scope > li").forEach(li =>
+      els.push(new Paragraph({ numbering: { reference: "bullets", level: 0 }, children: nodeToRuns(li) }))
+    );
+    return els;
+  }
+
+  if (tag === "ol") {
+    node.querySelectorAll(":scope > li").forEach(li =>
+      els.push(new Paragraph({ numbering: { reference: "numbers", level: 0 }, children: nodeToRuns(li) }))
+    );
+    return els;
+  }
+
+  if (tag === "table") {
+    const trList = Array.from(node.querySelectorAll("tr"));
+    if (!trList.length) return els;
+
+    let colCount = 0;
+    trList.forEach(tr => {
+      let count = 0;
+      tr.querySelectorAll("td,th").forEach(cell => {
+        count += parseInt(cell.getAttribute("colspan") || "1");
+      });
+      colCount = Math.max(colCount, count);
+    });
+    if (colCount === 0) return els;
+
+    const colWidths = estimateColWidths(trList, PAGE_CONTENT_WIDTH);
+    const finalColCount = colWidths.length;
+
+    const rows = trList.map((tr, rowIdx) => {
+      const tdList = Array.from(tr.querySelectorAll("td,th"));
+      const cells = tdList.map((td, colIdx) => {
+        const isHeader = td.tagName.toLowerCase() === "th" || rowIdx === 0;
+        const colspan = parseInt(td.getAttribute("colspan") || "1");
+        const cellWidth = colspan > 1
+          ? colWidths.slice(colIdx, colIdx + colspan).reduce((a,b) => a+b, 0)
+          : (colWidths[colIdx] || Math.floor(PAGE_CONTENT_WIDTH / finalColCount));
+
+        return new TableCell({
+          borders: CELL_BORDERS,
+          columnSpan: colspan > 1 ? colspan : undefined,
+          width: { size: cellWidth, type: WidthType.DXA },
+          shading: isHeader ? { fill: "D5E8F0", type: ShadingType.CLEAR } : undefined,
+          margins: { top: 80, bottom: 80, left: 120, right: 120 },
+          children: cellToParagraphs(td),
+        });
+      });
+
+      return new TableRow({ children: cells, tableHeader: rowIdx === 0 });
+    });
+
+    els.push(new Table({
+      width: { size: PAGE_CONTENT_WIDTH, type: WidthType.DXA },
+      columnWidths: colWidths,
+      rows,
+    }));
+    els.push(new Paragraph({ children: [], spacing: { after: 120 } }));
+    return els;
+  }
+
+  if (tag === "blockquote") {
+    els.push(new Paragraph({ indent: { left: 720 }, children: nodeToRuns(node) }));
+    return els;
+  }
+
+  for (const c of node.childNodes) els.push(...nodeToDocxElements(c));
+  return els;
+}
+
+function htmlToDocxElements(html) {
+  const div = document.createElement("div");
+  div.innerHTML = html || "";
+  const els = [];
+  for (const c of div.childNodes) els.push(...nodeToDocxElements(c));
+  if (!els.length) els.push(new Paragraph({ children: [] }));
+  return els;
+}
+
 // ─── Get sheet HTML ────────────────────────────────────────────────────────────
 function getSheetHtml(sheetData) {
   if (!sheetData || !sheetData.length) return "";
@@ -123,27 +349,51 @@ function getSheetHtml(sheetData) {
 // ─── Sheet data → .docx ─────────────────────────────────────────────────────────
 async function exportSheetToDocx(sheetData, fileName) {
   if (!sheetData?.length) return;
-  const plainRows = sheetData[0]?.[0] === "__html__" 
-    ? [[htmlToPlainText(sheetData[0][1])]] 
-    : sheetData;
-
-  const rows = plainRows.map((row) => 
-    new TableRow({
-      children: row.map(cell => new TableCell({
-        children: [new Paragraph({ children: [new TextRun(String(cell ?? ""))] })],
-        borders: {
-          top: { style: BorderStyle.SINGLE, size: 1 },
-          bottom: { style: BorderStyle.SINGLE, size: 1 },
-          left: { style: BorderStyle.SINGLE, size: 1 },
-          right: { style: BorderStyle.SINGLE, size: 1 },
-        },
-        width: { size: 100 / row.length, type: WidthType.PERCENTAGE },
-      })),
-    })
-  );
+  
+  let children;
+  if (sheetData[0]?.[0] === "__html__") {
+    const html = sheetData[0][1] || "";
+    children = htmlToDocxElements(html);
+  } else {
+    const rows = sheetData.map((row) => 
+      new TableRow({
+        children: row.map(cell => new TableCell({
+          children: [new Paragraph({ children: [new TextRun(String(cell ?? ""))] })],
+          borders: CELL_BORDERS,
+          width: { size: 100 / row.length, type: WidthType.PERCENTAGE },
+        })),
+      })
+    );
+    children = [new Table({ rows })];
+  }
 
   const doc = new Document({
-    sections: [{ children: [new Table({ rows })] }],
+    numbering: {
+      config: [
+        { reference: "bullets", levels: [{ level: 0, format: LevelFormat.BULLET, text: "•", alignment: AlignmentType.LEFT, style: { paragraph: { indent: { left: 720, hanging: 360 } } } }] },
+        { reference: "numbers", levels: [{ level: 0, format: LevelFormat.DECIMAL, text: "%1.", alignment: AlignmentType.LEFT, style: { paragraph: { indent: { left: 720, hanging: 360 } } } }] },
+      ],
+    },
+    styles: {
+      default: { document: { run: { font: "Arial", size: 24 } } },
+      paragraphStyles: [
+        { id: "Heading1", name: "Heading 1", basedOn: "Normal", next: "Normal", quickFormat: true,
+          run: { size: 32, bold: true, font: "Arial", color: "1D4ED8" },
+          paragraph: { spacing: { before: 240, after: 120 }, outlineLevel: 0 } },
+        { id: "Heading2", name: "Heading 2", basedOn: "Normal", next: "Normal", quickFormat: true,
+          run: { size: 28, bold: true, font: "Arial" },
+          paragraph: { spacing: { before: 180, after: 90 }, outlineLevel: 1 } },
+      ],
+    },
+    sections: [{
+      properties: {
+        page: {
+          size: { width: 11906, height: 16838 },
+          margin: { top: 720, right: 720, bottom: 720, left: 720 },
+        },
+      },
+      children,
+    }],
   });
 
   const blob = await Packer.toBlob(doc);
@@ -571,7 +821,20 @@ export default function ConersManagement() {
         setSheetData(evaluatedSheets[0]?.data || []);
         setActiveSheet(0);
       } else if (['doc', 'docx'].includes(ext)) {
-        setSheetData([["__html__", "<p>Word documents can be downloaded and edited locally.</p>"]]);
+        // mammoth se HTML render karo aur editable banao
+        try {
+          const mammoth = await import('mammoth');
+          const arrayBuf = await blob.arrayBuffer();
+          const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuf });
+          const html = result.value || '<p>Document empty hai.</p>';
+          setSheetData([["__html__", `
+            <div style="font-family:Georgia,serif;max-width:800px;margin:0 auto;padding:20px;line-height:1.6;">
+              ${html}
+            </div>
+          `]]);
+        } catch(e) {
+          setSheetData([["__html__", "<p>Word preview load nahi hua. Export karke dekho.</p>"]]);
+        }
         setSheets([{ name: "Document", data: [] }]);
       } else {
         setSheetData([["__html__", "<p>Preview not available. Download to view.</p>"]]);
@@ -843,11 +1106,12 @@ export default function ConersManagement() {
           </div>
 
           {/* Sheet Editor */}
-          <div style={{ flex: 1, overflow: "auto", padding: 20, background: "#F9FAFB" }}>
+          <div style={{ flex: 1, overflow: "auto", padding: 0, background: "#F9FAFB" }}>
             {sheetData[0]?.[0] === "__html__" ? (
-              <div 
-                style={{ background: "#fff", padding: 20, borderRadius: 8 }}
-                dangerouslySetInnerHTML={{ __html: sheetData[0][1] }}
+              <ReportSheetViewer
+                data={sheetData}
+                readOnly={false}
+                onDataChange={(newData) => setSheetData(newData)}
               />
             ) : (
               <div style={{ overflow: "auto", borderRadius: 8, border: "1px solid #E5E7EB", background: "#fff" }}>

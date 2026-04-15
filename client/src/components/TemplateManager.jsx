@@ -480,6 +480,8 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
   const [showNewSheetModal, setShowNewSheetModal] = useState(false);
   const [newSheetName, setNewSheetName]   = useState("");
 
+  const viewerRef = useRef(null);
+
   const addNewSheet = () => {
     const name = newSheetName.trim() || `Sheet ${sheetList.length + 1}`;
     if (sheetList.includes(name)) { alert("Sheet name already exists!"); return; }
@@ -545,7 +547,12 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
 
           <button style={css.btn("green")} onClick={() => {
             console.log("[DEBUG] Save Report button clicked!");
-            onSave(reportData, sheetList, reportPatient);
+            // Force-sync latest iframe HTML to avoid debounce data loss
+            const flushed = viewerRef.current?.getCurrentData?.({ allowEmpty: true });
+            const dataToSave = flushed
+              ? { ...reportData, [activeSheet]: flushed }
+              : reportData;
+            onSave(dataToSave, sheetList, reportPatient);
           }}>
             <Icon d={icons.save} size={14} /> Save Report
           </button>
@@ -579,6 +586,7 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
       </div>
 
       <ReportSheetViewer
+        ref={viewerRef}
         key={activeSheet}
         data={reportData[activeSheet] || [["__html__", "<p><br></p>"]]}
         readOnly={false}
@@ -620,16 +628,26 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
 // ══════════════════════════════════════════════════════════════════════════════
 // VIEW PANEL
 // ══════════════════════════════════════════════════════════════════════════════
-function ViewPanel({ template, onBack, onCreateReport }) {
+function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
   const [activeSheetIdx, setActiveSheetIdx] = useState(0);
   const sheetNames = template.sheetNames || [];
   const currentSheet = sheetNames[activeSheetIdx] || sheetNames[0];
-  const [localSheets, setLocalSheets] = useState(template.sheets);
+
+  const cloneSheets = useCallback((s) => {
+    if (!s) return {};
+    try {
+      return structuredClone(s);
+    } catch {
+      return JSON.parse(JSON.stringify(s));
+    }
+  }, []);
+
+  const [localSheets, setLocalSheets] = useState(() => cloneSheets(template.sheets));
 
   useEffect(() => {
-    setLocalSheets(template.sheets);
     setActiveSheetIdx(0);
-  }, [template.id, template.sheets]);
+    setLocalSheets(cloneSheets(template.sheets));
+  }, [template.id, cloneSheets, template.sheets]);
 
   return (
     <div style={css.panel}>
@@ -655,6 +673,7 @@ function ViewPanel({ template, onBack, onCreateReport }) {
                     row_heights: template.rowHeights || {}
                   }
                 });
+                onTemplateUpdated?.(template.id, localSheets);
                 alert("Template saved successfully!");
               } catch (err) {
                 alert("Save failed: " + err.message);
@@ -989,6 +1008,10 @@ export default function TemplateManager() {
           template={activeTemplate}
           onBack={() => setPanel(null)}
           onCreateReport={openCreateReport}
+          onTemplateUpdated={(id, sheets) => {
+            setTemplates(prev => prev.map(t => (t.id === id ? { ...t, sheets } : t)));
+            setActiveTemplate(prev => (prev && prev.id === id ? { ...prev, sheets } : prev));
+          }}
         />
       )}
 
