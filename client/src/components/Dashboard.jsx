@@ -11,8 +11,6 @@ import {
   FiActivity,
   FiBook,
   FiLayers,
-  FiSettings,
-  FiBell,
   FiSearch,
   FiFilter,
   FiMoreHorizontal,
@@ -20,9 +18,16 @@ import {
   FiClock,
   FiChevronDown,
   FiCheckSquare,
-  FiHeart
+  FiHeart,
+  FiHome,
+  FiUser,
+  FiUserCheck,
+  FiUpload,
+  FiCreditCard,
+  FiMessageSquare,
+  FiX
 } from 'react-icons/fi';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDashboardData, setFilters, clearFilters } from '../store/slices/dashboardSlice';
 import AssessmentCalendar from './AssessmentCalendar';
@@ -33,6 +38,9 @@ import RevenueCard from './RevenueCard';
 const routeMapping = {
   'assessment-list': '/encounters/assessments',
   'therapy-list': '/encounters/therapies',
+  'examinees': '/examinees',
+  'centers': '/centres',
+  'templates': '/templates',
 };
 
 const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointments, onViewAllTherapists, setActiveItem }) => {
@@ -51,6 +59,51 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [localFilters, setLocalFilters] = useState({ startDate: '', endDate: '', clinicId: '', doctorId: '' });
   const [showSessionsDropdown, setShowSessionsDropdown] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
+  const searchRef = useRef(null);
+
+  // Close search suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowSearchSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Searchable navigation items
+  const searchableItems = [
+    { label: 'Dashboard', route: '/dashboard', activeItem: 'dashboard', icon: FiHome },
+    { label: 'Sessions', route: '/encounters', activeItem: 'encounters', icon: FiUsers },
+    { label: 'Assessment List', route: '/encounters/assessments', activeItem: 'assessment-list', icon: FiFileText },
+    { label: 'Therapy List', route: '/encounters/therapies', activeItem: 'therapy-list', icon: FiActivity },
+    { label: 'Examinees', route: '/examinees', activeItem: 'patients', icon: FiUser },
+    { label: 'Therapists', route: '/therapists', activeItem: 'doctors', icon: FiUserCheck },
+    { label: 'Templates', route: '/templates', activeItem: 'template-manager', icon: FiBook },
+    { label: 'Forms', route: '/forms', activeItem: 'forms', icon: FiUpload },
+    { label: 'Centres', route: '/centres', activeItem: 'clinics', icon: FiMapPin },
+    { label: 'Centre Revenue', route: '/centres/revenue', activeItem: 'clinic-revenue', icon: FiTrendingUp },
+    { label: 'Billing Records', route: '/billing', activeItem: 'billing-records', icon: FiCreditCard },
+    { label: 'Queries', route: '/admin/queries', activeItem: 'queries', icon: FiMessageSquare },
+    { label: 'Reports', route: '/reports', activeItem: 'report', icon: FiFileText },
+    { label: 'Conners', route: '/coners', activeItem: 'coners', icon: FiLayers },
+  ];
+
+  // Filter suggestions based on search query
+  const filteredSuggestions = searchQuery.trim() 
+    ? searchableItems.filter(item => 
+        item.label.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
+
+  const handleSearchClick = (item) => {
+    setSearchQuery('');
+    setShowSearchSuggestions(false);
+    setActiveItem?.(item.activeItem);
+  };
 
   useEffect(() => {
     dispatch(fetchDashboardData());
@@ -113,24 +166,27 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
     },
     {
       icon: FiUsers,
-      title: 'Active Clients',
+      title: 'Examinees',
       value: stats.totalPatients?.toString() || '24',
       trend: '+5%',
-      color: 'emerald'
+      color: 'emerald',
+      route: 'examinees'
     },
     {
       icon: FiMapPin,
       title: 'Centers',
       value: stats.totalClinics?.toString() || '3',
       trend: '0%',
-      color: 'violet'
+      color: 'violet',
+      route: 'centers'
     },
     {
-      icon: FiActivity,
-      title: 'Pending Reports',
+      icon: FiBook,
+      title: 'Templates',
       value: '12',
       trend: '-8%',
-      color: 'amber'
+      color: 'amber',
+      route: 'templates'
     }
   ];
 
@@ -164,24 +220,66 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
           </div>
           
           <div className="flex items-center space-x-3">
-            <div className="relative">
-              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <div className="relative" ref={searchRef}>
+              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowSearchSuggestions(true);
+                }}
+                onFocus={() => setShowSearchSuggestions(true)}
                 placeholder="Search anything..."
-                className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none w-64"
+                className="pl-10 pr-10 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none w-64"
               />
+              {searchQuery && (
+                <button
+                  onClick={() => { setSearchQuery(''); setShowSearchSuggestions(false); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <FiX className="w-4 h-4" />
+                </button>
+              )}
+              
+              {/* Search Suggestions Dropdown */}
+              <AnimatePresence>
+                {showSearchSuggestions && searchQuery.trim() && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-100 z-30 overflow-hidden max-h-80 overflow-y-auto"
+                  >
+                    {filteredSuggestions.length > 0 ? (
+                      <>
+                        <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                          Results ({filteredSuggestions.length})
+                        </div>
+                        {filteredSuggestions.map((item, index) => (
+                          <Link
+                            key={index}
+                            to={item.route}
+                            onClick={() => handleSearchClick(item)}
+                            className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-blue-50 transition-colors text-left border-t border-gray-50"
+                          >
+                            <div className="p-2 bg-gray-100 rounded-lg">
+                              <item.icon className="w-4 h-4 text-gray-600" />
+                            </div>
+                            <span className="text-sm font-medium text-gray-800">{item.label}</span>
+                          </Link>
+                        ))}
+                      </>
+                    ) : (
+                      <div className="px-4 py-4 text-center text-gray-500">
+                        <FiSearch className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">No results found</p>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-            <button className="p-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors relative">
-              <FiBell className="w-5 h-5 text-gray-600" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
-            <button 
-              onClick={() => setActiveItem?.('settings')}
-              className="p-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
-            >
-              <FiSettings className="w-5 h-5 text-gray-600" />
-            </button>
           </div>
         </div>
 
@@ -197,9 +295,16 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className={`bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative ${stat.title === "Today's Sessions" ? 'cursor-pointer' : ''}`}
+              className={`bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative ${stat.title === "Today's Sessions" || stat.route ? 'cursor-pointer' : ''}`}
               onClick={stat.title === "Today's Sessions" ? () => setShowSessionsDropdown(!showSessionsDropdown) : undefined}
             >
+              {stat.route && (
+                <Link
+                  to={routeMapping[stat.route]}
+                  onClick={() => setActiveItem?.(stat.route)}
+                  className="absolute inset-0 z-10"
+                />
+              )}
               <div className="flex items-center justify-between">
                 <div className={`p-3 rounded-xl bg-${stat.color}-100`}>
                   <stat.icon className={`w-6 h-6 text-${stat.color}-600`} />
