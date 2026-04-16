@@ -1,4 +1,5 @@
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { 
   FiCalendar, 
   FiUsers, 
@@ -16,7 +17,10 @@ import {
   FiFilter,
   FiMoreHorizontal,
   FiArrowUpRight,
-  FiClock
+  FiClock,
+  FiChevronDown,
+  FiCheckSquare,
+  FiHeart
 } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -24,6 +28,12 @@ import { fetchDashboardData, setFilters, clearFilters } from '../store/slices/da
 import AssessmentCalendar from './AssessmentCalendar';
 import StatsCard from './StatsCard';
 import RevenueCard from './RevenueCard';
+
+// Route mapping - same as Sidebar
+const routeMapping = {
+  'assessment-list': '/encounters/assessments',
+  'therapy-list': '/encounters/therapies',
+};
 
 const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointments, onViewAllTherapists, setActiveItem }) => {
   const dispatch = useDispatch();
@@ -40,6 +50,7 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [localFilters, setLocalFilters] = useState({ startDate: '', endDate: '', clinicId: '', doctorId: '' });
+  const [showSessionsDropdown, setShowSessionsDropdown] = useState(false);
 
   useEffect(() => {
     dispatch(fetchDashboardData());
@@ -149,7 +160,7 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
             >
               Welcome Back, Admin
             </motion.h1>
-            <p className="text-gray-500 mt-1">Here\'s what\'s happening in your therapy center today</p>
+            <p className="text-gray-500 mt-1">Here is what is happening in your therapy center today</p>
           </div>
           
           <div className="flex items-center space-x-3">
@@ -186,20 +197,66 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+              className={`bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative ${stat.title === "Today's Sessions" ? 'cursor-pointer' : ''}`}
+              onClick={stat.title === "Today's Sessions" ? () => setShowSessionsDropdown(!showSessionsDropdown) : undefined}
             >
               <div className="flex items-center justify-between">
                 <div className={`p-3 rounded-xl bg-${stat.color}-100`}>
                   <stat.icon className={`w-6 h-6 text-${stat.color}-600`} />
                 </div>
-                <span className={`text-sm font-medium ${stat.trend.startsWith('+') ? 'text-emerald-600' : stat.trend.startsWith('-') ? 'text-red-600' : 'text-gray-500'}`}>
-                  {stat.trend}
-                </span>
+                <div className="flex items-center space-x-1">
+                  <span className={`text-sm font-medium ${stat.trend.startsWith('+') ? 'text-emerald-600' : stat.trend.startsWith('-') ? 'text-red-600' : 'text-gray-500'}`}>
+                    {stat.trend}
+                  </span>
+                  {stat.title === "Today's Sessions" && (
+                    <FiChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showSessionsDropdown ? 'rotate-180' : ''}`} />
+                  )}
+                </div>
               </div>
               <div className="mt-4">
                 <h3 className="text-2xl font-bold text-gray-800">{stat.value}</h3>
                 <p className="text-sm text-gray-500">{stat.title}</p>
               </div>
+              
+              {/* Dropdown for Today's Sessions */}
+              <AnimatePresence>
+                {stat.title === "Today's Sessions" && showSessionsDropdown && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-100 z-20 overflow-hidden"
+                  >
+                    <Link
+                      to={routeMapping['assessment-list']}
+                      onClick={() => { setActiveItem?.('assessment-list'); setShowSessionsDropdown(false); }}
+                      className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 transition-colors text-left"
+                    >
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <FiCheckSquare className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-800">Assessment List</p>
+                        <p className="text-xs text-gray-500">View all assessments</p>
+                      </div>
+                    </Link>
+                    <div className="border-t border-gray-100"></div>
+                    <Link
+                      to={routeMapping['therapy-list']}
+                      onClick={() => { setActiveItem?.('therapy-list'); setShowSessionsDropdown(false); }}
+                      className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 transition-colors text-left"
+                    >
+                      <div className="p-2 bg-emerald-100 rounded-lg">
+                        <FiHeart className="w-4 h-4 text-emerald-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-800">Therapy List</p>
+                        <p className="text-xs text-gray-500">View all therapy sessions</p>
+                      </div>
+                    </Link>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           ))}
         </motion.div>

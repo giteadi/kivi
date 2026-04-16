@@ -137,6 +137,8 @@ function App() {
       '/groups': 'groups',
       '/reports': 'report',
       '/plans': 'plans',
+      '/encounters/assessments': 'assessment-list',
+      '/encounters/therapies': 'therapy-list',
       '/encounters': 'encounters-list',
       '/staff': 'receptionists',
       '/services': 'services',
