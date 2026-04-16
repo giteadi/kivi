@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { FiEye } from 'react-icons/fi';
 import { 
   FiCalendar, 
   FiUsers, 
@@ -58,6 +59,8 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
   const [calendarLoading, setCalendarLoading] = useState(false);
   const [templatesCount, setTemplatesCount] = useState(0);
   const [todaysSessions, setTodaysSessions] = useState(0);
+  const [viewingAssessment, setViewingAssessment] = useState(null);
+  const [showViewModal, setShowViewModal] = useState(false);
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [localFilters, setLocalFilters] = useState({ startDate: '', endDate: '', clinicId: '', doctorId: '' });
@@ -215,7 +218,8 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
       title: 'Forms',
       description: 'Custom assessment forms',
       color: 'from-cyan-500 to-cyan-600',
-      onClick: () => setActiveItem?.('forms')
+      route: '/forms',
+      activeItem: 'forms'
     }
   ];
 
@@ -497,7 +501,99 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
           ))}
         </motion.div>
 
-        {/* Quick Actions Grid */}
+        {/* View Assessment Modal */}
+      <AnimatePresence>
+        {showViewModal && viewingAssessment && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowViewModal(false)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md"
+            >
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-2xl">
+                <h3 className="text-lg font-bold text-white flex items-center space-x-2">
+                  <FiEye className="w-5 h-5" />
+                  <span>Assessment Details</span>
+                </h3>
+                <button
+                  onClick={() => setShowViewModal(false)}
+                  className="text-white/80 hover:text-white transition-colors"
+                >
+                  <FiX className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Title</label>
+                  <p className="text-lg font-semibold text-gray-900">{viewingAssessment.title}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">Date</label>
+                    <p className="text-gray-900 font-medium">
+                      {viewingAssessment.date ? new Date(viewingAssessment.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : 'Not set'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">Time</label>
+                    <p className="text-gray-900 font-medium">{viewingAssessment.time || 'Not set'}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">Client Name</label>
+                    <p className="text-gray-900">{viewingAssessment.clientName || 'Not set'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">Duration</label>
+                    <p className="text-gray-900">{viewingAssessment.duration} min</p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Type</label>
+                  <span className={`${getAssessmentColor(viewingAssessment.type)} text-white text-xs px-2 py-1 rounded capitalize`}>
+                    {viewingAssessment.type}
+                  </span>
+                </div>
+
+                {viewingAssessment.notes && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">Notes</label>
+                    <p className="text-gray-900">{viewingAssessment.notes}</p>
+                  </div>
+                )}
+
+                <div className="flex space-x-3 pt-4 border-t border-gray-100">
+                  <button
+                    onClick={() => {
+                      setShowViewModal(false);
+                      setActiveItem?.('assessment-list');
+                    }}
+                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all font-medium shadow-lg shadow-blue-500/30 flex items-center justify-center space-x-2"
+                  >
+                    <FiCalendar className="w-4 h-4" />
+                    <span>View in Calendar</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Quick Actions Grid */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -513,23 +609,43 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {quickActions.map((action, index) => (
-              <motion.button
-                key={index}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.05 }}
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={action.onClick}
-                className={`group relative overflow-hidden bg-gradient-to-br ${action.color} rounded-2xl p-5 text-white shadow-lg hover:shadow-xl transition-all`}
-              >
-                <div className="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-white/20 rounded-full blur-xl group-hover:scale-150 transition-transform"></div>
-                <div className="relative">
-                  <action.icon className="w-8 h-8 mb-3" />
-                  <h3 className="font-semibold text-sm">{action.title}</h3>
-                  <p className="text-xs text-white/80 mt-1">{action.description}</p>
-                </div>
-              </motion.button>
+              action.route ? (
+                <Link key={index} to={action.route} onClick={() => setActiveItem?.(action.activeItem || action.route.replace('/', ''))}>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.05 }}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`group relative overflow-hidden bg-gradient-to-br ${action.color} rounded-2xl p-5 text-white shadow-lg hover:shadow-xl transition-all cursor-pointer`}
+                  >
+                    <div className="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-white/20 rounded-full blur-xl group-hover:scale-150 transition-transform"></div>
+                    <div className="relative">
+                      <action.icon className="w-8 h-8 mb-3" />
+                      <h3 className="font-semibold text-sm">{action.title}</h3>
+                      <p className="text-xs text-white/80 mt-1">{action.description}</p>
+                    </div>
+                  </motion.div>
+                </Link>
+              ) : (
+                <motion.button
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.05 }}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={action.onClick}
+                  className={`group relative overflow-hidden bg-gradient-to-br ${action.color} rounded-2xl p-5 text-white shadow-lg hover:shadow-xl transition-all`}
+                >
+                  <div className="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-white/20 rounded-full blur-xl group-hover:scale-150 transition-transform"></div>
+                  <div className="relative">
+                    <action.icon className="w-8 h-8 mb-3" />
+                    <h3 className="font-semibold text-sm">{action.title}</h3>
+                    <p className="text-xs text-white/80 mt-1">{action.description}</p>
+                  </div>
+                </motion.button>
+              )
             ))}
           </div>
         </motion.div>
@@ -582,7 +698,10 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="group cursor-pointer"
-                  onClick={() => setActiveItem?.('assessment-list')}
+                  onClick={() => {
+                    setViewingAssessment(assessment);
+                    setShowViewModal(true);
+                  }}
                 >
                   <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-blue-300 hover:shadow-md transition-all group-hover:bg-blue-50/50">
                     <div className="flex items-start justify-between mb-3">

@@ -181,12 +181,46 @@ const AssessmentCalendar = () => {
     setShowEditModal(true);
   };
 
-  const prevMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  const prevPeriod = () => {
+    if (viewMode === 'month') {
+      setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+    } else if (viewMode === 'week') {
+      const newDate = new Date(currentDate);
+      newDate.setDate(currentDate.getDate() - 7);
+      setCurrentDate(newDate);
+    } else if (viewMode === 'day') {
+      const newDate = new Date(currentDate);
+      newDate.setDate(currentDate.getDate() - 1);
+      setCurrentDate(newDate);
+    }
   };
 
-  const nextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  const nextPeriod = () => {
+    if (viewMode === 'month') {
+      setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+    } else if (viewMode === 'week') {
+      const newDate = new Date(currentDate);
+      newDate.setDate(currentDate.getDate() + 7);
+      setCurrentDate(newDate);
+    } else if (viewMode === 'day') {
+      const newDate = new Date(currentDate);
+      newDate.setDate(currentDate.getDate() + 1);
+      setCurrentDate(newDate);
+    }
+  };
+
+  const getPeriodLabel = () => {
+    if (viewMode === 'month') {
+      return `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+    } else if (viewMode === 'week') {
+      const startOfWeek = new Date(currentDate);
+      startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      return `${startOfWeek.getDate()} - ${endOfWeek.getDate()} ${monthNames[startOfWeek.getMonth()]} ${startOfWeek.getFullYear()}`;
+    } else if (viewMode === 'day') {
+      return currentDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    }
   };
 
   const goToToday = () => {
@@ -285,6 +319,112 @@ const AssessmentCalendar = () => {
     return days;
   };
 
+  // Render Week View
+  const renderWeekView = () => {
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+    
+    const weekDays = [];
+    for (let i = 0; i < 7; i++) {
+      const dayDate = new Date(startOfWeek);
+      dayDate.setDate(startOfWeek.getDate() + i);
+      const dayAssessments = assessments.filter(a => {
+        const aDate = new Date(a.date);
+        return aDate.getDate() === dayDate.getDate() && 
+               aDate.getMonth() === dayDate.getMonth() && 
+               aDate.getFullYear() === dayDate.getFullYear();
+      });
+      
+      weekDays.push(
+        <div key={i} className="min-h-[200px] border-r border-gray-100 last:border-r-0 p-2">
+          <div className="text-center mb-2">
+            <div className="text-xs text-gray-500">{dayNames[i]}</div>
+            <div className={`text-lg font-semibold ${
+              dayDate.getDate() === new Date().getDate() && 
+              dayDate.getMonth() === new Date().getMonth() ? 'text-blue-600' : 'text-gray-700'
+            }`}>{dayDate.getDate()}</div>
+          </div>
+          <div className="space-y-1">
+            {dayAssessments.map((assessment, idx) => (
+              <div
+                key={idx}
+                onClick={() => handleViewAssessment(assessment)}
+                className={`${getAssessmentColor(assessment.type)} text-white text-xs px-2 py-1 rounded cursor-pointer hover:opacity-90`}
+              >
+                <div className="font-medium">{assessment.time}</div>
+                <div className="truncate">{assessment.title}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    return <div className="grid grid-cols-7">{weekDays}</div>;
+  };
+
+  // Render Day View
+  const renderDayView = () => {
+    const dayAssessments = assessments.filter(a => {
+      const aDate = new Date(a.date);
+      return aDate.getDate() === currentDate.getDate() && 
+             aDate.getMonth() === currentDate.getMonth() && 
+             aDate.getFullYear() === currentDate.getFullYear();
+    }).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+
+    return (
+      <div className="p-4">
+        <div className="text-center mb-4">
+          <h3 className="text-xl font-semibold text-gray-800">
+            {currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+          </h3>
+          <p className="text-gray-500">{dayAssessments.length} assessment(s) scheduled</p>
+        </div>
+        <div className="space-y-3 max-w-2xl mx-auto">
+          {dayAssessments.map((assessment) => (
+            <motion.div
+              key={assessment.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              onClick={() => handleViewAssessment(assessment)}
+              className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className={`w-4 h-4 rounded-full ${getAssessmentColor(assessment.type)}`}></div>
+                  <div>
+                    <h4 className="font-medium text-gray-800">{assessment.title}</h4>
+                    <p className="text-sm text-gray-500">{assessment.time} ({assessment.duration} min)</p>
+                  </div>
+                </div>
+                <span className={`${getAssessmentColor(assessment.type)} text-white text-xs px-2 py-1 rounded capitalize`}>
+                  {assessment.type}
+                </span>
+              </div>
+              {assessment.clientName && (
+                <div className="mt-2 flex items-center space-x-2 text-sm text-gray-500">
+                  <FiUser className="w-4 h-4" />
+                  <span>{assessment.clientName}</span>
+                </div>
+              )}
+            </motion.div>
+          ))}
+          {dayAssessments.length === 0 && (
+            <div className="text-center py-12 text-gray-400">
+              <FiCalendar className="w-16 h-16 mx-auto mb-4 opacity-50" />
+              <p className="text-lg">No assessments scheduled for this date</p>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Schedule Assessment
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       {/* Header */}
@@ -295,13 +435,13 @@ const AssessmentCalendar = () => {
             <span>Assessment Calendar</span>
           </h2>
           <div className="flex items-center space-x-2 bg-white/20 rounded-lg p-1">
-            <button onClick={prevMonth} className="p-1.5 hover:bg-white/20 rounded text-white transition-colors">
+            <button onClick={prevPeriod} className="p-1.5 hover:bg-white/20 rounded text-white transition-colors">
               <FiChevronLeft className="w-5 h-5" />
             </button>
             <span className="text-white font-medium px-3 min-w-[140px] text-center">
-              {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+              {getPeriodLabel()}
             </span>
-            <button onClick={nextMonth} className="p-1.5 hover:bg-white/20 rounded text-white transition-colors">
+            <button onClick={nextPeriod} className="p-1.5 hover:bg-white/20 rounded text-white transition-colors">
               <FiChevronRight className="w-5 h-5" />
             </button>
           </div>
@@ -344,19 +484,27 @@ const AssessmentCalendar = () => {
         </div>
       </div>
 
-      {/* Day Names */}
-      <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50">
-        {dayNames.map((day) => (
-          <div key={day} className="py-3 text-center text-sm font-semibold text-gray-600">
-            {day}
+      {/* View Mode Content */}
+      {viewMode === 'month' && (
+        <>
+          {/* Day Names */}
+          <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50">
+            {dayNames.map((day) => (
+              <div key={day} className="py-3 text-center text-sm font-semibold text-gray-600">
+                {day}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      {/* Calendar Grid */}
-      <div className="grid grid-cols-7">
-        {renderCalendarGrid()}
-      </div>
+          {/* Calendar Grid */}
+          <div className="grid grid-cols-7">
+            {renderCalendarGrid()}
+          </div>
+        </>
+      )}
+
+      {viewMode === 'week' && renderWeekView()}
+      {viewMode === 'day' && renderDayView()}
 
       {/* Selected Date Sidebar */}
       <AnimatePresence>
@@ -386,7 +534,8 @@ const AssessmentCalendar = () => {
                   key={assessment.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+                  onClick={() => handleViewAssessment(assessment)}
+                  className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-2">
