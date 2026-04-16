@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const calendarController = require('../controllers/calendarController');
-const { authenticate } = require('../middleware/auth');
+const { authenticateToken } = require('../middleware/auth');
 
 // All routes require authentication
-router.use(authenticate);
+router.use(authenticateToken);
 
 // Get all events (with optional filters)
 router.get('/', calendarController.getEvents);

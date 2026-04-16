@@ -1,8 +1,12 @@
-const { pool } = require('../config/db');
+const { getDb } = require('../database');
 
 // Get all calendar events for a date range
 exports.getEvents = async (req, res) => {
     try {
+        console.log('📅 [Calendar] getEvents called');
+        console.log('👤 [Calendar] req.user:', req.user);
+        console.log('🔍 [Calendar] Query params:', req.query);
+        
         const { startDate, endDate, centreId, eventType } = req.query;
         
         let query = `
@@ -11,8 +15,8 @@ exports.getEvents = async (req, res) => {
                    u.last_name as creator_last_name,
                    c.name as centre_name
             FROM calendar_events ce
-            LEFT JOIN users u ON ce.created_by = u.id
-            LEFT JOIN centres c ON ce.centre_id = c.id
+            LEFT JOIN kivi_users u ON ce.created_by = u.id
+            LEFT JOIN kivi_centres c ON ce.centre_id = c.id
             WHERE 1=1
         `;
         const params = [];
@@ -33,21 +37,35 @@ exports.getEvents = async (req, res) => {
         }
 
         // If user is not admin, only show their events or events for their centre
-        if (req.user.role !== 'admin') {
+        if (req.user && req.user.role !== 'admin') {
             query += ` AND (ce.created_by = ? OR ce.centre_id = ?)`;
             params.push(req.user.id, req.user.centre_id);
         }
 
         query += ` ORDER BY ce.event_date ASC, ce.event_time ASC`;
 
-        const [events] = await pool.query(query, params);
-
-        res.json({
-            success: true,
-            data: events
+        const db = getDb();
+        console.log('🗄️ [Calendar] Executing query...');
+        
+        // Use callback-style query
+        db.query(query, params, (error, results) => {
+            if (error) {
+                console.error('❌ [Calendar] Error fetching calendar events:', error);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to fetch calendar events',
+                    error: error.message
+                });
+            }
+            
+            console.log('✅ [Calendar] Found', results.length, 'events');
+            res.json({
+                success: true,
+                data: results
+            });
         });
     } catch (error) {
-        console.error('Error fetching calendar events:', error);
+        console.error('❌ [Calendar] Error in getEvents:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch calendar events',
@@ -67,21 +85,22 @@ exports.getEventsByDate = async (req, res) => {
                    u.last_name as creator_last_name,
                    c.name as centre_name
             FROM calendar_events ce
-            LEFT JOIN users u ON ce.created_by = u.id
-            LEFT JOIN centres c ON ce.centre_id = c.id
+            LEFT JOIN kivi_users u ON ce.created_by = u.id
+            LEFT JOIN kivi_centres c ON ce.centre_id = c.id
             WHERE ce.event_date = ?
         `;
         const params = [date];
 
         // If user is not admin, only show their events
-        if (req.user.role !== 'admin') {
+        if (req.user && req.user.role !== 'admin') {
             query += ` AND (ce.created_by = ? OR ce.centre_id = ?)`;
             params.push(req.user.id, req.user.centre_id);
         }
 
         query += ` ORDER BY ce.event_time ASC`;
 
-        const [events] = await pool.query(query, params);
+        const db = getDb();
+        const [events] = await db.query(query, params);
 
         res.json({
             success: true,
@@ -102,14 +121,15 @@ exports.getEventById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const [events] = await pool.query(`
+        const db = getDb();
+        const [events] = await db.query(`
             SELECT ce.*, 
                    u.first_name as creator_first_name, 
                    u.last_name as creator_last_name,
                    c.name as centre_name
             FROM calendar_events ce
-            LEFT JOIN users u ON ce.created_by = u.id
-            LEFT JOIN centres c ON ce.centre_id = c.id
+            LEFT JOIN kivi_users u ON ce.created_by = u.id
+            LEFT JOIN kivi_centres c ON ce.centre_id = c.id
             WHERE ce.id = ?
         `, [id]);
 
@@ -137,6 +157,7 @@ exports.getEventById = async (req, res) => {
 // Create new calendar event
 exports.createEvent = async (req, res) => {
     try {
+        const db = getDb();
         const {
             title,
             clientName,
@@ -156,7 +177,7 @@ exports.createEvent = async (req, res) => {
             });
         }
 
-        const [result] = await pool.query(`
+        const [result] = await db.query(`
             INSERT INTO calendar_events 
             (title, client_name, event_date, event_time, duration_minutes, event_type, notes, created_by, centre_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -168,19 +189,19 @@ exports.createEvent = async (req, res) => {
             duration || 60,
             eventType || 'assessment',
             notes || null,
-            req.user.id,
-            centreId || req.user.centre_id
+            req.user ? req.user.id : null,
+            centreId || (req.user ? req.user.centre_id : null)
         ]);
 
         // Fetch the created event
-        const [events] = await pool.query(`
+        const [events] = await db.query(`
             SELECT ce.*, 
                    u.first_name as creator_first_name, 
                    u.last_name as creator_last_name,
                    c.name as centre_name
             FROM calendar_events ce
-            LEFT JOIN users u ON ce.created_by = u.id
-            LEFT JOIN centres c ON ce.centre_id = c.id
+            LEFT JOIN kivi_users u ON ce.created_by = u.id
+            LEFT JOIN kivi_centres c ON ce.centre_id = c.id
             WHERE ce.id = ?
         `, [result.insertId]);
 
@@ -202,6 +223,7 @@ exports.createEvent = async (req, res) => {
 // Update calendar event
 exports.updateEvent = async (req, res) => {
     try {
+        const db = getDb();
         const { id } = req.params;
         const {
             title,
@@ -216,7 +238,7 @@ exports.updateEvent = async (req, res) => {
         } = req.body;
 
         // Check if event exists
-        const [existingEvents] = await pool.query(
+        const [existingEvents] = await db.query(
             'SELECT * FROM calendar_events WHERE id = ?',
             [id]
         );
@@ -229,14 +251,14 @@ exports.updateEvent = async (req, res) => {
         }
 
         // Check permission (only admin or creator can update)
-        if (req.user.role !== 'admin' && existingEvents[0].created_by !== req.user.id) {
+        if (req.user && req.user.role !== 'admin' && existingEvents[0].created_by !== req.user.id) {
             return res.status(403).json({
                 success: false,
                 message: 'You do not have permission to update this event'
             });
         }
 
-        const [result] = await pool.query(`
+        const [result] = await db.query(`
             UPDATE calendar_events 
             SET title = COALESCE(?, title),
                 client_name = COALESCE(?, client_name),
@@ -269,14 +291,14 @@ exports.updateEvent = async (req, res) => {
         }
 
         // Fetch updated event
-        const [events] = await pool.query(`
+        const [events] = await db.query(`
             SELECT ce.*, 
                    u.first_name as creator_first_name, 
                    u.last_name as creator_last_name,
                    c.name as centre_name
             FROM calendar_events ce
-            LEFT JOIN users u ON ce.created_by = u.id
-            LEFT JOIN centres c ON ce.centre_id = c.id
+            LEFT JOIN kivi_users u ON ce.created_by = u.id
+            LEFT JOIN kivi_centres c ON ce.centre_id = c.id
             WHERE ce.id = ?
         `, [id]);
 
@@ -298,10 +320,11 @@ exports.updateEvent = async (req, res) => {
 // Delete calendar event
 exports.deleteEvent = async (req, res) => {
     try {
+        const db = getDb();
         const { id } = req.params;
 
         // Check if event exists
-        const [existingEvents] = await pool.query(
+        const [existingEvents] = await db.query(
             'SELECT * FROM calendar_events WHERE id = ?',
             [id]
         );
@@ -314,14 +337,14 @@ exports.deleteEvent = async (req, res) => {
         }
 
         // Check permission (only admin or creator can delete)
-        if (req.user.role !== 'admin' && existingEvents[0].created_by !== req.user.id) {
+        if (req.user && req.user.role !== 'admin' && existingEvents[0].created_by !== req.user.id) {
             return res.status(403).json({
                 success: false,
                 message: 'You do not have permission to delete this event'
             });
         }
 
-        await pool.query('DELETE FROM calendar_events WHERE id = ?', [id]);
+        const [result] = await db.query('DELETE FROM calendar_events WHERE id = ?', [id]);
 
         res.json({
             success: true,
@@ -340,6 +363,7 @@ exports.deleteEvent = async (req, res) => {
 // Get events statistics
 exports.getEventStats = async (req, res) => {
     try {
+        const db = getDb();
         const { startDate, endDate } = req.query;
 
         let query = `
@@ -361,16 +385,16 @@ exports.getEventStats = async (req, res) => {
         }
 
         // If user is not admin, only show their events
-        if (req.user.role !== 'admin') {
+        if (req.user && req.user.role !== 'admin') {
             query += ` AND (created_by = ? OR centre_id = ?)`;
             params.push(req.user.id, req.user.centre_id);
         }
 
-        const [stats] = await pool.query(query, params);
+        const [rows] = await db.query(query, params);
 
         res.json({
             success: true,
-            data: stats[0]
+            data: rows[0]
         });
     } catch (error) {
         console.error('Error fetching event stats:', error);
