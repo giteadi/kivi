@@ -100,14 +100,23 @@ exports.getEventsByDate = async (req, res) => {
         query += ` ORDER BY ce.event_time ASC`;
 
         const db = getDb();
-        const [events] = await db.query(query, params);
+        db.query(query, params, (error, events) => {
+            if (error) {
+                console.error('Error fetching events by date:', error);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to fetch events for date',
+                    error: error.message
+                });
+            }
 
-        res.json({
-            success: true,
-            data: events
+            res.json({
+                success: true,
+                data: events
+            });
         });
     } catch (error) {
-        console.error('Error fetching events by date:', error);
+        console.error('Error in getEventsByDate:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch events for date',
@@ -122,7 +131,7 @@ exports.getEventById = async (req, res) => {
         const { id } = req.params;
 
         const db = getDb();
-        const [events] = await db.query(`
+        db.query(`
             SELECT ce.*, 
                    u.first_name as creator_first_name, 
                    u.last_name as creator_last_name,
@@ -131,21 +140,30 @@ exports.getEventById = async (req, res) => {
             LEFT JOIN kivi_users u ON ce.created_by = u.id
             LEFT JOIN kivi_centres c ON ce.centre_id = c.id
             WHERE ce.id = ?
-        `, [id]);
+        `, [id], (error, events) => {
+            if (error) {
+                console.error('Error fetching event:', error);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to fetch event',
+                    error: error.message
+                });
+            }
 
-        if (events.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: 'Event not found'
+            if (events.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Event not found'
+                });
+            }
+
+            res.json({
+                success: true,
+                data: events[0]
             });
-        }
-
-        res.json({
-            success: true,
-            data: events[0]
         });
     } catch (error) {
-        console.error('Error fetching event:', error);
+        console.error('Error in getEventById:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch event',
@@ -177,7 +195,7 @@ exports.createEvent = async (req, res) => {
             });
         }
 
-        const [result] = await db.query(`
+        db.query(`
             INSERT INTO calendar_events 
             (title, client_name, event_date, event_time, duration_minutes, event_type, notes, created_by, centre_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -191,27 +209,45 @@ exports.createEvent = async (req, res) => {
             notes || null,
             req.user ? req.user.id : null,
             centreId || (req.user ? req.user.centre_id : null)
-        ]);
+        ], (error, result) => {
+            if (error) {
+                console.error('Error creating calendar event:', error);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to create event',
+                    error: error.message
+                });
+            }
 
-        // Fetch the created event
-        const [events] = await db.query(`
-            SELECT ce.*, 
-                   u.first_name as creator_first_name, 
-                   u.last_name as creator_last_name,
-                   c.name as centre_name
-            FROM calendar_events ce
-            LEFT JOIN kivi_users u ON ce.created_by = u.id
-            LEFT JOIN kivi_centres c ON ce.centre_id = c.id
-            WHERE ce.id = ?
-        `, [result.insertId]);
+            // Fetch the created event
+            db.query(`
+                SELECT ce.*, 
+                       u.first_name as creator_first_name, 
+                       u.last_name as creator_last_name,
+                       c.name as centre_name
+                FROM calendar_events ce
+                LEFT JOIN kivi_users u ON ce.created_by = u.id
+                LEFT JOIN kivi_centres c ON ce.centre_id = c.id
+                WHERE ce.id = ?
+            `, [result.insertId], (fetchError, events) => {
+                if (fetchError) {
+                    console.error('Error fetching created event:', fetchError);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Event created but failed to fetch',
+                        error: fetchError.message
+                    });
+                }
 
-        res.status(201).json({
-            success: true,
-            message: 'Event created successfully',
-            data: events[0]
+                res.status(201).json({
+                    success: true,
+                    message: 'Event created successfully',
+                    data: events[0]
+                });
+            });
         });
     } catch (error) {
-        console.error('Error creating calendar event:', error);
+        console.error('Error in createEvent:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to create event',
@@ -238,77 +274,105 @@ exports.updateEvent = async (req, res) => {
         } = req.body;
 
         // Check if event exists
-        const [existingEvents] = await db.query(
+        db.query(
             'SELECT * FROM calendar_events WHERE id = ?',
-            [id]
+            [id],
+            (error, existingEvents) => {
+                if (error) {
+                    console.error('Error checking event existence:', error);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Failed to check event',
+                        error: error.message
+                    });
+                }
+
+                if (existingEvents.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        message: 'Event not found'
+                    });
+                }
+
+                // Check permission (only admin or creator can update)
+                if (req.user && req.user.role !== 'admin' && existingEvents[0].created_by !== req.user.id) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'You do not have permission to update this event'
+                    });
+                }
+
+                db.query(`
+                    UPDATE calendar_events 
+                    SET title = COALESCE(?, title),
+                        client_name = COALESCE(?, client_name),
+                        event_date = COALESCE(?, event_date),
+                        event_time = COALESCE(?, event_time),
+                        duration_minutes = COALESCE(?, duration_minutes),
+                        event_type = COALESCE(?, event_type),
+                        notes = COALESCE(?, notes),
+                        status = COALESCE(?, status),
+                        centre_id = COALESCE(?, centre_id)
+                    WHERE id = ?
+                `, [
+                    title,
+                    clientName,
+                    eventDate,
+                    eventTime,
+                    duration,
+                    eventType,
+                    notes,
+                    status,
+                    centreId,
+                    id
+                ], (updateError, result) => {
+                    if (updateError) {
+                        console.error('Error updating calendar event:', updateError);
+                        return res.status(500).json({
+                            success: false,
+                            message: 'Failed to update event',
+                            error: updateError.message
+                        });
+                    }
+
+                    if (result.affectedRows === 0) {
+                        return res.status(400).json({
+                            success: false,
+                            message: 'No changes made'
+                        });
+                    }
+
+                    // Fetch updated event
+                    db.query(`
+                        SELECT ce.*, 
+                               u.first_name as creator_first_name, 
+                               u.last_name as creator_last_name,
+                               c.name as centre_name
+                        FROM calendar_events ce
+                        LEFT JOIN kivi_users u ON ce.created_by = u.id
+                        LEFT JOIN kivi_centres c ON ce.centre_id = c.id
+                        WHERE ce.id = ?
+                    `, [id], (fetchError, events) => {
+                        if (fetchError) {
+                            console.error('Error fetching updated event:', fetchError);
+                            return res.status(500).json({
+                                success: false,
+                                message: 'Event updated but failed to fetch',
+                                error: fetchError.message
+                            });
+                        }
+
+                        res.json({
+                            success: true,
+                            message: 'Event updated successfully',
+                            data: events[0]
+                        });
+                    });
+                });
+            }
         );
-
-        if (existingEvents.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: 'Event not found'
-            });
-        }
-
-        // Check permission (only admin or creator can update)
-        if (req.user && req.user.role !== 'admin' && existingEvents[0].created_by !== req.user.id) {
-            return res.status(403).json({
-                success: false,
-                message: 'You do not have permission to update this event'
-            });
-        }
-
-        const [result] = await db.query(`
-            UPDATE calendar_events 
-            SET title = COALESCE(?, title),
-                client_name = COALESCE(?, client_name),
-                event_date = COALESCE(?, event_date),
-                event_time = COALESCE(?, event_time),
-                duration_minutes = COALESCE(?, duration_minutes),
-                event_type = COALESCE(?, event_type),
-                notes = COALESCE(?, notes),
-                status = COALESCE(?, status),
-                centre_id = COALESCE(?, centre_id)
-            WHERE id = ?
-        `, [
-            title,
-            clientName,
-            eventDate,
-            eventTime,
-            duration,
-            eventType,
-            notes,
-            status,
-            centreId,
-            id
-        ]);
-
-        if (result.affectedRows === 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'No changes made'
-            });
-        }
-
-        // Fetch updated event
-        const [events] = await db.query(`
-            SELECT ce.*, 
-                   u.first_name as creator_first_name, 
-                   u.last_name as creator_last_name,
-                   c.name as centre_name
-            FROM calendar_events ce
-            LEFT JOIN kivi_users u ON ce.created_by = u.id
-            LEFT JOIN kivi_centres c ON ce.centre_id = c.id
-            WHERE ce.id = ?
-        `, [id]);
-
-        res.json({
-            success: true,
-            message: 'Event updated successfully',
-            data: events[0]
-        });
     } catch (error) {
-        console.error('Error updating calendar event:', error);
+        console.error('Error in updateEvent:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to update event',
@@ -324,34 +388,53 @@ exports.deleteEvent = async (req, res) => {
         const { id } = req.params;
 
         // Check if event exists
-        const [existingEvents] = await db.query(
+        db.query(
             'SELECT * FROM calendar_events WHERE id = ?',
-            [id]
+            [id],
+            (error, existingEvents) => {
+                if (error) {
+                    console.error('Error checking event existence:', error);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Failed to check event',
+                        error: error.message
+                    });
+                }
+
+                if (existingEvents.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        message: 'Event not found'
+                    });
+                }
+
+                // Check permission (only admin or creator can delete)
+                if (req.user && req.user.role !== 'admin' && existingEvents[0].created_by !== req.user.id) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'You do not have permission to delete this event'
+                    });
+                }
+
+                db.query('DELETE FROM calendar_events WHERE id = ?', [id], (deleteError) => {
+                    if (deleteError) {
+                        console.error('Error deleting calendar event:', deleteError);
+                        return res.status(500).json({
+                            success: false,
+                            message: 'Failed to delete event',
+                            error: deleteError.message
+                        });
+                    }
+
+                    res.json({
+                        success: true,
+                        message: 'Event deleted successfully'
+                    });
+                });
+            }
         );
-
-        if (existingEvents.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: 'Event not found'
-            });
-        }
-
-        // Check permission (only admin or creator can delete)
-        if (req.user && req.user.role !== 'admin' && existingEvents[0].created_by !== req.user.id) {
-            return res.status(403).json({
-                success: false,
-                message: 'You do not have permission to delete this event'
-            });
-        }
-
-        const [result] = await db.query('DELETE FROM calendar_events WHERE id = ?', [id]);
-
-        res.json({
-            success: true,
-            message: 'Event deleted successfully'
-        });
     } catch (error) {
-        console.error('Error deleting calendar event:', error);
+        console.error('Error in deleteEvent:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to delete event',
