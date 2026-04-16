@@ -25,12 +25,15 @@ import {
   FiUpload,
   FiCreditCard,
   FiMessageSquare,
-  FiX
+  FiX,
+  FiLoader
 } from 'react-icons/fi';
 import { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDashboardData, setFilters, clearFilters } from '../store/slices/dashboardSlice';
 import AssessmentCalendar from './AssessmentCalendar';
+import api from '../services/api';
+import toast from 'react-hot-toast';
 import StatsCard from './StatsCard';
 import RevenueCard from './RevenueCard';
 
@@ -50,11 +53,9 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
     isLoading 
   } = useSelector((state) => state.dashboard);
 
-  const [assessments, setAssessments] = useState([
-    { id: 1, title: 'Initial Assessment', clientName: 'Rahul Sharma', date: '2026-04-18', time: '10:00', duration: 60, type: 'assessment', notes: 'First session assessment' },
-    { id: 2, title: 'Progress Review', clientName: 'Priya Patel', date: '2026-04-20', time: '14:30', duration: 45, type: 'therapy', notes: 'Monthly progress check' },
-    { id: 3, title: 'Cognitive Evaluation', clientName: 'Amit Kumar', date: '2026-04-22', time: '11:00', duration: 90, type: 'evaluation', notes: 'Detailed cognitive testing' },
-  ]);
+  const [assessments, setAssessments] = useState([]);
+  const [upcomingAssessments, setUpcomingAssessments] = useState([]);
+  const [calendarLoading, setCalendarLoading] = useState(false);
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [localFilters, setLocalFilters] = useState({ startDate: '', endDate: '', clinicId: '', doctorId: '' });
@@ -107,44 +108,78 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
 
   useEffect(() => {
     dispatch(fetchDashboardData());
+    fetchUpcomingAssessments();
   }, [dispatch]);
+
+  // Fetch upcoming assessments from calendar API
+  const fetchUpcomingAssessments = async () => {
+    try {
+      setCalendarLoading(true);
+      // Get today's date and 7 days ahead
+      const today = new Date();
+      const nextWeek = new Date(today);
+      nextWeek.setDate(today.getDate() + 7);
+      
+      const startDate = today.toISOString().split('T')[0];
+      const endDate = nextWeek.toISOString().split('T')[0];
+      
+      const response = await api.request(`/calendar?startDate=${startDate}&endDate=${endDate}`);
+      if (response.success) {
+        // Transform backend data to frontend format and sort by date/time
+        const transformedData = response.data
+          .filter(event => event.status !== 'cancelled')
+          .map(event => ({
+            id: event.id,
+            title: event.title,
+            clientName: event.client_name,
+            date: event.event_date,
+            time: event.event_time?.substring(0, 5) || '',
+            duration: event.duration_minutes,
+            type: event.event_type,
+            notes: event.notes,
+            status: event.status
+          }))
+          .sort((a, b) => {
+            // Sort by date first, then by time
+            const dateA = new Date(a.date + 'T' + (a.time || '00:00'));
+            const dateB = new Date(b.date + 'T' + (b.time || '00:00'));
+            return dateA - dateB;
+          });
+        setUpcomingAssessments(transformedData);
+      }
+    } catch (error) {
+      console.error('Error fetching upcoming assessments:', error);
+    } finally {
+      setCalendarLoading(false);
+    }
+  };
+
+  const getAssessmentColor = (type) => {
+    const colors = {
+      assessment: 'bg-blue-500',
+      therapy: 'bg-emerald-500',
+      evaluation: 'bg-violet-500',
+      followup: 'bg-amber-500',
+      meeting: 'bg-pink-500'
+    };
+    return colors[type] || 'bg-blue-500';
+  };
 
   // Quick Action Cards Data
   const quickActions = [
     {
       icon: FiPlus,
-      title: 'New Session',
-      description: 'Schedule therapy session',
+      title: 'New Examinee',
+      description: 'Register new client',
       color: 'from-blue-500 to-blue-600',
-      onClick: () => onCreateNewEncounter?.()
+      onClick: () => setActiveItem?.('patient-create')
     },
     {
       icon: FiFileText,
       title: 'Create Report',
       description: 'Generate assessment report',
       color: 'from-emerald-500 to-emerald-600',
-      onClick: () => setActiveItem?.('reports')
-    },
-    {
-      icon: FiUsers,
-      title: 'Add Client',
-      description: 'Register new examinee',
-      color: 'from-violet-500 to-violet-600',
-      onClick: () => setActiveItem?.('students')
-    },
-    {
-      icon: FiBook,
-      title: 'Templates',
-      description: 'Manage assessment forms',
-      color: 'from-amber-500 to-amber-600',
-      onClick: () => setActiveItem?.('templates')
-    },
-    {
-      icon: FiLayers,
-      title: 'Conners',
-      description: 'Access assessment tools',
-      color: 'from-rose-500 to-rose-600',
-      onClick: () => setActiveItem?.('coners')
+      onClick: () => setActiveItem?.('template-manager')
     },
     {
       icon: FiClipboard,
@@ -191,16 +226,83 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
   ];
 
   // Handle Assessment Actions
-  const handleAddAssessment = (newAssessment) => {
-    setAssessments([...assessments, { ...newAssessment, id: Date.now() }]);
+  const handleAddAssessment = async (newAssessment) => {
+    try {
+      const response = await api.request('/calendar', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: newAssessment.title,
+          clientName: newAssessment.clientName,
+          eventDate: newAssessment.date,
+          eventTime: newAssessment.time || null,
+          duration: newAssessment.duration,
+          eventType: newAssessment.type,
+          notes: newAssessment.notes
+        })
+      });
+      if (response.success) {
+        toast.success('Assessment scheduled successfully');
+        fetchUpcomingAssessments();
+      }
+    } catch (error) {
+      console.error('Error adding assessment:', error);
+      toast.error('Failed to schedule assessment');
+    }
   };
 
-  const handleEditAssessment = (updatedAssessment) => {
-    setAssessments(assessments.map(a => a.id === updatedAssessment.id ? updatedAssessment : a));
+  const handleEditAssessment = async (updatedAssessment) => {
+    try {
+      const response = await api.request(`/calendar/${updatedAssessment.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          title: updatedAssessment.title,
+          clientName: updatedAssessment.clientName,
+          eventDate: updatedAssessment.date,
+          eventTime: updatedAssessment.time || null,
+          duration: updatedAssessment.duration,
+          eventType: updatedAssessment.type,
+          notes: updatedAssessment.notes
+        })
+      });
+      if (response.success) {
+        toast.success('Assessment updated successfully');
+        fetchUpcomingAssessments();
+      }
+    } catch (error) {
+      console.error('Error updating assessment:', error);
+      toast.error('Failed to update assessment');
+    }
   };
 
-  const handleDeleteAssessment = (id) => {
-    setAssessments(assessments.filter(a => a.id !== id));
+  const handleDeleteAssessment = async (id) => {
+    if (!confirm('Are you sure you want to delete this assessment?')) return;
+    try {
+      const response = await api.request(`/calendar/${id}`, {
+        method: 'DELETE'
+      });
+      if (response.success) {
+        toast.success('Assessment deleted successfully');
+        fetchUpcomingAssessments();
+      }
+    } catch (error) {
+      console.error('Error deleting assessment:', error);
+      toast.error('Failed to delete assessment');
+    }
+  };
+
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today';
+    } else if (date.toDateString() === tomorrow.toDateString()) {
+      return 'Tomorrow';
+    } else {
+      return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
   };
 
   return (
@@ -411,94 +513,114 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
           className="mb-8"
         >
           <AssessmentCalendar 
-            assessments={assessments}
             onAddAssessment={handleAddAssessment}
             onEditAssessment={handleEditAssessment}
             onDeleteAssessment={handleDeleteAssessment}
           />
         </motion.div>
 
-        {/* Bottom Section - Recent Activity & Upcoming */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Recent Activity */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-gray-800">Recent Activity</h3>
-              <button className="text-sm text-gray-500 hover:text-gray-700 flex items-center space-x-1">
-                <FiClock className="w-4 h-4" />
-                <span>Last 24 hours</span>
-              </button>
-            </div>
-            <div className="space-y-4">
-              {[
-                { icon: FiFileText, color: 'bg-blue-100 text-blue-600', title: 'Assessment report generated', desc: 'Rahul Sharma - Initial Assessment', time: '2 hours ago' },
-                { icon: FiUsers, color: 'bg-emerald-100 text-emerald-600', title: 'New client registered', desc: 'Priya Patel joined the center', time: '4 hours ago' },
-                { icon: FiCalendar, color: 'bg-violet-100 text-violet-600', title: 'Session completed', desc: 'Amit Kumar - Therapy Session #5', time: '5 hours ago' },
-                { icon: FiBook, color: 'bg-amber-100 text-amber-600', title: 'Template updated', desc: 'WRAT-5 Hindi template modified', time: '8 hours ago' },
-              ].map((activity, index) => (
-                <div key={index} className="flex items-start space-x-4 p-4 hover:bg-gray-50 rounded-xl transition-colors">
-                  <div className={`p-2.5 rounded-xl ${activity.color}`}>
-                    <activity.icon className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium text-gray-800">{activity.title}</h4>
-                    <p className="text-sm text-gray-500">{activity.desc}</p>
-                  </div>
-                  <span className="text-xs text-gray-400">{activity.time}</span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Upcoming Schedule */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-gray-800">Upcoming Today</h3>
-              <button 
-                onClick={() => onViewAllAppointments?.()}
-                className="text-sm text-blue-600 hover:text-blue-700"
-              >
-                View All
-              </button>
-            </div>
-            <div className="space-y-4">
-              {[
-                { time: '10:00 AM', title: 'Initial Assessment', client: 'Rahul Sharma', type: 'assessment', color: 'bg-blue-500' },
-                { time: '11:30 AM', title: 'Progress Review', client: 'Priya Patel', type: 'therapy', color: 'bg-emerald-500' },
-                { time: '02:00 PM', title: 'Cognitive Testing', client: 'Amit Kumar', type: 'evaluation', color: 'bg-violet-500' },
-                { time: '03:30 PM', title: 'Follow-up Session', client: 'Neha Gupta', type: 'followup', color: 'bg-amber-500' },
-              ].map((session, index) => (
-                <div key={index} className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-xl transition-colors cursor-pointer" onClick={() => onAppointmentClick?.(session)}>
-                  <div className={`w-1 h-12 rounded-full ${session.color}`}></div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-gray-800">{session.time}</span>
-                      <span className="text-xs text-gray-400 capitalize">{session.type}</span>
-                    </div>
-                    <h4 className="text-sm font-medium text-gray-700">{session.title}</h4>
-                    <p className="text-xs text-gray-500">{session.client}</p>
-                  </div>
-                </div>
-              ))}
+        {/* Upcoming Assessments Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <FiCalendar className="w-5 h-5 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-800">Upcoming Assessments</h3>
+              {calendarLoading && (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              )}
             </div>
             <button 
-              onClick={() => onCreateNewEncounter?.()}
-              className="w-full mt-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg shadow-blue-500/30"
+              onClick={() => setActiveItem?.('assessment-list')}
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-1"
             >
-              + Schedule New Session
+              <span>View All</span>
+              <FiArrowUpRight className="w-4 h-4" />
             </button>
-          </motion.div>
-        </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {upcomingAssessments.length > 0 ? (
+              upcomingAssessments.slice(0, 6).map((assessment) => (
+                <motion.div
+                  key={assessment.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="group cursor-pointer"
+                  onClick={() => setActiveItem?.('assessment-list')}
+                >
+                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-blue-300 hover:shadow-md transition-all group-hover:bg-blue-50/50">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-2 h-2 rounded-full ${getAssessmentColor(assessment.type)}`}></div>
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">{assessment.type}</span>
+                      </div>
+                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                        formatDate(assessment.date) === 'Today' 
+                          ? 'bg-red-100 text-red-600' 
+                          : formatDate(assessment.date) === 'Tomorrow'
+                          ? 'bg-amber-100 text-amber-600'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {formatDate(assessment.date)}
+                      </span>
+                    </div>
+                    
+                    <h4 className="font-semibold text-gray-800 mb-1 group-hover:text-blue-600 transition-colors">{assessment.title}</h4>
+                    
+                    {assessment.clientName && (
+                      <div className="flex items-center space-x-2 text-sm text-gray-500 mb-2">
+                        <FiUser className="w-4 h-4" />
+                        <span>{assessment.clientName}</span>
+                      </div>
+                    )}
+                    
+                    {assessment.time && (
+                      <div className="flex items-center space-x-2 text-sm text-gray-500">
+                        <FiClock className="w-4 h-4" />
+                        <span>{assessment.time} ({assessment.duration} min)</span>
+                      </div>
+                    )}
+                    
+                    {assessment.notes && (
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <p className="text-xs text-gray-500 line-clamp-2">{assessment.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-8 text-gray-400">
+                <FiCalendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>No upcoming assessments scheduled</p>
+                <button
+                  onClick={() => setActiveItem?.('assessment-list')}
+                  className="mt-3 text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Schedule an assessment
+                </button>
+              </div>
+            )}
+          </div>
+          
+          {upcomingAssessments.length > 6 && (
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => setActiveItem?.('assessment-list')}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                View All {upcomingAssessments.length} Assessments
+              </button>
+            </div>
+          )}
+        </motion.div>
       </div>
     </div>
   );

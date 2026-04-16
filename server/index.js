@@ -83,6 +83,7 @@ const startServer = async () => {
     app.use('/api/templates', require('./routes/templateRoutes'));
     app.use('/api/forms', require('./routes/formRoutes'));
     app.use('/api/coners', require('./routes/conerRoutes'));
+    app.use('/api/calendar', require('./routes/calendarRoutes'));
     app.use('/api/financial', require('./routes/financialRoutes'));
     app.use('/api/contact-queries', require('./routes/contactQueryRoutes'));
     app.use('/api/center-visibility', require('./routes/centerVisibilityRoutes'));

@@ -11,14 +11,21 @@ import {
   FiCalendar,
   FiMoreVertical,
   FiTrash2,
-  FiEdit2
+  FiEdit2,
+  FiLoader
 } from 'react-icons/fi';
+import api from '../services/api';
+import toast from 'react-hot-toast';
 
-const AssessmentCalendar = ({ assessments = [], onAddAssessment, onEditAssessment, onDeleteAssessment }) => {
+const AssessmentCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [viewMode, setViewMode] = useState('month'); // 'month', 'week', 'day'
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [viewMode, setViewMode] = useState('month');
+  const [assessments, setAssessments] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [editingAssessment, setEditingAssessment] = useState(null);
   const [newAssessment, setNewAssessment] = useState({
     title: '',
     clientName: '',
@@ -32,6 +39,139 @@ const AssessmentCalendar = ({ assessments = [], onAddAssessment, onEditAssessmen
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  // Fetch assessments from API
+  useEffect(() => {
+    fetchAssessments();
+  }, [currentDate]);
+
+  const fetchAssessments = async () => {
+    try {
+      setLoading(true);
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+      const endDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
+      
+      const response = await api.request(`/calendar?startDate=${startDate}&endDate=${endDate}`);
+      if (response.success) {
+        // Transform backend data to frontend format
+        const transformedData = response.data.map(event => ({
+          id: event.id,
+          title: event.title,
+          clientName: event.client_name,
+          date: event.event_date,
+          time: event.event_time?.substring(0, 5) || '',
+          duration: event.duration_minutes,
+          type: event.event_type,
+          notes: event.notes,
+          status: event.status
+        }));
+        setAssessments(transformedData);
+      }
+    } catch (error) {
+      console.error('Error fetching assessments:', error);
+      toast.error('Failed to load calendar events');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddAssessment = async (e) => {
+    e.preventDefault();
+    if (!selectedDate || !newAssessment.title) return;
+
+    try {
+      const eventData = {
+        title: newAssessment.title,
+        clientName: newAssessment.clientName,
+        eventDate: selectedDate.toISOString().split('T')[0],
+        eventTime: newAssessment.time || null,
+        duration: newAssessment.duration,
+        eventType: newAssessment.type,
+        notes: newAssessment.notes
+      };
+
+      const response = await api.request('/calendar', {
+        method: 'POST',
+        body: JSON.stringify(eventData)
+      });
+
+      if (response.success) {
+        toast.success('Assessment scheduled successfully');
+        await fetchAssessments();
+        setShowAddModal(false);
+        setNewAssessment({ title: '', clientName: '', time: '', duration: 60, type: 'assessment', notes: '' });
+      }
+    } catch (error) {
+      console.error('Error adding assessment:', error);
+      toast.error('Failed to schedule assessment');
+    }
+  };
+
+  const handleEditAssessment = async (e) => {
+    e.preventDefault();
+    if (!editingAssessment) return;
+
+    try {
+      const eventData = {
+        title: newAssessment.title,
+        clientName: newAssessment.clientName,
+        eventDate: selectedDate?.toISOString().split('T')[0],
+        eventTime: newAssessment.time || null,
+        duration: newAssessment.duration,
+        eventType: newAssessment.type,
+        notes: newAssessment.notes
+      };
+
+      const response = await api.request(`/calendar/${editingAssessment.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(eventData)
+      });
+
+      if (response.success) {
+        toast.success('Assessment updated successfully');
+        await fetchAssessments();
+        setShowEditModal(false);
+        setEditingAssessment(null);
+        setNewAssessment({ title: '', clientName: '', time: '', duration: 60, type: 'assessment', notes: '' });
+      }
+    } catch (error) {
+      console.error('Error updating assessment:', error);
+      toast.error('Failed to update assessment');
+    }
+  };
+
+  const handleDeleteAssessment = async (id) => {
+    if (!confirm('Are you sure you want to delete this assessment?')) return;
+
+    try {
+      const response = await api.request(`/calendar/${id}`, {
+        method: 'DELETE'
+      });
+
+      if (response.success) {
+        toast.success('Assessment deleted successfully');
+        await fetchAssessments();
+      }
+    } catch (error) {
+      console.error('Error deleting assessment:', error);
+      toast.error('Failed to delete assessment');
+    }
+  };
+
+  const openEditModal = (assessment) => {
+    setEditingAssessment(assessment);
+    setNewAssessment({
+      title: assessment.title,
+      clientName: assessment.clientName || '',
+      time: assessment.time || '',
+      duration: assessment.duration || 60,
+      type: assessment.type || 'assessment',
+      notes: assessment.notes || ''
+    });
+    setShowEditModal(true);
+  };
 
   const prevMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
@@ -57,19 +197,6 @@ const AssessmentCalendar = ({ assessments = [], onAddAssessment, onEditAssessmen
 
   const handleDateClick = (day) => {
     setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day));
-  };
-
-  const handleAddAssessment = (e) => {
-    e.preventDefault();
-    if (selectedDate && newAssessment.title) {
-      onAddAssessment({
-        ...newAssessment,
-        date: selectedDate.toISOString().split('T')[0],
-        id: Date.now()
-      });
-      setShowAddModal(false);
-      setNewAssessment({ title: '', clientName: '', time: '', duration: 60, type: 'assessment', notes: '' });
-    }
   };
 
   const getAssessmentColor = (type) => {
@@ -186,13 +313,21 @@ const AssessmentCalendar = ({ assessments = [], onAddAssessment, onEditAssessmen
               </button>
             ))}
           </div>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center space-x-2 px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-gray-100 transition-colors font-medium"
-          >
-            <FiPlus className="w-4 h-4" />
-            <span>Add Assessment</span>
-          </button>
+          <div className="flex items-center space-x-2">
+            {loading && (
+              <div className="flex items-center space-x-2 text-white/80">
+                <FiLoader className="w-4 h-4 animate-spin" />
+                <span className="text-sm">Loading...</span>
+              </div>
+            )}
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-gray-100 transition-colors font-medium"
+            >
+              <FiPlus className="w-4 h-4" />
+              <span>Add Assessment</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -247,13 +382,13 @@ const AssessmentCalendar = ({ assessments = [], onAddAssessment, onEditAssessmen
                     </div>
                     <div className="flex space-x-1">
                       <button 
-                        onClick={() => onEditAssessment(assessment)}
+                        onClick={() => openEditModal(assessment)}
                         className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                       >
                         <FiEdit2 className="w-4 h-4" />
                       </button>
                       <button 
-                        onClick={() => onDeleteAssessment(assessment.id)}
+                        onClick={() => handleDeleteAssessment(assessment.id)}
                         className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                       >
                         <FiTrash2 className="w-4 h-4" />
@@ -425,6 +560,134 @@ const AssessmentCalendar = ({ assessments = [], onAddAssessment, onEditAssessmen
                     className="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all font-medium shadow-lg shadow-blue-500/30"
                   >
                     Schedule Assessment
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Assessment Modal */}
+      <AnimatePresence>
+        {showEditModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowEditModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden"
+            >
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-emerald-600 to-teal-600">
+                <h3 className="text-xl font-bold text-white flex items-center space-x-2">
+                  <FiEdit2 className="w-5 h-5" />
+                  <span>Edit Assessment</span>
+                </h3>
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="p-2 hover:bg-white/20 rounded-lg text-white transition-colors"
+                >
+                  <FiX className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <form onSubmit={handleEditAssessment} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Assessment Title *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newAssessment.title}
+                    onChange={(e) => setNewAssessment({...newAssessment, title: e.target.value})}
+                    placeholder="e.g., Initial Assessment, Progress Review"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Client Name</label>
+                    <input
+                      type="text"
+                      value={newAssessment.clientName}
+                      onChange={(e) => setNewAssessment({...newAssessment, clientName: e.target.value})}
+                      placeholder="Client name"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                    <input
+                      type="time"
+                      value={newAssessment.time}
+                      onChange={(e) => setNewAssessment({...newAssessment, time: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Duration (min)</label>
+                    <select
+                      value={newAssessment.duration}
+                      onChange={(e) => setNewAssessment({...newAssessment, duration: parseInt(e.target.value)})}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                    >
+                      <option value={30}>30 min</option>
+                      <option value={45}>45 min</option>
+                      <option value={60}>1 hour</option>
+                      <option value={90}>1.5 hours</option>
+                      <option value={120}>2 hours</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                    <select
+                      value={newAssessment.type}
+                      onChange={(e) => setNewAssessment({...newAssessment, type: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                    >
+                      <option value="assessment">Assessment</option>
+                      <option value="therapy">Therapy Session</option>
+                      <option value="evaluation">Evaluation</option>
+                      <option value="followup">Follow-up</option>
+                      <option value="meeting">Meeting</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                  <textarea
+                    value={newAssessment.notes}
+                    onChange={(e) => setNewAssessment({...newAssessment, notes: e.target.value})}
+                    placeholder="Additional notes..."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all resize-none"
+                  />
+                </div>
+
+                <div className="flex space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:from-emerald-700 hover:to-teal-700 transition-all font-medium shadow-lg shadow-emerald-500/30"
+                  >
+                    Update Assessment
                   </button>
                 </div>
               </form>
