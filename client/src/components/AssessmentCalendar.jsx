@@ -12,7 +12,8 @@ import {
   FiMoreVertical,
   FiTrash2,
   FiEdit2,
-  FiLoader
+  FiLoader,
+  FiEye
 } from 'react-icons/fi';
 import api from '../services/api';
 import toast from 'react-hot-toast';
@@ -26,6 +27,8 @@ const AssessmentCalendar = () => {
   const [assessments, setAssessments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editingAssessment, setEditingAssessment] = useState(null);
+  const [viewingAssessment, setViewingAssessment] = useState(null);
+  const [showViewModal, setShowViewModal] = useState(false);
   const [newAssessment, setNewAssessment] = useState({
     title: '',
     clientName: '',
@@ -85,7 +88,7 @@ const AssessmentCalendar = () => {
       const eventData = {
         title: newAssessment.title,
         clientName: newAssessment.clientName,
-        eventDate: selectedDate.toISOString().split('T')[0],
+        eventDate: selectedDate.toLocaleDateString('en-CA'), // Use local date format (YYYY-MM-DD)
         eventTime: newAssessment.time || null,
         duration: newAssessment.duration,
         eventType: newAssessment.type,
@@ -117,7 +120,7 @@ const AssessmentCalendar = () => {
       const eventData = {
         title: newAssessment.title,
         clientName: newAssessment.clientName,
-        eventDate: selectedDate?.toISOString().split('T')[0],
+        eventDate: selectedDate?.toLocaleDateString('en-CA'), // Use local date format
         eventTime: newAssessment.time || null,
         duration: newAssessment.duration,
         eventType: newAssessment.type,
@@ -158,6 +161,11 @@ const AssessmentCalendar = () => {
       console.error('Error deleting assessment:', error);
       toast.error('Failed to delete assessment');
     }
+  };
+
+  const handleViewAssessment = (assessment) => {
+    setViewingAssessment(assessment);
+    setShowViewModal(true);
   };
 
   const openEditModal = (assessment) => {
@@ -250,9 +258,14 @@ const AssessmentCalendar = () => {
             {dayAssessments.slice(0, 3).map((assessment, idx) => (
               <div
                 key={idx}
-                className={`${getAssessmentColor(assessment.type)} text-white text-xs px-1.5 py-0.5 rounded truncate`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleViewAssessment(assessment);
+                }}
+                className={`${getAssessmentColor(assessment.type)} text-white text-xs px-1.5 py-0.5 rounded truncate cursor-pointer hover:opacity-90 flex items-center space-x-1`}
               >
-                {assessment.time} {assessment.title}
+                <FiEye className="w-3 h-3" />
+                <span>{assessment.time} {assessment.title}</span>
               </div>
             ))}
             {dayAssessments.length > 3 && (
@@ -694,6 +707,106 @@ const AssessmentCalendar = () => {
             </motion.div>
           </motion.div>
         )}
+
+        {/* View Assessment Modal */}
+        <AnimatePresence>
+          {showViewModal && viewingAssessment && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowViewModal(false)}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-md"
+              >
+                <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-2xl">
+                  <h3 className="text-lg font-bold text-white flex items-center space-x-2">
+                    <FiEye className="w-5 h-5" />
+                    <span>Event Details</span>
+                  </h3>
+                  <button
+                    onClick={() => setShowViewModal(false)}
+                    className="text-white/80 hover:text-white transition-colors"
+                  >
+                    <FiX className="w-5 h-5" />
+                  </button>
+                </div>
+                
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">Title</label>
+                    <p className="text-lg font-semibold text-gray-900">{viewingAssessment.title}</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Date</label>
+                      <p className="text-gray-900 font-medium">{viewingAssessment.date}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Time</label>
+                      <p className="text-gray-900 font-medium">{viewingAssessment.time || 'Not set'}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Client Name</label>
+                      <p className="text-gray-900">{viewingAssessment.clientName || 'Not set'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Duration</label>
+                      <p className="text-gray-900">{viewingAssessment.duration} min</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">Type</label>
+                    <span className={`${getAssessmentColor(viewingAssessment.type)} text-white text-xs px-2 py-1 rounded`}>
+                      {viewingAssessment.type}
+                    </span>
+                  </div>
+
+                  {viewingAssessment.notes && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Notes</label>
+                      <p className="text-gray-900">{viewingAssessment.notes}</p>
+                    </div>
+                  )}
+
+                  <div className="flex space-x-3 pt-4 border-t border-gray-100">
+                    <button
+                      onClick={() => {
+                        setShowViewModal(false);
+                        openEditModal(viewingAssessment);
+                      }}
+                      className="flex-1 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:from-emerald-700 hover:to-teal-700 transition-all font-medium shadow-lg shadow-emerald-500/30 flex items-center justify-center space-x-2"
+                    >
+                      <FiEdit2 className="w-4 h-4" />
+                      <span>Edit</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowViewModal(false);
+                        handleDeleteAssessment(viewingAssessment.id);
+                      }}
+                      className="flex-1 px-4 py-2.5 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-lg hover:from-red-700 hover:to-pink-700 transition-all font-medium shadow-lg shadow-red-500/30 flex items-center justify-center space-x-2"
+                    >
+                      <FiTrash2 className="w-4 h-4" />
+                      <span>Delete</span>
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </AnimatePresence>
     </div>
   );
