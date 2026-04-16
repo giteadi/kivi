@@ -42,6 +42,16 @@ class AssessmentResultController {
       }
       
       console.log('✅ [saveResults] Validation PASSED');
+      
+      // Check if items array is empty
+      if (items.length === 0) {
+        console.log('⚠️ [saveResults] WARNING: Items array is empty!');
+        return res.status(400).json({
+          success: false,
+          message: 'No responses to save. Please enter at least one response.',
+          data: { totalItems: 0 }
+        });
+      }
 
       // Save each item response
       const savedResults = [];

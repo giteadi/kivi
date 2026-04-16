@@ -766,20 +766,25 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
       return;
     }
 
+    // Check if any responses entered
+    const items = Object.entries(assessmentItemResponses).map(([itemNum, response]) => ({
+      itemNumber: parseInt(itemNum),
+      response: response,
+      responseText: null,
+      isCorrect: null,
+      score: null,
+      timeTaken: null
+    }));
+    
+    if (items.length === 0) {
+      alert('Please enter at least one response before saving.');
+      return;
+    }
+
     setIsSavingAssessment(true);
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3005/api';
       
-      // Prepare items data
-      const items = Object.entries(assessmentItemResponses).map(([itemNum, response]) => ({
-        itemNumber: parseInt(itemNum),
-        response: response,
-        responseText: null,
-        isCorrect: null,
-        score: null,
-        timeTaken: null
-      }));
-
       // Calculate completion percentage
       const totalItems = 24;
       const completedItems = items.length;
@@ -2652,37 +2657,6 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                         <div className="text-xs text-gray-500">Send assessment link to examinee for remote completion</div>
                       </div>
                     </label>
-                  </div>
-                </div>
-
-                {/* Item Entry */}
-                <div className="bg-white rounded-xl shadow-sm border p-6">
-                  <h3 className="text-lg font-bold text-blue-600 mb-4">Conners</h3>
-                  <div className="flex items-center gap-2 mb-4">
-                    <input type="checkbox" id="showItemText" className="w-4 h-4 text-blue-600 rounded" />
-                    <label htmlFor="showItemText" className="text-sm text-gray-700 cursor-pointer">Show Item Text</label>
-                  </div>
-                  <div className="border rounded-lg overflow-hidden">
-                    <div className="grid grid-cols-12 gap-2 p-3 bg-gray-50 border-b text-xs font-medium text-gray-600">
-                      <div className="col-span-1">#</div>
-                      <div className="col-span-11">Response</div>
-                    </div>
-                    <div className="divide-y divide-gray-100 max-h-[400px] overflow-y-auto">
-                      {Array.from({ length: 24 }, (_, i) => i + 1).map(itemNum => (
-                        <div key={itemNum} className="grid grid-cols-12 gap-2 p-2 items-center hover:bg-gray-50">
-                          <div className="col-span-1 text-sm text-gray-600 font-medium">{itemNum}.</div>
-                          <div className="col-span-11">
-                            <input 
-                              type="text" 
-                              value={assessmentItemResponses[itemNum] || ''}
-                              onChange={(e) => handleItemResponseChange(itemNum, e.target.value)}
-                              className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              placeholder=""
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
                   </div>
                 </div>
 
