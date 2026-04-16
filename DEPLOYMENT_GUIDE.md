@@ -23,9 +23,16 @@ This guide provides complete instructions for deploying the Kivi Educational The
 │   ├── index.js            # Main server file (PORT 3005)
 │   ├── database.js          # Database configuration
 │   ├── routes/              # API routes
-│   │   └── formRoutes.js    # Forms API
+│   │   ├── formRoutes.js    # Forms API
+│   │   ├── calendarRoutes.js    # Calendar API (NEW)
+│   │   └── ...
+│   ├── controllers/         # Route controllers
+│   │   ├── calendarController.js  # Calendar CRUD (NEW)
+│   │   └── ...
 │   ├── migrations/          # SQL migrations
-│   │   └── create_forms_table.sql
+│   │   ├── create_forms_table.sql
+│   │   ├── create_calendar_events_table.sql  # Calendar table (NEW)
+│   │   └── ...
 │   ├── package.json        # Dependencies
 │   └── .env                # Environment variables
 ├── client/                  # React source files
@@ -421,6 +428,39 @@ sudo pm2 restart dashboard
 
 ---
 
-**Last Updated:** April 14, 2026
-**Version:** 2.0
+**Last Updated:** April 16, 2026
+**Version:** 2.1
 **Status:** Production Ready - SSH Key Auth
+
+## 🗓️ Calendar API (New)
+
+### Database Table
+```sql
+CREATE TABLE IF NOT EXISTS calendar_events (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    client_name VARCHAR(255),
+    event_date DATE NOT NULL,
+    event_time TIME,
+    duration_minutes INT DEFAULT 60,
+    event_type ENUM('assessment', 'therapy', 'evaluation', 'followup', 'meeting') DEFAULT 'assessment',
+    notes TEXT,
+    created_by INT,
+    centre_id INT,
+    status ENUM('active', 'completed', 'cancelled') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+```
+
+### API Endpoints
+- `GET /api/calendar?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD` - Get events
+- `POST /api/calendar` - Create event
+- `PUT /api/calendar/:id` - Update event
+- `DELETE /api/calendar/:id` - Delete event
+- `GET /api/calendar/stats` - Get event statistics
+
+### Backend Files
+- `/server/controllers/calendarController.js` - Calendar CRUD operations
+- `/server/routes/calendarRoutes.js` - Calendar API routes
+- `/server/migrations/create_calendar_events_table.sql` - Database schema
