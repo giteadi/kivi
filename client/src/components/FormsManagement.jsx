@@ -435,6 +435,8 @@ export default function FormsManagement() {
   const [sheets, setSheets] = useState([]);
   const fileInputRef = useRef(null);
 
+  const [showNewDocModal, setShowNewDocModal] = useState(false);
+
   // Folder state
   const [folders, setFolders] = useState([]);
   const [currentFolderId, setCurrentFolderId] = useState(null);
@@ -873,11 +875,16 @@ export default function FormsManagement() {
     }
   };
 
-  // Duplicate form - exact copy download
+  // Duplicate form - upload as new file to server
   const handleDuplicateForm = async (form, e) => {
     e.stopPropagation();
-    const newName = prompt(`Duplicate ka naam:`, `Copy of ${form.name}`);
-    if (!newName?.trim()) return;
+    const ext = form.name.match(/\.([^.]+)$/)?.[1]?.toLowerCase();
+    const suggested = ext ? `Copy of ${form.name}` : `Copy of ${form.name}`;
+    const newNameRaw = prompt(`Enter name for duplicate:`, suggested);
+    if (!newNameRaw?.trim()) return;
+    const newName = (ext && !newNameRaw.toLowerCase().endsWith(`.${ext}`))
+      ? `${newNameRaw.trim()}.${ext}`
+      : newNameRaw.trim();
 
     setLoading(true);
     try {
@@ -889,17 +896,15 @@ export default function FormsManagement() {
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
 
       const blob = await response.blob();
-      const ext = form.name.match(/\.([^.]+)$/)?.[1]?.toLowerCase();
-      const fileName = newName.endsWith('.' + ext) ? newName : `${newName}.${ext}`;
+      const formData = new FormData();
+      formData.append('file', blob, newName);
+      formData.append('name', newName);
+      if (currentFolderId) {
+        formData.append('folder_id', String(currentFolderId));
+      }
 
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      await api.post('/forms/upload', formData);
+      loadForms();
     } catch (err) {
       alert("Duplicate failed: " + err.message);
     } finally {
@@ -1018,6 +1023,93 @@ export default function FormsManagement() {
     setSheetData(prev => prev.map(row => row.filter((_, i) => i !== idx)));
   };
 
+  // Helper: clear grid but keep formulas
+  function makeClearedGridKeepFormulas(grid, formulaCache) {
+    const rowCount = grid?.length || 0;
+    const colCount = Math.max(0, ...(grid || []).map(r => r?.length || 0));
+    const cleared = Array.from({ length: rowCount }, () => Array.from({ length: colCount }, () => ""));
+
+    Object.keys(formulaCache || {}).forEach((key) => {
+      const [rStr, cStr] = key.split('_');
+      const r = Number(rStr);
+      const c = Number(cStr);
+      if (!Number.isNaN(r) && !Number.isNaN(c) && cleared[r]) {
+        cleared[r][c] = formulaCache[key];
+      }
+    });
+    return cleared;
+  }
+
+  // Helper: build XLSX blob from sheets
+  function buildXlsxBlobFromSheets(sheetDefs) {
+    const wb = XLSX.utils.book_new();
+    sheetDefs.forEach((s) => {
+      const ws = XLSX.utils.aoa_to_sheet(s.data || []);
+      const formulaCache = s.formulaCache || {};
+      Object.keys(formulaCache).forEach((key) => {
+        const [rStr, cStr] = key.split('_');
+        const r = Number(rStr);
+        const c = Number(cStr);
+        if (Number.isNaN(r) || Number.isNaN(c)) return;
+        const addr = XLSX.utils.encode_cell({ r, c });
+        const rawFormula = String(formulaCache[key] || "");
+        const f = rawFormula.startsWith('=') ? rawFormula.slice(1) : rawFormula;
+        ws[addr] = ws[addr] || { t: 'n', v: 0 };
+        ws[addr].f = f;
+      });
+      XLSX.utils.book_append_sheet(wb, ws, s.name || 'Sheet1');
+    });
+    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    return blob;
+  }
+
+  // Handler: create new document from current
+  const handleCreateNewDocumentFromCurrent = async (mode) => {
+    if (!selectedForm || !sheets?.length) return;
+
+    const ext = selectedForm.name.match(/\.([^.]+)$/)?.[1]?.toLowerCase();
+    const defaultName = ext
+      ? `New - ${selectedForm.name.replace(new RegExp(`\\.${ext}$`, 'i'), '')}`
+      : `New - ${selectedForm.name}`;
+    const nameRaw = prompt('Enter new document name:', defaultName);
+    if (!nameRaw?.trim()) return;
+    const fileName = (ext && !nameRaw.toLowerCase().endsWith(`.${ext}`))
+      ? `${nameRaw.trim()}.${ext}`
+      : nameRaw.trim();
+
+    setLoading(true);
+    try {
+      const outSheets = sheets.map((s) => {
+        if (mode === 'with_formulas') {
+          const cleared = makeClearedGridKeepFormulas(s.data, s.formulaCache || buildFormulaCache(s.data));
+          return { ...s, data: cleared };
+        }
+        const rowCount = s.data?.length || 0;
+        const colCount = Math.max(0, ...(s.data || []).map(r => r?.length || 0));
+        const blank = Array.from({ length: rowCount }, () => Array.from({ length: colCount }, () => ""));
+        return { ...s, data: blank, formulaCache: {} };
+      });
+
+      const blob = buildXlsxBlobFromSheets(outSheets);
+      const formData = new FormData();
+      formData.append('file', blob, fileName);
+      formData.append('name', fileName);
+      if (currentFolderId) {
+        formData.append('folder_id', String(currentFolderId));
+      }
+
+      await api.post('/forms/upload', formData);
+      await loadForms();
+      setShowNewDocModal(false);
+      alert('New document created!');
+    } catch (err) {
+      alert('New document failed: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Save changes
   const handleSaveChanges = async () => {
     if (!selectedForm) return;
@@ -1057,6 +1149,9 @@ export default function FormsManagement() {
               <button style={css.btn("green")} onClick={handleSaveChanges}>
                 <Icon d={icons.save} /> Save
               </button>
+              <button style={css.btn("ghost")} onClick={() => setShowNewDocModal(true)}>
+                New Document
+              </button>
               <select 
                 style={css.btn("ghost")} 
                 onChange={(e) => e.target.value && handleExport(e.target.value)}
@@ -1068,6 +1163,46 @@ export default function FormsManagement() {
               </select>
             </div>
           </div>
+
+          {showNewDocModal && (
+            <div style={css.overlay} onClick={() => setShowNewDocModal(false)}>
+              <div style={css.modal} onClick={(e) => e.stopPropagation()}>
+                <h3 style={{ margin: "0 0 12px", fontSize: 18 }}>Create New Document</h3>
+                {selectedForm?.type === 'excel' || selectedForm?.name?.match(/\.(xlsx|xls|csv)$/i) ? (
+                  <>
+                    <p style={{ margin: "0 0 20px", fontSize: 13, color: "#6B7280" }}>
+                      Choose how to create the new sheet.
+                    </p>
+                    <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                      <button style={css.btn("ghost")} onClick={() => setShowNewDocModal(false)}>
+                        Cancel
+                      </button>
+                      <button style={css.btn("ghost")} onClick={() => handleCreateNewDocumentFromCurrent('blank')}>
+                        New Sheet
+                      </button>
+                      <button style={css.btn("primary")} onClick={() => handleCreateNewDocumentFromCurrent('with_formulas')}>
+                        New Sheet with Formula
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p style={{ margin: "0 0 20px", fontSize: 13, color: "#6B7280" }}>
+                      Create a new blank document based on this template?
+                    </p>
+                    <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                      <button style={css.btn("ghost")} onClick={() => setShowNewDocModal(false)}>
+                        Cancel
+                      </button>
+                      <button style={css.btn("primary")} onClick={() => handleCreateNewDocumentFromCurrent('blank')}>
+                        New Document
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Sheet Tabs */}
           {sheets.length > 1 && (

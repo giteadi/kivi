@@ -1178,20 +1178,38 @@ export default function ConersManagement() {
             <div style={css.overlay} onClick={() => setShowNewDocModal(false)}>
               <div style={css.modal} onClick={(e) => e.stopPropagation()}>
                 <h3 style={{ margin: "0 0 12px", fontSize: 18 }}>Create New Document</h3>
-                <p style={{ margin: "0 0 20px", fontSize: 13, color: "#6B7280" }}>
-                  Choose how to create the new sheet.
-                </p>
-                <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                  <button style={css.btn("ghost")} onClick={() => setShowNewDocModal(false)}>
-                    Cancel
-                  </button>
-                  <button style={css.btn("ghost")} onClick={() => handleCreateNewDocumentFromCurrent('blank')}>
-                    New Sheet
-                  </button>
-                  <button style={css.btn("primary")} onClick={() => handleCreateNewDocumentFromCurrent('with_formulas')}>
-                    New Sheet with Formula
-                  </button>
-                </div>
+                {selectedForm?.type === 'excel' || selectedForm?.name?.match(/\.(xlsx|xls|csv)$/i) ? (
+                  <>
+                    <p style={{ margin: "0 0 20px", fontSize: 13, color: "#6B7280" }}>
+                      Choose how to create the new sheet.
+                    </p>
+                    <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                      <button style={css.btn("ghost")} onClick={() => setShowNewDocModal(false)}>
+                        Cancel
+                      </button>
+                      <button style={css.btn("ghost")} onClick={() => handleCreateNewDocumentFromCurrent('blank')}>
+                        New Sheet
+                      </button>
+                      <button style={css.btn("primary")} onClick={() => handleCreateNewDocumentFromCurrent('with_formulas')}>
+                        New Sheet with Formula
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p style={{ margin: "0 0 20px", fontSize: 13, color: "#6B7280" }}>
+                      Create a new blank document based on this template?
+                    </p>
+                    <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                      <button style={css.btn("ghost")} onClick={() => setShowNewDocModal(false)}>
+                        Cancel
+                      </button>
+                      <button style={css.btn("primary")} onClick={() => handleCreateNewDocumentFromCurrent('blank')}>
+                        New Document
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}
