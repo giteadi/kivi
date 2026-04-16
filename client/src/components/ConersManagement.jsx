@@ -428,6 +428,8 @@ export default function ConersManagement() {
   const [sheets, setSheets] = useState([]);
   const fileInputRef = useRef(null);
 
+  const [showNewDocModal, setShowNewDocModal] = useState(false);
+
   // Folder state
   const [folders, setFolders] = useState([]);
   const [currentFolderId, setCurrentFolderId] = useState(null);
@@ -633,6 +635,94 @@ export default function ConersManagement() {
     });
     return cache;
   }
+
+  function makeClearedGridKeepFormulas(grid, formulaCache) {
+    const rowCount = grid?.length || 0;
+    const colCount = Math.max(0, ...(grid || []).map(r => r?.length || 0));
+    const cleared = Array.from({ length: rowCount }, () => Array.from({ length: colCount }, () => ""));
+
+    Object.keys(formulaCache || {}).forEach((key) => {
+      const [rStr, cStr] = key.split('_');
+      const r = Number(rStr);
+      const c = Number(cStr);
+      if (!Number.isNaN(r) && !Number.isNaN(c) && cleared[r]) {
+        cleared[r][c] = formulaCache[key];
+      }
+    });
+
+    return cleared;
+  }
+
+  function buildXlsxBlobFromSheets(sheetDefs) {
+    const wb = XLSX.utils.book_new();
+
+    sheetDefs.forEach((s) => {
+      const ws = XLSX.utils.aoa_to_sheet(s.data || []);
+      const formulaCache = s.formulaCache || {};
+      Object.keys(formulaCache).forEach((key) => {
+        const [rStr, cStr] = key.split('_');
+        const r = Number(rStr);
+        const c = Number(cStr);
+        if (Number.isNaN(r) || Number.isNaN(c)) return;
+        const addr = XLSX.utils.encode_cell({ r, c });
+        const rawFormula = String(formulaCache[key] || "");
+        const f = rawFormula.startsWith('=') ? rawFormula.slice(1) : rawFormula;
+        ws[addr] = ws[addr] || { t: 'n', v: 0 };
+        ws[addr].f = f;
+      });
+
+      XLSX.utils.book_append_sheet(wb, ws, s.name || 'Sheet1');
+    });
+
+    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    return blob;
+  }
+
+  const handleCreateNewDocumentFromCurrent = async (mode) => {
+    if (!selectedForm || !sheets?.length) return;
+
+    const ext = selectedForm.name.match(/\.([^.]+)$/)?.[1]?.toLowerCase();
+    const defaultName = ext
+      ? `New - ${selectedForm.name.replace(new RegExp(`\\.${ext}$`, 'i'), '')}`
+      : `New - ${selectedForm.name}`;
+    const nameRaw = prompt('Enter new document name:', defaultName);
+    if (!nameRaw?.trim()) return;
+    const fileName = (ext && !nameRaw.toLowerCase().endsWith(`.${ext}`))
+      ? `${nameRaw.trim()}.${ext}`
+      : nameRaw.trim();
+
+    setLoading(true);
+    try {
+      const outSheets = sheets.map((s) => {
+        if (mode === 'with_formulas') {
+          const cleared = makeClearedGridKeepFormulas(s.data, s.formulaCache || buildFormulaCache(s.data));
+          return { ...s, data: cleared };
+        }
+        const rowCount = s.data?.length || 0;
+        const colCount = Math.max(0, ...(s.data || []).map(r => r?.length || 0));
+        const blank = Array.from({ length: rowCount }, () => Array.from({ length: colCount }, () => ""));
+        return { ...s, data: blank, formulaCache: {} };
+      });
+
+      const blob = buildXlsxBlobFromSheets(outSheets);
+      const formData = new FormData();
+      formData.append('file', blob, fileName);
+      formData.append('name', fileName);
+      if (currentFolderId) {
+        formData.append('folder_id', String(currentFolderId));
+      }
+
+      await api.post('/coners/upload', formData);
+      await loadForms();
+      setShowNewDocModal(false);
+      alert('New document created!');
+    } catch (err) {
+      alert('New document failed: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   function reEvaluateFormulas(sheetData) {
     return sheetData.map((row, rIdx) =>
@@ -863,8 +953,13 @@ export default function ConersManagement() {
   // Duplicate form - upload as new file
   const handleDuplicateForm = async (form, e) => {
     e.stopPropagation();
-    const newName = prompt(`Enter name for duplicate:`, `Copy of ${form.name}`);
-    if (!newName?.trim()) return;
+    const ext = form.name.match(/\.([^.]+)$/)?.[1]?.toLowerCase();
+    const suggested = ext ? `Copy of ${form.name}` : `Copy of ${form.name}`;
+    const newNameRaw = prompt(`Enter name for duplicate:`, suggested);
+    if (!newNameRaw?.trim()) return;
+    const newName = (ext && !newNameRaw.toLowerCase().endsWith(`.${ext}`))
+      ? `${newNameRaw.trim()}.${ext}`
+      : newNameRaw.trim();
 
     setLoading(true);
     try {
@@ -1017,7 +1112,7 @@ export default function ConersManagement() {
     }
   };
 
-  // Export
+  // Export - Download to user
   const handleExport = async (type) => {
     let blob;
     if (type === "docx") {
@@ -1025,24 +1120,27 @@ export default function ConersManagement() {
     } else {
       blob = exportSheetToXlsx(sheetData, selectedForm?.name || "form.xlsx");
     }
+
+    if (!blob) {
+      alert("Export failed: Could not create file");
+      return;
+    }
     
-    // Upload as new file instead of downloading
-    const formData = new FormData();
+    // Download the file
     const ext = type === "docx" ? "docx" : "xlsx";
-    const fileName = `${selectedForm?.name || "exported"}.${ext}`;
-    formData.append('file', blob, fileName);
-    formData.append('name', fileName);
-    if (currentFolderId) {
-      formData.append('folder_id', String(currentFolderId));
-    }
+    const baseName = selectedForm?.name?.replace(/\.[^.]+$/, '') || "exported";
+    const fileName = `${baseName}.${ext}`;
     
-    try {
-      await api.post('/coners/upload', formData);
-      loadForms();
-      alert("Exported successfully!");
-    } catch (err) {
-      alert("Export failed: " + err.message);
-    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    alert("Downloaded successfully!");
   };
 
   // ─── Render ───────────────────────────────────────────────────────────────────
@@ -1061,6 +1159,9 @@ export default function ConersManagement() {
               <button style={css.btn("green")} onClick={handleSaveChanges}>
                 <Icon d={icons.save} /> Save
               </button>
+              <button style={css.btn("ghost")} onClick={() => setShowNewDocModal(true)}>
+                New Document
+              </button>
               <select 
                 style={css.btn("ghost")} 
                 onChange={(e) => e.target.value && handleExport(e.target.value)}
@@ -1072,6 +1173,28 @@ export default function ConersManagement() {
               </select>
             </div>
           </div>
+
+          {showNewDocModal && (
+            <div style={css.overlay} onClick={() => setShowNewDocModal(false)}>
+              <div style={css.modal} onClick={(e) => e.stopPropagation()}>
+                <h3 style={{ margin: "0 0 12px", fontSize: 18 }}>Create New Document</h3>
+                <p style={{ margin: "0 0 20px", fontSize: 13, color: "#6B7280" }}>
+                  Choose how to create the new sheet.
+                </p>
+                <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                  <button style={css.btn("ghost")} onClick={() => setShowNewDocModal(false)}>
+                    Cancel
+                  </button>
+                  <button style={css.btn("ghost")} onClick={() => handleCreateNewDocumentFromCurrent('blank')}>
+                    New Sheet
+                  </button>
+                  <button style={css.btn("primary")} onClick={() => handleCreateNewDocumentFromCurrent('with_formulas')}>
+                    New Sheet with Formula
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Sheet Tabs */}
           {sheets.length > 1 && (
@@ -1226,15 +1349,6 @@ export default function ConersManagement() {
             <p style={css.subtitle}>Upload, edit and export conors (Excel, Word, PDF)</p>
           </div>
           <div style={{ display: "flex", gap: 10 }}>
-            <button style={css.btn("ghost")} onClick={() => {
-              if (selectedForm || forms.length > 0) {
-                handleNewFromTemplate(selectedForm || forms[0], { stopPropagation: () => {} });
-              } else {
-                alert("Please select or upload a template conor first.");
-              }
-            }}>
-              ✨ New Conor from Template
-            </button>
             <button style={css.btn("primary")} onClick={() => fileInputRef.current?.click()}>
               <Icon d={icons.upload} /> Upload Conor
             </button>
