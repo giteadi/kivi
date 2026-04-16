@@ -56,6 +56,8 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
   const [assessments, setAssessments] = useState([]);
   const [upcomingAssessments, setUpcomingAssessments] = useState([]);
   const [calendarLoading, setCalendarLoading] = useState(false);
+  const [templatesCount, setTemplatesCount] = useState(0);
+  const [todaysSessions, setTodaysSessions] = useState(0);
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [localFilters, setLocalFilters] = useState({ startDate: '', endDate: '', clinicId: '', doctorId: '' });
@@ -109,7 +111,34 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
   useEffect(() => {
     dispatch(fetchDashboardData());
     fetchUpcomingAssessments();
+    fetchTemplatesCount();
+    fetchTodaysSessions();
   }, [dispatch]);
+
+  // Fetch templates count
+  const fetchTemplatesCount = async () => {
+    try {
+      const response = await api.request('/templates');
+      if (response.success) {
+        setTemplatesCount(response.data?.length || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+    }
+  };
+
+  // Fetch today's sessions
+  const fetchTodaysSessions = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const response = await api.request(`/sessions?date=${today}`);
+      if (response.success) {
+        setTodaysSessions(response.data?.length || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching today sessions:', error);
+    }
+  };
 
   // Fetch upcoming assessments from calendar API
   const fetchUpcomingAssessments = async () => {
@@ -195,7 +224,7 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
     {
       icon: FiCalendar,
       title: 'Today\'s Sessions',
-      value: stats.totalAppointments?.toString() || '8',
+      value: todaysSessions.toString(),
       trend: '+12%',
       color: 'blue'
     },
@@ -218,7 +247,7 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
     {
       icon: FiBook,
       title: 'Templates',
-      value: '12',
+      value: templatesCount.toString(),
       trend: '-8%',
       color: 'amber',
       route: 'templates'
