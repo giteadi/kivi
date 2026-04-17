@@ -332,6 +332,30 @@ class TemplateController {
         });
       }
 
+      // Check if this is parse-only mode (no template creation)
+      const parseOnly = req.body?.parse_only === 'true' || req.body?.parse_only === true;
+      
+      if (parseOnly) {
+        // Cleanup temp file
+        fs.unlink(filePath, (err) => {
+          if (err) console.error('Failed to delete temp file:', err);
+        });
+
+        console.log(`✅ PARSE ONLY SUCCESS: Returning parsed data without creating template`);
+
+        return res.status(200).json({
+          success: true,
+          data: {
+            template_data: {
+              sheets: parsedData.sheets,
+              sheetNames: parsedData.names,
+              row_heights: parsedData.row_heights || {}
+            }
+          },
+          message: 'File parsed successfully'
+        });
+      }
+
       // Create template data
       const templateData = {
         name: fileName.replace(/\.(xlsx?|csv|docx)$/i, ""),
