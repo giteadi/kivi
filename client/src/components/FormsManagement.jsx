@@ -26,6 +26,24 @@ const Icon = ({ d, size = 16, stroke = "currentColor", fill = "none" }) => (
   </svg>
 );
 
+// Default MindSaid Learning Centre header HTML for new documents
+const DEFAULT_REPORT_HEADER = `<div style="margin-bottom:20px;padding:20px;background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;">
+  <div style="display:flex;align-items:center;gap:20px;">
+    <div style="flex-shrink:0;">
+      <img src="https://mindsaidlearning.com/logo.png" alt="MindSaid Learning Centre" style="max-width:200px;height:auto;" onerror="this.style.display='none'" />
+    </div>
+    <div style="flex:1;">
+      <h1 style="margin:0 0 5px 0;color:#333;font-size:24px;">MindSaid Learning Centre</h1>
+      <p style="margin:0;color:#666;font-size:14px;">Learning This Ability</p>
+      <p style="margin:5px 0 0 0;color:#666;font-size:12px;">Psycho-educational Assessment & Intervention Centre</p>
+      <p style="margin:5px 0 0 0;color:#666;font-size:12px;">
+        Tel: +918928186952 | <a href="mailto:contact@mindsaidlearning.com" style="color:#4A90E2;">contact@mindsaidlearning.com</a><br/>
+        <a href="https://www.mindsaidlearning.com" style="color:#4A90E2;">www.mindsaidlearning.com</a>
+      </p>
+    </div>
+  </div>
+</div>`;
+
 const icons = {
   upload:   "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12",
   download: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3",
@@ -843,12 +861,13 @@ export default function FormsManagement() {
           const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuf });
           const html = result.value || '<p>Document empty hai.</p>';
           setSheetData([["__html__", `
+            ${DEFAULT_REPORT_HEADER}
             <div style="font-family:Georgia,serif;max-width:800px;margin:0 auto;padding:20px;line-height:1.6;">
               ${html}
             </div>
           `]]);
         } catch(e) {
-          setSheetData([["__html__", "<p>Word preview load nahi hua. Export karke dekho.</p>"]]);
+          setSheetData([["__html__", DEFAULT_REPORT_HEADER + "<p>Word preview load nahi hua. Export karke dekho.</p>"]]);
         }
         setSheets([{ name: "Document", data: [] }]);
       } else {
