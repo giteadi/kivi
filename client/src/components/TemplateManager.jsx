@@ -810,32 +810,71 @@ export default function TemplateManager() {
 
   const openView = (tpl) => { setActiveTemplate(tpl); setPanel("view"); };
 
-  // Default MindSaid Learning Centre header HTML for new reports
-  const DEFAULT_REPORT_HEADER = `<div style="margin-bottom:20px;padding:20px;background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;">
-    <div style="display:flex;align-items:center;gap:20px;">
-      <div style="flex-shrink:0;">
-        <img src="https://mindsaidlearning.com/logo.png" alt="MindSaid Learning Centre" style="max-width:200px;height:auto;" onerror="this.style.display='none'" />
-      </div>
-      <div style="flex:1;">
-        <h1 style="margin:0 0 5px 0;color:#333;font-size:24px;">MindSaid Learning Centre</h1>
-        <p style="margin:0;color:#666;font-size:14px;">Learning This Ability</p>
-        <p style="margin:5px 0 0 0;color:#666;font-size:12px;">Psycho-educational Assessment & Intervention Centre</p>
-        <p style="margin:5px 0 0 0;color:#666;font-size:12px;">
-          Tel: +918928186952 | <a href="mailto:contact@mindsaidlearning.com" style="color:#4A90E2;">contact@mindsaidlearning.com</a><br/>
-          <a href="https://www.mindsaidlearning.com" style="color:#4A90E2;">www.mindsaidlearning.com</a>
-        </p>
-      </div>
-    </div>
-  </div>`;
-
   const openCreateReport = (tpl) => {
-    const defaultSheetName = tpl.sheetNames[0] || "Report";
+    // Use template's header only, rest content should be empty for new report
+    const reportSheets = {};
+    const reportSheetNames = [];
+
+    tpl.sheetNames.forEach(sheetName => {
+      const sheetData = tpl.sheets[sheetName];
+      if (!sheetData) return;
+
+      // Deep clone to avoid mutating the template
+      let clonedData;
+      try {
+        clonedData = structuredClone(sheetData);
+      } catch {
+        clonedData = JSON.parse(JSON.stringify(sheetData));
+      }
+
+      // ── Sirf header rakhna, baaki content hatana ──
+      if (clonedData[0]?.[0] === "__html__") {
+        const html = clonedData[0][1] || "";
+        
+        // Extract header div (the one with specific styling that contains logo)
+        // Header div has: margin-bottom, padding, background, border styling
+        const headerMatch = html.match(/<div[^>]*style="[^"]*margin-bottom[^"]*background[^"]*"[^>]*>.*?<\/div>/is);
+        
+        // Also try to find the header by looking for the logo image or MindSaid text
+        let headerHtml = "";
+        
+        if (headerMatch) {
+          headerHtml = headerMatch[0];
+        } else {
+          // Fallback: try to find first div that looks like a header
+          const divMatch = html.match(/<div[^>]*style="[^"]*(?:background|padding|margin)[^"]*"[^>]*>.*?<\/div>/is);
+          if (divMatch) {
+            headerHtml = divMatch[0];
+          }
+        }
+        
+        // If still no header found, try to find table with logo or MindSaid text
+        if (!headerHtml) {
+          const tableMatch = html.match(/<table[^>]*>.*?MindSaid.*?<\/table>/is);
+          if (tableMatch) {
+            headerHtml = tableMatch[0];
+          }
+        }
+        
+        // Sirf header + empty paragraph for new report
+        clonedData = [["__html__", headerHtml + "<p><br></p>"]];
+      }
+
+      reportSheets[sheetName] = clonedData;
+      reportSheetNames.push(sheetName);
+    });
+
+    // Fallback if template has no sheets
+    if (reportSheetNames.length === 0) {
+      const fallbackName = "Report";
+      reportSheets[fallbackName] = [["__html__", "<p><br></p>"]];
+      reportSheetNames.push(fallbackName);
+    }
+
     setReportPanel({
       templateName: tpl.name,
-      allSheets: [defaultSheetName],
-      allData: {
-        [defaultSheetName]: [["__html__", DEFAULT_REPORT_HEADER + "<p><br></p>"]]
-      },
+      allSheets: reportSheetNames,
+      allData: reportSheets,
       patientName: ""
     });
     setPanel("report");
