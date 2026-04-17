@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiDownload, FiCalendar, FiUser, FiDollarSign, FiFilter, FiRefreshCw } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiDownload, FiCalendar, FiUser, FiDollarSign, FiFilter, FiRefreshCw, FiX } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useToast } from './Toast';
@@ -13,6 +13,22 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
   const [billingData, setBillingData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // View modal state
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedBill, setSelectedBill] = useState(null);
+  
+  // Edit modal state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({ status: 'Pending', amount: 0 });
+  
+  // Delete confirmation
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [billToDelete, setBillToDelete] = useState(null);
+  
+  // Loading states
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     fetchBillingRecords();
@@ -103,9 +119,164 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
     }
   };
 
-  const totalRevenue = billingData.reduce((sum, bill) => sum + bill.total, 0);
-  const paidAmount = billingData.filter(bill => bill.status.toLowerCase() === 'paid').reduce((sum, bill) => sum + bill.total, 0);
-  const pendingAmount = billingData.filter(bill => bill.status.toLowerCase() === 'pending').reduce((sum, bill) => sum + bill.total, 0);
+  // Handle edit click
+  const handleEditClick = (bill) => {
+    setSelectedBill(bill);
+    setEditForm({
+      status: bill.status,
+      amount: bill.amount
+    });
+    setShowEditModal(true);
+  };
+
+  // Handle update billing
+  const handleUpdateBilling = async () => {
+    if (!selectedBill) return;
+    
+    setIsUpdating(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3005/api'}/invoices/${selectedBill.rawId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          status: editForm.status,
+          amount: editForm.amount
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success('Invoice updated successfully');
+        setShowEditModal(false);
+        fetchBillingRecords(); // Refresh data
+      } else {
+        toast.error(result.message || 'Failed to update invoice');
+      }
+    } catch (error) {
+      console.error('Error updating invoice:', error);
+      toast.error('Failed to update invoice');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Handle delete click
+  const handleDeleteClick = (bill) => {
+    setBillToDelete(bill);
+    setShowDeleteConfirm(true);
+  };
+
+  // Handle confirm delete
+  const handleConfirmDelete = async () => {
+    if (!billToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3005/api'}/invoices/${billToDelete.rawId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success('Invoice deleted successfully');
+        setShowDeleteConfirm(false);
+        fetchBillingRecords(); // Refresh data
+      } else {
+        toast.error(result.message || 'Failed to delete invoice');
+      }
+    } catch (error) {
+      console.error('Error deleting invoice:', error);
+      toast.error('Failed to delete invoice');
+    } finally {
+      setIsDeleting(false);
+      setBillToDelete(null);
+    }
+  };
+
+  // Handle download PDF
+  const handleDownloadPDF = (bill) => {
+    // Create a simple PDF-like text file for now
+    const invoiceContent = `
+INVOICE
+=======
+
+Invoice ID: ${bill.id}
+Date: ${bill.date}
+Status: ${bill.status}
+
+PATIENT INFORMATION
+-------------------
+Name: ${bill.patient.name}
+Email: ${bill.patient.email}
+
+DOCTOR/THERAPIST
+----------------
+Name: ${bill.doctor.name}
+
+SERVICE DETAILS
+---------------
+Service: ${bill.service}
+Clinic: ${bill.clinic}
+
+PAYMENT DETAILS
+---------------
+Amount: ₹${bill.amount?.toLocaleString()}
+Tax: ₹${bill.tax?.toLocaleString()}
+Total: ₹${bill.total?.toLocaleString()}
+Payment Method: ${bill.paymentMethod}
+
+Thank you for choosing MindSaid Learning!
+    `;
+    
+    // Create and download file
+    const blob = new Blob([invoiceContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Invoice-${bill.patient.name}-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast.success('Invoice downloaded successfully');
+  };
+
+  // Handle export all records
+  const handleExport = () => {
+    const csvContent = [
+      ['Invoice ID', 'Patient', 'Doctor', 'Service', 'Amount', 'Status', 'Date'],
+      ...filteredBilling.map(bill => [
+        bill.id,
+        bill.patient.name,
+        bill.doctor.name,
+        bill.service,
+        bill.amount,
+        bill.status,
+        bill.date
+      ])
+    ].map(row => row.join(',')).join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Billing-Records-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast.success('Records exported successfully');
+  };
 
   return (
     <div className="lg:ml-64 min-h-screen bg-gray-50">
@@ -121,6 +292,7 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+              onClick={handleExport}
               className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
             >
               <FiDownload className="w-4 h-4" />
@@ -325,7 +497,10 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          onClick={() => onViewBilling && onViewBilling(bill.rawId)}
+                          onClick={() => {
+                            setSelectedBill(bill);
+                            setShowViewModal(true);
+                          }}
                           className="text-blue-600 hover:text-blue-900 p-1 rounded"
                           title="View Invoice"
                         >
@@ -334,7 +509,7 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          onClick={() => onEditBilling && onEditBilling(bill.rawId)}
+                          onClick={() => handleEditClick(bill)}
                           className="text-green-600 hover:text-green-900 p-1 rounded"
                           title="Edit"
                         >
@@ -343,15 +518,16 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
+                          onClick={() => handleDownloadPDF(bill)}
                           className="text-purple-600 hover:text-purple-900 p-1 rounded"
-                          title="Download"
+                          title="Download PDF"
                         >
                           <FiDownload className="w-4 h-4" />
                         </motion.button>
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          onClick={() => onDeleteBilling && onDeleteBilling(bill.rawId)}
+                          onClick={() => handleDeleteClick(bill)}
                           className="text-red-600 hover:text-red-900 p-1 rounded"
                           title="Delete"
                         >
@@ -441,63 +617,254 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
           </motion.div>
         )}
 
-        {/* Financial Stats */}
-        {!loading && !error && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4"
-        >
-          <div className="bg-white rounded-lg p-4 shadow-sm border">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <FiDollarSign className="w-6 h-6 text-blue-600" />
+        {/* View Invoice Modal */}
+        {showViewModal && selectedBill && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            >
+              {/* Modal Header */}
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-white">Invoice Details</h2>
+                <button
+                  onClick={() => setShowViewModal(false)}
+                  className="text-white hover:text-gray-200"
+                >
+                  <FiX className="w-6 h-6" />
+                </button>
               </div>
-              <div>
-                <div className="text-2xl font-bold text-blue-600">₹{(totalRevenue / 100000).toFixed(1)}L</div>
-                <div className="text-sm text-gray-600">Total Revenue</div>
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-white rounded-lg p-4 shadow-sm border">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <FiDollarSign className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-green-600">₹{(paidAmount / 100000).toFixed(1)}L</div>
-                <div className="text-sm text-gray-600">Paid Amount</div>
-              </div>
-            </div>
-          </div>
+              {/* Modal Content */}
+              <div className="p-6 space-y-6">
+                {/* Invoice ID & Status */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500">Invoice ID</p>
+                    <p className="text-lg font-bold text-blue-600">{selectedBill.id}</p>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedBill.status)}`}>
+                    {selectedBill.status}
+                  </span>
+                </div>
 
-          <div className="bg-white rounded-lg p-4 shadow-sm border">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <FiDollarSign className="w-6 h-6 text-yellow-600" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-yellow-600">₹{(pendingAmount / 100000).toFixed(1)}L</div>
-                <div className="text-sm text-gray-600">Pending Amount</div>
-              </div>
-            </div>
-          </div>
+                {/* Patient Info */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <FiUser className="w-5 h-5 text-blue-600" />
+                    Patient Information
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-500">Name</p>
+                      <p className="font-medium">{selectedBill.patient.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Email</p>
+                      <p className="font-medium">{selectedBill.patient.email}</p>
+                    </div>
+                  </div>
+                </div>
 
-          <div className="bg-white rounded-lg p-4 shadow-sm border">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <FiUser className="w-6 h-6 text-purple-600" />
+                {/* Doctor Info */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <FiUser className="w-5 h-5 text-green-600" />
+                    Doctor/Therapist
+                  </h3>
+                  <p className="font-medium">{selectedBill.doctor.name}</p>
+                </div>
+
+                {/* Service Info */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-800 mb-3">Service Details</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Service:</span>
+                      <span className="font-medium">{selectedBill.service}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Clinic:</span>
+                      <span className="font-medium">{selectedBill.clinic}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Date:</span>
+                      <span className="font-medium">{selectedBill.date}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Amount */}
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <h3 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                    <FiDollarSign className="w-5 h-5" />
+                    Payment Details
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Amount:</span>
+                      <span className="font-medium">₹{selectedBill.amount?.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Tax:</span>
+                      <span className="font-medium">₹{selectedBill.tax?.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-lg font-bold text-blue-800 border-t border-blue-200 pt-2">
+                      <span>Total:</span>
+                      <span>₹{selectedBill.total?.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <div className="text-2xl font-bold text-purple-600">{billingData.length}</div>
-                <div className="text-sm text-gray-600">Total Invoices</div>
+
+              {/* Modal Footer */}
+              <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowViewModal(false)}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    alert('PDF download functionality coming soon!');
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                >
+                  <FiDownload className="w-4 h-4" />
+                  Download PDF
+                </button>
               </div>
-            </div>
+            </motion.div>
           </div>
-        </motion.div>
         )}
+
+        {/* Edit Modal */}
+        {showEditModal && selectedBill && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-white rounded-xl shadow-xl max-w-md w-full"
+            >
+              {/* Modal Header */}
+              <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-white">Edit Invoice</h2>
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="text-white hover:text-gray-200"
+                >
+                  <FiX className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Invoice ID</label>
+                  <p className="text-gray-900 font-medium">{selectedBill.id}</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <select
+                    value={editForm.status}
+                    onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Overdue">Overdue</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Amount (₹)</label>
+                  <input
+                    type="number"
+                    value={editForm.amount}
+                    onChange={(e) => setEditForm({ ...editForm, amount: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpdateBilling}
+                  disabled={isUpdating}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isUpdating ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && billToDelete && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-white rounded-xl shadow-xl max-w-md w-full"
+            >
+              {/* Modal Header */}
+              <div className="bg-red-600 px-6 py-4 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-white">Confirm Delete</h2>
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="text-white hover:text-gray-200"
+                >
+                  <FiX className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6">
+                <p className="text-gray-700 mb-4">
+                  Are you sure you want to delete invoice <strong>{billToDelete.id}</strong>?
+                </p>
+                <p className="text-sm text-gray-500">
+                  Patient: {billToDelete.patient.name}<br/>
+                  Amount: ₹{billToDelete.amount?.toLocaleString()}
+                </p>
+                <p className="text-red-600 text-sm mt-4">This action cannot be undone.</p>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  disabled={isDeleting}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete Invoice'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
       </div>
     </div>
   );

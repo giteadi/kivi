@@ -463,11 +463,6 @@ def parse_xls(file_path):
 
 # ─── STANDALONE DOCX → HTML PARSER (with images) ─────────────────────────────
 def parse_docx_to_html(file_path):
-    """
-    Parse a standalone .docx file into HTML with embedded base64 images.
-    Returns the same format as parse_xlsx: {ok, sheets, names, row_heights}
-    but sheets use the __html__ format for rich text rendering.
-    """
     import base64
 
     try:
@@ -484,17 +479,38 @@ def parse_docx_to_html(file_path):
             W   = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
             R   = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
             REL = 'http://schemas.openxmlformats.org/package/2006/relationships'
+            A   = 'http://schemas.openxmlformats.org/drawingml/2006/main'
+            PIC = 'http://schemas.openxmlformats.org/drawingml/2006/picture'
 
-            # ── Load relationships (rId → media target path) ──
+            # ── Load ALL relationship files (document + headers + footers) ──
+            all_rels = {}  # rId → target path, merged from all .rels files
+            rels_files = [f for f in all_files if f.startswith('word/_rels/') and f.endswith('.rels')]
+            for rels_file in rels_files:
+                try:
+                    rels_root = safe_xml_parse(dz.read(rels_file))
+                    if rels_root:
+                        for rel in rels_root.findall(f'{{{REL}}}Relationship'):
+                            rid    = rel.attrib.get('Id', '')
+                            target = rel.attrib.get('Target', '')
+                            if rid and target:
+                                all_rels[rid] = target
+                except Exception as e:
+                    log(f"  Rels load error {rels_file}: {e}")
+
+            # Keep document.xml.rels separately for document-scoped lookups
             rels = {}
-            if 'word/_rels/document.xml.rels' in all_files:
-                rels_root = safe_xml_parse(dz.read('word/_rels/document.xml.rels'))
-                if rels_root:
-                    for rel in rels_root.findall(f'{{{REL}}}Relationship'):
-                        rid    = rel.attrib.get('Id', '')
-                        target = rel.attrib.get('Target', '')
-                        if rid and target:
-                            rels[rid] = target
+            doc_rels_file = 'word/_rels/document.xml.rels'
+            if doc_rels_file in all_files:
+                try:
+                    rels_root = safe_xml_parse(dz.read(doc_rels_file))
+                    if rels_root:
+                        for rel in rels_root.findall(f'{{{REL}}}Relationship'):
+                            rid    = rel.attrib.get('Id', '')
+                            target = rel.attrib.get('Target', '')
+                            if rid and target:
+                                rels[rid] = target
+                except Exception as e:
+                    log(f"  Doc rels error: {e}")
 
             # ── Load media files as base64 data URLs ──
             media_cache = {}
@@ -502,8 +518,9 @@ def parse_docx_to_html(file_path):
                 '.png':  'image/png',  '.jpg':  'image/jpeg', '.jpeg': 'image/jpeg',
                 '.gif':  'image/gif',  '.bmp':  'image/bmp',  '.webp': 'image/webp',
                 '.tiff': 'image/tiff', '.tif':  'image/tiff', '.svg':  'image/svg+xml',
+                '.emf':  'image/x-emf', '.wmf': 'image/x-wmf',
             }
-            MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB per image
+            MAX_IMAGE_SIZE = 5 * 1024 * 1024
             for fname in all_files:
                 if not fname.startswith('word/media/'):
                     continue
@@ -523,75 +540,96 @@ def parse_docx_to_html(file_path):
                 media_cache[fname.replace('word/', '')] = data_url
                 norm = os.path.normpath(fname).replace('\\', '/')
                 media_cache[norm] = data_url
+                # Also store by just the filename (e.g. "image1.png")
+                media_cache[os.path.basename(fname)] = data_url
 
-            log(f"  DOCX→HTML: {len(media_cache)} media entries cached")
+            log(f"  DOCX→HTML: {len(media_cache)} media entries, {len(all_rels)} total rels")
 
-            # ── Helper: resolve rId to <img> tag ──
-            def img_tag_for_rid(rid):
-                target = rels.get(rid, '')
+            # ── Helper: resolve rId to <img> tag (tries all_rels first, then rels) ──
+            def img_tag_for_rid(rid, source_rels=None):
+                # Try source-specific rels first, then global all_rels
+                target = (source_rels or {}).get(rid) or rels.get(rid) or all_rels.get(rid, '')
                 if not target:
                     return ''
-                # Try various path prefixes
-                for prefix in ['', 'word/', '../']:
-                    p = os.path.normpath(prefix + target.lstrip('/')).replace('\\', '/')
-                    # Re-normalize ../ paths
-                    p = re.sub(r'xl/worksheets/\.\./(.+)', r'xl/\1', p)
+                # Normalize path
+                candidates = []
+                for prefix in ['', 'word/', 'word/media/']:
+                    raw = prefix + target.lstrip('./')
+                    p = os.path.normpath(raw).replace('\\', '/')
                     p = re.sub(r'word/\.\./(.+)', r'\1', p)
+                    candidates.append(p)
+                # Also try just the basename
+                candidates.append(os.path.basename(target))
+                candidates.append(target)
+                
+                for p in candidates:
                     if p in media_cache:
                         return f'<img src="{media_cache[p]}" style="max-width:100%;height:auto;" />'
-                # Try raw target
-                if target in media_cache:
-                    return f'<img src="{media_cache[target]}" style="max-width:100%;height:auto;" />'
-                log(f"  Image not found for rId={rid}, target={target}")
+                
+                log(f"  Image not found for rId={rid}, target={target}, tried: {candidates}")
                 return ''
 
-            # ── Helper: find image in a drawing/pict element ──
-            def find_image_html(el):
+            # ── Helper: find image in any element (drawing/pict/inline/anchor) ──
+            def find_image_html(el, source_rels=None):
+                # Method 1: Direct blip with embed attribute (DrawingML)
                 for node in el.iter():
                     tag = node.tag.split('}')[-1] if '}' in node.tag else node.tag
+                    ns_uri = node.tag.split('}')[0].lstrip('{') if '}' in node.tag else ''
+                    
                     if tag == 'blip':
-                        embed = node.attrib.get(f'{{{R}}}embed', '')
+                        # Try both R namespace and a: namespace embed attributes
+                        embed = (node.attrib.get(f'{{{R}}}embed') or 
+                                 node.attrib.get(f'{{{R}}}link') or
+                                 node.attrib.get('r:embed') or '')
+                        if not embed:
+                            # Try all attributes for r:embed
+                            for attr_key, attr_val in node.attrib.items():
+                                if 'embed' in attr_key.lower():
+                                    embed = attr_val
+                                    break
                         if embed:
-                            return img_tag_for_rid(embed)
-                        link = node.attrib.get(f'{{{R}}}link', '')
-                        if link:
-                            log(f"  Linked image (unsupported): rId={link}")
+                            img = img_tag_for_rid(embed, source_rels)
+                            if img:
+                                return img
+                    
+                    # VML/pict image path: v:imagedata
+                    if tag == 'imagedata':
+                        rid = (node.attrib.get(f'{{{R}}}id') or
+                               node.attrib.get('r:id') or '')
+                        if not rid:
+                            for attr_key, attr_val in node.attrib.items():
+                                if attr_key.endswith('}id') or attr_key == 'r:id':
+                                    rid = attr_val
+                                    break
+                        if rid:
+                            img = img_tag_for_rid(rid, source_rels)
+                            if img:
+                                return img
                 return ''
 
-            # ── Helper: HTML-escape text ──
             def esc_html(s):
                 return str(s).replace('&','&amp;').replace('<','&lt;').replace('>','&gt;').replace('"','&quot;')
 
-            # ── Helper: get run HTML (text with formatting + images) ──
-            def run_to_html(run_el):
+            def run_to_html(run_el, source_rels=None):
                 parts = []
-
-                # Check for drawing (image)
                 drawing = run_el.find(f'{{{W}}}drawing')
                 if drawing is not None:
-                    img = find_image_html(drawing)
+                    img = find_image_html(drawing, source_rels)
                     if img:
                         parts.append(img)
-
-                # Check for pict (older image format)
                 pict = run_el.find(f'{{{W}}}pict')
                 if pict is not None:
-                    img = find_image_html(pict)
+                    img = find_image_html(pict, source_rels)
                     if img:
                         parts.append(img)
-
-                # Text content
                 rpr = run_el.find(f'{{{W}}}rPr')
                 bold      = rpr is not None and rpr.find(f'{{{W}}}b') is not None
                 italic    = rpr is not None and rpr.find(f'{{{W}}}i') is not None
                 underline = rpr is not None and rpr.find(f'{{{W}}}u') is not None
                 strike    = rpr is not None and rpr.find(f'{{{W}}}strike') is not None
-
-                # Collect text from <t> elements
                 texts = [t.text for t in run_el.findall(f'.//{{{W}}}t') if t.text]
                 text = ''.join(texts)
                 if not text:
-                    # Check for tab / br
                     for child in run_el:
                         ctag = child.tag.split('}')[-1] if '}' in child.tag else child.tag
                         if ctag == 'tab':
@@ -601,7 +639,6 @@ def parse_docx_to_html(file_path):
                     if not parts:
                         return ''
                     return ''.join(parts)
-
                 text = esc_html(text)
                 if bold:      text = f'<strong>{text}</strong>'
                 if italic:    text = f'<em>{text}</em>'
@@ -610,28 +647,23 @@ def parse_docx_to_html(file_path):
                 parts.append(text)
                 return ''.join(parts)
 
-            # ── Helper: paragraph → HTML ──
-            def para_to_html(para_el):
+            def para_to_html(para_el, source_rels=None):
                 runs_html = []
                 for run in para_el.findall(f'{{{W}}}r'):
-                    h = run_to_html(run)
+                    h = run_to_html(run, source_rels)
                     if h:
                         runs_html.append(h)
-
-                # Also check for images directly inside paragraph (not in runs)
                 for child in para_el:
                     ctag = child.tag.split('}')[-1] if '}' in child.tag else child.tag
                     if ctag == 'drawing':
-                        img = find_image_html(child)
+                        img = find_image_html(child, source_rels)
                         if img:
                             runs_html.append(img)
-
                 content = ''.join(runs_html)
                 if not content.strip():
                     return '<p><br></p>'
                 return f'<p>{content}</p>'
 
-            # ── Helper: detect heading level from paragraph style ──
             def get_heading_level(para_el):
                 ppr = para_el.find(f'{{{W}}}pPr')
                 if ppr is None:
@@ -640,16 +672,13 @@ def parse_docx_to_html(file_path):
                 if style_el is None:
                     return 0
                 val = style_el.attrib.get(f'{{{W}}}val', '')
-                # Common heading style names: Heading1, heading1, Heading 1, etc.
                 m = re.match(r'[Hh]eading\s*(\d)', val)
                 if m:
                     return int(m.group(1))
-                # Also check for "Title" style
                 if val.lower() == 'title':
                     return 1
                 return 0
 
-            # ── Helper: detect list type from numPr ──
             def get_list_info(para_el):
                 ppr = para_el.find(f'{{{W}}}pPr')
                 if ppr is None:
@@ -662,8 +691,82 @@ def parse_docx_to_html(file_path):
                 numid_el = numpr.find(f'{{{W}}}numId')
                 num_id = numid_el.attrib.get(f'{{{W}}}val', '0') if numid_el is not None else '0'
                 if num_id == '0':
-                    return None  # numId=0 means "no numbering"
+                    return None
                 return {'level': lvl, 'numId': num_id}
+
+            # ── BUG FIX: extract_xml_to_html now handles BOTH paragraphs AND tables ──
+            def extract_element_to_html(el, source_rels=None):
+                """Recursively convert any element (para or table) to HTML."""
+                html_parts = []
+                tag = el.tag.split('}')[-1] if '}' in el.tag else el.tag
+                
+                if tag == 'p':
+                    ph = para_to_html(el, source_rels)
+                    if ph and ph != '<p><br></p>':
+                        html_parts.append(ph)
+                
+                elif tag == 'tbl':
+                    html_parts.append('<table style="border-collapse:collapse;width:100%;">')
+                    for tr in el.findall(f'{{{W}}}tr'):
+                        html_parts.append('<tr>')
+                        for tc in tr.findall(f'{{{W}}}tc'):
+                            cell_paras = []
+                            # Check for images in runs inside this cell
+                            for para in tc.findall(f'.//{{{W}}}p'):
+                                ph = para_to_html(para, source_rels)
+                                ph_inner = re.sub(r'^<p>(.*?)</p>$', r'\1', ph)
+                                if ph_inner.strip() and ph_inner.strip() != '<br>':
+                                    cell_paras.append(ph_inner)
+                            cell_content = '<br>'.join(cell_paras) if cell_paras else '&nbsp;'
+                            tcpr = tc.find(f'{{{W}}}tcPr')
+                            colspan_attr = ''
+                            if tcpr is not None:
+                                gs = tcpr.find(f'{{{W}}}gridSpan')
+                                if gs is not None:
+                                    cs_val = gs.attrib.get(f'{{{W}}}val', '')
+                                    if cs_val and cs_val != '1':
+                                        colspan_attr = f' colspan="{cs_val}"'
+                            html_parts.append(
+                                f'<td style="border:1px solid #ccc;padding:6px 10px;vertical-align:top;"{colspan_attr}>{cell_content}</td>'
+                            )
+                        html_parts.append('</tr>')
+                    html_parts.append('</table>')
+                
+                return html_parts
+
+            # ── Load headers — now with per-header rels ──
+            header_html_parts = []
+            for fname in sorted(all_files):
+                if not (fname.startswith('word/header') and fname.endswith('.xml')):
+                    continue
+                # Load this header's specific rels
+                hrels_path = fname.replace('word/', 'word/_rels/') + '.rels'
+                h_rels = {}
+                if hrels_path in all_files:
+                    try:
+                        hr = safe_xml_parse(dz.read(hrels_path))
+                        if hr:
+                            for rel in hr.findall(f'{{{REL}}}Relationship'):
+                                rid = rel.attrib.get('Id', '')
+                                tgt = rel.attrib.get('Target', '')
+                                if rid and tgt:
+                                    h_rels[rid] = tgt
+                    except Exception as e:
+                        log(f"  Header rels error {hrels_path}: {e}")
+                
+                try:
+                    h_root = safe_xml_parse(dz.read(fname))
+                    if h_root is None:
+                        continue
+                    h_body = h_root  # headers don't have a <body>, just iterate direct children
+                    count = 0
+                    for child in h_body:
+                        parts = extract_element_to_html(child, h_rels)
+                        header_html_parts.extend(parts)
+                        count += len(parts)
+                    log(f"  Header {fname}: {count} elements (h_rels: {len(h_rels)})")
+                except Exception as e:
+                    log(f"  Header error {fname}: {e}")
 
             # ── Process body ──
             body = root.find(f'{{{W}}}body')
@@ -671,7 +774,14 @@ def parse_docx_to_html(file_path):
                 body = root
 
             html_parts = []
-            current_list_type = None  # None, 'ul', 'ol'
+
+            if header_html_parts:
+                html_parts.append('<div style="margin-bottom:20px;padding:15px;background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;">')
+                html_parts.extend(header_html_parts)
+                html_parts.append('</div>')
+                log(f"  Added {len(header_html_parts)} header elements")
+
+            current_list_type = None
             current_list_items = []
             prev_num_id = None
 
@@ -692,55 +802,21 @@ def parse_docx_to_html(file_path):
 
                 if tag == 'tbl':
                     flush_list()
-                    # ── TABLE ──
-                    html_parts.append('<table style="border-collapse:collapse;width:100%;">')
-                    for tr in child.findall(f'{{{W}}}tr'):
-                        html_parts.append('<tr>')
-                        for tc in tr.findall(f'{{{W}}}tc'):
-                            # Cell content
-                            cell_paras = []
-                            for para in tc.findall(f'{{{W}}}p'):
-                                ph = para_to_html(para)
-                                # Strip <p> wrapper for inline cell content
-                                ph = re.sub(r'^<p>(.*?)</p>$', r'\1', ph)
-                                if ph.strip() and ph.strip() != '<br>':
-                                    cell_paras.append(ph)
-                            cell_content = '<br>'.join(cell_paras) if cell_paras else '&nbsp;'
-
-                            # Colspan
-                            tcpr = tc.find(f'{{{W}}}tcPr')
-                            colspan_attr = ''
-                            if tcpr is not None:
-                                gs = tcpr.find(f'{{{W}}}gridSpan')
-                                if gs is not None:
-                                    cs_val = gs.attrib.get(f'{{{W}}}val', '')
-                                    if cs_val and cs_val != '1':
-                                        colspan_attr = f' colspan="{cs_val}"'
-
-                            html_parts.append(
-                                f'<td style="border:1px solid #ccc;padding:6px 10px;vertical-align:top;"{colspan_attr}>{cell_content}</td>'
-                            )
-                        html_parts.append('</tr>')
-                    html_parts.append('</table>')
+                    parts = extract_element_to_html(child, rels)
+                    html_parts.extend(parts)
 
                 elif tag == 'p':
-                    # ── PARAGRAPH ──
                     list_info = get_list_info(child)
                     heading = get_heading_level(child)
-                    para_html = para_to_html(child)
+                    para_html = para_to_html(child, rels)
 
                     if list_info:
-                        # List item — determine ul vs ol (heuristic: odd numId = ol, even = ul)
-                        # We group consecutive list items with same numId
                         list_type = 'ol' if int(list_info['numId']) % 2 == 1 else 'ul'
                         level = list_info['level']
-
                         if prev_num_id != list_info['numId'] or current_list_type != list_type:
                             flush_list()
                             current_list_type = list_type
-
                         indent = '  ' * level
-                        # Strip <p> wrapper, use <li> instead
                         content = re.sub(r'^<p>(.*?)</p>$', r'\1', para_html)
                         current_list_items.append(f'{indent}<li>{content}</li>')
                         prev_num_id = list_info['numId']
@@ -754,7 +830,7 @@ def parse_docx_to_html(file_path):
                 elif tag == 'sdt':
                     flush_list()
                     for para in child.findall(f'.//{{{W}}}p'):
-                        ph = para_to_html(para)
+                        ph = para_to_html(para, rels)
                         html_parts.append(ph)
 
             flush_list()
@@ -763,9 +839,7 @@ def parse_docx_to_html(file_path):
             if not html.strip():
                 html = '<p><br></p>'
 
-            # Use filename (without extension) as sheet name
             sheet_name = os.path.splitext(os.path.basename(file_path))[0]
-
             log(f"  DOCX→HTML: generated {len(html)} chars, sheet='{sheet_name}'")
 
             return {
@@ -782,7 +856,6 @@ def parse_docx_to_html(file_path):
         import traceback
         log(f"DOCX→HTML error: {e}\n{traceback.format_exc()}")
         return {'ok': False, 'error': str(e)}
-
 
 def parse_csv(file_path):
     rows = []

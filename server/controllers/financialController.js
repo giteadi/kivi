@@ -157,8 +157,8 @@ class FinancialController extends BaseModel {
       let sql1 = `
         SELECT 
           br.id,
-          br.amount,
-          br.status,
+          br.total_amount as amount,
+          br.payment_status as status,
           br.created_at,
           st.first_name as student_first_name, 
           st.last_name as student_last_name,
@@ -196,7 +196,7 @@ class FinancialController extends BaseModel {
       }
 
       if (status) {
-        sql1 += ' AND br.status = ?';
+        sql1 += ' AND br.payment_status = ?';
         params1.push(status);
       }
 
@@ -204,7 +204,7 @@ class FinancialController extends BaseModel {
       let sql2 = `
         SELECT 
           a.id,
-          5500 as amount,
+          COALESCE(a.price, 5500) as amount,
           COALESCE(a.payment_status, 'Pending') as status,
           COALESCE(a.invoice_sent_date, a.created_at) as created_at,
           st.first_name as student_first_name, 
@@ -235,13 +235,17 @@ class FinancialController extends BaseModel {
       }
 
       if (status) {
-        sql2 += ' AND COALESCE(a.payment_status, ?) = ?';
-        params2.push(status, status);
+        sql2 += " AND COALESCE(a.payment_status, 'Pending') = ?";
+        params2.push(status);
       }
 
-      // Combine both queries with UNION
-      const sql = `${sql1} UNION ALL ${sql2} ORDER BY created_at DESC`;
+      // Combine both queries with UNION - wrap in subquery for ORDER BY
+      const sql = `SELECT * FROM (${sql1} UNION ALL ${sql2}) AS combined ORDER BY created_at DESC`;
       const params = [...params1, ...params2];
+
+      // DEBUG: Log the SQL query
+      console.log('Billing Records SQL:', sql);
+      console.log('Billing Records Params:', params);
 
       const results = await this.query(sql, params);
 

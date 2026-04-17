@@ -220,6 +220,13 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
       color: 'from-cyan-500 to-cyan-600',
       route: '/forms',
       activeItem: 'forms'
+    },
+    {
+      icon: FiCreditCard,
+      title: 'Invoice',
+      description: 'View billing records',
+      color: 'from-purple-500 to-purple-600',
+      onClick: () => setActiveItem?.('billing-records')
     }
   ];
 

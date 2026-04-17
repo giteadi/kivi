@@ -105,6 +105,7 @@ class InvoiceController {
           student_id: parseInt(studentId) || 1,
           assessment_name: assessmentName || 'Educational Assessment',
           assessment_type: assessmentId || 'standard', // Use the string ID as type
+          price: parseFloat(price) || 5500,
           examiner: examiner || 'To be assigned',
           examiner_name: examiner || 'To be assigned',
           scheduled_date: adminDate || new Date().toISOString().split('T')[0],
@@ -295,6 +296,102 @@ class InvoiceController {
 </body>
 </html>
     `;
+  }
+
+  // Delete invoice (soft delete - just mark invoice_sent as false)
+  async deleteInvoice(req, res) {
+    try {
+      const { id } = req.params;
+
+      if (!id || isNaN(parseInt(id))) {
+        return res.status(400).json({
+          success: false,
+          message: 'Valid invoice ID is required'
+        });
+      }
+
+      const Assessment = require('../models/Assessment');
+      const assessmentModel = new Assessment();
+
+      // Check if assessment exists
+      const assessment = await assessmentModel.getAssessment(parseInt(id));
+      if (!assessment) {
+        return res.status(404).json({
+          success: false,
+          message: 'Invoice not found'
+        });
+      }
+
+      // Soft delete - mark invoice_sent as false and clear invoice data
+      await assessmentModel.update(parseInt(id), {
+        invoice_sent: false,
+        invoice_sent_date: null,
+        invoice_email: null,
+        payment_status: null
+      });
+
+      res.json({
+        success: true,
+        message: 'Invoice deleted successfully'
+      });
+    } catch (error) {
+      console.error('Delete invoice error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to delete invoice',
+        error: error.message
+      });
+    }
+  }
+
+  // Update invoice (status and amount)
+  async updateInvoice(req, res) {
+    try {
+      const { id } = req.params;
+      const { status, amount } = req.body;
+
+      if (!id || isNaN(parseInt(id))) {
+        return res.status(400).json({
+          success: false,
+          message: 'Valid invoice ID is required'
+        });
+      }
+
+      const Assessment = require('../models/Assessment');
+      const assessmentModel = new Assessment();
+
+      // Check if assessment exists
+      const assessment = await assessmentModel.getAssessment(parseInt(id));
+      if (!assessment) {
+        return res.status(404).json({
+          success: false,
+          message: 'Invoice not found'
+        });
+      }
+
+      // Prepare update data
+      const updateData = {};
+      if (status) updateData.payment_status = status.toLowerCase();
+      if (amount !== undefined && amount !== null) updateData.price = parseFloat(amount);
+
+      await assessmentModel.update(parseInt(id), updateData);
+
+      res.json({
+        success: true,
+        message: 'Invoice updated successfully',
+        data: {
+          id: parseInt(id),
+          ...updateData
+        }
+      });
+    } catch (error) {
+      console.error('Update invoice error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to update invoice',
+        error: error.message
+      });
+    }
   }
 }
 
