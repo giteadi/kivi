@@ -88,7 +88,42 @@ class InvoiceController {
       // Update assessment record with invoice info
       const Assessment = require('../models/Assessment');
       const assessmentModel = new Assessment();
-      await assessmentModel.update(assessmentId, {
+      
+      // Check if assessmentId is a valid number (database ID) or string (assessment type)
+      let realAssessmentId = assessmentId;
+      let assessmentRecord = null;
+      
+      if (!isNaN(parseInt(assessmentId))) {
+        // It's a valid number ID, try to find it
+        assessmentRecord = await assessmentModel.getAssessment(parseInt(assessmentId));
+      }
+      
+      // If assessment doesn't exist, create it first
+      if (!assessmentRecord) {
+        console.log('Assessment not found, creating new assessment record...');
+        const newAssessmentId = await assessmentModel.create({
+          student_id: parseInt(studentId) || 1,
+          assessment_name: assessmentName || 'Educational Assessment',
+          assessment_type: assessmentId || 'standard', // Use the string ID as type
+          examiner: examiner || 'To be assigned',
+          examiner_name: examiner || 'To be assigned',
+          scheduled_date: adminDate || new Date().toISOString().split('T')[0],
+          scheduled_time: '09:00:00',
+          duration: 60,
+          status: 'Scheduled',
+          delivery_method: 'Online',
+          total_score: null,
+          max_score: null,
+          completion_percentage: 0,
+          language: 'English',
+          created_at: new Date(),
+          updated_at: new Date()
+        });
+        realAssessmentId = newAssessmentId;
+        console.log('Created new assessment with ID:', realAssessmentId);
+      }
+      
+      await assessmentModel.update(realAssessmentId, {
         invoice_sent: true,
         invoice_sent_date: new Date(),
         invoice_email: email,

@@ -148,17 +148,24 @@ class FinancialController extends BaseModel {
     }
   }
 
-  // Get billing records
+  // Get billing records (includes both therapy session bills and assessment invoices)
   async getBillingRecords(req, res) {
     try {
       const { patientId, doctorId, startDate, endDate, status } = req.query;
       
-      let sql = `
+      // Query 1: Traditional billing records from kivi_billing_records
+      let sql1 = `
         SELECT 
-          br.*,
-          st.first_name as student_first_name, st.last_name as student_last_name,
-          u.first_name as therapist_first_name, u.last_name as therapist_last_name,
-          a.session_date
+          br.id,
+          br.amount,
+          br.status,
+          br.created_at,
+          st.first_name as student_first_name, 
+          st.last_name as student_last_name,
+          u.first_name as therapist_first_name, 
+          u.last_name as therapist_last_name,
+          a.session_date as service_date,
+          'Therapy Session' as service_type
         FROM kivi_billing_records br
         JOIN kivi_sessions a ON br.session_id = a.id
         JOIN kivi_students st ON a.student_id = st.id
@@ -166,34 +173,75 @@ class FinancialController extends BaseModel {
         JOIN kivi_users u ON t.user_id = u.id
         WHERE 1=1
       `;
-      const params = [];
+      const params1 = [];
 
       if (patientId) {
-        sql += ' AND st.id = ?';
-        params.push(patientId);
+        sql1 += ' AND st.id = ?';
+        params1.push(patientId);
       }
 
       if (doctorId) {
-        sql += ' AND t.id = ?';
-        params.push(doctorId);
+        sql1 += ' AND t.id = ?';
+        params1.push(doctorId);
       }
 
       if (startDate) {
-        sql += ' AND br.created_at >= ?';
-        params.push(startDate);
+        sql1 += ' AND br.created_at >= ?';
+        params1.push(startDate);
       }
 
       if (endDate) {
-        sql += ' AND br.created_at <= ?';
-        params.push(endDate);
+        sql1 += ' AND br.created_at <= ?';
+        params1.push(endDate);
       }
 
       if (status) {
-        sql += ' AND br.status = ?';
-        params.push(status);
+        sql1 += ' AND br.status = ?';
+        params1.push(status);
       }
 
-      sql += ' ORDER BY br.created_at DESC';
+      // Query 2: Assessment invoices from kivi_assessments
+      let sql2 = `
+        SELECT 
+          a.id,
+          5500 as amount,
+          COALESCE(a.payment_status, 'Pending') as status,
+          COALESCE(a.invoice_sent_date, a.created_at) as created_at,
+          st.first_name as student_first_name, 
+          st.last_name as student_last_name,
+          a.examiner_name as therapist_first_name,
+          NULL as therapist_last_name,
+          a.scheduled_date as service_date,
+          CONCAT('Assessment: ', a.assessment_name) as service_type
+        FROM kivi_assessments a
+        JOIN kivi_students st ON a.student_id = st.id
+        WHERE a.invoice_sent = true
+      `;
+      const params2 = [];
+
+      if (patientId) {
+        sql2 += ' AND st.id = ?';
+        params2.push(patientId);
+      }
+
+      if (startDate) {
+        sql2 += ' AND COALESCE(a.invoice_sent_date, a.created_at) >= ?';
+        params2.push(startDate);
+      }
+
+      if (endDate) {
+        sql2 += ' AND COALESCE(a.invoice_sent_date, a.created_at) <= ?';
+        params2.push(endDate);
+      }
+
+      if (status) {
+        sql2 += ' AND COALESCE(a.payment_status, ?) = ?';
+        params2.push(status, status);
+      }
+
+      // Combine both queries with UNION
+      const sql = `${sql1} UNION ALL ${sql2} ORDER BY created_at DESC`;
+      const params = [...params1, ...params2];
 
       const results = await this.query(sql, params);
 
