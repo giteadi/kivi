@@ -766,25 +766,20 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
       return;
     }
 
-    // Check if any responses entered
-    const items = Object.entries(assessmentItemResponses).map(([itemNum, response]) => ({
-      itemNumber: parseInt(itemNum),
-      response: response,
-      responseText: null,
-      isCorrect: null,
-      score: null,
-      timeTaken: null
-    }));
-    
-    if (items.length === 0) {
-      alert('Please enter at least one response before saving.');
-      return;
-    }
-
     setIsSavingAssessment(true);
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3005/api';
       
+      // Prepare items data (may be empty since response section removed)
+      const items = Object.entries(assessmentItemResponses).map(([itemNum, response]) => ({
+        itemNumber: parseInt(itemNum),
+        response: response,
+        responseText: null,
+        isCorrect: null,
+        score: null,
+        timeTaken: null
+      }));
+
       // Calculate completion percentage
       const totalItems = 24;
       const completedItems = items.length;
@@ -808,7 +803,10 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
       const result = await response.json();
 
       if (result.success) {
-        alert(`Assessment saved successfully! ${result.data.totalItems} responses saved.`);
+        const message = result.data.totalItems > 0 
+          ? `Assessment saved successfully! ${result.data.totalItems} responses saved.`
+          : 'Assessment saved successfully!';
+        alert(message);
         if (closeAfterSave) {
           setShowAssessmentAdmin(false);
           setAssessmentItemResponses({});

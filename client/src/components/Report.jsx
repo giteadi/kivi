@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { FiSearch, FiRotateCcw } from 'react-icons/fi';
+import { useState, useEffect } from 'react';
+import { FiSearch, FiRotateCcw, FiEdit, FiEye, FiFileText } from 'react-icons/fi';
+import api from '../services/api';
 
 const Report = () => {
   const [activeTab, setActiveTab] = useState('report');
@@ -9,26 +10,53 @@ const Report = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [selectedExaminee, setSelectedExaminee] = useState(null);
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+  
+  // Real data states
+  const [examinees, setExaminees] = useState([]);
+  const [examineeAssessments, setExamineeAssessments] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedExamineeData, setSelectedExamineeData] = useState(null);
+  const [showAssessmentDetails, setShowAssessmentDetails] = useState(false);
 
-  // Mock examinee data
-  const examinees = [
-    { id: 1, systemId: '30816596', lastName: 'Sharma', firstName: 'Aditya', examineeId: 'as/msl/260331', birthDate: '23/05/2000', gender: 'Male' },
-    { id: 2, systemId: '30664804', lastName: 'Sh', firstName: 'Aditya Sh', examineeId: 'as/msl/2234', birthDate: '20/02/2015', gender: 'Male' },
-    { id: 3, systemId: '30770350', lastName: 'Chamariya', firstName: 'Darsh', examineeId: 'DC/MSL/260318', birthDate: '16/10/2013', gender: 'Male' },
-    { id: 4, systemId: '30746724', lastName: 'Sharma', firstName: 'Devraj', examineeId: 'DS/MSL/260312', birthDate: '08/01/2014', gender: 'Male' },
-    { id: 5, systemId: '30742268', lastName: 'Giki', firstName: 'Mudassar', examineeId: 'MG/MSL/260307', birthDate: '17/01/2020', gender: 'Male' },
-    { id: 6, systemId: '30740569', lastName: 'Menezes', firstName: 'Ayesha', examineeId: 'AM/MSL/260305', birthDate: '23/10/2008', gender: 'Female' },
-    { id: 7, systemId: '30652226', lastName: 'Bosch', firstName: 'Berta', examineeId: 'BB/MSL/260215', birthDate: '30/12/2011', gender: 'Female' },
-    { id: 8, systemId: '30591908', lastName: 'Joshi', firstName: 'Anaika', examineeId: 'aj/msl/26311', birthDate: '08/04/2014', gender: 'Female' },
-    { id: 9, systemId: '30569914', lastName: 'Nagpal', firstName: 'Himnish', examineeId: 'hn/msl/26120', birthDate: '16/10/2014', gender: 'Male' },
-    { id: 10, systemId: '30550546', lastName: 'Rao', firstName: 'Aditya', examineeId: 'AR/MSL/26120', birthDate: '25/01/2018', gender: 'Male' },
-  ];
+  const totalRecords = examinees.length;
+  const totalPages = Math.ceil(totalRecords / itemsPerPage) || 1;
 
-  const totalRecords = 210;
-  const totalPages = Math.ceil(totalRecords / itemsPerPage);
+  // Fetch examinees from API
+  useEffect(() => {
+    fetchExaminees();
+  }, []);
 
-  const handleExamineeSelect = (examineeId) => {
-    setSelectedExaminee(examineeId === selectedExaminee ? null : examineeId);
+  const fetchExaminees = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get('/examinees');
+      if (response.success && Array.isArray(response.data)) {
+        setExaminees(response.data);
+      } else if (Array.isArray(response)) {
+        setExaminees(response);
+      }
+    } catch (error) {
+      console.error('Error fetching examinees:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle examinee selection - assessments already included in examinee data
+  const handleExamineeSelect = (examinee) => {
+    if (selectedExaminee === examinee.id) {
+      setSelectedExaminee(null);
+      setSelectedExamineeData(null);
+      setExamineeAssessments([]);
+      setShowAssessmentDetails(false);
+      return;
+    }
+    
+    setSelectedExaminee(examinee.id);
+    setSelectedExamineeData(examinee);
+    // Assessments already included in examinee data from API
+    setExamineeAssessments(examinee.assessments || []);
+    setShowAssessmentDetails(true);
   };
 
   const handleGenerateReport = () => {
@@ -36,7 +64,20 @@ const Report = () => {
       alert('Please select an examinee first');
       return;
     }
-    alert(`Generating report for examinee ID: ${selectedExaminee}`);
+    if (examineeAssessments.length === 0) {
+      alert('No assessments found for this examinee. Please create an assessment first.');
+      return;
+    }
+    alert(`Generating report for ${selectedExamineeData?.firstName} ${selectedExamineeData?.lastName} with ${examineeAssessments.length} assessment(s)`);
+  };
+
+  const handleEditAssessment = (assessment) => {
+    alert(`Edit assessment: ${assessment.name || assessment.assessment_name}`);
+    // TODO: Navigate to assessment edit page or open modal
+  };
+
+  const handleViewAssessment = (assessment) => {
+    alert(`View assessment details:\n${assessment.name || assessment.assessment_name}\nDate: ${assessment.date || assessment.scheduled_date}`);
   };
 
   return (
@@ -176,7 +217,7 @@ const Report = () => {
               <FiRotateCcw className="w-4 h-4" />
               Reset Sort Order
             </button>
-            <span className="text-sm font-semibold text-gray-700">210 Records</span>
+            <span className="text-sm font-semibold text-gray-700">{totalRecords} Records</span>
           </div>
 
           {/* Data Table */}
@@ -209,46 +250,60 @@ const Report = () => {
                 </tr>
               </thead>
               <tbody>
-                {examinees.map((examinee, index) => (
-                  <tr
-                    key={examinee.id}
-                    className={`hover:bg-blue-50 cursor-pointer border-b last:border-b-0 ${
-                      selectedExaminee === examinee.id ? 'bg-blue-100' : ''
-                    }`}
-                    onClick={() => handleExamineeSelect(examinee.id)}
-                  >
-                    <td className="px-3 py-3 border-r text-center text-gray-700">
-                      {index + 1}
-                    </td>
-                    <td className="px-3 py-3 border-r text-center">
-                      <input
-                        type="checkbox"
-                        checked={selectedExaminee === examinee.id}
-                        onChange={() => handleExamineeSelect(examinee.id)}
-                        className="rounded border-gray-300"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    </td>
-                    <td className="px-3 py-3 border-r text-center text-gray-700">
-                      {examinee.systemId}
-                    </td>
-                    <td className="px-3 py-3 border-r text-center text-gray-700">
-                      {examinee.lastName}
-                    </td>
-                    <td className="px-3 py-3 border-r text-center text-gray-700">
-                      {examinee.firstName}
-                    </td>
-                    <td className="px-3 py-3 border-r text-center text-gray-700">
-                      {examinee.examineeId}
-                    </td>
-                    <td className="px-3 py-3 border-r text-center text-gray-700">
-                      {examinee.birthDate}
-                    </td>
-                    <td className="px-3 py-3 text-center text-gray-700">
-                      {examinee.gender}
+                {loading ? (
+                  <tr>
+                    <td colSpan="8" className="px-3 py-8 text-center text-gray-500">
+                      Loading examinees...
                     </td>
                   </tr>
-                ))}
+                ) : examinees.length === 0 ? (
+                  <tr>
+                    <td colSpan="8" className="px-3 py-8 text-center text-gray-500">
+                      No examinees found. Please add examinees first.
+                    </td>
+                  </tr>
+                ) : (
+                  examinees.map((examinee, index) => (
+                    <tr
+                      key={examinee.id}
+                      className={`hover:bg-blue-50 cursor-pointer border-b last:border-b-0 ${
+                        selectedExaminee === examinee.id ? 'bg-blue-100' : ''
+                      }`}
+                      onClick={() => handleExamineeSelect(examinee)}
+                    >
+                      <td className="px-3 py-3 border-r text-center text-gray-700">
+                        {index + 1}
+                      </td>
+                      <td className="px-3 py-3 border-r text-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedExaminee === examinee.id}
+                          onChange={() => handleExamineeSelect(examinee)}
+                          className="rounded border-gray-300"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </td>
+                      <td className="px-3 py-3 border-r text-center text-gray-700">
+                        {examinee.systemId || examinee.system_id || `SYS${String(examinee.id).padStart(6, '0')}`}
+                      </td>
+                      <td className="px-3 py-3 border-r text-center text-gray-700">
+                        {examinee.lastName || examinee.last_name}
+                      </td>
+                      <td className="px-3 py-3 border-r text-center text-gray-700">
+                        {examinee.firstName || examinee.first_name}
+                      </td>
+                      <td className="px-3 py-3 border-r text-center text-gray-700">
+                        {examinee.examineeId || examinee.examinee_id || examinee.student_id}
+                      </td>
+                      <td className="px-3 py-3 border-r text-center text-gray-700">
+                        {examinee.birthDate || examinee.date_of_birth || examinee.dob}
+                      </td>
+                      <td className="px-3 py-3 text-center text-gray-700">
+                        {examinee.gender}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -285,14 +340,80 @@ const Report = () => {
             </div>
           </div>
 
+          {/* Assessment Details Section - Shows when examinee is selected */}
+          {showAssessmentDetails && selectedExamineeData && (
+            <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-blue-800">
+                  <FiFileText className="inline mr-2" />
+                  Assessments for {selectedExamineeData.firstName || selectedExamineeData.first_name} {selectedExamineeData.lastName || selectedExamineeData.last_name}
+                </h3>
+                <span className="text-sm text-blue-600">
+                  {examineeAssessments.length} assessment(s) found
+                </span>
+              </div>
+              
+              {examineeAssessments.length === 0 ? (
+                <div className="bg-white rounded-lg p-4 text-center text-gray-500">
+                  No assessments found for this examinee.
+                  <br />
+                  <span className="text-sm">Please create an assessment from the Examinees section first.</span>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {examineeAssessments.map((assessment, idx) => (
+                    <div key={assessment.id || idx} className="bg-white rounded-lg border p-4 hover:shadow-md transition-shadow">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-800">
+                            {assessment.name || assessment.assessment_name || `Assessment #${idx + 1}`}
+                          </h4>
+                          <div className="text-sm text-gray-600 mt-1 space-x-4">
+                            <span>📅 {(assessment.date || assessment.scheduled_date) ? new Date(assessment.date || assessment.scheduled_date).toLocaleDateString() : 'No date'}</span>
+                            <span>👤 {assessment.examiner || assessment.examiner_name || 'No examiner'}</span>
+                            <span>📝 {assessment.deliveryMethod || assessment.delivery_method || 'Manual Entry'}</span>
+                            <span className={`px-2 py-1 rounded text-xs ${assessment.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                              {assessment.status || 'Pending'}
+                            </span>
+                          </div>
+                          {assessment.price && (
+                            <div className="text-sm text-green-600 mt-1">
+                              💰 ₹{assessment.price}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          <button
+                            onClick={() => handleViewAssessment(assessment)}
+                            className="p-2 text-blue-600 hover:bg-blue-100 rounded transition-colors"
+                            title="View Details"
+                          >
+                            <FiEye className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => handleEditAssessment(assessment)}
+                            className="p-2 text-green-600 hover:bg-green-100 rounded transition-colors"
+                            title="Edit Assessment"
+                          >
+                            <FiEdit className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Generate Report Button */}
           <div className="mt-6 flex justify-end">
             <button
               onClick={handleGenerateReport}
-              disabled={!selectedExaminee}
+              disabled={!selectedExaminee || examineeAssessments.length === 0}
               className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
             >
-              Generate Report
+              Generate Report ({examineeAssessments.length} assessment{examineeAssessments.length !== 1 ? 's' : ''})
             </button>
           </div>
         </div>
