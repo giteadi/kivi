@@ -911,11 +911,20 @@ export default function FormsManagement() {
         reportSheetNames.push(fallbackName);
       }
 
+      // 🔥 Detect original format from template name
+      const detectFormat = (fileName) => {
+        const ext = fileName?.split('.').pop()?.toLowerCase();
+        if (['xlsx', 'xls', 'csv'].includes(ext)) return 'excel';
+        if (['doc', 'docx'].includes(ext)) return 'word';
+        return 'html';
+      };
+
       setReportPanel({
         templateName: form.name,
         allSheets: reportSheetNames,
         allData: reportSheets,
         patientName: "",
+        format: detectFormat(form.name), // 🔥 Track original format
       });
       return;
     }
@@ -1027,24 +1036,29 @@ export default function FormsManagement() {
     }
   };
 
-  // Save report (like TemplateManager) - FIXED: Use template_data instead of file
+  // Save report (like TemplateManager) - FIXED: Preserve original format
   const saveReport = async (allData, sheetList, activePatientName) => {
     try {
       // Clean template name by removing file extension
       const cleanTemplateName = reportPanel.templateName.replace(/\.[^/.]+$/, "");
-      const name = `${activePatientName || "Patient"} — ${cleanTemplateName} — ${new Date().toLocaleDateString("en-IN")}`;
-      
-      // Create a minimal docx file blob (required for upload)
+      const baseName = `${activePatientName || "Patient"} — ${cleanTemplateName} — ${new Date().toLocaleDateString("en-IN")}`;
+
       const firstSheet = sheetList[0];
       const sheetData = allData[firstSheet];
       let blob;
-      let fileName = name + ".docx";
-      
-      if (sheetData[0]?.[0] === "__html__") {
-        blob = await createDocxBlob(sheetData);
-      } else {
+      let fileName;
+
+      // 🔥 FORMAT BASED SAVE - preserve original template format
+      if (reportPanel.format === 'excel') {
+        // Excel template → save as .xlsx
         blob = sheetDataToXlsxBlob(sheetData);
-        fileName = name + ".xlsx";
+        fileName = baseName + '.xlsx';
+        console.log('[DEBUG] Saving as Excel (.xlsx) - original format preserved');
+      } else {
+        // Word/HTML template → save as .docx
+        blob = await createDocxBlob(sheetData);
+        fileName = baseName + '.docx';
+        console.log('[DEBUG] Saving as Word (.docx)');
       }
 
       if (!blob) {
@@ -1053,7 +1067,7 @@ export default function FormsManagement() {
 
       const formData = new FormData();
       formData.append('file', blob, fileName);
-      formData.append('name', name);
+      formData.append('name', baseName);
       if (currentFolderId) {
         formData.append('folder_id', String(currentFolderId));
       }
@@ -1069,7 +1083,7 @@ export default function FormsManagement() {
       await api.post('/forms/upload', formData);
       await loadForms();
       setReportPanel(null);
-      alert(`✅ Report "${name}" saved successfully!`);
+      alert(`✅ Report "${baseName}" saved successfully!`);
     } catch (err) {
       console.error('[DEBUG] Save report failed:', err);
       alert("Save failed: " + err.message);

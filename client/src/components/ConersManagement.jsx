@@ -953,11 +953,20 @@ export default function ConersManagement() {
         reportSheetNames.push(fallbackName);
       }
 
+      // 🔥 Detect original format from template name
+      const detectFormat = (fileName) => {
+        const ext = fileName?.split('.').pop()?.toLowerCase();
+        if (['xlsx', 'xls', 'csv'].includes(ext)) return 'excel';
+        if (['doc', 'docx'].includes(ext)) return 'word';
+        return 'html';
+      };
+
       setReportPanel({
         templateName: form.name,
         allSheets: reportSheetNames,
         allData: reportSheets,
         patientName: "",
+        format: detectFormat(form.name), // 🔥 Track original format
       });
       return;
     }
@@ -967,66 +976,108 @@ export default function ConersManagement() {
     alert('This coner needs to be re-uploaded to support the New Report feature. Please upload it again.');
   };
 
-  // Save report (like TemplateManager)
+  // Save report (like TemplateManager) - FIXED: Preserve original format
   const saveReport = async (allData, sheetList, activePatientName) => {
     try {
       // Clean template name by removing file extension
       const cleanTemplateName = reportPanel.templateName.replace(/\.[^/.]+$/, "");
-      const name = `${activePatientName || "Patient"} — ${cleanTemplateName} — ${new Date().toLocaleDateString("en-IN")}`;
-      
-      // Convert to FormData for upload
+      const baseName = `${activePatientName || "Patient"} — ${cleanTemplateName} — ${new Date().toLocaleDateString("en-IN")}`;
+
       const firstSheet = sheetList[0];
       const sheetData = allData[firstSheet];
       let blob;
-      
-      if (sheetData[0]?.[0] === "__html__") {
-        // Export as docx
-        blob = await exportSheetToDocx(sheetData, name + ".docx");
+      let fileName;
+
+      // 🔥 FORMAT BASED SAVE - preserve original template format
+      if (reportPanel.format === 'excel') {
+        // Excel template → save as .xlsx
+        blob = exportSheetToXlsx(sheetData, baseName + '.xlsx');
+        fileName = baseName + '.xlsx';
+        console.log('[DEBUG] Saving coner as Excel (.xlsx) - original format preserved');
       } else {
-        // Export as xlsx
-        blob = exportSheetToXlsx(sheetData, name + ".xlsx");
+        // Word/HTML template → save as .docx
+        blob = await exportSheetToDocx(sheetData, baseName + '.docx');
+        fileName = baseName + '.docx';
+        console.log('[DEBUG] Saving coner as Word (.docx)');
       }
 
       const formData = new FormData();
-      formData.append('file', blob, name + ".docx");
-      formData.append('name', name);
+      formData.append('file', blob, fileName);
+      formData.append('name', baseName);
       if (currentFolderId) {
         formData.append('folder_id', String(currentFolderId));
       }
+      
+      // ✅ CRITICAL FIX: Send template_data for proper reopen
+      const templateData = {
+        sheets: allData,
+        sheetNames: sheetList
+      };
+      formData.append('template_data', JSON.stringify(templateData));
 
+      console.log('[DEBUG] Uploading coner report with template_data...');
       await api.post('/coners/upload', formData);
       await loadForms();
       setReportPanel(null);
-      alert(`✅ Report "${name}" saved successfully!`);
+      alert(`✅ Report "${baseName}" saved successfully!`);
     } catch (err) {
       alert("Save failed: " + err.message);
     }
   };
 
-  // Parse file and open viewer
+  // Parse file and open viewer - FIXED: Use template_data directly
   const handleViewForm = async (form) => {
-    console.log('[DEBUG] handleViewForm called for coner:', form.name, 'type:', form.type);
+    console.log("[DEBUG] handleViewForm called for coner:", form.name, "type:", form.type);
     setSelectedForm(form);
     setLoading(true);
-    
+
     try {
-      const token = localStorage.getItem('token');
-      console.log('[DEBUG] Downloading coner file for viewing...');
-      
+      // ✅ CRITICAL FIX: If template_data exists → use directly (NO FILE DOWNLOAD)
+      if (form.template_data?.sheets) {
+        console.log("[DEBUG] ✅ Using template_data directly - no file download needed");
+
+        const sheets = form.template_data.sheets;
+        const sheetNames = form.template_data.sheetNames || Object.keys(sheets);
+
+        console.log("[DEBUG] Sheet names:", sheetNames);
+
+        // Convert to sheet objects
+        const loadedSheets = sheetNames.map((name) => ({
+          name,
+          data: sheets[name] || [],
+          formulaCache: {},
+        }));
+
+        setSheets(loadedSheets);
+        setSheetData(sheets[sheetNames[0]] || []);
+        setActiveSheet(0);
+        setShowViewer(true);
+        setLoading(false);
+
+        console.log("[DEBUG] ✅ Direct render complete");
+        return;
+      }
+
+      // ❌ FALLBACK: Only download if no template_data (old files)
+      console.warn("[DEBUG] ⚠️ No template_data found, falling back to file download");
+
+      const token = localStorage.getItem("token");
+      console.log("[DEBUG] Downloading coner file for viewing...");
+
       const response = await fetch(
         `https://dashboard.iplanbymsl.in/api/coners/${form.id}/download`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (!response.ok) {
-        console.error('[DEBUG] Download failed:', response.status);
+        console.error("[DEBUG] Download failed:", response.status);
         throw new Error(`Server error: ${response.status}`);
       }
-      
+
       const blob = await response.blob();
-      console.log('[DEBUG] File downloaded, blob size:', blob.size);
+      console.log("[DEBUG] File downloaded, blob size:", blob.size);
       const ext = form.name.match(/\.([^.]+)$/)?.[1]?.toLowerCase();
-      console.log('[DEBUG] File extension:', ext);
+      console.log("[DEBUG] File extension:", ext);
 
       if (['xlsx', 'xls', 'csv'].includes(ext)) {
         console.log('[DEBUG] Processing Excel file for viewing...');
