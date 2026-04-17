@@ -810,13 +810,31 @@ export default function TemplateManager() {
 
   const openView = (tpl) => { setActiveTemplate(tpl); setPanel("view"); };
 
+  // Default MindSaid Learning Centre header HTML for new reports
+  const DEFAULT_REPORT_HEADER = `<div style="margin-bottom:20px;padding:20px;background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;">
+    <div style="display:flex;align-items:center;gap:20px;">
+      <div style="flex-shrink:0;">
+        <img src="https://mindsaidlearning.com/logo.png" alt="MindSaid Learning Centre" style="max-width:200px;height:auto;" onerror="this.style.display='none'" />
+      </div>
+      <div style="flex:1;">
+        <h1 style="margin:0 0 5px 0;color:#333;font-size:24px;">MindSaid Learning Centre</h1>
+        <p style="margin:0;color:#666;font-size:14px;">Learning This Ability</p>
+        <p style="margin:5px 0 0 0;color:#666;font-size:12px;">Psycho-educational Assessment & Intervention Centre</p>
+        <p style="margin:5px 0 0 0;color:#666;font-size:12px;">
+          Tel: +918928186952 | <a href="mailto:contact@mindsaidlearning.com" style="color:#4A90E2;">contact@mindsaidlearning.com</a><br/>
+          <a href="https://www.mindsaidlearning.com" style="color:#4A90E2;">www.mindsaidlearning.com</a>
+        </p>
+      </div>
+    </div>
+  </div>`;
+
   const openCreateReport = (tpl) => {
     const defaultSheetName = tpl.sheetNames[0] || "Report";
     setReportPanel({
       templateName: tpl.name,
       allSheets: [defaultSheetName],
       allData: {
-        [defaultSheetName]: [["__html__", "<p><br></p>"]]
+        [defaultSheetName]: [["__html__", DEFAULT_REPORT_HEADER + "<p><br></p>"]]
       },
       patientName: ""
     });
