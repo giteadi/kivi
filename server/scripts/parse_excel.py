@@ -466,10 +466,16 @@ def parse_docx_to_html(file_path):
     import base64
 
     try:
+        # First check if file is a valid ZIP archive
+        if not zipfile.is_zipfile(file_path):
+            return {'ok': False, 'error': 'Invalid DOCX: file is not a valid ZIP archive. File may be corrupted.'}
+            
         with zipfile.ZipFile(file_path, 'r') as dz:
             all_files = set(dz.namelist())
             if 'word/document.xml' not in all_files:
-                return {'ok': False, 'error': 'Invalid DOCX: no document.xml'}
+                # Log what files ARE present for debugging
+                log(f"  DOCX validation failed. Files in archive: {sorted(list(all_files)[:20])}")
+                return {'ok': False, 'error': 'Invalid DOCX: no document.xml. File may be corrupted or not a valid Word document.'}
 
             doc_xml = dz.read('word/document.xml')
             root = safe_xml_parse(doc_xml)

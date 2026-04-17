@@ -448,6 +448,9 @@ export default function ConersManagement() {
 
   const [showNewDocModal, setShowNewDocModal] = useState(false);
 
+  // Report panel state (like TemplateManager)
+  const [reportPanel, setReportPanel] = useState(null);
+
   // Folder state
   const [folders, setFolders] = useState([]);
   const [currentFolderId, setCurrentFolderId] = useState(null);
@@ -861,24 +864,172 @@ export default function ConersManagement() {
     return evalExpr(formulaBody);
   }
 
+  // Extract header from HTML content (like TemplateManager)
+  const extractHeaderFromHtml = (html) => {
+    if (!html) return "";
+    
+    // Try to find header div with specific styling
+    const headerMatch = html.match(/<div[^>]*style="[^"]*margin-bottom[^"]*background[^"]*"[^>]*>.*?<\/div>/is);
+    if (headerMatch) return headerMatch[0];
+    
+    // Fallback: find first div with background/padding/margin
+    const divMatch = html.match(/<div[^>]*style="[^"]*(?:background|padding|margin)[^"]*"[^>]*>.*?<\/div>/is);
+    if (divMatch) return divMatch[0];
+    
+    // Try to find table with logo or MindSaid text
+    const tableMatch = html.match(/<table[^>]*>.*?MindSaid.*?<\/table>/is);
+    if (tableMatch) return tableMatch[0];
+    
+    return "";
+  };
+
+  // Open Create Report panel (like TemplateManager's New Report)
+  const openCreateReport = async (form) => {
+    console.log('[DEBUG] openCreateReport called for form:', form.name, 'type:', form.type);
+    
+    // Check if form has template_data (parsed sheets)
+    if (form.template_data?.sheets) {
+      console.log('[DEBUG] Using stored template_data from coner');
+      const reportSheets = {};
+      const reportSheetNames = [];
+      
+      const sheetNames = form.template_data.sheetNames || Object.keys(form.template_data.sheets);
+      
+      sheetNames.forEach(sheetName => {
+        const sheetData = form.template_data.sheets[sheetName];
+        if (!sheetData) return;
+
+        // Deep clone to avoid mutating the form data
+        let clonedData;
+        try {
+          clonedData = structuredClone(sheetData);
+        } catch {
+          clonedData = JSON.parse(JSON.stringify(sheetData));
+        }
+
+        // Extract header only, rest content should be empty for new report
+        if (clonedData[0]?.[0] === "__html__") {
+          const html = clonedData[0][1] || "";
+          
+          // Extract header div (the one with specific styling that contains logo)
+          const headerMatch = html.match(/<div[^>]*style="[^"]*margin-bottom[^"]*background[^"]*"[^>]*>.*?<\/div>/is);
+          
+          let headerHtml = "";
+          
+          if (headerMatch) {
+            headerHtml = headerMatch[0];
+          } else {
+            // Fallback: try to find first div that looks like a header
+            const divMatch = html.match(/<div[^>]*style="[^"]*(?:background|padding|margin)[^"]*"[^>]*>.*?<\/div>/is);
+            if (divMatch) {
+              headerHtml = divMatch[0];
+            }
+          }
+          
+          // If still no header found, try to find table with logo or MindSaid text
+          if (!headerHtml) {
+            const tableMatch = html.match(/<table[^>]*>.*?MindSaid.*?<\/table>/is);
+            if (tableMatch) {
+              headerHtml = tableMatch[0];
+            }
+          }
+          
+          // Use extracted header or default
+          const finalHeader = headerHtml || DEFAULT_REPORT_HEADER;
+          clonedData = [["__html__", finalHeader + "<p><br></p>"]];
+        } else {
+          // For non-HTML data, use default header
+          clonedData = [["__html__", DEFAULT_REPORT_HEADER + "<p><br></p>"]];
+        }
+
+        reportSheets[sheetName] = clonedData;
+        reportSheetNames.push(sheetName);
+      });
+
+      // Fallback if form has no sheets
+      if (reportSheetNames.length === 0) {
+        const fallbackName = "Report";
+        reportSheets[fallbackName] = [["__html__", DEFAULT_REPORT_HEADER + "<p><br></p>"]];
+        reportSheetNames.push(fallbackName);
+      }
+
+      setReportPanel({
+        templateName: form.name,
+        allSheets: reportSheetNames,
+        allData: reportSheets,
+        patientName: "",
+      });
+      return;
+    }
+    
+    // If no template_data, show error
+    console.error('[DEBUG] Coner has no template_data. Please re-upload the file.');
+    alert('This coner needs to be re-uploaded to support the New Report feature. Please upload it again.');
+  };
+
+  // Save report (like TemplateManager)
+  const saveReport = async (allData, sheetList, activePatientName) => {
+    try {
+      // Clean template name by removing file extension
+      const cleanTemplateName = reportPanel.templateName.replace(/\.[^/.]+$/, "");
+      const name = `${activePatientName || "Patient"} — ${cleanTemplateName} — ${new Date().toLocaleDateString("en-IN")}`;
+      
+      // Convert to FormData for upload
+      const firstSheet = sheetList[0];
+      const sheetData = allData[firstSheet];
+      let blob;
+      
+      if (sheetData[0]?.[0] === "__html__") {
+        // Export as docx
+        blob = await exportSheetToDocx(sheetData, name + ".docx");
+      } else {
+        // Export as xlsx
+        blob = exportSheetToXlsx(sheetData, name + ".xlsx");
+      }
+
+      const formData = new FormData();
+      formData.append('file', blob, name + ".docx");
+      formData.append('name', name);
+      if (currentFolderId) {
+        formData.append('folder_id', String(currentFolderId));
+      }
+
+      await api.post('/coners/upload', formData);
+      await loadForms();
+      setReportPanel(null);
+      alert(`✅ Report "${name}" saved successfully!`);
+    } catch (err) {
+      alert("Save failed: " + err.message);
+    }
+  };
+
   // Parse file and open viewer
   const handleViewForm = async (form) => {
+    console.log('[DEBUG] handleViewForm called for coner:', form.name, 'type:', form.type);
     setSelectedForm(form);
     setLoading(true);
     
     try {
       const token = localStorage.getItem('token');
+      console.log('[DEBUG] Downloading coner file for viewing...');
+      
       const response = await fetch(
         `https://dashboard.iplanbymsl.in/api/coners/${form.id}/download`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if (!response.ok) throw new Error(`Server error: ${response.status}`);
-
+      if (!response.ok) {
+        console.error('[DEBUG] Download failed:', response.status);
+        throw new Error(`Server error: ${response.status}`);
+      }
+      
       const blob = await response.blob();
+      console.log('[DEBUG] File downloaded, blob size:', blob.size);
       const ext = form.name.match(/\.([^.]+)$/)?.[1]?.toLowerCase();
+      console.log('[DEBUG] File extension:', ext);
 
       if (['xlsx', 'xls', 'csv'].includes(ext)) {
+        console.log('[DEBUG] Processing Excel file for viewing...');
         const data = await blob.arrayBuffer();
         const workbook = XLSX.read(data, { 
           type: "array",
@@ -929,42 +1080,58 @@ export default function ConersManagement() {
         setSheetData(evaluatedSheets[0]?.data || []);
         setActiveSheet(0);
       } else if (['doc', 'docx'].includes(ext)) {
+        console.log('[DEBUG] Processing Word document for viewing...');
+        console.log('[DEBUG] Calling /api/templates/upload for Word parsing...');
+        
         // Backend API se parse karo taaki base64 images aa sake (mammoth removed)
         const parseFormData = new FormData();
         parseFormData.append('file', blob, form.name);
         parseFormData.append('parse_only', 'true');
         
-        const parseResponse = await fetch(
-          `${import.meta.env.VITE_API_URL || "https://dashboard.iplanbymsl.in/api"}/templates/upload`,
-          { 
-            method: "POST", 
-            headers: { 
-              Authorization: `Bearer ${token}` 
-            }, 
-            body: parseFormData 
-          }
-        );
+        const apiUrl = `${import.meta.env.VITE_API_URL || "https://dashboard.iplanbymsl.in/api"}/templates/upload`;
+        console.log('[DEBUG] API URL:', apiUrl);
+        
+        const parseResponse = await fetch(apiUrl, {
+          method: "POST", 
+          headers: { Authorization: `Bearer ${token}` }, 
+          body: parseFormData 
+        });
+        
+        console.log('[DEBUG] View - Parse response status:', parseResponse.status);
+        console.log('[DEBUG] View - Parse response ok:', parseResponse.ok);
         
         if (parseResponse.ok) {
           const parseResult = await parseResponse.json();
+          console.log('[DEBUG] View - Parse result success:', parseResult.success);
+          console.log('[DEBUG] View - Has sheets:', !!parseResult.data?.template_data?.sheets);
+          
           if (parseResult.data?.template_data?.sheets) {
             const sheets = parseResult.data.template_data.sheets;
             const sheetNames = Object.keys(sheets);
+            console.log('[DEBUG] View - Sheet names:', sheetNames);
+            
             const firstSheet = sheets[sheetNames[0]];
             
             if (firstSheet && firstSheet[0]?.[0] === "__html__") {
               const htmlContent = firstSheet[0][1] || "";
+              console.log('[DEBUG] View - HTML content length:', htmlContent.length);
               setSheetData([["__html__", htmlContent]]);
             } else {
+              console.log('[DEBUG] View - No __html__ format, using raw data');
               setSheetData(firstSheet || [["__html__", "<p><br></p>"]]);
             }
           } else {
+            console.warn('[DEBUG] View - No sheets in parse result');
             setSheetData([["__html__", "<p>Document parse nahi hua.</p>"]]);
           }
         } else {
-          setSheetData([["__html__", "<p>Document load nahi hua. Please try again.</p>"]]);
+          const errorText = await parseResponse.text();
+          console.error('[DEBUG] View - Parse FAILED! Status:', parseResponse.status);
+          console.error('[DEBUG] View - Error response body:', errorText);
+          setSheetData([["__html__", "<p>Document load nahi hua. Error: " + parseResponse.status + "</p>"]]);
         }
         setSheets([{ name: "Document", data: [] }]);
+        console.log('[DEBUG] Word document processing complete');
       } else {
         setSheetData([["__html__", "<p>Preview not available. Download to view.</p>"]]);
         setSheets([{ name: "Preview", data: [] }]);
@@ -1573,6 +1740,13 @@ export default function ConersManagement() {
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
                       <button 
+                        style={{ ...css.iconBtn, flexShrink: 0, background: "#059669", color: "#fff", borderColor: "#059669" }}
+                        onClick={(e) => { e.stopPropagation(); openCreateReport(form); }}
+                        title="New Report"
+                      >
+                        📋
+                      </button>
+                      <button 
                         style={{ ...css.iconBtn, flexShrink: 0, border: "none", background: "transparent" }}
                         onClick={(e) => handleDuplicateForm(form, e)}
                         title="Duplicate (exact copy download)"
@@ -1648,6 +1822,148 @@ export default function ConersManagement() {
                 disabled={!renameFolderName.trim()}
               >
                 Rename
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report Edit Panel (like TemplateManager) */}
+      {reportPanel && (
+        <ReportEditPanel
+          reportPanel={reportPanel}
+          onBack={() => setReportPanel(null)}
+          onSave={saveReport}
+        />
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// REPORT EDIT PANEL (like TemplateManager's ReportEditPanel)
+// ══════════════════════════════════════════════════════════════════════════════
+function ReportEditPanel({ reportPanel, onBack, onSave }) {
+  const { templateName, allSheets, allData, patientName: initPatient } = reportPanel;
+
+  const [activeSheet, setActiveSheet] = useState(allSheets[0]);
+  const [reportData, setReportData] = useState(allData);
+  const [reportPatient, setReportPatient] = useState(initPatient || "");
+  const [sheetList, setSheetList] = useState(allSheets);
+  const [showNewSheetModal, setShowNewSheetModal] = useState(false);
+  const [newSheetName, setNewSheetName] = useState("");
+
+  const viewerRef = useRef(null);
+
+  const addNewSheet = () => {
+    const name = newSheetName.trim() || `Sheet ${sheetList.length + 1}`;
+    if (sheetList.includes(name)) { alert("Sheet name already exists!"); return; }
+    setReportData(prev => ({ ...prev, [name]: [["__html__", "<p><br></p>"]] }));
+    setSheetList(prev => [...prev, name]);
+    setActiveSheet(name);
+    setShowNewSheetModal(false);
+    setNewSheetName("");
+  };
+
+  const patientIcon = "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z";
+
+  return (
+    <div style={css.panel}>
+      {/* Header - Green like TemplateManager */}
+      <div style={{ ...css.panelHeader, background: "#064E3B", borderColor: "#065F46" }}>
+        <button
+          style={{ ...css.btn("ghost"), color: "#D1FAE5", borderColor: "#065F46" }}
+          onClick={() => { if (confirm("Discard changes and go back?")) onBack(); }}
+        >
+          <Icon d={icons.back} size={15} /> Back
+        </button>
+        <span style={{ width: 1, height: 24, background: "#065F46" }} />
+        <Icon d={patientIcon} size={18} stroke="#6EE7B7" />
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ color: "#D1FAE5", fontWeight: 600, fontSize: 14 }}>Patient Report:</span>
+          <input
+            value={reportPatient}
+            onChange={e => setReportPatient(e.target.value)}
+            placeholder="Enter patient name..."
+            style={{
+              background: "#065F46", border: "1px solid #059669", color: "#fff",
+              borderRadius: 6, padding: "4px 10px", fontSize: 13, outline: "none",
+              fontFamily: "inherit", width: 200,
+            }}
+          />
+        </div>
+        <span style={{ color: "#6EE7B7", fontSize: 12, marginLeft: 4 }}>— {templateName.replace(/\.[^/.]+$/, "")}</span>
+
+        <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
+          <button style={css.btn("green")} onClick={() => {
+            const flushed = viewerRef.current?.getCurrentData?.({ allowEmpty: true });
+            const dataToSave = flushed
+              ? { ...reportData, [activeSheet]: flushed }
+              : reportData;
+            onSave(dataToSave, sheetList, reportPatient);
+          }}>
+            <Icon d={icons.save} size={14} /> Save Report
+          </button>
+        </div>
+      </div>
+
+      {/* Sheet tabs */}
+      <div style={{ ...css.sheetTabs, background: "#F0FDF4", borderColor: "#BBF7D0" }}>
+        {sheetList.map(name => (
+          <button
+            key={name}
+            style={{
+              ...css.tab(name === activeSheet),
+              ...(name === activeSheet ? { background: "#059669", borderColor: "#059669" } : {}),
+            }}
+            onClick={() => setActiveSheet(name)}
+          >
+            {name}
+          </button>
+        ))}
+        <button
+          onClick={() => setShowNewSheetModal(true)}
+          title="Add new sheet"
+          style={{
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            width: 28, height: 28, borderRadius: 6,
+            border: "1px dashed #6EE7B7", background: "rgba(255,255,255,0.3)",
+            color: "#065F46", cursor: "pointer", fontSize: 18, fontWeight: 300, flexShrink: 0,
+          }}
+        >+</button>
+      </div>
+
+      <ReportSheetViewer
+        ref={viewerRef}
+        key={activeSheet}
+        data={reportData[activeSheet] || [["__html__", "<p><br></p>"]]}
+        readOnly={false}
+        reportMode={true}
+        onDataChange={newData => setReportData(prev => ({ ...prev, [activeSheet]: newData }))}
+      />
+
+      {/* New Sheet Modal */}
+      {showNewSheetModal && (
+        <div style={css.overlay}>
+          <div style={{ ...css.modal, maxWidth: 380 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>➕ Add New Sheet</h3>
+              <button style={css.iconBtn} onClick={() => setShowNewSheetModal(false)}>
+                <Icon d={icons.x} size={16} />
+              </button>
+            </div>
+            <input
+              style={css.input}
+              placeholder={`Sheet ${sheetList.length + 1}`}
+              value={newSheetName}
+              onChange={e => setNewSheetName(e.target.value)}
+              autoFocus
+              onKeyDown={e => { if (e.key === "Enter") addNewSheet(); if (e.key === "Escape") setShowNewSheetModal(false); }}
+            />
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 16 }}>
+              <button style={css.btn("ghost")} onClick={() => setShowNewSheetModal(false)}>Cancel</button>
+              <button style={css.btn("primary")} onClick={addNewSheet}>
+                <Icon d={icons.plus} size={14} /> Create Sheet
               </button>
             </div>
           </div>

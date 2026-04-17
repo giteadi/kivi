@@ -67,7 +67,7 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    const { name, folder_id, client_id } = req.body;
+    const { name, folder_id, client_id, template_data } = req.body;
     const fileName = name || req.file.originalname;
     const ext = path.extname(req.file.originalname).toLowerCase();
     
@@ -78,9 +78,75 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
     else if (['.doc', '.docx'].includes(ext)) fileType = 'word';
     else if (ext === '.pdf') fileType = 'pdf';
 
+    // Use provided template_data from frontend, or parse file as fallback
+    let templateData = null;
+    
+    // If frontend sent template_data, use it directly (for reports with HTML content)
+    if (template_data) {
+      try {
+        templateData = typeof template_data === 'string' ? template_data : JSON.stringify(template_data);
+        console.log('[DEBUG] Using template_data from frontend request');
+      } catch (e) {
+        console.warn('Failed to process frontend template_data:', e);
+      }
+    }
+    try {
+      const { spawn } = require('child_process');
+      const pythonPath = process.env.PYTHON_PATH || 'python3';
+      const parserScript = path.join(__dirname, '../scripts/parse_excel.py');
+      
+      const parsePromise = new Promise((resolve, reject) => {
+        const python = spawn(pythonPath, [parserScript, req.file.path]);
+        let dataString = '';
+        let errorString = '';
+
+        python.stdout.on('data', (data) => {
+          dataString += data.toString();
+        });
+
+        python.stderr.on('data', (data) => {
+          errorString += data.toString();
+        });
+
+        python.on('close', (code) => {
+          if (code !== 0) {
+            console.warn('Python parser warning:', errorString);
+            resolve(null); // Don't fail upload if parsing fails
+          } else {
+            try {
+              const parsed = JSON.parse(dataString);
+              resolve(parsed);
+            } catch (e) {
+              console.warn('Failed to parse Python output:', e);
+              resolve(null);
+            }
+          }
+        });
+
+        python.on('error', (err) => {
+          console.warn('Python spawn error:', err);
+          resolve(null);
+        });
+      });
+
+      // Only use parsed data if we don't already have template_data from frontend
+      if (!templateData) {
+        const parsedData = await parsePromise;
+        if (parsedData && parsedData.ok) {
+          templateData = JSON.stringify({
+            sheets: parsedData.sheets,
+            sheetNames: parsedData.names,
+            row_heights: parsedData.row_heights || {}
+          });
+        }
+      }
+    } catch (parseError) {
+      console.warn('File parsing failed, continuing without template_data:', parseError);
+    }
+
     const query = `
-      INSERT INTO coners (name, type, file_path, file_size, folder_id, client_id, created_by, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+      INSERT INTO coners (name, type, file_path, file_size, folder_id, client_id, template_data, created_by, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
     `;
     
     const [result] = await getDb().promise().query(query, [
@@ -90,6 +156,7 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
       req.file.size,
       folder_id || null,
       client_id || null,
+      templateData,
       req.user.id
     ]);
 
@@ -138,7 +205,8 @@ router.get('/:id/download', authenticateToken, async (req, res) => {
     };
     
     res.setHeader('Content-Type', contentTypes[ext] || 'application/octet-stream');
-    res.setHeader('Content-Disposition', `inline; filename="${coner.name}"`);
+    const encodedFilename = encodeURIComponent(coner.name);
+    res.setHeader('Content-Disposition', `inline; filename*=UTF-8''${encodedFilename}`);
     
     const fileStream = fs.createReadStream(filePath);
     fileStream.pipe(res);
