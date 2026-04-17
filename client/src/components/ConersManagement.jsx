@@ -929,20 +929,40 @@ export default function ConersManagement() {
         setSheetData(evaluatedSheets[0]?.data || []);
         setActiveSheet(0);
       } else if (['doc', 'docx'].includes(ext)) {
-        // mammoth se HTML render karo aur editable banao
-        try {
-          const mammoth = await import('mammoth');
-          const arrayBuf = await blob.arrayBuffer();
-          const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuf });
-          const html = result.value || '<p>Document empty hai.</p>';
-          setSheetData([["__html__", `
-            ${DEFAULT_REPORT_HEADER}
-            <div style="font-family:Georgia,serif;max-width:800px;margin:0 auto;padding:20px;line-height:1.6;">
-              ${html}
-            </div>
-          `]]);
-        } catch(e) {
-          setSheetData([["__html__", DEFAULT_REPORT_HEADER + "<p>Word preview load nahi hua. Export karke dekho.</p>"]]);
+        // Backend API se parse karo taaki base64 images aa sake (mammoth removed)
+        const parseFormData = new FormData();
+        parseFormData.append('file', blob, form.name);
+        parseFormData.append('parse_only', 'true');
+        
+        const parseResponse = await fetch(
+          `${import.meta.env.VITE_API_URL || "https://dashboard.iplanbymsl.in/api"}/templates/upload`,
+          { 
+            method: "POST", 
+            headers: { 
+              Authorization: `Bearer ${token}` 
+            }, 
+            body: parseFormData 
+          }
+        );
+        
+        if (parseResponse.ok) {
+          const parseResult = await parseResponse.json();
+          if (parseResult.data?.template_data?.sheets) {
+            const sheets = parseResult.data.template_data.sheets;
+            const sheetNames = Object.keys(sheets);
+            const firstSheet = sheets[sheetNames[0]];
+            
+            if (firstSheet && firstSheet[0]?.[0] === "__html__") {
+              const htmlContent = firstSheet[0][1] || "";
+              setSheetData([["__html__", htmlContent]]);
+            } else {
+              setSheetData(firstSheet || [["__html__", "<p><br></p>"]]);
+            }
+          } else {
+            setSheetData([["__html__", "<p>Document parse nahi hua.</p>"]]);
+          }
+        } else {
+          setSheetData([["__html__", "<p>Document load nahi hua. Please try again.</p>"]]);
         }
         setSheets([{ name: "Document", data: [] }]);
       } else {
