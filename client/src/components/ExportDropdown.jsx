@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 
-const ExportDropdown = ({ onExportDocx, onExportXlsx, ghost = false }) => {
+const ExportDropdown = ({ onExportDocx, onExportXlsx, onExportPdf, ghost = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -20,6 +20,8 @@ const ExportDropdown = ({ onExportDocx, onExportXlsx, ghost = false }) => {
         await onExportDocx();
       } else if (type === 'xlsx' && onExportXlsx) {
         await onExportXlsx();
+      } else if (type === 'pdf' && onExportPdf) {
+        await onExportPdf();
       }
     } catch (err) {
       console.error('Export failed:', err);
@@ -95,7 +97,7 @@ const ExportDropdown = ({ onExportDocx, onExportXlsx, ghost = false }) => {
       {isOpen && (
         <div style={dropdownStyle}>
           <div
-            style={{ ...itemStyle, borderRadius: '6px 6px 0 0' }}
+            style={itemStyle}
             onClick={async () => await handleExport('docx')}
             onMouseEnter={(e) => { e.currentTarget.style.background = '#F3F4F6'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
@@ -110,7 +112,7 @@ const ExportDropdown = ({ onExportDocx, onExportXlsx, ghost = false }) => {
             Word (.docx)
           </div>
           <div
-            style={{ ...itemStyle, borderRadius: '0 0 6px 6px', borderBottom: 'none' }}
+            style={itemStyle}
             onClick={async () => await handleExport('xlsx')}
             onMouseEnter={(e) => { e.currentTarget.style.background = '#F3F4F6'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
@@ -121,6 +123,20 @@ const ExportDropdown = ({ onExportDocx, onExportXlsx, ghost = false }) => {
               <line x1="9" y1="21" x2="9" y2="9" />
             </svg>
             Excel (.xlsx)
+          </div>
+          <div
+            style={{ ...itemStyle, borderRadius: '0 0 6px 6px', borderBottom: 'none' }}
+            onClick={async () => await handleExport('pdf')}
+            onMouseEnter={(e) => { e.currentTarget.style.background = '#F3F4F6'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+            </svg>
+            PDF (.pdf)
           </div>
         </div>
       )}

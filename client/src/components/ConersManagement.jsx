@@ -4,6 +4,8 @@ import {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
   AlignmentType, HeadingLevel, BorderStyle, WidthType, ShadingType, LevelFormat, ImageRun,
 } from "docx";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import api from "../services/api";
 import Sidebar from "./Sidebar";
 import ReportSheetViewer from "./ReportSheetViewer";
@@ -536,6 +538,110 @@ function exportSheetToXlsx(sheetData, fileName) {
   const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
   const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   return blob;
+}
+
+// ─── Sheet data → .pdf ─────────────────────────────────────────────────────────
+async function exportSheetToPdf(sheetData, fileName, viewerRef) {
+  try {
+    // Get HTML content from viewer
+    let htmlContent = "";
+    
+    if (sheetData[0]?.[0] === "__html__") {
+      // Word/HTML format
+      htmlContent = sheetData[0][1] || "";
+    } else {
+      // Excel format - convert to HTML table
+      htmlContent = "<table style='width:100%;border-collapse:collapse;'>";
+      sheetData.forEach((row, rIdx) => {
+        htmlContent += "<tr>";
+        row.forEach(cell => {
+          const tag = rIdx === 0 ? "th" : "td";
+          htmlContent += `<${tag} style='border:1px solid #555;padding:8px;text-align:left;'>${cell || ""}</${tag}>`;
+        });
+        htmlContent += "</tr>";
+      });
+      htmlContent += "</table>";
+    }
+
+    // Create temporary container
+    const container = document.createElement("div");
+    container.style.position = "absolute";
+    container.style.left = "-9999px";
+    container.style.top = "0";
+    container.style.width = "210mm"; // A4 width
+    container.style.padding = "20mm";
+    container.style.background = "#fff";
+    container.style.fontFamily = "'Times New Roman', Georgia, serif";
+    container.style.fontSize = "13px";
+    container.style.lineHeight = "1.7";
+    container.style.color = "#111";
+    container.innerHTML = htmlContent;
+    
+    // Add table styles
+    const tables = container.querySelectorAll("table");
+    tables.forEach(table => {
+      table.style.width = "100%";
+      table.style.borderCollapse = "collapse";
+      table.style.marginBottom = "16px";
+    });
+    
+    const cells = container.querySelectorAll("td, th");
+    cells.forEach(cell => {
+      cell.style.border = "1px solid #555";
+      cell.style.padding = "8px";
+      cell.style.textAlign = "left";
+    });
+    
+    const headers = container.querySelectorAll("th");
+    headers.forEach(th => {
+      th.style.background = "#f0f0f0";
+      th.style.fontWeight = "bold";
+    });
+
+    document.body.appendChild(container);
+
+    // Convert to canvas
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: "#ffffff",
+    });
+
+    document.body.removeChild(container);
+
+    // Create PDF
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    });
+
+    const imgWidth = 210; // A4 width in mm
+    const pageHeight = 297; // A4 height in mm
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    // Add first page
+    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    // Add additional pages if needed
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+
+    // Save PDF
+    pdf.save(fileName.replace(/\.[^/.]+$/, "") + ".pdf");
+  } catch (err) {
+    console.error("[PDF Export Error]", err);
+    alert("PDF export failed: " + err.message);
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1543,6 +1649,12 @@ export default function ConersManagement() {
 
   // Export - Download to user
   const handleExport = async (type) => {
+    if (type === "pdf") {
+      // PDF export doesn't return blob, it downloads directly
+      await exportSheetToPdf(sheetData, selectedForm?.name || "form.pdf", viewerRef);
+      return;
+    }
+
     let blob;
     if (type === "docx") {
       blob = await exportSheetToDocx(sheetData, selectedForm?.name || "form.docx");
@@ -1599,6 +1711,7 @@ export default function ConersManagement() {
                 <option value="" disabled>Export...</option>
                 <option value="xlsx">Excel (.xlsx)</option>
                 <option value="docx">Word (.docx)</option>
+                <option value="pdf">PDF (.pdf)</option>
               </select>
             </div>
           </div>
@@ -2134,6 +2247,59 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
         <span style={{ color: "#6EE7B7", fontSize: 12, marginLeft: 4 }}>— {templateName.replace(/\.[^/.]+$/, "")}</span>
 
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
+          <select
+            style={{ ...css.btn("ghost"), color: "#D1FAE5", borderColor: "#065F46" }}
+            onChange={async (e) => {
+              if (!e.target.value) return;
+              const type = e.target.value;
+              e.target.value = ""; // Reset dropdown
+              
+              const flushed = viewerRef.current?.getCurrentData?.({ allowEmpty: true });
+              const dataToExport = flushed
+                ? { ...reportData, [activeSheet]: flushed }
+                : reportData;
+              
+              // Export to local file
+              const cleanTemplate = templateName.replace(/\.[^/.]+$/, "");
+              const name = `${reportPatient || "Patient"} — ${cleanTemplate} — ${new Date().toLocaleDateString("en-IN")}`;
+              const firstSheet = sheetList[0];
+              const sheetData = dataToExport[firstSheet];
+              
+              if (type === "pdf") {
+                await exportSheetToPdf(sheetData, name + ".pdf", viewerRef);
+              } else if (sheetData[0]?.[0] === "__html__") {
+                const blob = await exportSheetToDocx(sheetData, name + ".docx");
+                if (blob) {
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = name + ".docx";
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                }
+              } else {
+                const blob = exportSheetToXlsx(sheetData, name + ".xlsx");
+                if (blob) {
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = name + ".xlsx";
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                }
+              }
+            }}
+            defaultValue=""
+          >
+            <option value="" disabled>Export...</option>
+            <option value="xlsx">Excel (.xlsx)</option>
+            <option value="docx">Word (.docx)</option>
+            <option value="pdf">PDF (.pdf)</option>
+          </select>
           <button style={css.btn("green")} onClick={() => {
             const flushed = viewerRef.current?.getCurrentData?.({ allowEmpty: true });
             const dataToSave = flushed

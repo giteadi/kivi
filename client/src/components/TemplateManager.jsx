@@ -10,6 +10,8 @@ import {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
   AlignmentType, HeadingLevel, BorderStyle, WidthType, ShadingType, LevelFormat, ImageRun,
 } from "docx";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import api from "../services/api";
 import ReportSheetViewer from "./ReportSheetViewer";
 import Sidebar from "./Sidebar";
@@ -464,6 +466,112 @@ function buildAndDownloadXlsx(allData, sheetList, patientName, templateName) {
   XLSX.writeFile(wb, `${patientName || "Report"}_${templateName || "export"}.xlsx`);
 }
 
+// ─── Export to PDF ────────────────────────────────────────────────────────────
+async function exportToPdf(allData, sheetNames, patientName, templateName, viewerRef = null) {
+  try {
+    // Get HTML content from first sheet
+    const firstSheet = sheetNames[0];
+    const sheetData = allData[firstSheet];
+    let htmlContent = "";
+    
+    if (sheetData[0]?.[0] === "__html__") {
+      // Word/HTML format
+      htmlContent = sheetData[0][1] || "";
+    } else {
+      // Excel format - convert to HTML table
+      htmlContent = "<table style='width:100%;border-collapse:collapse;'>";
+      sheetData.forEach((row, rIdx) => {
+        htmlContent += "<tr>";
+        row.forEach(cell => {
+          const tag = rIdx === 0 ? "th" : "td";
+          htmlContent += `<${tag} style='border:1px solid #555;padding:8px;text-align:left;'>${cell || ""}</${tag}>`;
+        });
+        htmlContent += "</tr>";
+      });
+      htmlContent += "</table>";
+    }
+
+    // Create temporary container
+    const container = document.createElement("div");
+    container.style.position = "absolute";
+    container.style.left = "-9999px";
+    container.style.top = "0";
+    container.style.width = "210mm"; // A4 width
+    container.style.padding = "20mm";
+    container.style.background = "#fff";
+    container.style.fontFamily = "'Times New Roman', Georgia, serif";
+    container.style.fontSize = "13px";
+    container.style.lineHeight = "1.7";
+    container.style.color = "#111";
+    container.innerHTML = htmlContent;
+    
+    // Add table styles
+    const tables = container.querySelectorAll("table");
+    tables.forEach(table => {
+      table.style.width = "100%";
+      table.style.borderCollapse = "collapse";
+      table.style.marginBottom = "16px";
+    });
+    
+    const cells = container.querySelectorAll("td, th");
+    cells.forEach(cell => {
+      cell.style.border = "1px solid #555";
+      cell.style.padding = "8px";
+      cell.style.textAlign = "left";
+    });
+    
+    const headers = container.querySelectorAll("th");
+    headers.forEach(th => {
+      th.style.background = "#f0f0f0";
+      th.style.fontWeight = "bold";
+    });
+
+    document.body.appendChild(container);
+
+    // Convert to canvas
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: "#ffffff",
+    });
+
+    document.body.removeChild(container);
+
+    // Create PDF
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    });
+
+    const imgWidth = 210; // A4 width in mm
+    const pageHeight = 297; // A4 height in mm
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    // Add first page
+    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    // Add additional pages if needed
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+
+    // Save PDF
+    pdf.save(`${patientName || "Report"}_${templateName || "export"}.pdf`);
+  } catch (err) {
+    console.error("[PDF Export Error]", err);
+    alert("PDF export failed: " + err.message);
+  }
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // RENAME MODAL COMPONENT
 // ══════════════════════════════════════════════════════════════════════════════
@@ -585,6 +693,7 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
               XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), activeSheet.substring(0, 31));
               XLSX.writeFile(wb, `${reportPatient || "Report"}_${activeSheet}.xlsx`);
             }}
+            onExportPdf={() => exportToPdf(reportData, [activeSheet], reportPatient, activeSheet, viewerRef)}
           />
 
           <button style={css.btn("green")} onClick={() => {
@@ -691,6 +800,7 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
   const [activeSheetIdx, setActiveSheetIdx] = useState(0);
   const sheetNames = template.sheetNames || [];
   const currentSheet = sheetNames[activeSheetIdx] || sheetNames[0];
+  const viewerRef = useRef(null); // ✅ Add viewerRef
 
   const cloneSheets = useCallback((s) => {
     if (!s) return {};
@@ -742,6 +852,7 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
               XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), currentSheet.substring(0, 31));
               XLSX.writeFile(wb, `${template.name}_${currentSheet}.xlsx`);
             }}
+            onExportPdf={() => exportToPdf(localSheets, [currentSheet], template.name, currentSheet, viewerRef)}
           />
           <button style={css.btn("green")} onClick={() => onCreateReport(template)}>
             <Icon d={icons.patient} size={14} /> New Report
@@ -756,6 +867,7 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
       </div>
 
       <ReportSheetViewer
+        ref={viewerRef}
         key={currentSheet}
         data={localSheets[currentSheet] || [["__html__", "<p><br></p>"]]}
         readOnly={false}
