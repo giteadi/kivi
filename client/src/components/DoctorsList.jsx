@@ -57,7 +57,8 @@ const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDo
   const transformedDoctors = doctors.map(doctor => {
     console.log('🔄 Transforming doctor data:', doctor);
     return {
-      id: `#${doctor.id}`,
+      id: doctor.id, // ✅ Keep original ID for API calls
+      displayId: `#${doctor.id}`, // ✅ Use displayId for UI
       name: `${doctor.first_name} ${doctor.last_name}`,
       email: doctor.email,
       phone: doctor.phone,
