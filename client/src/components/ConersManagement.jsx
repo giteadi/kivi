@@ -1638,11 +1638,46 @@ export default function ConersManagement() {
     if (!selectedForm) return;
     
     try {
-      await api.put(`/coners/${selectedForm.id}/data`, {
-        sheetData: sheetData
+      // Build updated sheets object
+      const updatedSheets = {};
+      sheets.forEach((sheet, idx) => {
+        if (idx === activeSheet) {
+          // Use current sheetData for active sheet
+          updatedSheets[sheet.name] = sheetData;
+        } else {
+          // Keep other sheets as-is
+          updatedSheets[sheet.name] = sheet.data;
+        }
       });
-      alert("Changes saved!");
+      
+      const sheetNames = sheets.map(s => s.name);
+      
+      // Build template_data object
+      const templateData = {
+        sheets: updatedSheets,
+        sheetNames: sheetNames
+      };
+      
+      // Update form with new template_data
+      await api.put(`/coners/${selectedForm.id}`, {
+        name: selectedForm.name,
+        type: selectedForm.type,
+        template_data: templateData,
+        folder_id: selectedForm.folder_id
+      });
+      
+      // Update local state
+      setSelectedForm(prev => ({
+        ...prev,
+        template_data: templateData
+      }));
+      
+      // Refresh forms list
+      await fetchForms();
+      
+      alert("✅ Changes saved successfully!");
     } catch (err) {
+      console.error("Save error:", err);
       alert("Save failed: " + err.message);
     }
   };
