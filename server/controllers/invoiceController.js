@@ -627,18 +627,24 @@ class InvoiceController {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Invoice – MindSaid Learning Centre</title>
-  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Merriweather:wght@700&display=swap" rel="stylesheet" />
+  <!-- No external fonts - using system fonts for Wave-style look -->
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Lato', sans-serif;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-weight: 400;
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: #222;
       background: #e8e8e8;
       display: flex;
       justify-content: center;
       align-items: flex-start;
       min-height: 100vh;
       padding: 40px 20px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     .page {
@@ -673,7 +679,7 @@ class InvoiceController {
 
     .logo-text h1 {
       font-size: 17px;
-      font-weight: 900;
+      font-weight: bold;
       color: #1a1a2e;
       letter-spacing: 0.3px;
       line-height: 1.2;
@@ -692,13 +698,14 @@ class InvoiceController {
     }
 
     .invoice-title-block h2 {
-      font-family: 'Merriweather', serif;
-      font-size: 40px;
-      font-weight: 700;
-      letter-spacing: 4px;
-      color: #111;
-      line-height: 1;
-      margin-bottom: 14px;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 38px;
+      font-weight: 300;
+      letter-spacing: 3px;
+      color: #1a1a2e;
+      line-height: 1.2;
+      margin-bottom: 12px;
+      text-transform: uppercase;
     }
 
     .company-address {
@@ -794,7 +801,7 @@ class InvoiceController {
 
     .amount-due-box .adu-value {
       font-size: 18px;
-      font-weight: 900;
+      font-weight: bold;
       color: #111;
       margin-top: 2px;
     }
@@ -905,7 +912,7 @@ class InvoiceController {
       padding-top: 12px;
       border-top: 1px solid #ccc;
       font-size: 13.5px;
-      font-weight: 900;
+      font-weight: bold;
       color: #111;
     }
 
