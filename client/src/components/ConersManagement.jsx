@@ -55,6 +55,7 @@ const icons = {
   x:        "M18 6L6 18M6 6l12 12",
   file:     "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6",
   back:     "M19 12H5M12 19l-7-7 7-7",
+  rename:   "M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z",
 };
 
 const css = {
@@ -118,6 +119,14 @@ function htmlToPlainText(html) {
   const div = document.createElement("div");
   div.innerHTML = html;
   return div.innerText || div.textContent || "";
+}
+
+// ─── Clean display name (remove dash and everything after) ────────────────────
+function getDisplayName(fullName) {
+  if (!fullName) return "";
+  // Split by " — " (em dash) and take first part
+  const parts = fullName.split(" — ");
+  return parts[0].trim();
 }
 
 // ─── HTML → docx elements (from TemplateManager) ─────────────────────────────

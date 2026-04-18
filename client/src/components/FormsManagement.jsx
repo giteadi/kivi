@@ -55,6 +55,7 @@ const icons = {
   x:        "M18 6L6 18M6 6l12 12",
   file:     "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6",
   back:     "M19 12H5M12 19l-7-7 7-7",
+  rename:   "M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z",
 };
 
 const css = {
@@ -118,6 +119,14 @@ function htmlToPlainText(html) {
   const div = document.createElement("div");
   div.innerHTML = html;
   return div.innerText || div.textContent || "";
+}
+
+// ─── Clean display name (remove dash and everything after) ────────────────────
+function getDisplayName(fullName) {
+  if (!fullName) return "";
+  // Split by " — " (em dash) and take first part
+  const parts = fullName.split(" — ");
+  return parts[0].trim();
 }
 
 // ─── HTML → docx elements (from TemplateManager) ─────────────────────────────
@@ -558,6 +567,59 @@ function sheetDataToXlsxBlob(sheetData) {
   return new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// RENAME MODAL COMPONENT
+// ══════════════════════════════════════════════════════════════════════════════
+function RenameModal({ form, onClose, onRename }) {
+  const [newName, setNewName] = useState(form.name || "");
+  const [saving, setSaving] = useState(false);
+
+  const handleRename = async () => {
+    const trimmed = newName.trim();
+    if (!trimmed) { alert("Name cannot be empty"); return; }
+    if (trimmed === form.name) { onClose(); return; }
+    
+    setSaving(true);
+    try {
+      await api.put(`/forms/${form.id}`, {
+        name: trimmed,
+        type: form.type,
+        template_data: form.template_data,
+      });
+      onRename(form.id, trimmed);
+      onClose();
+    } catch (err) {
+      alert("Rename failed: " + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div style={css.overlay} onClick={onClose}>
+      <div style={{ ...css.modal, maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>✏️ Rename Form</h3>
+          <button style={css.iconBtn} onClick={onClose}><Icon d={icons.x} size={16} /></button>
+        </div>
+        <input
+          style={css.input}
+          value={newName}
+          onChange={e => setNewName(e.target.value)}
+          autoFocus
+          onKeyDown={e => { if (e.key === "Enter") handleRename(); if (e.key === "Escape") onClose(); }}
+        />
+        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 18 }}>
+          <button style={css.btn("ghost")} onClick={onClose}>Cancel</button>
+          <button style={css.btn("primary")} onClick={handleRename} disabled={saving}>
+            <Icon d={icons.save} size={14} /> {saving ? "Saving…" : "Rename"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Component ──────────────────────────────────────────────────────────────
 export default function FormsManagement() {
   const [forms, setForms] = useState([]);
@@ -575,6 +637,9 @@ export default function FormsManagement() {
 
   // Report panel state (like TemplateManager)
   const [reportPanel, setReportPanel] = useState(null);
+
+  // Rename modal state
+  const [renameTarget, setRenameTarget] = useState(null);
 
   // Folder state
   const [folders, setFolders] = useState([]);
@@ -1474,6 +1539,11 @@ export default function FormsManagement() {
     }
   };
 
+  // Rename form - update form name in state after successful API call
+  const handleRename = (id, newName) => {
+    setForms(prev => prev.map(f => f.id === id ? { ...f, name: newName } : f));
+  };
+
   // Duplicate form - upload as new file to server
   const handleDuplicateForm = async (form, e) => {
     e.stopPropagation();
@@ -1798,25 +1868,15 @@ export default function FormsManagement() {
                         Cancel
                       </button>
                       <button style={css.btn("primary")} onClick={async () => { 
-                        const patientName = prompt('Patient/Student name:');
-                        if (!patientName?.trim()) {
-                          console.log('[DEBUG] No patient name provided, cancelling');
-                          return;
-                        }
-                        
-                        console.log('[DEBUG] Creating new report from viewer for patient:', patientName);
+                        console.log('[DEBUG] Creating new report from viewer');
                         
                         setShowNewDocModal(false);
                         setShowViewer(false); // Close viewer first
                         
-                        // Open report editor
+                        // Open report editor with default name
                         await openCreateReport(selectedForm);
                         
-                        // Set patient name immediately
-                        setReportPanel(prev => {
-                          if (!prev) return prev;
-                          return { ...prev, patientName: patientName.trim() };
-                        });
+                        // Patient name will be entered in the report editor itself
                       }}>
                         New Report
                       </button>
@@ -2145,7 +2205,7 @@ export default function FormsManagement() {
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {form.name}
+                        {getDisplayName(form.name)}
                       </h3>
                       <p style={{ margin: "4px 0 0", fontSize: 12, color: "#6B7280" }}>
                         {form.type?.toUpperCase() || "FILE"}
@@ -2159,26 +2219,21 @@ export default function FormsManagement() {
                         style={{ ...css.iconBtn, flexShrink: 0, background: "#059669", color: "#fff", borderColor: "#059669" }}
                         onClick={async (e) => { 
                           e.stopPropagation(); 
-                          const patientName = prompt('Patient/Student name:');
-                          if (!patientName?.trim()) {
-                            console.log('[DEBUG] No patient name provided, cancelling');
-                            return;
-                          }
+                          console.log('[DEBUG] Opening report editor');
                           
-                          console.log('[DEBUG] Opening report editor for patient:', patientName);
-                          
-                          // Open report editor with patient name
+                          // Open report editor - patient name will be entered in the editor
                           await openCreateReport(form);
-                          
-                          // Set patient name immediately after report panel state is set
-                          setReportPanel(prev => {
-                            if (!prev) return prev;
-                            return { ...prev, patientName: patientName.trim() };
-                          });
                         }}
                         title="New Report"
                       >
                         📋
+                      </button>
+                      <button 
+                        style={{ ...css.iconBtn, flexShrink: 0, background: "#D97706", color: "#fff", borderColor: "#D97706" }}
+                        onClick={(e) => { e.stopPropagation(); setRenameTarget(form); }}
+                        title="Rename"
+                      >
+                        <Icon d={icons.rename} size={16} />
                       </button>
                       <button 
                         style={{ ...css.iconBtn, flexShrink: 0, border: "none", background: "transparent" }}
@@ -2268,6 +2323,15 @@ export default function FormsManagement() {
           reportPanel={reportPanel}
           onBack={() => setReportPanel(null)}
           onSave={saveReport}
+        />
+      )}
+
+      {/* Rename Modal */}
+      {renameTarget && (
+        <RenameModal
+          form={renameTarget}
+          onClose={() => setRenameTarget(null)}
+          onRename={handleRename}
         />
       )}
     </div>
