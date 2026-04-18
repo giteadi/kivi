@@ -2216,7 +2216,7 @@ export default function FormsManagement() {
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
                       <button 
-                        style={{ ...css.iconBtn, flexShrink: 0, background: "#059669", color: "#fff", borderColor: "#059669" }}
+                        style={{ ...css.btn("green"), fontSize: 11, padding: "4px 8px", flexShrink: 0 }}
                         onClick={async (e) => { 
                           e.stopPropagation(); 
                           console.log('[DEBUG] Opening report editor');
@@ -2226,28 +2226,28 @@ export default function FormsManagement() {
                         }}
                         title="New Report"
                       >
-                        📋
+                        New Report
                       </button>
                       <button 
-                        style={{ ...css.iconBtn, flexShrink: 0, background: "#D97706", color: "#fff", borderColor: "#D97706" }}
+                        style={{ fontSize: 11, padding: "4px 8px", flexShrink: 0, background: "#D97706", color: "#fff", border: "1px solid #D97706", borderRadius: 6, cursor: "pointer" }}
                         onClick={(e) => { e.stopPropagation(); setRenameTarget(form); }}
                         title="Rename"
                       >
-                        <Icon d={icons.rename} size={16} />
+                        Rename
                       </button>
                       <button 
-                        style={{ ...css.iconBtn, flexShrink: 0, border: "none", background: "transparent" }}
+                        style={{ fontSize: 11, padding: "4px 8px", flexShrink: 0, background: "#6B7280", color: "#fff", border: "1px solid #6B7280", borderRadius: 6, cursor: "pointer" }}
                         onClick={(e) => handleDuplicateForm(form, e)}
-                        title="Duplicate (exact copy download)"
+                        title="Duplicate"
                       >
-                        copy
+                        Copy
                       </button>
                       <button 
-                        style={{ ...css.iconBtn, flexShrink: 0 }}
+                        style={{ ...css.btn("red"), fontSize: 11, padding: "4px 8px", flexShrink: 0 }}
                         onClick={(e) => { e.stopPropagation(); handleDeleteForm(form.id); }}
                         title="Delete"
                       >
-                        <Icon d={icons.trash} size={16} />
+                        Delete
                       </button>
                     </div>
                   </div>

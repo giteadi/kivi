@@ -538,6 +538,59 @@ function exportSheetToXlsx(sheetData, fileName) {
   return blob;
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// RENAME MODAL COMPONENT
+// ══════════════════════════════════════════════════════════════════════════════
+function RenameModal({ form, onClose, onRename }) {
+  const [newName, setNewName] = useState(form.name || "");
+  const [saving, setSaving] = useState(false);
+
+  const handleRename = async () => {
+    const trimmed = newName.trim();
+    if (!trimmed) { alert("Name cannot be empty"); return; }
+    if (trimmed === form.name) { onClose(); return; }
+    
+    setSaving(true);
+    try {
+      await api.put(`/coners/${form.id}`, {
+        name: trimmed,
+        type: form.type,
+        template_data: form.template_data,
+      });
+      onRename(form.id, trimmed);
+      onClose();
+    } catch (err) {
+      alert("Rename failed: " + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div style={css.overlay} onClick={onClose}>
+      <div style={{ ...css.modal, maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>✏️ Rename Coner</h3>
+          <button style={css.iconBtn} onClick={onClose}><Icon d={icons.x} size={16} /></button>
+        </div>
+        <input
+          style={css.input}
+          value={newName}
+          onChange={e => setNewName(e.target.value)}
+          autoFocus
+          onKeyDown={e => { if (e.key === "Enter") handleRename(); if (e.key === "Escape") onClose(); }}
+        />
+        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 18 }}>
+          <button style={css.btn("ghost")} onClick={onClose}>Cancel</button>
+          <button style={css.btn("primary")} onClick={handleRename} disabled={saving}>
+            <Icon d={icons.save} size={14} /> {saving ? "Saving…" : "Rename"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Component ──────────────────────────────────────────────────────────────
 export default function ConersManagement() {
   const [forms, setForms] = useState([]);
@@ -555,6 +608,9 @@ export default function ConersManagement() {
 
   // Report panel state (like TemplateManager)
   const [reportPanel, setReportPanel] = useState(null);
+
+  // Rename modal state
+  const [renameTarget, setRenameTarget] = useState(null);
 
   // Folder state
   const [folders, setFolders] = useState([]);
@@ -1312,6 +1368,11 @@ export default function ConersManagement() {
     }
   };
 
+  // Rename form - update form name in state after successful API call
+  const handleRename = (id, newName) => {
+    setForms(prev => prev.map(f => f.id === id ? { ...f, name: newName } : f));
+  };
+
   // Duplicate form - upload as new file
   const handleDuplicateForm = async (form, e) => {
     e.stopPropagation();
@@ -1885,7 +1946,7 @@ export default function ConersManagement() {
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {form.name}
+                        {getDisplayName(form.name)}
                       </h3>
                       <p style={{ margin: "4px 0 0", fontSize: 12, color: "#6B7280" }}>
                         {form.type?.toUpperCase() || "FILE"}
@@ -1896,25 +1957,32 @@ export default function ConersManagement() {
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
                       <button 
-                        style={{ ...css.iconBtn, flexShrink: 0, background: "#059669", color: "#fff", borderColor: "#059669" }}
+                        style={{ ...css.btn("green"), fontSize: 11, padding: "4px 8px", flexShrink: 0 }}
                         onClick={(e) => { e.stopPropagation(); openCreateReport(form); }}
                         title="New Report"
                       >
-                        📋
+                        New Report
                       </button>
                       <button 
-                        style={{ ...css.iconBtn, flexShrink: 0, border: "none", background: "transparent" }}
-                        onClick={(e) => handleDuplicateForm(form, e)}
-                        title="Duplicate (exact copy download)"
+                        style={{ fontSize: 11, padding: "4px 8px", flexShrink: 0, background: "#D97706", color: "#fff", border: "1px solid #D97706", borderRadius: 6, cursor: "pointer" }}
+                        onClick={(e) => { e.stopPropagation(); setRenameTarget(form); }}
+                        title="Rename"
                       >
-                        copy
+                        Rename
                       </button>
                       <button 
-                        style={{ ...css.iconBtn, flexShrink: 0 }}
+                        style={{ fontSize: 11, padding: "4px 8px", flexShrink: 0, background: "#6B7280", color: "#fff", border: "1px solid #6B7280", borderRadius: 6, cursor: "pointer" }}
+                        onClick={(e) => handleDuplicateForm(form, e)}
+                        title="Duplicate"
+                      >
+                        Copy
+                      </button>
+                      <button 
+                        style={{ ...css.btn("red"), fontSize: 11, padding: "4px 8px", flexShrink: 0 }}
                         onClick={(e) => { e.stopPropagation(); handleDeleteForm(form.id); }}
                         title="Delete"
                       >
-                        <Icon d={icons.trash} size={16} />
+                        Delete
                       </button>
                     </div>
                   </div>
@@ -1990,6 +2058,15 @@ export default function ConersManagement() {
           reportPanel={reportPanel}
           onBack={() => setReportPanel(null)}
           onSave={saveReport}
+        />
+      )}
+
+      {/* Rename Modal */}
+      {renameTarget && (
+        <RenameModal
+          form={renameTarget}
+          onClose={() => setRenameTarget(null)}
+          onRename={handleRename}
         />
       )}
     </div>

@@ -978,27 +978,36 @@ export default function TemplateManager() {
                       </div>
                       <input type="checkbox" checked={isSel} onChange={() => {}} style={{ accentColor: "#2563EB", width: 15, height: 15 }} />
                     </div>
-                    <div style={{ borderTop: "1px solid #F3F4F6", padding: "8px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <div style={{ display: "flex", gap: 4 }}>
-                        {[
-                          { icon: icons.eye,    title: "View/Edit",  fn: (e) => { e.stopPropagation(); openView(t); },           color: "#2563EB" },
-                          { icon: icons.patient, title: "New Report", fn: (e) => { e.stopPropagation(); openCreateReport(t); },   color: "#059669" },
-                          // FIX 3: Rename button
-                          { icon: icons.rename, title: "Rename",     fn: (e) => { e.stopPropagation(); setRenameTarget(t); },    color: "#D97706" },
-                        ].map(({ icon, title, fn, color }) => (
-                          <button key={title} title={title} onClick={fn}
-                            style={{ ...css.iconBtn, width: 28, height: 28 }}
-                            onMouseEnter={e => { e.currentTarget.style.color = color; e.currentTarget.style.background = "#F9FAFB"; }}
-                            onMouseLeave={e => { e.currentTarget.style.color = "#6B7280"; e.currentTarget.style.background = "transparent"; }}>
-                            <Icon d={icon} size={14} />
-                          </button>
-                        ))}
+                    <div style={{ borderTop: "1px solid #F3F4F6", padding: "8px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4, flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); openView(t); }}
+                          style={{ fontSize: 11, padding: "4px 8px", background: "#2563EB", color: "#fff", border: "1px solid #2563EB", borderRadius: 6, cursor: "pointer" }}
+                          title="View/Edit"
+                        >
+                          View
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); openCreateReport(t); }}
+                          style={{ fontSize: 11, padding: "4px 8px", background: "#059669", color: "#fff", border: "1px solid #059669", borderRadius: 6, cursor: "pointer" }}
+                          title="New Report"
+                        >
+                          New Report
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setRenameTarget(t); }}
+                          style={{ fontSize: 11, padding: "4px 8px", background: "#D97706", color: "#fff", border: "1px solid #D97706", borderRadius: 6, cursor: "pointer" }}
+                          title="Rename"
+                        >
+                          Rename
+                        </button>
                       </div>
-                      <button onClick={e => { e.stopPropagation(); deleteTpl(t.id); }}
-                        style={{ ...css.iconBtn, width: 28, height: 28 }}
-                        onMouseEnter={e => { e.currentTarget.style.color = "#DC2626"; e.currentTarget.style.background = "#FEF2F2"; }}
-                        onMouseLeave={e => { e.currentTarget.style.color = "#6B7280"; e.currentTarget.style.background = "transparent"; }}>
-                        <Icon d={icons.trash} size={14} />
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); deleteTpl(t.id); }}
+                        style={{ fontSize: 11, padding: "4px 8px", background: "#DC2626", color: "#fff", border: "1px solid #DC2626", borderRadius: 6, cursor: "pointer" }}
+                        title="Delete"
+                      >
+                        Delete
                       </button>
                     </div>
                   </div>
@@ -1043,18 +1052,35 @@ export default function TemplateManager() {
                           {new Date(t.createdAt).toLocaleDateString()}
                         </td>
                         <td style={{ padding: "11px 14px", borderBottom: "1px solid #F3F4F6" }}>
-                          <div style={{ display: "flex", gap: 4, justifyContent: "flex-end", alignItems: "center" }}>
-                            {[
-                              { icon: icons.eye,     title: "View",       fn: (e) => { e.stopPropagation(); openView(t); } },
-                              { icon: icons.patient, title: "New Report", fn: (e) => { e.stopPropagation(); openCreateReport(t); } },
-                              // FIX 3: Rename in list view too
-                              { icon: icons.rename,  title: "Rename",     fn: (e) => { e.stopPropagation(); setRenameTarget(t); } },
-                              { icon: icons.trash,   title: "Delete",     fn: (e) => { e.stopPropagation(); deleteTpl(t.id); } },
-                            ].map(({ icon, title, fn }) => (
-                              <button key={title} title={title} onClick={fn} style={{ ...css.iconBtn, width: 28, height: 28 }}>
-                                <Icon d={icon} size={14} />
-                              </button>
-                            ))}
+                          <div style={{ display: "flex", gap: 4, justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap" }}>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); openView(t); }}
+                              style={{ fontSize: 11, padding: "4px 8px", background: "#2563EB", color: "#fff", border: "1px solid #2563EB", borderRadius: 6, cursor: "pointer" }}
+                              title="View"
+                            >
+                              View
+                            </button>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); openCreateReport(t); }}
+                              style={{ fontSize: 11, padding: "4px 8px", background: "#059669", color: "#fff", border: "1px solid #059669", borderRadius: 6, cursor: "pointer" }}
+                              title="New Report"
+                            >
+                              New Report
+                            </button>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); setRenameTarget(t); }}
+                              style={{ fontSize: 11, padding: "4px 8px", background: "#D97706", color: "#fff", border: "1px solid #D97706", borderRadius: 6, cursor: "pointer" }}
+                              title="Rename"
+                            >
+                              Rename
+                            </button>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); deleteTpl(t.id); }}
+                              style={{ fontSize: 11, padding: "4px 8px", background: "#DC2626", color: "#fff", border: "1px solid #DC2626", borderRadius: 6, cursor: "pointer" }}
+                              title="Delete"
+                            >
+                              Delete
+                            </button>
                           </div>
                         </td>
                       </tr>
