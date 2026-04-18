@@ -24,6 +24,10 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
   const [errors, setErrors] = useState({});
   const [age, setAge] = useState({ years: 0, months: 0 });
   
+  // Centers state for dynamic center selection
+  const [centers, setCenters] = useState([]);
+  const [loadingCenters, setLoadingCenters] = useState(false);
+  
   // State for Evaluation tab checkboxes and Other inputs
   const [evaluationData, setEvaluationData] = useState({
     academicConcerns: { other: false, otherText: '' },
@@ -119,6 +123,32 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
       setAge({ years: 0, months: 0 });
     }
   }, [formData.birthDate]);
+
+  // Fetch centers on mount
+  useEffect(() => {
+    fetchCenters();
+  }, []);
+
+  const fetchCenters = async () => {
+    try {
+      setLoadingCenters(true);
+      const response = await api.getClinics();
+      if (response.success && response.data) {
+        setCenters(response.data);
+        // If user has a center_id, pre-select it
+        if (user?.center_id) {
+          const userCenter = response.data.find(c => c.id === user.center_id);
+          if (userCenter) {
+            setFormData(prev => ({ ...prev, account: userCenter.name }));
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching centers:', error);
+    } finally {
+      setLoadingCenters(false);
+    }
+  };
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -477,16 +507,30 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                       </h3>
 
                       <div>
-                        <label className={labelClass}>Account</label>
+                        <label className={labelClass}>Center / Account *</label>
                         <div className="relative">
-                          <input
-                            type="text"
+                          <select
                             value={formData.account}
-                            readOnly
-                            className={`${inputClass('account')} bg-gray-50 pl-10 font-medium text-gray-700`}
-                          />
+                            onChange={(e) => handleChange('account', e.target.value)}
+                            disabled={loadingCenters || centers.length === 0}
+                            className={`${inputClass('account')} bg-white pl-10 font-medium text-gray-700 cursor-pointer appearance-none`}
+                          >
+                            <option value="">Select Center</option>
+                            {centers.map((center) => (
+                              <option key={center.id} value={center.name}>
+                                {center.name}
+                              </option>
+                            ))}
+                          </select>
                           <FiMapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                          {loadingCenters && (
+                            <span className="absolute right-10 top-1/2 -translate-y-1/2 text-xs text-gray-400">Loading...</span>
+                          )}
                         </div>
+                        {centers.length === 0 && !loadingCenters && (
+                          <p className="text-xs text-red-500 mt-1">No centers available. Please check your connection.</p>
+                        )}
                       </div>
 
                       <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide border-b pb-2 pt-4">

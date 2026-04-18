@@ -38,15 +38,59 @@ const AssessmentCalendar = () => {
     notes: ''
   });
 
+  // User and center info
+  const [user, setUser] = useState(null);
+  const [centers, setCenters] = useState([]);
+  const [selectedCenter, setSelectedCenter] = useState(null);
+
   const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+  // Get user from localStorage on mount
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        // For non-admin users, set their assigned center
+        if (parsedUser.role !== 'admin' && parsedUser.center_id) {
+          setSelectedCenter(parsedUser.center_id);
+        }
+      } catch (error) {
+        console.error('Error parsing user:', error);
+      }
+    }
+  }, []);
+
+  // Fetch centers for admin users
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      fetchCenters();
+    }
+  }, [user]);
+
+  const fetchCenters = async () => {
+    try {
+      const response = await api.getClinics();
+      if (response.success) {
+        setCenters(response.data || []);
+        // Auto-select first center if none selected
+        if (!selectedCenter && response.data?.length > 0) {
+          setSelectedCenter(response.data[0].id);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching centers:', error);
+    }
+  };
+
   // Fetch assessments from API
   useEffect(() => {
     fetchAssessments();
-  }, [currentDate]);
+  }, [currentDate, selectedCenter]);
 
   const fetchAssessments = async () => {
     try {
@@ -56,7 +100,16 @@ const AssessmentCalendar = () => {
       const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
       const endDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
       
-      const response = await api.request(`/calendar?startDate=${startDate}&endDate=${endDate}`);
+      // Build query params with center filter
+      const params = new URLSearchParams({
+        startDate,
+        endDate
+      });
+      if (selectedCenter) {
+        params.append('centerId', selectedCenter);
+      }
+      
+      const response = await api.request(`/calendar?${params.toString()}`);
       if (response.success) {
         // Transform backend data to frontend format
         const transformedData = response.data.map(event => ({
@@ -92,7 +145,8 @@ const AssessmentCalendar = () => {
         eventTime: newAssessment.time || null,
         duration: newAssessment.duration,
         eventType: newAssessment.type,
-        notes: newAssessment.notes
+        notes: newAssessment.notes,
+        centerId: selectedCenter || user?.center_id || null
       };
 
       const response = await api.request('/calendar', {
@@ -124,7 +178,8 @@ const AssessmentCalendar = () => {
         eventTime: newAssessment.time || null,
         duration: newAssessment.duration,
         eventType: newAssessment.type,
-        notes: newAssessment.notes
+        notes: newAssessment.notes,
+        centerId: selectedCenter || user?.center_id || null
       };
 
       const response = await api.request(`/calendar/${editingAssessment.id}`, {
@@ -451,6 +506,29 @@ const AssessmentCalendar = () => {
           >
             Today
           </button>
+
+          {/* Center Selector - Only for admin users */}
+          {user?.role === 'admin' && centers.length > 0 && (
+            <select
+              value={selectedCenter || ''}
+              onChange={(e) => setSelectedCenter(e.target.value ? parseInt(e.target.value) : null)}
+              className="px-3 py-1.5 bg-white/20 text-white text-sm rounded-lg hover:bg-white/30 transition-colors border-none outline-none cursor-pointer"
+            >
+              <option value="" className="text-gray-800">All Centers</option>
+              {centers.map((center) => (
+                <option key={center.id} value={center.id} className="text-gray-800">
+                  {center.name}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {/* Show center name for non-admin users */}
+          {user?.role !== 'admin' && user?.center_id && (
+            <span className="px-3 py-1.5 bg-white/20 text-white text-sm rounded-lg">
+              {centers.find(c => c.id === user.center_id)?.name || 'My Center'}
+            </span>
+          )}
         </div>
         <div className="flex items-center space-x-2">
           <div className="flex bg-white/20 rounded-lg p-1">
