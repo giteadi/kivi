@@ -1673,7 +1673,7 @@ export default function ConersManagement() {
       }));
       
       // Refresh forms list
-      await fetchForms();
+      await loadForms();
       
       alert("✅ Changes saved successfully!");
     } catch (err) {

@@ -1936,7 +1936,7 @@ export default function FormsManagement() {
       }));
       
       // Refresh forms list
-      await fetchForms();
+      await loadForms();
       
       alert("✅ Changes saved successfully!");
     } catch (err) {
