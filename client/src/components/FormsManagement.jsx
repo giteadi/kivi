@@ -1058,8 +1058,14 @@ export default function FormsManagement() {
           const finalHeader = headerHtml || DEFAULT_REPORT_HEADER;
           clonedData = [["__html__", finalHeader + "<p><br></p>"]];
         } else {
-          // For non-HTML data, use default header
-          clonedData = [["__html__", DEFAULT_REPORT_HEADER + "<p><br></p>"]];
+          // ✅ Excel data → keep structure, clear data rows
+          const rowCount = clonedData.length;
+          const colCount = Math.max(...clonedData.map(r => r?.length || 0));
+          // Header row rakho (row 0), baaki clear karo
+          clonedData = clonedData.map((row, idx) => {
+            if (idx === 0) return [...row]; // header row as-is
+            return Array(colCount).fill(""); // data rows blank
+          });
         }
 
         reportSheets[sheetName] = clonedData;

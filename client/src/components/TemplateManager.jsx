@@ -615,14 +615,48 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
         >+</button>
       </div>
 
-      <ReportSheetViewer
-        ref={viewerRef}
-        key={activeSheet}
-        data={reportData[activeSheet] || [["__html__", "<p><br></p>"]]}
-        readOnly={false}
-        reportMode={true}
-        onDataChange={newData => setReportData(prev => ({ ...prev, [activeSheet]: newData }))}
-      />
+      {/* Conditional rendering based on format */}
+      {reportData[activeSheet]?.[0]?.[0] === "__html__" ? (
+        <ReportSheetViewer
+          ref={viewerRef}
+          key={activeSheet}
+          data={reportData[activeSheet] || [["__html__", "<p><br></p>"]]}
+          readOnly={false}
+          reportMode={true}
+          onDataChange={newData => setReportData(prev => ({ ...prev, [activeSheet]: newData }))}
+        />
+      ) : (
+        // ✅ Excel grid render karo
+        <div style={{ flex: 1, overflow: "auto", padding: 16, background: "#F9FAFB" }}>
+          <table style={{ borderCollapse: "collapse", width: "100%", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
+            <tbody>
+              {(reportData[activeSheet] || []).map((row, rIdx) => (
+                <tr key={rIdx}>
+                  {(row || []).map((cell, cIdx) => (
+                    <td key={cIdx} style={{ border: "1px solid #E5E7EB", padding: 0 }}>
+                      <input
+                        value={cell ?? ""}
+                        onChange={e => {
+                          const newData = reportData[activeSheet].map((r, ri) =>
+                            ri === rIdx ? r.map((c, ci) => ci === cIdx ? e.target.value : c) : r
+                          );
+                          setReportData(prev => ({ ...prev, [activeSheet]: newData }));
+                        }}
+                        style={{
+                          width: "100%", padding: "6px 10px",
+                          border: "none", outline: "none", fontSize: 13,
+                          background: rIdx === 0 ? "#F0F9FF" : "transparent",
+                          fontWeight: rIdx === 0 ? 600 : 400,
+                        }}
+                      />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {showNewSheetModal && (
         <div style={css.overlay}>
@@ -836,6 +870,12 @@ export default function TemplateManager() {
     const reportSheets = {};
     const reportSheetNames = [];
 
+    // ✅ Detect format from template
+    const isExcel = tpl.sheetNames?.some(name => {
+      const d = tpl.sheets[name];
+      return d && d[0]?.[0] !== "__html__";
+    });
+
     tpl.sheetNames.forEach(sheetName => {
       const sheetData = tpl.sheets[sheetName];
       if (!sheetData) return;
@@ -845,10 +885,19 @@ export default function TemplateManager() {
       catch { clonedData = JSON.parse(JSON.stringify(sheetData)); }
 
       if (clonedData[0]?.[0] === "__html__") {
+        // Word/HTML template → header extract karo
         const html = clonedData[0][1] || "";
-        // Use robust DOM-based header extraction (FIX 1)
         const headerHtml = extractHeaderHtml(html);
         clonedData = [["__html__", headerHtml + "<p><br></p>"]];
+      } else {
+        // ✅ Excel template → rows clear karo but structure rakho
+        const rowCount = clonedData.length;
+        const colCount = Math.max(...clonedData.map(r => r?.length || 0));
+        // Header row rakho (row 0), baaki clear karo
+        clonedData = clonedData.map((row, idx) => {
+          if (idx === 0) return [...row]; // header row as-is
+          return Array(colCount).fill(""); // data rows blank
+        });
       }
 
       reportSheets[sheetName] = clonedData;
@@ -866,6 +915,7 @@ export default function TemplateManager() {
       allSheets: reportSheetNames,
       allData: reportSheets,
       patientName: "",
+      isExcel, // ✅ Format track karo
     });
     setPanel("report");
   };
@@ -878,12 +928,49 @@ export default function TemplateManager() {
       const datePart = new Date().toLocaleDateString("en-IN");
       // Format: "PatientName — TemplateName — Date"
       const name = `${patientPart} — ${templatePart} — ${datePart}`;
-      await api.createTemplate({
-        name,
-        type: "report",
-        description: `Patient report for ${patientPart}`,
-        template_data: { sheets: allData, sheetNames: sheetList },
-      });
+
+      if (reportPanel.isExcel) {
+        // ✅ Excel format → .xlsx blob banao aur upload karo
+        const wb = XLSX.utils.book_new();
+        sheetList.forEach(sheetName => {
+          const rows = allData[sheetName] || [];
+          XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), sheetName.substring(0, 31));
+        });
+        const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+        const blob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+        
+        const formData = new FormData();
+        formData.append("file", blob, `${name}.xlsx`);
+        // template_data bhi bhejo taaki reopen ho sake
+        formData.append("template_data", JSON.stringify({
+          sheets: allData,
+          sheetNames: sheetList,
+          isExcel: true,
+        }));
+        
+        // ✅ Upload endpoint use karo
+        await fetch(
+          `${import.meta.env.VITE_API_URL || "https://dashboard.iplanbymsl.in/api"}/templates/upload`,
+          {
+            method: "POST",
+            headers: { Authorization: `Bearer ${localStorage.getItem("token") || ""}` },
+            body: formData,
+          }
+        );
+      } else {
+        // Word/HTML format → existing logic
+        await api.createTemplate({
+          name,
+          type: "report",
+          description: `Patient report for ${patientPart}`,
+          template_data: { 
+            sheets: allData, 
+            sheetNames: sheetList,
+            isExcel: false,
+          },
+        });
+      }
+
       await fetchTemplates();
       setPanel(null);
       setReportPanel(null);
