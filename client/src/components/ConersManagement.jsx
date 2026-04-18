@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import * as XLSX from "xlsx";
 import {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
-  AlignmentType, HeadingLevel, BorderStyle, WidthType, ShadingType, LevelFormat,
+  AlignmentType, HeadingLevel, BorderStyle, WidthType, ShadingType, LevelFormat, ImageRun,
 } from "docx";
 import api from "../services/api";
 import Sidebar from "./Sidebar";
@@ -231,7 +231,7 @@ function cellToParagraphs(tdNode) {
   return paragraphs;
 }
 
-function nodeToDocxElements(node) {
+async function nodeToDocxElements(node) {
   const els = [];
   if (node.nodeType === Node.TEXT_NODE) {
     const t = node.textContent.trim();
@@ -249,13 +249,97 @@ function nodeToDocxElements(node) {
   }
 
   if (["p", "div", "section"].includes(tag)) {
+    // ✅ CHECK: Agar p/div ke andar img hai toh runs nahi, children process karo
+    const hasImg = node.querySelector?.("img");
+    if (hasImg) {
+      for (const c of node.childNodes) els.push(...await nodeToDocxElements(c));
+      return els;
+    }
+    
     const runs = nodeToRuns(node);
     if (runs.length) { els.push(new Paragraph({ children: runs })); return els; }
-    for (const c of node.childNodes) els.push(...nodeToDocxElements(c));
+    for (const c of node.childNodes) els.push(...await nodeToDocxElements(c));
     return els;
   }
 
   if (tag === "br") { els.push(new Paragraph({ children: [] })); return els; }
+
+  // Handle images
+  if (tag === "img") {
+    const src = node.getAttribute("src");
+    if (!src) return els;
+    
+    try {
+      let imageBuffer;
+      let imageType = "png";
+      
+      if (src.startsWith("data:image")) {
+        const [meta, base64Data] = src.split(",");
+        const mimeMatch = meta.match(/data:image\/(\w+);/);
+        imageType = mimeMatch?.[1]?.toLowerCase() || "png";
+        // jpeg → jpg (docx library "jpg" expect karta hai)
+        if (imageType === "jpeg") imageType = "jpg";
+        
+        // ✅ KEY FIX: ArrayBuffer pass karo directly
+        const binaryStr = atob(base64Data);
+        const len = binaryStr.length;
+        const buffer = new ArrayBuffer(len);
+        const view = new Uint8Array(buffer);
+        for (let i = 0; i < len; i++) {
+          view[i] = binaryStr.charCodeAt(i);
+        }
+        imageBuffer = buffer; // ArrayBuffer, not Uint8Array
+      } else {
+        try {
+          const dataUrl = await new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => {
+              const canvas = document.createElement("canvas");
+              canvas.width = img.naturalWidth || 250;
+              canvas.height = img.naturalHeight || 100;
+              canvas.getContext("2d").drawImage(img, 0, 0);
+              resolve(canvas.toDataURL("image/png"));
+            };
+            img.onerror = reject;
+            img.src = src;
+          });
+          const base64Data = dataUrl.split(",")[1];
+          const binaryStr = atob(base64Data);
+          const len = binaryStr.length;
+          const buffer = new ArrayBuffer(len);
+          const view = new Uint8Array(buffer);
+          for (let i = 0; i < len; i++) {
+            view[i] = binaryStr.charCodeAt(i);
+          }
+          imageBuffer = buffer;
+          imageType = "png";
+        } catch {
+          const response = await fetch(src);
+          imageBuffer = await response.arrayBuffer(); // ✅ ArrayBuffer directly
+          const ext = src.split(".").pop()?.toLowerCase() || "png";
+          const typeMap = { jpg: "jpg", jpeg: "jpg", png: "png", gif: "gif", webp: "png" };
+          imageType = typeMap[ext] || "png";
+        }
+      }
+      
+      // ✅ Image dimensions bhi console mein log karo debug ke liye
+      console.log("[IMG] type:", imageType, "buffer size:", imageBuffer.byteLength);
+      
+      els.push(new Paragraph({
+        alignment: AlignmentType.CENTER,  // ✅ Center alignment
+        children: [new ImageRun({
+          data: imageBuffer,
+          transformation: { width: 250, height: 100 },
+          type: imageType,
+        })],
+        spacing: { after: 120 },
+      }));
+    } catch (err) {
+      console.warn("[IMG] Failed, skipping:", err.message);
+    }
+    return els;
+  }
 
   if (tag === "hr") {
     els.push(new Paragraph({
@@ -266,16 +350,18 @@ function nodeToDocxElements(node) {
   }
 
   if (tag === "ul") {
-    node.querySelectorAll(":scope > li").forEach(li =>
-      els.push(new Paragraph({ numbering: { reference: "bullets", level: 0 }, children: nodeToRuns(li) }))
-    );
+    const liElements = node.querySelectorAll(":scope > li");
+    for (const li of liElements) {
+      els.push(new Paragraph({ numbering: { reference: "bullets", level: 0 }, children: nodeToRuns(li) }));
+    }
     return els;
   }
 
   if (tag === "ol") {
-    node.querySelectorAll(":scope > li").forEach(li =>
-      els.push(new Paragraph({ numbering: { reference: "numbers", level: 0 }, children: nodeToRuns(li) }))
-    );
+    const liElements = node.querySelectorAll(":scope > li");
+    for (const li of liElements) {
+      els.push(new Paragraph({ numbering: { reference: "numbers", level: 0 }, children: nodeToRuns(li) }));
+    }
     return els;
   }
 
@@ -332,15 +418,15 @@ function nodeToDocxElements(node) {
     return els;
   }
 
-  for (const c of node.childNodes) els.push(...nodeToDocxElements(c));
+  for (const c of node.childNodes) els.push(...await nodeToDocxElements(c));
   return els;
 }
 
-function htmlToDocxElements(html) {
+async function htmlToDocxElements(html) {
   const div = document.createElement("div");
   div.innerHTML = html || "";
   const els = [];
-  for (const c of div.childNodes) els.push(...nodeToDocxElements(c));
+  for (const c of div.childNodes) els.push(...await nodeToDocxElements(c));
   if (!els.length) els.push(new Paragraph({ children: [] }));
   return els;
 }
@@ -366,13 +452,20 @@ function getSheetHtml(sheetData) {
 
 // ─── Sheet data → .docx ─────────────────────────────────────────────────────────
 async function exportSheetToDocx(sheetData, fileName) {
-  if (!sheetData?.length) return;
+  console.log("[DOCX Export Coners] Starting export:", fileName, "Data:", sheetData);
+  if (!sheetData?.length) {
+    console.log("[DOCX Export Coners] No data, returning");
+    return;
+  }
   
   let children;
   if (sheetData[0]?.[0] === "__html__") {
     const html = sheetData[0][1] || "";
-    children = htmlToDocxElements(html);
+    console.log("[DOCX Export Coners] HTML mode, converting:", html?.substring(0, 200));
+    children = await htmlToDocxElements(html);
+    console.log("[DOCX Export Coners] Generated", children.length, "DOCX elements");
   } else {
+    console.log("[DOCX Export Coners] Table mode");
     const rows = sheetData.map((row) => 
       new TableRow({
         children: row.map(cell => new TableCell({
@@ -385,6 +478,7 @@ async function exportSheetToDocx(sheetData, fileName) {
     children = [new Table({ rows })];
   }
 
+  console.log("[DOCX Export Coners] Creating document...");
   const doc = new Document({
     numbering: {
       config: [
@@ -414,7 +508,9 @@ async function exportSheetToDocx(sheetData, fileName) {
     }],
   });
 
+  console.log("[DOCX Export Coners] Packing to blob...");
   const blob = await Packer.toBlob(doc);
+  console.log("[DOCX Export Coners] Blob created, size:", blob.size, "bytes");
   return blob;
 }
 
