@@ -216,6 +216,27 @@ router.get('/:id/download', authenticateToken, async (req, res) => {
   }
 });
 
+// PUT /api/coners/:id - Update coner (name, type, template_data)
+router.put('/:id', authenticateToken, async (req, res) => {
+  try {
+    const { name, type, template_data, folder_id } = req.body;
+    
+    const query = `
+      UPDATE coners 
+      SET name = ?, type = ?, template_data = ?, folder_id = ?, updated_at = NOW()
+      WHERE id = ? AND deleted_at IS NULL
+    `;
+    
+    const templateDataStr = template_data ? JSON.stringify(template_data) : null;
+    await getDb().promise().query(query, [name, type, templateDataStr, folder_id || null, req.params.id]);
+    
+    res.json({ message: 'Coner updated successfully' });
+  } catch (error) {
+    console.error('Update coner error:', error);
+    res.status(500).json({ message: 'Failed to update coner' });
+  }
+});
+
 // PUT /api/coners/:id/data - Update coner data (for Excel/CSV editing)
 router.put('/:id/data', authenticateToken, async (req, res) => {
   try {

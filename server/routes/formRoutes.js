@@ -375,6 +375,27 @@ router.get('/:id/download', authenticateToken, async (req, res) => {
   }
 });
 
+// PUT /api/forms/:id - Update form (name, type, template_data)
+router.put('/:id', authenticateToken, async (req, res) => {
+  try {
+    const { name, type, template_data, folder_id } = req.body;
+    
+    const query = `
+      UPDATE forms 
+      SET name = ?, type = ?, template_data = ?, folder_id = ?, updated_at = NOW()
+      WHERE id = ? AND deleted_at IS NULL
+    `;
+    
+    const templateDataStr = template_data ? JSON.stringify(template_data) : null;
+    await getDb().promise().query(query, [name, type, templateDataStr, folder_id || null, req.params.id]);
+    
+    res.json({ message: 'Form updated successfully' });
+  } catch (error) {
+    console.error('Update form error:', error);
+    res.status(500).json({ message: 'Failed to update form' });
+  }
+});
+
 // PUT /api/forms/:id/data - Update form data (for Excel/CSV editing)
 router.put('/:id/data', authenticateToken, async (req, res) => {
   try {
