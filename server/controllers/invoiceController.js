@@ -148,10 +148,12 @@ class InvoiceController {
       // Check if assessmentId is a valid number (database ID) or string (assessment type)
       let realAssessmentId = assessmentId;
       let assessmentRecord = null;
+      const numericId = parseInt(assessmentId, 10);
       
-      if (!isNaN(parseInt(assessmentId))) {
-        // It's a valid number ID, try to find it
-        assessmentRecord = await assessmentModel.getAssessment(parseInt(assessmentId));
+      if (!isNaN(numericId) && numericId > 0 && String(assessmentId).match(/^\d+$/)) {
+        // It's a pure numeric ID, try to find it
+        realAssessmentId = numericId;
+        assessmentRecord = await assessmentModel.getAssessment(numericId);
       }
       
       // If assessment doesn't exist, create it first
