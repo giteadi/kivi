@@ -189,7 +189,65 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
     { id: 'report', label: 'Report', icon: FiFileText }
   ];
 
-  // Assessment data
+  // MindSaid Learning Centre - Psycho-Educational Assessment Packages
+  const assessmentPackages = [
+    {
+      id: 'pe-basic',
+      name: 'Psycho-Educational Assessment',
+      category: 'PE Assessment',
+      price: 18500,
+      ageRange: '6.11-16.11 years',
+      description: 'WISC-IV (Manual scoring), WRAT-V (Computerised), WJ-III Ach (Computerised), ADHDT-2',
+      includes: ['WISC-IV Manual', 'WRAT-V', 'WJ-III Ach', 'ADHDT-2']
+    },
+    {
+      id: 'pe-standard',
+      name: 'Psycho-Educational Assessment',
+      category: 'PE Assessment',
+      price: 22500,
+      ageRange: '6.11-16.11 years',
+      description: 'WISC-V (Computerised), WRAT-V (Computerised), WJ-III Ach (Computerised), Brown\'s EF/A Scales',
+      includes: ['WISC-V', 'WRAT-V', 'WJ-III Ach', 'Brown EF/A']
+    },
+    {
+      id: 'pe-comprehensive',
+      name: 'Psycho-Educational Assessment',
+      category: 'PE Assessment',
+      price: 38500,
+      ageRange: '6.11-90 years',
+      description: 'WJ-IV Cog (Standard & Extended), WJ-IV Ach (Standard & Extended), Conners-3rd Edition',
+      includes: ['WJ-IV Cog', 'WJ-IV Ach', 'Conners-3'],
+      note: 'Additional tests Rs 4500 extra'
+    },
+    {
+      id: 'autism-eval',
+      name: 'Autism Evaluation',
+      category: 'Specialized',
+      price: 22500,
+      description: 'ISAA, CARS-2, WJ-III Ach, DSM-5 ADHD/Autism, School Checklists, VABS (Computerised)',
+      includes: ['ISAA', 'CARS-2', 'WJ-III Ach', 'DSM-5', 'VABS']
+    },
+    {
+      id: 'early-years',
+      name: 'Early Years Assessment',
+      category: 'Early Childhood',
+      price: 28500,
+      ageRange: '2.6-7.11 years',
+      description: 'WJ IV ECAD (with software), WJ-III Form-C, ADHDT-2, DSM-5, ISAA, GARS, GRS',
+      includes: ['WJ IV ECAD', 'WJ-III Form-C', 'ADHDT-2', 'ISAA', 'GARS', 'GRS']
+    },
+    {
+      id: 'remedial',
+      name: 'Remedial Sessions',
+      category: 'Therapy',
+      price: 2500,
+      description: 'Per hour remedial therapy sessions. WRAT-5 available in any Indian language.',
+      includes: ['1 Hour Session'],
+      note: 'WRAT-5 in any Indian language'
+    }
+  ];
+
+  // Individual assessments for reference
   const assessments = [
     { id: '16pf', name: '16PF', category: 'Personality' },
     { id: 'bai', name: 'BAI', category: 'Anxiety' },
@@ -370,8 +428,15 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
     );
   };
 
-  // Calculate total price
-  const totalPrice = selectedAssessments.length * ASSESSMENT_PRICE;
+  // Calculate total price - check if package or individual assessment
+  const totalPrice = selectedAssessments.reduce((total, id) => {
+    const pkg = assessmentPackages.find(p => p.id === id);
+    if (pkg) {
+      return total + pkg.price;
+    }
+    // Individual assessment
+    return total + ASSESSMENT_PRICE;
+  }, 0);
 
   // Create package
   const createPackage = () => {
@@ -758,8 +823,9 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
 
   // Save assessment results to backend
   const handleSaveAssessment = async (closeAfterSave = false) => {
-    // Get assessment ID from currentAssessment or from the first assessment in the package
-    const assessmentId = currentAssessment?.id || currentPackage?.assessments?.[0]?.id;
+    // Check for assessment from: currentAssessment, currentPackage, or selected package from assessmentPackages
+    const selectedPkg = assessmentPackages.find(p => selectedAssessments.includes(p.id));
+    const assessmentId = currentAssessment?.id || currentPackage?.assessments?.[0]?.id || selectedPkg?.id || selectedAssessments[0];
     
     if (!assessmentId) {
       alert('No assessment selected. Please select an assessment first.');
@@ -824,8 +890,12 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
 
   // Send invoice email
   const handleSendInvoice = async () => {
-    if (!currentAssessment?.id) {
-      alert('No assessment selected.');
+    // Check for either individual assessment or package
+    const hasAssessment = currentAssessment?.id;
+    const hasPackage = currentPackage?.id || selectedAssessments.some(id => assessmentPackages.find(p => p.id === id));
+    
+    if (!hasAssessment && !hasPackage) {
+      alert('No assessment or package selected.');
       return;
     }
 
@@ -837,14 +907,21 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
       return;
     }
 
+    // Get selected package if any
+    const selectedPackage = assessmentPackages.find(p => selectedAssessments.includes(p.id)) || currentPackage;
+
     setIsSendingInvoice(true);
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3005/api';
       
       // Calculate proper package details
-      const itemsCount = currentPackage?.assessments?.length || selectedAssessments.length || 1;
-      const individualPrice = ASSESSMENT_PRICE;
-      const totalPrice = itemsCount * individualPrice;
+      const isPackage = !!selectedPackage;
+      const itemsCount = isPackage ? 1 : (selectedAssessments.length || 1);
+      const unitPrice = isPackage ? selectedPackage.price : ASSESSMENT_PRICE;
+      const totalPrice = isPackage ? selectedPackage.price : (itemsCount * ASSESSMENT_PRICE);
+      
+      // Get student info from first selected item
+      const firstStudent = items.find(i => selectedItems.includes(i.id)) || items[0];
       
       const response = await fetch(`${apiUrl}/invoices/send-assessment`, {
         method: 'POST',
@@ -852,16 +929,16 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          assessmentId: currentAssessment.id,
+          assessmentId: currentAssessment?.id || selectedPackage?.id || selectedAssessments[0] || 'package',
           studentId: selectedItems[0],
           email: email,
-          firstName: currentAssessment.firstName || '',
-          lastName: currentAssessment.lastName || '',
-          assessmentName: currentPackage?.name || currentAssessment.name || 'Educational Assessment',
-          assessmentType: itemsCount > 1 ? `Package (${itemsCount} assessments)` : 'Standard',
+          firstName: firstStudent?.firstName || currentAssessment?.firstName || '',
+          lastName: firstStudent?.lastName || currentAssessment?.lastName || '',
+          assessmentName: selectedPackage?.name || currentAssessment?.name || 'Educational Assessment',
+          assessmentType: isPackage ? 'MindSaid Package' : (itemsCount > 1 ? `Package (${itemsCount} assessments)` : 'Standard'),
           price: totalPrice,
-          individualPrice: individualPrice,
-          itemsCount: itemsCount,
+          individualPrice: unitPrice,
+          itemsCount: isPackage ? 1 : itemsCount,
           adminDate: document.querySelector('input[type="date"]')?.value,
           examiner: document.querySelector('select')?.value || 'To be assigned'
         })
@@ -2209,11 +2286,87 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                     ))}
                   </div>
 
+                  {/* MindSaid Assessment Packages */}
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                        <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
+                        MindSaid Assessment Packages
+                      </h3>
+                      <span className="text-xs text-gray-500">Psycho-Educational Evaluations</span>
+                    </div>
+                    <div className="space-y-3">
+                      {assessmentPackages.map((pkg) => (
+                        <div
+                          key={pkg.id}
+                          onClick={() => {
+                            // Toggle package selection
+                            if (selectedAssessments.includes(pkg.id)) {
+                              setSelectedAssessments(selectedAssessments.filter(id => id !== pkg.id));
+                            } else {
+                              setSelectedAssessments([...selectedAssessments, pkg.id]);
+                            }
+                            // Set package name automatically
+                            if (!packageName) {
+                              setPackageName(pkg.name);
+                            }
+                          }}
+                          className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                            selectedAssessments.includes(pkg.id)
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="font-semibold text-gray-900">{pkg.name}</h4>
+                                {pkg.ageRange && (
+                                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
+                                    {pkg.ageRange}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-600 mb-2">{pkg.description}</p>
+                              <div className="flex flex-wrap gap-1">
+                                {pkg.includes.map((item, idx) => (
+                                  <span key={idx} className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                                    {item}
+                                  </span>
+                                ))}
+                              </div>
+                              {pkg.note && (
+                                <p className="text-xs text-amber-600 mt-2">* {pkg.note}</p>
+                              )}
+                            </div>
+                            <div className="text-right ml-4">
+                              <div className="text-xl font-bold text-blue-600">₹{pkg.price.toLocaleString()}</div>
+                              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mt-2 ml-auto ${
+                                selectedAssessments.includes(pkg.id)
+                                  ? 'border-blue-500 bg-blue-500'
+                                  : 'border-gray-300'
+                              }`}>
+                                {selectedAssessments.includes(pkg.id) && (
+                                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-200 my-4"></div>
+
                   {/* Selected Count & Total */}
                   <div className="flex items-center justify-between mb-3 bg-gray-100 p-3 rounded-lg">
                     <div className="text-sm">
                       <span className="font-medium text-gray-700">{selectedAssessments.length}</span>
-                      <span className="text-gray-600"> assessments selected</span>
+                      <span className="text-gray-600"> items selected</span>
                     </div>
                     <div className="text-lg font-bold text-emerald-600">
                       Total: ₹{totalPrice.toLocaleString()}
@@ -2428,21 +2581,61 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                       try {
                         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3005/api';
                         
-                        // Use name from examineeData (hardcoded as 'Aditya Sharma')
-                        const nameParts = 'Aditya Sharma'.split(' ');
+                        // Find selected package from assessmentPackages
+                        const selectedPkg = assessmentPackages.find(p => 
+                          selectedAssessments.includes(p.id)
+                        );
+                        
+                        // Get actual student from transformed patients
+                        const selectedStudent = transformedPatients.find(p => 
+                          selectedItems.includes(p.id)
+                        ) || transformedPatients[0] || {};
+                        
+                        // 4-level fallback for assessmentId
+                        const safeAssessmentId = 
+                          currentAssessment?.id || 
+                          selectedPkg?.id || 
+                          selectedAssessments[0] || 
+                          'custom-package';
+                        
+                        // Find name from all possible sources
+                        const assessmentName = 
+                          selectedPkg?.name || 
+                          currentPackage?.name || 
+                          currentAssessment?.name || 
+                          (selectedAssessments.length > 1 
+                            ? `Package (${selectedAssessments.length} assessments)` 
+                            : 'Educational Assessment');
+                        
+                        // Build includes list for package description
+                        const includesList = selectedPkg?.includes 
+                          ? selectedPkg.includes.join(', ') 
+                          : '';
+                        
+                        // Get student name properly
+                        const studentName = selectedStudent?.name || 
+                          (selectedStudent?.firstName && selectedStudent?.lastName 
+                            ? `${selectedStudent.firstName} ${selectedStudent.lastName}` 
+                            : null) || 
+                          'Student';
+                        
+                        const nameParts = studentName.split(' ');
                         const firstName = nameParts[0] || '';
                         const lastName = nameParts.slice(1).join(' ') || '';
                         
                         // DEBUG: Log the data being sent
                         const payload = {
-                          assessmentId: currentAssessment?.id || currentPackage?.assessments?.[0]?.id,
+                          assessmentId: safeAssessmentId,
                           studentId: selectedItems[0],
                           email: invoiceData.toEmail,
                           firstName: firstName,
                           lastName: lastName,
-                          assessmentName: currentPackage?.name || (selectedAssessments.length > 1 ? `Package (${selectedAssessments.length} assessments)` : (currentAssessment?.name || 'Assessment')),
-                          assessmentType: 'Standard',
-                          price: invoiceData.price || currentPackage?.totalPrice || totalPrice || ASSESSMENT_PRICE,
+                          assessmentName: assessmentName,
+                          assessmentType: selectedPkg ? 'MindSaid Package' : 'Standard',
+                          price: invoiceData.price || selectedPkg?.price || currentPackage?.totalPrice || totalPrice || ASSESSMENT_PRICE,
+                          individualPrice: selectedPkg?.price || ASSESSMENT_PRICE,
+                          itemsCount: selectedPkg ? 1 : (selectedAssessments.length || 1),
+                          includes: includesList,
                           adminDate: new Date().toISOString().split('T')[0],
                           examiner: 'JAGGI, KRUTIKA',
                           notes: invoiceData.notes,
@@ -2453,6 +2646,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                         console.log('currentPackage:', currentPackage);
                         console.log('currentAssessment:', currentAssessment);
                         console.log('selectedItems:', selectedItems);
+                        console.log('selectedStudent:', selectedStudent);
                         
                         const response = await fetch(`${apiUrl}/invoices/send-assessment`, {
                           method: 'POST',

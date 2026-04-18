@@ -58,8 +58,8 @@ const InvoiceScreen = ({
 
   const calculateTotals = () => {
     const price = assessmentData?.price || 5500;
-    const gst = price * 0.18;
-    const total = price + gst;
+    const gst = 0; // No GST
+    const total = price; // Total equals base price
     return { price, gst, total };
   };
 
@@ -677,10 +677,12 @@ const InvoiceScreen = ({
                       <td className="p-3 text-sm">{assessmentData?.name || 'Assessment Fee'}</td>
                       <td className="p-3 text-sm text-right">₹{price.toLocaleString()}</td>
                     </tr>
-                    <tr>
-                      <td className="p-3 text-sm">GST (18%)</td>
-                      <td className="p-3 text-sm text-right">₹{gst.toLocaleString()}</td>
-                    </tr>
+                    {gst > 0 && (
+                      <tr>
+                        <td className="p-3 text-sm">GST (18%)</td>
+                        <td className="p-3 text-sm text-right">₹{gst.toLocaleString()}</td>
+                      </tr>
+                    )}
                   </tbody>
                   <tfoot>
                     <tr className="font-bold text-lg">
@@ -921,10 +923,12 @@ const InvoiceScreen = ({
                   <span className="text-gray-600">Base Price:</span>
                   <span className="font-medium">₹{price.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">GST (18%):</span>
-                  <span className="font-medium">₹{gst.toLocaleString()}</span>
-                </div>
+                {gst > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">GST (18%):</span>
+                    <span className="font-medium">₹{gst.toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="border-t pt-3 flex justify-between">
                   <span className="font-bold text-gray-800">Total:</span>
                   <span className="font-bold text-xl text-blue-600">₹{total.toLocaleString()}</span>
