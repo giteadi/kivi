@@ -69,8 +69,8 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
   useEffect(() => {
     const fetchTherapistData = async () => {
       try {
-        // Extract numeric ID from doctorId (remove # prefix)
-        const numericId = doctorId?.replace('#', '');
+        // Extract numeric ID from doctorId (handle both string "#4" and number 4)
+        const numericId = typeof doctorId === 'string' ? doctorId.replace('#', '') : doctorId;
         
         const result = await api.getDoctor(numericId);
 

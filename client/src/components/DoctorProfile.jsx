@@ -9,8 +9,8 @@ const DoctorProfile = ({ doctorId, onBack, onEditProfile }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Extract numeric ID from doctorId (remove # prefix)
-  const numericId = doctorId?.replace('#', '');
+  // Extract numeric ID from doctorId (handle both string "#4" and number 4)
+  const numericId = typeof doctorId === 'string' ? doctorId.replace('#', '') : doctorId;
 
   // Fetch doctor data from API
   useEffect(() => {

@@ -23,27 +23,35 @@ const PatientsList = ({ onViewPatient, onEditPatient, onDeletePatient, onCreateN
 
   const clinics = ['all', 'MindSaid Learning Main', 'MindSaid Learning North', 'MindSaid Learning South', 'MindSaid Learning East'];
 
-  // Transform API data to match frontend format
-  const transformedPatients = patients.map(patient => ({
-    id: `#${patient.id}`,
-    name: `${patient.first_name} ${patient.last_name}`,
-    initials: `${patient.first_name?.[0] || ''}${patient.last_name?.[0] || ''}`,
-    email: patient.email,
-    phone: patient.phone,
-    clinic: patient.clinic_name || 'Unknown Clinic',
-    clinicColor: 'bg-blue-100 text-blue-800', // Default color, can be enhanced
-    registrationDate: new Date(patient.created_at).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    }),
-    lastVisit: patient.last_visit ? new Date(patient.last_visit).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    }) : 'No visits',
-    status: patient.status === 'active' ? 'Active' : 'Inactive'
-  }));
+  // Transform API data to match frontend format with error handling
+  const transformedPatients = (patients || []).map(patient => {
+    try {
+      return {
+        id: patient.id, // ✅ Keep original ID for API calls
+        displayId: `#${patient.id}`, // ✅ Use displayId for UI
+        name: `${patient.first_name || ''} ${patient.last_name || ''}`.trim() || 'Unknown',
+        initials: `${patient.first_name?.[0] || ''}${patient.last_name?.[0] || ''}` || 'NA',
+        email: patient.email || 'N/A',
+        phone: patient.phone || 'N/A',
+        clinic: patient.clinic_name || 'Unknown Clinic',
+        clinicColor: 'bg-blue-100 text-blue-800',
+        registrationDate: patient.created_at ? new Date(patient.created_at).toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }) : 'N/A',
+        lastVisit: patient.last_visit ? new Date(patient.last_visit).toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }) : 'No visits',
+        status: patient.status === 'active' ? 'Active' : 'Inactive'
+      };
+    } catch (err) {
+      console.error('Error transforming patient:', patient, err);
+      return null;
+    }
+  }).filter(Boolean);
 
   const filteredPatients = transformedPatients.filter(patient => {
     const matchesSearch = patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -53,7 +61,7 @@ const PatientsList = ({ onViewPatient, onEditPatient, onDeletePatient, onCreateN
     
     // Apply advanced filters
     let matchesAdvancedFilters = true;
-    if (appliedFilters.patientId && !patient.id.toLowerCase().includes(appliedFilters.patientId.toLowerCase())) {
+    if (appliedFilters.patientId && !patient.displayId.toLowerCase().includes(appliedFilters.patientId.toLowerCase())) {
       matchesAdvancedFilters = false;
     }
     if (appliedFilters.patientName && !patient.name.toLowerCase().includes(appliedFilters.patientName.toLowerCase())) {
@@ -232,7 +240,7 @@ const PatientsList = ({ onViewPatient, onEditPatient, onDeletePatient, onCreateN
                       transition={{ delay: index * 0.05 }}
                       whileHover={{ backgroundColor: '#f9fafb' }}
                       className="hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => onViewPatient(patient.id.replace('#', ''))}
+                      onClick={() => onViewPatient(patient.id)}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <input 
@@ -242,7 +250,7 @@ const PatientsList = ({ onViewPatient, onEditPatient, onDeletePatient, onCreateN
                         />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {patient.id}
+                        {patient.displayId}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
@@ -281,7 +289,7 @@ const PatientsList = ({ onViewPatient, onEditPatient, onDeletePatient, onCreateN
                             whileTap={{ scale: 0.95 }}
                             onClick={(e) => {
                               e.stopPropagation();
-                              onViewPatient(patient.id.replace('#', ''));
+                              onViewPatient(patient.id);
                             }}
                             className="text-blue-600 hover:text-blue-900 p-1 rounded"
                             title="View Profile"
