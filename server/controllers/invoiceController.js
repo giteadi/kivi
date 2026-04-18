@@ -62,11 +62,10 @@ class InvoiceController {
       // Generate invoice number
       const invoiceNumber = `INV-ASSESS-${Date.now()}`;
 
-      // Calculate amounts
+      // Calculate amounts (no GST)
       const subtotal = parseFloat(price) || 0;
-      const gstRate = 0.18; // 18% GST
-      const gstAmount = subtotal * gstRate;
-      const totalAmount = subtotal + gstAmount;
+      const gstAmount = 0;
+      const totalAmount = subtotal;
 
       // Create email HTML
       const emailHtml = this.generateInvoiceEmail({
@@ -616,7 +615,7 @@ class InvoiceController {
     // Calculate values
     const qty = itemsCount || 1;
     const unitPrice = individualPrice || (subtotal / qty);
-    const gst = gstAmount || (totalAmount - subtotal);
+    const gst = 0; // No GST
     const clientName = `${firstName || ''} ${lastName || ''}`.trim() || 'Client';
 
     return `
@@ -899,10 +898,6 @@ class InvoiceController {
       color: #111;
     }
 
-    .totals-table .gst-row td {
-      font-size: 11.5px;
-      color: #666;
-    }
 
     .totals-table .grand-row td {
       padding-top: 12px;
@@ -1048,16 +1043,8 @@ class InvoiceController {
   <!-- TOTALS -->
   <div class="totals-section">
     <table class="totals-table">
-      <tr>
-        <td>Subtotal:</td>
-        <td>₹${subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-      </tr>
-      <tr class="gst-row">
-        <td>GST (18%):</td>
-        <td>₹${gst.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-      </tr>
       <tr class="grand-row">
-        <td>Amount Due (INR):</td>
+        <td>Amount (INR):</td>
         <td>₹${totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
       </tr>
     </table>
