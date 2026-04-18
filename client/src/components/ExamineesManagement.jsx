@@ -841,6 +841,11 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3005/api';
       
+      // Calculate proper package details
+      const itemsCount = currentPackage?.assessments?.length || selectedAssessments.length || 1;
+      const individualPrice = ASSESSMENT_PRICE;
+      const totalPrice = itemsCount * individualPrice;
+      
       const response = await fetch(`${apiUrl}/invoices/send-assessment`, {
         method: 'POST',
         headers: {
@@ -852,9 +857,11 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
           email: email,
           firstName: currentAssessment.firstName || '',
           lastName: currentAssessment.lastName || '',
-          assessmentName: currentAssessment.name || 'Educational Assessment',
-          assessmentType: currentAssessment.type || 'Standard',
-          price: ASSESSMENT_PRICE,
+          assessmentName: currentPackage?.name || currentAssessment.name || 'Educational Assessment',
+          assessmentType: itemsCount > 1 ? `Package (${itemsCount} assessments)` : 'Standard',
+          price: totalPrice,
+          individualPrice: individualPrice,
+          itemsCount: itemsCount,
           adminDate: document.querySelector('input[type="date"]')?.value,
           examiner: document.querySelector('select')?.value || 'To be assigned'
         })

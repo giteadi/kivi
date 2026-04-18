@@ -78,46 +78,384 @@ const InvoiceScreen = ({
     }
   };
 
-  // Handle PDF download
+  // Handle PDF download - Professional format
   const handleDownloadPDF = () => {
     const { price, gst, total } = calculateTotals();
+    const invoiceNumber = `msl/${new Date().getFullYear()}/${String(Date.now()).slice(-4)}`;
+    const formattedDate = new Date().toLocaleDateString('en-IN', {
+      day: '2-digit', month: 'long', year: 'numeric'
+    });
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 7);
+    const formattedDueDate = dueDate.toLocaleDateString('en-IN', {
+      day: '2-digit', month: 'long', year: 'numeric'
+    });
+
+    // Professional HTML invoice
+    const invoiceHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Invoice - ${invoiceNumber}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'Segoe UI', Arial, sans-serif; 
+      line-height: 1.5; 
+      color: #333;
+      background: #f5f5f5;
+    }
+    .invoice-container { 
+      max-width: 800px; 
+      margin: 20px auto; 
+      background: white;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 40px;
+      border-bottom: 3px solid #29b6f6;
+    }
+    .logo-section {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .logo {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 28px;
+      font-weight: bold;
+    }
+    .company-info h1 {
+      font-size: 24px;
+      color: #333;
+      margin: 0;
+    }
+    .company-info p {
+      font-size: 12px;
+      color: #666;
+      margin: 2px 0;
+    }
+    .invoice-title-section {
+      text-align: right;
+    }
+    .invoice-title-section h2 {
+      font-size: 36px;
+      color: #333;
+      font-weight: 300;
+      letter-spacing: 3px;
+      margin: 0;
+    }
+    .company-address {
+      font-size: 11px;
+      color: #666;
+      margin-top: 10px;
+      line-height: 1.6;
+    }
+    .invoice-body {
+      padding: 40px;
+    }
+    .bill-section {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 30px;
+    }
+    .bill-to {
+      flex: 1;
+    }
+    .bill-to h3 {
+      font-size: 12px;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+      font-weight: normal;
+    }
+    .bill-to .customer-name {
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    .bill-to .customer-email {
+      font-size: 13px;
+      color: #666;
+    }
+    .invoice-details {
+      text-align: right;
+    }
+    .invoice-details h3 {
+      font-size: 12px;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+      font-weight: normal;
+    }
+    .detail-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 20px;
+      margin-bottom: 5px;
+      font-size: 13px;
+    }
+    .detail-label {
+      color: #666;
+    }
+    .detail-value {
+      color: #333;
+      font-weight: 500;
+      min-width: 150px;
+    }
+    .amount-due {
+      background: #f5f5f5;
+      padding: 8px 15px;
+      margin-top: 10px;
+      display: inline-block;
+    }
+    .amount-due .label {
+      font-size: 11px;
+      color: #666;
+      text-transform: uppercase;
+    }
+    .amount-due .value {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+    }
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    .items-table thead {
+      background: #29b6f6;
+    }
+    .items-table th {
+      color: white;
+      padding: 12px 15px;
+      text-align: left;
+      font-weight: 500;
+      font-size: 13px;
+    }
+    .items-table th:last-child {
+      text-align: right;
+    }
+    .items-table td {
+      padding: 15px;
+      border-bottom: 1px solid #eee;
+      font-size: 13px;
+      vertical-align: top;
+    }
+    .items-table td:last-child {
+      text-align: right;
+    }
+    .item-name {
+      font-weight: 500;
+      color: #333;
+    }
+    .item-description {
+      font-size: 11px;
+      color: #666;
+      margin-top: 3px;
+    }
+    .totals-section {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 2px solid #eee;
+    }
+    .totals-table {
+      width: 300px;
+    }
+    .totals-table td {
+      padding: 8px 0;
+      font-size: 13px;
+    }
+    .totals-table td:first-child {
+      text-align: left;
+      color: #666;
+    }
+    .totals-table td:last-child {
+      text-align: right;
+      color: #333;
+      font-weight: 500;
+    }
+    .totals-table .grand-total {
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+      padding-top: 15px;
+      border-top: 2px solid #eee;
+    }
+    .footer {
+      background: #f9f9f9;
+      padding: 30px 40px;
+      text-align: center;
+      border-top: 1px solid #eee;
+    }
+    .footer p {
+      font-size: 12px;
+      color: #999;
+      margin: 5px 0;
+    }
+    .powered-by {
+      margin-top: 20px;
+      font-size: 11px;
+      color: #ccc;
+    }
+    .powered-by strong {
+      color: #29b6f6;
+    }
+    @media print {
+      body { background: white; }
+      .invoice-container { box-shadow: none; margin: 0; }
+      .no-print { display: none; }
+    }
+    .print-btn {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: #29b6f6;
+      color: white;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .print-btn:hover {
+      background: #0288d1;
+    }
+  </style>
+</head>
+<body>
+  <button class="print-btn no-print" onclick="window.print()">🖨️ Print / Save as PDF</button>
+  
+  <div class="invoice-container">
+    <div class="header">
+      <div class="logo-section">
+        <div class="logo">M</div>
+        <div class="company-info">
+          <h1>MindSaid Learning Centre</h1>
+          <p>Learning This Ability</p>
+        </div>
+      </div>
+      <div class="invoice-title-section">
+        <h2>INVOICE</h2>
+        <div class="company-address">
+          <strong>MindSaid Learning</strong><br>
+          D-207, Crystal Plaza,<br>
+          Opp. Infinity Mall, Link Road, Andheri (W),<br>
+          Mumbai, Maharashtra 400053, India<br>
+          Tel: +91 8928186952<br>
+          www.mindsaidlearning.com
+        </div>
+      </div>
+    </div>
     
-    // Create invoice content for PDF
-    const invoiceContent = `
-      INVOICE
-      
-      MindSaid Learning
-      
-      Invoice #: INV-${Date.now()}
-      Date: ${new Date().toLocaleDateString()}
-      
-      Bill To:
-      ${examineeData?.name || 'Student Name'}
-      ${examineeData?.email || 'email@example.com'}
-      
-      Assessment: ${assessmentData?.name || 'Assessment'}
-      
-      Description                    Amount
-      ${assessmentData?.name || 'Assessment Fee'}        ₹${price.toLocaleString()}
-      GST (18%)                      ₹${gst.toLocaleString()}
-      ----------------------------------------
-      Total                          ₹${total.toLocaleString()}
-      
-      ${invoiceData.notes ? `Notes: ${invoiceData.notes}` : ''}
-      
-      Thank you for choosing MindSaid Learning!
-    `;
-    
-    // Create a blob and download
-    const blob = new Blob([invoiceContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Invoice-${examineeData?.name || 'Student'}-${new Date().toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    <div class="invoice-body">
+      <div class="bill-section">
+        <div class="bill-to">
+          <h3>Bill To</h3>
+          <div class="customer-name">${examineeData?.name || invoiceData.toName || 'Student Name'}</div>
+          <div class="customer-email">${invoiceData.toEmail || 'email@example.com'}</div>
+        </div>
+        <div class="invoice-details">
+          <h3>Invoice Details</h3>
+          <div class="detail-row">
+            <span class="detail-label">Invoice Number:</span>
+            <span class="detail-value">${invoiceNumber}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Invoice Date:</span>
+            <span class="detail-value">${formattedDate}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Payment Due:</span>
+            <span class="detail-value">${formattedDueDate}</span>
+          </div>
+          <div class="amount-due">
+            <div class="label">Amount Due (INR):</div>
+            <div class="value">₹${total.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+          </div>
+        </div>
+      </div>
+
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th style="width: 50%;">Items</th>
+            <th style="width: 15%;">Quantity</th>
+            <th style="width: 20%;">Price</th>
+            <th style="width: 15%;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="item-name">${assessmentData?.name || 'Psycho-Educational Assessment (WJ-IV)'}</div>
+              <div class="item-description">${assessmentData?.type || 'Woodcock-Johnson-IV(Cognitive)<br>Woodcock-Johnson-IV(Achievement)<br>Brown\'s EF/A Scales'}</div>
+            </td>
+            <td>1</td>
+            <td>₹${price.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            <td>₹${price.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="totals-section">
+        <table class="totals-table">
+          <tr>
+            <td>Total:</td>
+            <td>₹${price.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+          </tr>
+          <tr class="grand-total">
+            <td>Amount Due (INR):</td>
+            <td>₹${total.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p><strong>MindSaid Learning Centre</strong></p>
+      <p>D-207, Crystal Plaza, Andheri (W), Mumbai | Phone: +91 8928186952</p>
+      <p>Email: contact@mindsaidlearning.com</p>
+      <p style="margin-top: 15px; font-size: 11px; color: #bbb;">
+        This is an electronically generated invoice and does not require a physical signature.
+      </p>
+      <div class="powered-by">
+        Powered by <strong>〰 wave</strong>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Auto-open print dialog after a short delay
+    setTimeout(() => {
+      window.print();
+    }, 500);
+  </script>
+</body>
+</html>`;
+
+    // Open in new window for print/PDF
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(invoiceHtml);
+    printWindow.document.close();
   };
 
   const { price, gst, total } = calculateTotals();
