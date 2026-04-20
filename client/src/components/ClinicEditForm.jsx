@@ -135,7 +135,7 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
   ];
 
   return (
-    <div className="lg:ml-64 min-h-screen bg-gray-50">
+    <div className="lg:ml-64 min-h-screen bg-gray-50 dark:bg-[#0f0f10] transition-colors duration-300">
       <div className="p-4 lg:p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -144,24 +144,24 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onCancel}
-              className="p-2 rounded-lg bg-white shadow-sm border hover:bg-gray-50"
+              className="p-2 rounded-lg bg-white dark:bg-[#1c1c1e] shadow-sm dark:shadow-black/20 border dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#2c2c2e]"
             >
-              <FiArrowLeft className="w-5 h-5 text-gray-600" />
+              <FiArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
             </motion.button>
             <div>
-              <h1 className="text-2xl font-semibold text-gray-800">Edit Clinic</h1>
-              <p className="text-gray-600">Update clinic information and settings</p>
+              <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">Edit Clinic</h1>
+              <p className="text-gray-600 dark:text-gray-400">Update clinic information and settings</p>
             </div>
           </div>
         </div>
 
         {/* Breadcrumb */}
-        <div className="flex items-center text-sm text-gray-500 mb-6">
+        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-6">
           <span>Home</span>
           <span className="mx-2">›</span>
           <span>Clinics</span>
           <span className="mx-2">›</span>
-          <span className="text-gray-800">Edit Clinic</span>
+          <span className="text-gray-800 dark:text-gray-300">Edit Clinic</span>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -169,35 +169,35 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-xl p-6 shadow-sm border"
+            className="bg-white dark:bg-[#1c1c1e] rounded-xl p-6 shadow-sm dark:shadow-black/20 border dark:border-gray-800"
           >
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Basic Information</h3>
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Basic Information</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Clinic Name *
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.name ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white ${
+                    errors.name ? 'border-red-500' : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e]'
+                  } transition-colors duration-300`}
                   placeholder="Enter clinic name"
                 />
                 {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Status
                 </label>
                 <select
                   value={formData.status}
                   onChange={(e) => handleInputChange('status', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
                 >
                   <option value="Active">Active</option>
                   <option value="Inactive">Inactive</option>
@@ -206,14 +206,14 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Description
                 </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
                   placeholder="Enter clinic description"
                 />
               </div>
@@ -225,53 +225,53 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white rounded-xl p-6 shadow-sm border"
+            className="bg-white dark:bg-[#1c1c1e] rounded-xl p-6 shadow-sm dark:shadow-black/20 border dark:border-gray-800"
           >
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Contact Information</h3>
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Contact Information</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Address *
                 </label>
                 <input
                   type="text"
                   value={formData.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.address ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white ${
+                    errors.address ? 'border-red-500' : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e]'
+                  } transition-colors duration-300`}
                   placeholder="Enter full address"
                 />
                 {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   City *
                 </label>
                 <input
                   type="text"
                   value={formData.city}
                   onChange={(e) => handleInputChange('city', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.city ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white ${
+                    errors.city ? 'border-red-500' : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e]'
+                  } transition-colors duration-300`}
                   placeholder="Enter city"
                 />
                 {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   State *
                 </label>
                 <select
                   value={formData.state}
                   onChange={(e) => handleInputChange('state', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.state ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white ${
+                    errors.state ? 'border-red-500' : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e]'
+                  } transition-colors duration-300`}
                 >
                   <option value="">Select State</option>
                   {states.map(state => (
@@ -282,62 +282,62 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   ZIP Code *
                 </label>
                 <input
                   type="text"
                   value={formData.zipCode}
                   onChange={(e) => handleInputChange('zipCode', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.zipCode ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white ${
+                    errors.zipCode ? 'border-red-500' : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e]'
+                  } transition-colors duration-300`}
                   placeholder="Enter ZIP code"
                 />
                 {errors.zipCode && <p className="text-red-500 text-sm mt-1">{errors.zipCode}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Phone Number *
                 </label>
                 <input
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => handleInputChange('phone', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.phone ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white ${
+                    errors.phone ? 'border-red-500' : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e]'
+                  } transition-colors duration-300`}
                   placeholder="Enter phone number"
                 />
                 {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Email Address *
                 </label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.email ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white ${
+                    errors.email ? 'border-red-500' : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e]'
+                  } transition-colors duration-300`}
                   placeholder="Enter email address"
                 />
                 {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Website
                 </label>
                 <input
                   type="url"
                   value={formData.website}
                   onChange={(e) => handleInputChange('website', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
                   placeholder="Enter website URL"
                 />
               </div>
@@ -349,32 +349,32 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white rounded-xl p-6 shadow-sm border"
+            className="bg-white dark:bg-[#1c1c1e] rounded-xl p-6 shadow-sm dark:shadow-black/20 border dark:border-gray-800"
           >
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Operating Information</h3>
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Operating Information</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Established Date
                 </label>
                 <input
                   type="date"
                   value={formData.established}
                   onChange={(e) => handleInputChange('established', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Operating Hours
                 </label>
                 <input
                   type="text"
                   value={formData.operatingHours}
                   onChange={(e) => handleInputChange('operatingHours', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
                   placeholder="e.g., 8:00 AM - 8:00 PM"
                 />
               </div>
@@ -386,9 +386,9 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
                       type="checkbox"
                       checked={formData.emergencyServices}
                       onChange={(e) => handleInputChange('emergencyServices', e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                     />
-                    <span className="ml-2 text-sm text-gray-700">Emergency Services Available</span>
+                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Emergency Services Available</span>
                   </label>
 
                   <label className="flex items-center">
@@ -396,9 +396,9 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
                       type="checkbox"
                       checked={formData.parkingAvailable}
                       onChange={(e) => handleInputChange('parkingAvailable', e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                     />
-                    <span className="ml-2 text-sm text-gray-700">Parking Available</span>
+                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Parking Available</span>
                   </label>
 
                   <label className="flex items-center">
@@ -406,9 +406,9 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
                       type="checkbox"
                       checked={formData.wheelchairAccessible}
                       onChange={(e) => handleInputChange('wheelchairAccessible', e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                     />
-                    <span className="ml-2 text-sm text-gray-700">Wheelchair Accessible</span>
+                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Wheelchair Accessible</span>
                   </label>
                 </div>
               </div>
@@ -427,7 +427,7 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onCancel}
-              className="flex items-center space-x-2 px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center space-x-2 px-6 py-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-[#2c2c2e] transition-colors"
             >
               <FiX className="w-4 h-4" />
               <span>Cancel</span>

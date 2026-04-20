@@ -150,7 +150,7 @@ const Queries = () => {
         sidebarCollapsed={sidebarCollapsed}
         setSidebarCollapsed={setSidebarCollapsed}
       />
-      <div className="flex-1 min-h-screen bg-slate-50 p-6 lg:ml-64">
+      <div className="flex-1 min-h-screen bg-slate-50 dark:bg-[#0f0f10] p-6 lg:ml-64 transition-colors duration-300">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -158,57 +158,57 @@ const Queries = () => {
         >
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Contact Queries</h1>
-            <p className="text-gray-600">Manage and respond to contact form submissions</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Contact Queries</h1>
+            <p className="text-gray-600 dark:text-gray-400">Manage and respond to contact form submissions</p>
           </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-xl p-6 shadow-sm">
+          <div className="bg-white dark:bg-[#1c1c1e] rounded-xl p-6 shadow-sm dark:shadow-black/20 border dark:border-gray-800">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Total Queries</p>
-                <p className="text-2xl font-bold text-gray-900">{queries.length}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Total Queries</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{queries.length}</p>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                <FiMessageSquare className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
+                <FiMessageSquare className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-xl p-6 shadow-sm">
+          <div className="bg-white dark:bg-[#1c1c1e] rounded-xl p-6 shadow-sm dark:shadow-black/20 border dark:border-gray-800">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Pending</p>
-                <p className="text-2xl font-bold text-yellow-600">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Pending</p>
+                <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                   {queries.filter(q => q.status === 'pending').length}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
-                <FiClock className="w-6 h-6 text-yellow-600" />
+              <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl flex items-center justify-center">
+                <FiClock className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-xl p-6 shadow-sm">
+          <div className="bg-white dark:bg-[#1c1c1e] rounded-xl p-6 shadow-sm dark:shadow-black/20 border dark:border-gray-800">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Resolved</p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Resolved</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {queries.filter(q => q.status === 'resolved').length}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                <FiCheckCircle className="w-6 h-6 text-green-600" />
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
+                <FiCheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-xl p-6 shadow-sm">
+          <div className="bg-white dark:bg-[#1c1c1e] rounded-xl p-6 shadow-sm dark:shadow-black/20 border dark:border-gray-800">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">This Month</p>
-                <p className="text-2xl font-bold text-purple-600">
+                <p className="text-sm text-gray-500 dark:text-gray-400">This Month</p>
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                   {queries.filter(q => {
                     const date = new Date(q.created_at);
                     const now = new Date();
@@ -216,15 +216,15 @@ const Queries = () => {
                   }).length}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                <FiMail className="w-6 h-6 text-purple-600" />
+              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
+                <FiMail className="w-6 h-6 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
           </div>
         </div>
 
         {/* Filters and Search */}
-        <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
+        <div className="bg-white dark:bg-[#1c1c1e] rounded-xl shadow-sm dark:shadow-black/20 border dark:border-gray-800 p-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
             <div className="flex items-center gap-2">
               <FiFilter className="text-gray-400" />
@@ -236,7 +236,7 @@ const Queries = () => {
                     className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${
                       filter === status
                         ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-gray-100 dark:bg-[#2c2c2e] text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#3a3a3c]'
                     }`}
                   >
                     {status}
@@ -253,7 +253,7 @@ const Queries = () => {
                   placeholder="Search queries..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none w-64"
+                  className="pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none w-64 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-300"
                 />
               </div>
               <button
@@ -268,25 +268,25 @@ const Queries = () => {
         </div>
 
         {error && (
-          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-yellow-800">
+          <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl text-yellow-800 dark:text-yellow-200">
             {error}
           </div>
         )}
 
         {/* Queries Table */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-[#1c1c1e] rounded-xl shadow-sm dark:shadow-black/20 border dark:border-gray-800 overflow-hidden">
           {loading ? (
             <div className="p-12 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading queries...</p>
+              <p className="text-gray-600 dark:text-gray-400">Loading queries...</p>
             </div>
           ) : filteredQueries.length === 0 ? (
             <div className="p-12 text-center">
-              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FiMessageSquare className="w-10 h-10 text-gray-400" />
+              <div className="w-20 h-20 bg-gray-100 dark:bg-[#2c2c2e] rounded-full flex items-center justify-center mx-auto mb-4">
+                <FiMessageSquare className="w-10 h-10 text-gray-400 dark:text-gray-500" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No queries found</h3>
-              <p className="text-gray-500">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No queries found</h3>
+              <p className="text-gray-500 dark:text-gray-400">
                 {searchTerm || filter !== 'all' 
                   ? 'Try adjusting your filters' 
                   : 'Contact queries will appear here when users submit the contact form'}
@@ -295,37 +295,37 @@ const Queries = () => {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-gray-50 dark:bg-[#2c2c2e] border-b border-gray-200 dark:border-gray-700">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sender</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sender</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Subject</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {filteredQueries.map((query) => (
-                    <tr key={query.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={query.id} className="hover:bg-gray-50 dark:hover:bg-[#2c2c2e] transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center">
-                          <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center">
-                            <span className="text-sm font-medium text-blue-600">
+                          <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-full flex items-center justify-center">
+                            <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
                               {query.name?.charAt(0).toUpperCase()}
                             </span>
                           </div>
                           <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-900">{query.name}</p>
-                            <p className="text-sm text-gray-500">{query.email}</p>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">{query.name}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{query.email}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-sm text-gray-900 max-w-xs truncate">{query.subject}</p>
-                        <p className="text-sm text-gray-500 max-w-xs truncate">{query.message}</p>
+                        <p className="text-sm text-gray-900 dark:text-white max-w-xs truncate">{query.subject}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">{query.message}</p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="text-sm text-gray-900">{formatDate(query.created_at)}</p>
+                        <p className="text-sm text-gray-900 dark:text-white">{formatDate(query.created_at)}</p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {getStatusBadge(query.status)}
@@ -334,7 +334,7 @@ const Queries = () => {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => setSelectedQuery(query)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                             title="View Details"
                           >
                             <FiEye className="w-5 h-5" />
@@ -343,14 +343,14 @@ const Queries = () => {
                             <>
                               <button
                                 onClick={() => handleStatusUpdate(query.id, 'resolved')}
-                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
                                 title="Mark as Resolved"
                               >
                                 <FiCheckCircle className="w-5 h-5" />
                               </button>
                               <button
                                 onClick={() => handleStatusUpdate(query.id, 'rejected')}
-                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                 title="Reject"
                               >
                                 <FiXCircle className="w-5 h-5" />
@@ -382,31 +382,31 @@ const Queries = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-white dark:bg-[#1c1c1e] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border dark:border-gray-800 shadow-2xl dark:shadow-black/40"
           >
-            <div className="p-6 border-b border-gray-200">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-800">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-900">Query Details</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Query Details</h2>
                 <button
                   onClick={() => setSelectedQuery(null)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-[#2c2c2e] rounded-lg transition-colors"
                 >
-                  <FiXCircle className="w-6 h-6 text-gray-500" />
+                  <FiXCircle className="w-6 h-6 text-gray-500 dark:text-gray-400" />
                 </button>
               </div>
             </div>
             
             <div className="p-6 space-y-6">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center">
-                  <span className="text-2xl font-medium text-blue-600">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-full flex items-center justify-center">
+                  <span className="text-2xl font-medium text-blue-600 dark:text-blue-400">
                     {selectedQuery.name?.charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-900">{selectedQuery.name}</h3>
-                  <p className="text-gray-600">{selectedQuery.email}</p>
-                  <p className="text-sm text-gray-500 mt-1">{formatDate(selectedQuery.created_at)}</p>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{selectedQuery.name}</h3>
+                  <p className="text-gray-600 dark:text-gray-400">{selectedQuery.email}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{formatDate(selectedQuery.created_at)}</p>
                 </div>
                 <div className="ml-auto">
                   {getStatusBadge(selectedQuery.status)}
@@ -414,14 +414,14 @@ const Queries = () => {
               </div>
               
               <div>
-                <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Subject</h4>
-                <p className="text-lg text-gray-900">{selectedQuery.subject}</p>
+                <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Subject</h4>
+                <p className="text-lg text-gray-900 dark:text-white">{selectedQuery.subject}</p>
               </div>
               
               <div>
-                <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Message</h4>
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-gray-700 whitespace-pre-wrap">{selectedQuery.message}</p>
+                <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Message</h4>
+                <div className="bg-gray-50 dark:bg-[#2c2c2e] rounded-xl p-4">
+                  <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{selectedQuery.message}</p>
                 </div>
               </div>
               

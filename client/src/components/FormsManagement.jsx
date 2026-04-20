@@ -61,59 +61,54 @@ const icons = {
 };
 
 const css = {
-  root:     { fontFamily: "system-ui,-apple-system,sans-serif", minHeight: "100vh", background: "#F3F4F6", color: "#1a1a1a", display: "flex" },
+  root:     { fontFamily: "system-ui,-apple-system,sans-serif", minHeight: "100vh", display: "flex" },
   main:     { flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh", overflow: "auto", marginLeft: "256px", paddingLeft: "24px" },
-  header:   { background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, position: "sticky", top: 0, zIndex: 20 },
+  header:   { padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, position: "sticky", top: 0, zIndex: 20 },
   h1:       { margin: 0, fontSize: 19, fontWeight: 700, letterSpacing: "-0.3px" },
-  subtitle: { margin: 0, fontSize: 12, color: "#6B7280" },
+  subtitle: { margin: 0, fontSize: 12 },
   btn: (v = "default") => ({
     display: "inline-flex", alignItems: "center", gap: 6,
     padding: "7px 14px", borderRadius: 8, fontSize: 13, fontWeight: 500,
     border: "1px solid", cursor: "pointer", transition: "all 0.15s",
     ...(v === "primary" ? { background: "#2563EB", color: "#fff", borderColor: "#2563EB" } :
         v === "green"   ? { background: "#059669", color: "#fff", borderColor: "#059669" } :
-        v === "red"     ? { background: "#DC2626", color: "#fff", borderColor: "#DC2626" } :
-        v === "ghost"   ? { background: "transparent", color: "#374151", borderColor: "#D1D5DB" } :
-                          { background: "#fff", color: "#374151", borderColor: "#D1D5DB" }),
+        v === "red"     ? { background: "#DC2626", color: "#fff",    borderColor: "#DC2626" } :
+        v === "ghost"   ? { background: "transparent", borderColor: "#D1D5DB" } :
+                          { background: "transparent", borderColor: "#D1D5DB" }),
   }),
-  iconBtn:   { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 6, border: "1px solid #E5E7EB", background: "transparent", cursor: "pointer", color: "#6B7280" },
-  toolbar:   { background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "10px 24px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" },
-  searchInput: { width: "100%", padding: "7px 12px 7px 36px", border: "1px solid #D1D5DB", borderRadius: 8, fontSize: 13, outline: "none", boxSizing: "border-box" },
+  iconBtn:   { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 6, border: "1px solid", background: "transparent", cursor: "pointer" },
+  toolbar:   { padding: "10px 24px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" },
   content:   { padding: 24, display: "flex", gap: 24 },
-  folderTree: { width: 280, minWidth: 280, background: "#fff", borderRadius: 12, border: "1px solid #E5E7EB", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", overflow: "hidden", display: "flex", flexDirection: "column" },
-  folderTreeHeader: { padding: "16px 20px", borderBottom: "1px solid #E5E7EB", display: "flex", alignItems: "center", justifyContent: "space-between" },
-  folderTreeTitle: { margin: 0, fontSize: 14, fontWeight: 600, color: "#1F2937" },
+  folderTree: { width: 280, minWidth: 280, borderRadius: 12, overflow: "hidden", display: "flex", flexDirection: "column" },
+  folderTreeHeader: { padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" },
+  folderTreeTitle: { margin: 0, fontSize: 14, fontWeight: 600 },
   folderTreeContent: { padding: "8px 0", overflow: "auto", flex: 1 },
-  folderItem: (level, selected) => ({ 
-    padding: "8px 16px 8px " + (16 + level * 20) + "px", 
-    cursor: "pointer", 
-    display: "flex", 
-    alignItems: "center", 
-    gap: 8, 
-    background: selected ? "#EFF6FF" : "transparent",
-    color: selected ? "#2563EB" : "#374151",
+  folderItem: (level, selected) => ({
+    padding: "8px 16px 8px " + (16 + level * 20) + "px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
     fontWeight: selected ? 500 : 400,
-    borderRight: selected ? "3px solid #2563EB" : "3px solid transparent",
-    transition: "all 0.15s",
-    ":hover": { background: selected ? "#EFF6FF" : "#F9FAFB" }
+    transition: "all 0.15s"
   }),
-  folderIcon: { color: "#F59E0B", flexShrink: 0 },
+  folderIcon: { flexShrink: 0 },
   folderName: { flex: 1, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-  folderToggle: { flexShrink: 0, color: "#9CA3AF", transition: "transform 0.15s" },
+  folderToggle: { flexShrink: 0, transition: "transform 0.15s" },
   mainContent: { flex: 1, display: "flex", flexDirection: "column" },
-  breadcrumb: { display: "flex", alignItems: "center", gap: 8, padding: "0 0 16px 0", fontSize: 13, color: "#6B7280" },
-  breadcrumbItem: { cursor: "pointer", ":hover": { color: "#2563EB" } },
-  breadcrumbSeparator: { color: "#D1D5DB" },
-  card: (sel) => ({ background: "#fff", borderRadius: 12, border: sel ? "2px solid #3B82F6" : "1px solid #E5E7EB", boxShadow: sel ? "0 0 0 3px rgba(59,130,246,0.1)" : "0 1px 3px rgba(0,0,0,0.06)", overflow: "hidden", cursor: "pointer", transition: "all 0.15s" }),
-  cardIcon:  { width: 36, height: 36, background: "#EFF6FF", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#2563EB" },
-  panel:     { position: "fixed", inset: 0, background: "#fff", zIndex: 50, display: "flex", flexDirection: "column" },
-  panelHeader: { background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 },
-  sheetTabs: { background: "#F1F5F9", borderBottom: "1px solid #E5E7EB", padding: "6px 14px", display: "flex", alignItems: "center", gap: 6, overflowX: "auto", flexShrink: 0 },
-  tab: (a) => ({ padding: "5px 14px", borderRadius: 6, fontSize: 12, fontWeight: 500, cursor: "pointer", border: "1px solid", background: a ? "#2563EB" : "#fff", color: a ? "#fff" : "#374151", borderColor: a ? "#2563EB" : "#D1D5DB", whiteSpace: "nowrap", flexShrink: 0 }),
-  modal:     { background: "#fff", borderRadius: 14, border: "1px solid #E5E7EB", padding: 28, maxWidth: 500, width: "90%", margin: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.15)" },
+  breadcrumb: { display: "flex", alignItems: "center", gap: 8, padding: "0 0 16px 0", fontSize: 13 },
+  breadcrumbItem: { cursor: "pointer" },
+  breadcrumbSeparator: {},
+  card: (sel) => ({ borderRadius: 12, overflow: "hidden", cursor: "pointer", transition: "all 0.15s" }),
+  cardIcon:  { width: 36, height: 36, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  panel:     { position: "fixed", inset: 0, zIndex: 50, display: "flex", flexDirection: "column" },
+  panelHeader: { padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 },
+  sheetTabs: { borderBottom: "1px solid", padding: "6px 14px", display: "flex", alignItems: "center", gap: 6, overflowX: "auto", flexShrink: 0 },
+  tab: (a) => ({ padding: "5px 14px", borderRadius: 6, fontSize: 12, fontWeight: 500, cursor: "pointer", border: "1px solid", whiteSpace: "nowrap", flexShrink: 0 }),
+  modal:     { borderRadius: 14, padding: 28, maxWidth: 500, width: "90%", margin: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.15)" },
   overlay:   { position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 40, display: "flex", alignItems: "center", justifyContent: "center" },
-  input:     { width: "100%", padding: "9px 12px", border: "1px solid #D1D5DB", borderRadius: 8, fontSize: 14, outline: "none", boxSizing: "border-box" },
-  badge: (c) => ({ display: "inline-block", padding: "2px 8px", borderRadius: 12, fontSize: 11, fontWeight: 500, background: c === "green" ? "#D1FAE5" : c === "blue" ? "#DBEAFE" : "#F3F4F6", color: c === "green" ? "#065F46" : c === "blue" ? "#1D4ED8" : "#6B7280" }),
+  input:     { width: "100%", padding: "9px 12px", borderRadius: 8, fontSize: 14, outline: "none", boxSizing: "border-box" },
+  badge: (c) => ({ display: "inline-block", padding: "2px 8px", borderRadius: 12, fontSize: 11, fontWeight: 500 }),
 };
 
 // ─── HTML → plain text ─────────────────────────────────────────────────────────
@@ -2182,17 +2177,17 @@ export default function FormsManagement() {
   }
 
   return (
-    <div style={css.root}>
+    <div style={css.root} className="bg-gray-100 dark:bg-[#0f0f10] text-gray-900 dark:text-white transition-colors duration-300">
       <Sidebar />
-      <main style={css.main}>
+      <main style={css.main} className="bg-gray-100 dark:bg-[#0f0f10] transition-colors duration-300">
         {/* Header */}
-        <div style={css.header}>
+        <div style={css.header} className="bg-white dark:bg-[#1c1c1e] border-b border-gray-200 dark:border-gray-800 transition-colors duration-300">
           <div>
-            <h1 style={css.h1}>Forms</h1>
-            <p style={css.subtitle}>Upload, edit and export forms (Excel, Word, PDF)</p>
+            <h1 style={css.h1} className="text-gray-900 dark:text-white">Forms</h1>
+            <p style={css.subtitle} className="text-gray-500 dark:text-gray-400">Upload, edit and export forms (Excel, Word, PDF)</p>
           </div>
           <div style={{ display: "flex", gap: 10 }}>
-            <button style={css.btn("ghost")} onClick={() => {
+            <button className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" onClick={() => {
               if (selectedForm || forms.length > 0) {
                 handleNewFromTemplate(selectedForm || forms[0], { stopPropagation: () => {} });
               } else {
@@ -2204,9 +2199,9 @@ export default function FormsManagement() {
             <button style={css.btn("primary")} onClick={() => fileInputRef.current?.click()}>
               <Icon d={icons.upload} /> Upload Form
             </button>
-            <input 
+            <input
               ref={fileInputRef}
-              type="file" 
+              type="file"
               accept=".xlsx,.xls,.csv,.doc,.docx,.pdf"
               style={{ display: "none" }}
               onChange={handleFileUpload}
@@ -2215,23 +2210,24 @@ export default function FormsManagement() {
         </div>
 
         {/* Search */}
-        <div style={css.toolbar}>
+        <div style={css.toolbar} className="bg-white dark:bg-[#1c1c1e] border-b border-gray-200 dark:border-gray-800 transition-colors duration-300">
           <input
             placeholder="Search forms..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ ...css.searchInput, maxWidth: 300 }}
+            className="w-full max-w-xs pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#2c2c2e] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-300"
+            style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239CA3AF' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' /%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "10px center", backgroundSize: "16px" }}
           />
         </div>
 
         {/* Content with Folder Tree */}
         <div style={css.content}>
           {/* Folder Tree Sidebar */}
-          <div style={css.folderTree}>
-            <div style={css.folderTreeHeader}>
-              <h3 style={css.folderTreeTitle}>Folders</h3>
-              <button 
-                style={{ ...css.iconBtn, width: 28, height: 28 }}
+          <div style={css.folderTree} className="bg-white dark:bg-[#1c1c1e] border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300">
+            <div style={css.folderTreeHeader} className="border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
+              <h3 style={css.folderTreeTitle} className="text-gray-900 dark:text-white">Folders</h3>
+              <button
+                className="w-7 h-7 rounded-md border border-gray-200 dark:border-gray-700 bg-transparent cursor-pointer text-gray-500 dark:text-gray-400 flex items-center justify-center"
                 onClick={() => setShowCreateFolder(true)}
                 title="Create Folder"
               >
@@ -2240,42 +2236,45 @@ export default function FormsManagement() {
             </div>
             <div style={css.folderTreeContent}>
               {/* All Forms - Root */}
-              <div 
+              <div
                 style={css.folderItem(0, currentFolderId === null)}
                 onClick={() => setCurrentFolderId(null)}
+                className={`flex items-center gap-2 cursor-pointer transition-all hover:bg-gray-50 dark:hover:bg-[#252528] ${currentFolderId === null ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-r-[3px] border-blue-600' : 'text-gray-700 dark:text-gray-300'}`}
               >
-                <Icon d={folderIcons.home} size={16} style={{ color: "#2563EB" }} />
-                <span style={css.folderName}>All Forms</span>
+                <Icon d={folderIcons.home} size={16} className="text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                <span style={css.folderName} className="text-gray-700 dark:text-gray-300">All Forms</span>
               </div>
 
               {/* Folder Tree */}
               {buildFolderTree(null, 0).map(folder => (
                 <div key={folder.id}>
-                  <div 
+                  <div
                     style={css.folderItem(folder.level, currentFolderId === folder.id)}
                     onClick={() => setCurrentFolderId(folder.id)}
+                    className={`flex items-center gap-2 cursor-pointer transition-all hover:bg-gray-50 dark:hover:bg-[#252528] ${currentFolderId === folder.id ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-r-[3px] border-blue-600' : 'text-gray-700 dark:text-gray-300'}`}
                   >
                     {folder.hasChildren && (
-                      <span 
+                      <span
                         style={css.folderToggle}
                         onClick={(e) => { e.stopPropagation(); toggleFolder(folder.id); }}
+                        className="text-gray-400 dark:text-gray-500 flex-shrink-0"
                       >
                         <Icon d={expandedFolders.has(folder.id) ? folderIcons.chevronDown : folderIcons.chevronRight} size={14} />
                       </span>
                     )}
-                    {!folder.hasChildren && <span style={{ width: 18 }} />}
-                    <Icon d={expandedFolders.has(folder.id) ? folderIcons.folderOpen : folderIcons.folder} size={16} style={css.folderIcon} />
-                    <span style={css.folderName}>{folder.name}</span>
-                    <div style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
+                    {!folder.hasChildren && <span className="w-[18px] flex-shrink-0" />}
+                    <Icon d={expandedFolders.has(folder.id) ? folderIcons.folderOpen : folderIcons.folder} size={16} className="text-amber-500 flex-shrink-0" />
+                    <span style={css.folderName} className="text-gray-700 dark:text-gray-300">{folder.name}</span>
+                    <div className="ml-auto flex gap-1">
                       <button
-                        style={{ ...css.iconBtn, width: 24, height: 24, padding: 0 }}
+                        className="w-6 h-6 p-0 rounded border border-gray-200 dark:border-gray-700 bg-transparent cursor-pointer text-gray-500 dark:text-gray-400 flex items-center justify-center"
                         onClick={(e) => { e.stopPropagation(); openRenameModal(folder); }}
                         title="Rename"
                       >
                         ✏️
                       </button>
                       <button
-                        style={{ ...css.iconBtn, width: 24, height: 24, padding: 0 }}
+                        className="w-6 h-6 p-0 rounded border border-gray-200 dark:border-gray-700 bg-transparent cursor-pointer text-gray-500 dark:text-gray-400 flex items-center justify-center"
                         onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder.id); }}
                         title="Delete"
                       >
@@ -2285,24 +2284,25 @@ export default function FormsManagement() {
                   </div>
                   {expandedFolders.has(folder.id) && folder.children.length > 0 && (
                     folder.children.map(child => (
-                      <div 
+                      <div
                         key={child.id}
                         style={css.folderItem(child.level, currentFolderId === child.id)}
                         onClick={() => setCurrentFolderId(child.id)}
+                        className={`flex items-center gap-2 cursor-pointer transition-all hover:bg-gray-50 dark:hover:bg-[#252528] ${currentFolderId === child.id ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-r-[3px] border-blue-600' : 'text-gray-700 dark:text-gray-300'}`}
                       >
-                        <span style={{ width: 18 }} />
-                        <Icon d={folderIcons.folder} size={16} style={css.folderIcon} />
-                        <span style={css.folderName}>{child.name}</span>
-                        <div style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
+                        <span className="w-[18px] flex-shrink-0" />
+                        <Icon d={folderIcons.folder} size={16} className="text-amber-500 flex-shrink-0" />
+                        <span style={css.folderName} className="text-gray-700 dark:text-gray-300">{child.name}</span>
+                        <div className="ml-auto flex gap-1">
                           <button
-                            style={{ ...css.iconBtn, width: 24, height: 24, padding: 0 }}
+                            className="w-6 h-6 p-0 rounded border border-gray-200 dark:border-gray-700 bg-transparent cursor-pointer text-gray-500 dark:text-gray-400 flex items-center justify-center"
                             onClick={(e) => { e.stopPropagation(); openRenameModal(child); }}
                             title="Rename"
                           >
                             ✏️
                           </button>
                           <button
-                            style={{ ...css.iconBtn, width: 24, height: 24, padding: 0 }}
+                            className="w-6 h-6 p-0 rounded border border-gray-200 dark:border-gray-700 bg-transparent cursor-pointer text-gray-500 dark:text-gray-400 flex items-center justify-center"
                             onClick={(e) => { e.stopPropagation(); handleDeleteFolder(child.id); }}
                             title="Delete"
                           >
@@ -2320,59 +2320,59 @@ export default function FormsManagement() {
           {/* Main Content Area */}
           <div style={css.mainContent}>
             {/* Breadcrumb */}
-            <div style={css.breadcrumb}>
-              <span style={css.breadcrumbItem} onClick={() => setCurrentFolderId(null)}>All Forms</span>
+            <div style={css.breadcrumb} className="text-gray-500 dark:text-gray-400">
+              <span className="cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors" onClick={() => setCurrentFolderId(null)}>All Forms</span>
               {getBreadcrumb().map((folder, idx) => (
-                <span key={folder.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={css.breadcrumbSeparator}>/</span>
-                  <span style={css.breadcrumbItem} onClick={() => setCurrentFolderId(folder.id)}>{folder.name}</span>
+                <span key={folder.id} className="flex items-center gap-2">
+                  <span className="text-gray-300 dark:text-gray-600">/</span>
+                  <span className="cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors" onClick={() => setCurrentFolderId(folder.id)}>{folder.name}</span>
                 </span>
               ))}
             </div>
 
             {/* Forms Grid */}
             {loading ? (
-              <p>Loading...</p>
+              <p className="text-gray-600 dark:text-gray-400">Loading...</p>
             ) : filteredForms.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "60px 20px", color: "#6B7280", background: "#fff", borderRadius: 12, border: "1px solid #E5E7EB" }}>
+              <div className="text-center py-16 px-5 text-gray-500 dark:text-gray-400 bg-white dark:bg-[#1c1c1e] rounded-xl border border-gray-200 dark:border-gray-700 transition-colors duration-300">
                 <Icon d={icons.file} size={48} />
-                <p>No forms found. Upload your first form!</p>
-                {currentFolderId && <p style={{ fontSize: 12 }}>in this folder</p>}
+                <p className="mt-4">No forms found. Upload your first form!</p>
+                {currentFolderId && <p className="text-xs mt-2">in this folder</p>}
             </div>
           ) : (
-            <div style={{ 
-              display: "grid", 
-              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", 
-              gap: 16 
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+              gap: 16
             }}>
               {filteredForms.map(form => (
-                <div 
-                  key={form.id} 
-                  style={css.card(false)}
+                <div
+                  key={form.id}
                   onClick={() => handleViewForm(form)}
+                  className="bg-white dark:bg-[#1c1c1e] rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden cursor-pointer transition-all hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md transition-colors duration-300"
                 >
-                  <div style={{ padding: 16, display: "flex", alignItems: "flex-start", gap: 12 }}>
-                    <div style={css.cardIcon}>
+                  <div className="p-4 flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
                       <Icon d={icons.file} size={20} />
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="m-0 text-sm font-semibold truncate text-gray-900 dark:text-white">
                         {getDisplayName(form.name)}
                       </h3>
-                      <p style={{ margin: "4px 0 0", fontSize: 12, color: "#6B7280" }}>
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         {form.type?.toUpperCase() || "FILE"}
                       </p>
-                      <p style={{ margin: "4px 0 0", fontSize: 11, color: "#9CA3AF" }}>
+                      <p className="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
                         {new Date(form.created_at).toLocaleDateString()}
                       </p>
                     </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
-                      <button 
-                        style={{ ...css.btn("green"), fontSize: 11, padding: "4px 8px", flexShrink: 0 }}
-                        onClick={async (e) => { 
-                          e.stopPropagation(); 
+                    <div className="flex flex-col gap-1 flex-shrink-0">
+                      <button
+                        className="text-xs px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md transition-colors"
+                        onClick={async (e) => {
+                          e.stopPropagation();
                           console.log('[DEBUG] Opening report editor');
-                          
+
                           // Open report editor - patient name will be entered in the editor
                           await openCreateReport(form);
                         }}
@@ -2380,22 +2380,22 @@ export default function FormsManagement() {
                       >
                         New Report
                       </button>
-                      <button 
-                        style={{ fontSize: 11, padding: "4px 8px", flexShrink: 0, background: "#D97706", color: "#fff", border: "1px solid #D97706", borderRadius: 6, cursor: "pointer" }}
+                      <button
+                        className="text-xs px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-md transition-colors"
                         onClick={(e) => { e.stopPropagation(); setRenameTarget(form); }}
                         title="Rename"
                       >
                         Rename
                       </button>
-                      <button 
-                        style={{ fontSize: 11, padding: "4px 8px", flexShrink: 0, background: "#6B7280", color: "#fff", border: "1px solid #6B7280", borderRadius: 6, cursor: "pointer" }}
+                      <button
+                        className="text-xs px-2 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors"
                         onClick={(e) => handleDuplicateForm(form, e)}
                         title="Duplicate"
                       >
                         Copy
                       </button>
-                      <button 
-                        style={{ ...css.btn("red"), fontSize: 11, padding: "4px 8px", flexShrink: 0 }}
+                      <button
+                        className="text-xs px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
                         onClick={(e) => { e.stopPropagation(); handleDeleteForm(form.id); }}
                         title="Delete"
                       >
@@ -2414,22 +2414,22 @@ export default function FormsManagement() {
       {/* Create Folder Modal */}
       {showCreateFolder && (
         <div style={css.overlay} onClick={() => setShowCreateFolder(false)}>
-          <div style={css.modal} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ margin: "0 0 20px", fontSize: 18 }}>Create New Folder</h3>
+          <div className="bg-white dark:bg-[#1c1c1e] rounded-xl border border-gray-200 dark:border-gray-700 p-7 max-w-md w-[90%] mx-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="m-0 mb-5 text-lg font-semibold text-gray-900 dark:text-white">Create New Folder</h3>
             <input
               type="text"
               placeholder="Folder name"
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
-              style={{ ...css.input, marginBottom: 20 }}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#2c2c2e] text-gray-900 dark:text-white text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-5"
               onKeyPress={(e) => e.key === "Enter" && handleCreateFolder()}
             />
-            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-              <button style={css.btn("ghost")} onClick={() => setShowCreateFolder(false)}>
+            <div className="flex gap-2.5 justify-end">
+              <button className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" onClick={() => setShowCreateFolder(false)}>
                 Cancel
               </button>
-              <button 
-                style={css.btn("primary")} 
+              <button
+                style={css.btn("primary")}
                 onClick={handleCreateFolder}
                 disabled={!newFolderName.trim() || creatingFolder}
               >

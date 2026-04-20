@@ -83,20 +83,20 @@ const ClinicRevenue = () => {
   ));
 
   return (
-    <div className="lg:ml-64 min-h-screen bg-gray-50">
+    <div className="lg:ml-64 min-h-screen bg-gray-50 dark:bg-[#0f0f10] transition-colors duration-300">
       <div className="p-4 lg:p-6">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 space-y-4 lg:space-y-0">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-800">Clinic Revenue</h1>
-            <p className="text-gray-600">Overall revenue analysis and clinic performance</p>
+            <h1 className="text-2xl font-semibold text-gray-800 dark:text-white transition-colors duration-300">Clinic Revenue</h1>
+            <p className="text-gray-600 dark:text-gray-400 transition-colors duration-300">Overall revenue analysis and clinic performance</p>
           </div>
-          
+
           <div className="flex items-center space-x-3">
             <select
               value={selectedPeriod}
               onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-[#2c2c2e] text-gray-900 dark:text-white transition-colors duration-300"
             >
               <option value="Export">Export</option>
               <option value="This Month">This Month</option>
@@ -107,12 +107,12 @@ const ClinicRevenue = () => {
         </div>
 
         {/* Breadcrumb */}
-        <div className="flex items-center text-sm text-gray-500 mb-6">
-          <span>Home</span>
+        <div className="flex items-center text-sm text-gray-500 dark:text-gray-500 mb-6 transition-colors duration-300">
+          <span className="hover:text-gray-700 dark:hover:text-gray-300">Home</span>
           <span className="mx-2">›</span>
-          <span>Financial</span>
+          <span className="hover:text-gray-700 dark:hover:text-gray-300">Financial</span>
           <span className="mx-2">›</span>
-          <span className="text-gray-800">Clinic Revenue</span>
+          <span className="text-gray-800 dark:text-gray-200">Clinic Revenue</span>
         </div>
 
         {/* Loading State */}
@@ -120,21 +120,21 @@ const ClinicRevenue = () => {
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <FiRefreshCw className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-4" />
-              <p className="text-gray-500">Loading clinic revenue data...</p>
+              <p className="text-gray-500 dark:text-gray-400 transition-colors duration-300">Loading clinic revenue data...</p>
             </div>
           </div>
         )}
 
         {/* Error State */}
         {error && !loading && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6 transition-colors duration-300">
             <div className="flex items-center justify-between">
-              <div className="text-red-800">{error}</div>
+              <div className="text-red-800 dark:text-red-200 transition-colors duration-300">{error}</div>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={fetchClinicRevenue}
-                className="flex items-center space-x-2 px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-sm"
+                className="flex items-center space-x-2 px-3 py-1 bg-red-100 dark:bg-red-800/30 hover:bg-red-200 dark:hover:bg-red-800/50 text-red-700 dark:text-red-200 rounded text-sm transition-colors duration-300"
               >
                 <FiRefreshCw className="w-4 h-4" />
                 <span>Retry</span>
@@ -150,11 +150,11 @@ const ClinicRevenue = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-xl p-6 shadow-sm border"
+            className="bg-white dark:bg-[#1c1c1e] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-300"
           >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-gray-800">Clinic Revenue (Overall)</h2>
-              <select className="px-3 py-1 border border-gray-300 rounded text-sm">
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-white transition-colors duration-300">Clinic Revenue (Overall)</h2>
+              <select className="px-3 py-1 border border-gray-300 dark:border-gray-700 rounded text-sm bg-white dark:bg-[#2c2c2e] text-gray-900 dark:text-white transition-colors duration-300">
                 <option>Export</option>
               </select>
             </div>
@@ -206,8 +206,8 @@ const ClinicRevenue = () => {
                 
                 {/* Center text */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <div className="text-xs text-gray-500">Total</div>
-                  <div className="text-lg font-bold text-gray-800">₹{(totalRevenue / 100000).toFixed(1)}L/-</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300">Total</div>
+                  <div className="text-lg font-bold text-gray-800 dark:text-white transition-colors duration-300">₹{(totalRevenue / 100000).toFixed(1)}L/-</div>
                 </div>
               </div>
             </div>
@@ -218,9 +218,9 @@ const ClinicRevenue = () => {
                 <div key={index} className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <div className={`w-3 h-3 rounded-full ${item.color}`}></div>
-                    <span className="text-sm text-gray-600">{item.clinic}</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400 transition-colors duration-300">{item.clinic}</span>
                   </div>
-                  <div className="text-sm text-gray-800">
+                  <div className="text-sm text-gray-800 dark:text-gray-200 transition-colors duration-300">
                     ₹{(item.amount / 100000).toFixed(1)}L ({item.percentage}%)
                   </div>
                 </div>
@@ -233,9 +233,9 @@ const ClinicRevenue = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white rounded-xl p-6 shadow-sm border"
+            className="bg-white dark:bg-[#1c1c1e] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-300"
           >
-            <h2 className="text-lg font-semibold text-gray-800 mb-6">Clinic Revenue (Detail)</h2>
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-6 transition-colors duration-300">Clinic Revenue (Detail)</h2>
 
             {/* Bar Chart */}
             <div className="h-80">
@@ -254,14 +254,14 @@ const ClinicRevenue = () => {
                         ></div>
                       ))}
                     </div>
-                    <div className="text-xs text-gray-500 mt-2 transform rotate-45">{month.month}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 transform rotate-45 transition-colors duration-300">{month.month}</div>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Y-axis labels */}
-            <div className="flex justify-between text-xs text-gray-500 mt-4">
+            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-4 transition-colors duration-300">
               <span>0</span>
               <span>{Math.round(maxValue * 0.2)}</span>
               <span>{Math.round(maxValue * 0.4)}</span>
@@ -271,7 +271,7 @@ const ClinicRevenue = () => {
             </div>
 
             {/* Legend */}
-            <div className="flex flex-wrap gap-4 mt-6 text-sm">
+            <div className="flex flex-wrap gap-4 mt-6 text-sm text-gray-700 dark:text-gray-300 transition-colors duration-300">
               {revenueData.map((clinic) => (
                 <div key={clinic.clinic} className="flex items-center space-x-2">
                   <div className={`w-3 h-3 ${clinic.color} rounded`}></div>

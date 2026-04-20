@@ -43,11 +43,11 @@ const icons = {
 };
 
 const css = {
-  root:     { fontFamily: "system-ui,-apple-system,sans-serif", minHeight: "100vh", background: "#F3F4F6", color: "#1a1a1a", display: "flex" },
+  root:     { fontFamily: "system-ui,-apple-system,sans-serif", minHeight: "100vh", display: "flex" },
   main:     { flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh", overflow: "auto", marginLeft: 256 },
-  header:   { background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, position: "sticky", top: 0, zIndex: 20 },
+  header:   { padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, position: "sticky", top: 0, zIndex: 20 },
   h1:       { margin: 0, fontSize: 19, fontWeight: 700, letterSpacing: "-0.3px" },
-  subtitle: { margin: 0, fontSize: 12, color: "#6B7280" },
+  subtitle: { margin: 0, fontSize: 12 },
   btn: (v = "default") => ({
     display: "inline-flex", alignItems: "center", gap: 6,
     padding: "7px 14px", borderRadius: 8, fontSize: 13, fontWeight: 500,
@@ -55,23 +55,22 @@ const css = {
     ...(v === "primary" ? { background: "#2563EB", color: "#fff",    borderColor: "#2563EB" } :
         v === "green"   ? { background: "#059669", color: "#fff",    borderColor: "#059669" } :
         v === "red"     ? { background: "#DC2626", color: "#fff",    borderColor: "#DC2626" } :
-        v === "ghost"   ? { background: "transparent", color: "#374151", borderColor: "#D1D5DB" } :
-                          { background: "#fff", color: "#374151", borderColor: "#D1D5DB" }),
+        v === "ghost"   ? { background: "transparent", borderColor: "#D1D5DB" } :
+                          { background: "transparent", borderColor: "#D1D5DB" }),
   }),
-  iconBtn:   { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 6, border: "1px solid #E5E7EB", background: "transparent", cursor: "pointer", color: "#6B7280" },
-  toolbar:   { background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "10px 24px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" },
-  searchInput: { width: "100%", padding: "7px 12px 7px 36px", border: "1px solid #D1D5DB", borderRadius: 8, fontSize: 13, outline: "none", boxSizing: "border-box" },
+  iconBtn:   { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 6, border: "1px solid", background: "transparent", cursor: "pointer" },
+  toolbar:   { padding: "10px 24px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" },
   content:   { padding: 24 },
-  card: (sel) => ({ background: "#fff", borderRadius: 12, border: sel ? "2px solid #3B82F6" : "1px solid #E5E7EB", boxShadow: sel ? "0 0 0 3px rgba(59,130,246,0.1)" : "0 1px 3px rgba(0,0,0,0.06)", overflow: "hidden", cursor: "pointer", transition: "all 0.15s" }),
-  cardIcon:  { width: 36, height: 36, background: "#EFF6FF", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#2563EB" },
-  panel:     { position: "fixed", inset: 0, background: "#fff", zIndex: 50, display: "flex", flexDirection: "column" },
-  panelHeader: { background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 },
-  sheetTabs: { background: "#F1F5F9", borderBottom: "1px solid #E5E7EB", padding: "6px 14px", display: "flex", alignItems: "center", gap: 6, overflowX: "auto", flexShrink: 0 },
-  tab: (a) => ({ padding: "5px 14px", borderRadius: 6, fontSize: 12, fontWeight: 500, cursor: "pointer", border: "1px solid", background: a ? "#2563EB" : "#fff", color: a ? "#fff" : "#374151", borderColor: a ? "#2563EB" : "#D1D5DB", whiteSpace: "nowrap", flexShrink: 0 }),
-  modal:     { background: "#fff", borderRadius: 14, border: "1px solid #E5E7EB", padding: 28, maxWidth: 500, width: "90%", margin: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.15)" },
+  card: (sel) => ({ borderRadius: 12, border: sel ? "2px solid #3B82F6" : "1px solid", overflow: "hidden", cursor: "pointer", transition: "all 0.15s" }),
+  cardIcon:  { width: 36, height: 36, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  panel:     { position: "fixed", inset: 0, zIndex: 50, display: "flex", flexDirection: "column" },
+  panelHeader: { padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 },
+  sheetTabs: { borderBottom: "1px solid", padding: "6px 14px", display: "flex", alignItems: "center", gap: 6, overflowX: "auto", flexShrink: 0 },
+  tab: (a) => ({ padding: "5px 14px", borderRadius: 6, fontSize: 12, fontWeight: 500, cursor: "pointer", border: "1px solid", whiteSpace: "nowrap", flexShrink: 0 }),
+  modal:     { borderRadius: 14, padding: 28, maxWidth: 500, width: "90%", margin: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.15)" },
   overlay:   { position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 40, display: "flex", alignItems: "center", justifyContent: "center" },
-  input:     { width: "100%", padding: "9px 12px", border: "1px solid #D1D5DB", borderRadius: 8, fontSize: 14, outline: "none", boxSizing: "border-box" },
-  badge: (c) => ({ display: "inline-block", padding: "2px 8px", borderRadius: 12, fontSize: 11, fontWeight: 500, background: c === "green" ? "#D1FAE5" : c === "blue" ? "#DBEAFE" : "#F3F4F6", color: c === "green" ? "#065F46" : c === "blue" ? "#1D4ED8" : "#6B7280" }),
+  input:     { width: "100%", padding: "9px 12px", borderRadius: 8, fontSize: 14, outline: "none", boxSizing: "border-box" },
+  badge: (c) => ({ display: "inline-block", padding: "2px 8px", borderRadius: 12, fontSize: 11, fontWeight: 500 }),
 };
 
 // ─── HTML → plain text (fallback) ────────────────────────────────────────────
@@ -602,21 +601,21 @@ function RenameModal({ template, onClose, onRename }) {
 
   return (
     <div style={css.overlay} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ ...css.modal, maxWidth: 420 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>✏️ Rename Template</h3>
-          <button style={css.iconBtn} onClick={onClose}><Icon d={icons.x} size={16} /></button>
+      <div className="bg-white dark:bg-[#1c1c1e] rounded-xl border border-gray-200 dark:border-gray-700 p-7 max-w-md w-[90%] mx-auto shadow-2xl">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="m-0 text-base font-bold text-gray-900 dark:text-white">✏️ Rename Template</h3>
+          <button className="w-[30px] h-[30px] rounded-md border border-gray-200 dark:border-gray-700 bg-transparent cursor-pointer text-gray-500 dark:text-gray-400 flex items-center justify-center" onClick={onClose}><Icon d={icons.x} size={16} /></button>
         </div>
-        <label style={{ fontSize: 12, color: "#6B7280", display: "block", marginBottom: 6 }}>New Name</label>
+        <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1.5">New Name</label>
         <input
-          style={css.input}
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#2c2c2e] text-gray-900 dark:text-white text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           value={newName}
           onChange={e => setNewName(e.target.value)}
           autoFocus
           onKeyDown={e => { if (e.key === "Enter") handleRename(); if (e.key === "Escape") onClose(); }}
         />
-        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 18 }}>
-          <button style={css.btn("ghost")} onClick={onClose}>Cancel</button>
+        <div className="flex gap-2 justify-end mt-5">
+          <button className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" onClick={onClose}>Cancel</button>
           <button style={css.btn("primary")} onClick={handleRename} disabled={saving}>
             <Icon d={icons.save} size={14} /> {saving ? "Saving…" : "Rename"}
           </button>
@@ -1105,20 +1104,20 @@ export default function TemplateManager() {
   const toggleSel = (t) => setSelected(s => s.find(x => x.id === t.id) ? s.filter(x => x.id !== t.id) : [...s, t]);
 
   return (
-    <div style={css.root}>
+    <div style={css.root} className="bg-gray-100 dark:bg-[#0f0f10] text-gray-900 dark:text-white transition-colors duration-300">
       <Sidebar activeItem="template-manager" setActiveItem={() => {}} sidebarCollapsed={false} setSidebarCollapsed={() => {}} />
 
-      <div style={css.main}>
-        <div style={css.header}>
+      <div style={css.main} className="bg-gray-100 dark:bg-[#0f0f10] transition-colors duration-300">
+        <div style={css.header} className="bg-white dark:bg-[#1c1c1e] border-b border-gray-200 dark:border-gray-800 transition-colors duration-300">
           <div>
-            <h1 style={css.h1}>📊 Template Manager</h1>
-            <p style={css.subtitle}>
+            <h1 style={css.h1} className="text-gray-900 dark:text-white">📊 Template Manager</h1>
+            <p style={css.subtitle} className="text-gray-500 dark:text-gray-400">
               {loading ? "Loading…" : `${templates.length} templates`}
-              {error && <span style={{ color: "#DC2626", marginLeft: 8 }}>⚠️ {error}</span>}
+              {error && <span className="text-red-600 dark:text-red-400 ml-2">⚠️ {error}</span>}
             </p>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            {loading && <span style={{ fontSize: 12, color: "#6B7280" }}>⏳</span>}
+            {loading && <span className="text-sm text-gray-500 dark:text-gray-400">⏳</span>}
             <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.docx" onChange={handleUpload} style={{ display: "none" }} />
             <button style={css.btn("primary")} onClick={() => fileRef.current?.click()}>
               <Icon d={icons.upload} size={14} /> Upload File
@@ -1126,16 +1125,21 @@ export default function TemplateManager() {
           </div>
         </div>
 
-        <div style={css.toolbar}>
+        <div style={css.toolbar} className="bg-white dark:bg-[#1c1c1e] border-b border-gray-200 dark:border-gray-800 transition-colors duration-300">
           <div style={{ position: "relative", flex: 1, maxWidth: 320 }}>
-            <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#9CA3AF" }}>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
               <Icon d="M21 21l-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0" size={15} />
             </span>
-            <input style={css.searchInput} placeholder="Search templates…" value={search} onChange={e => setSearch(e.target.value)} />
+            <input
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#2c2c2e] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-300"
+              placeholder="Search templates…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
           </div>
           <div style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
             {[{ v: "grid", d: icons.grid }, { v: "list", d: icons.list }].map(({ v, d }) => (
-              <button key={v} onClick={() => setView(v)} style={{ ...css.iconBtn, background: view === v ? "#EFF6FF" : "transparent", color: view === v ? "#2563EB" : "#6B7280", borderColor: view === v ? "#BFDBFE" : "#E5E7EB" }}>
+              <button key={v} onClick={() => setView(v)} className={`w-[30px] h-[30px] rounded-md border flex items-center justify-center transition-colors ${view === v ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800' : 'bg-transparent text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700'}`}>
                 <Icon d={d} size={16} />
               </button>
             ))}
@@ -1144,10 +1148,10 @@ export default function TemplateManager() {
 
         <div style={css.content}>
           {filtered.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 20px", color: "#9CA3AF" }}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>📂</div>
-              <p style={{ fontSize: 16, fontWeight: 500, marginBottom: 4 }}>No templates yet</p>
-              <p style={{ fontSize: 13, marginBottom: 20 }}>Upload an Excel or Word document template to get started</p>
+            <div className="text-center py-16 text-gray-400 dark:text-gray-500">
+              <div className="text-5xl mb-3">📂</div>
+              <p className="text-base font-medium mb-1 text-gray-900 dark:text-white">No templates yet</p>
+              <p className="text-sm mb-5">Upload an Excel or Word document template to get started</p>
               <button style={css.btn("primary")} onClick={() => fileRef.current?.click()}>
                 <Icon d={icons.upload} size={14} /> Upload File
               </button>
@@ -1157,53 +1161,53 @@ export default function TemplateManager() {
               {filtered.map(t => {
                 const isSel = !!selected.find(s => s.id === t.id);
                 return (
-                  <div key={t.id} style={css.card(isSel)} onClick={() => openView(t)}>
+                  <div key={t.id} onClick={() => openView(t)} className={`bg-white dark:bg-[#1c1c1e] rounded-xl overflow-hidden cursor-pointer transition-all ${isSel ? 'border-2 border-blue-500 shadow-[0_0_0_3px_rgba(59,130,246,0.1)]' : 'border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'}`}>
                     <div style={{ padding: "14px 16px 10px", display: "flex", alignItems: "flex-start", gap: 12 }}>
-                      <div style={css.cardIcon}><Icon d={icons.file} size={20} /></div>
+                      <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"><Icon d={icons.file} size={20} /></div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         {/* FIX 2: Show patient name + template name for reports */}
-                        <p style={{ fontSize: 14, fontWeight: 600, margin: "0 0 2px", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={t.name}>
+                        <p className="text-sm font-semibold mb-0.5 leading-tight truncate text-gray-900 dark:text-white" title={t.name}>
                           {getDisplayName(t)}
                         </p>
                         {/* Show date as subtitle for reports */}
                         {t.type === "report" && (() => {
                           const parts = t.name.split("—").map(s => s.trim());
-                          return parts.length >= 3 ? <p style={{ fontSize: 11, color: "#9CA3AF", margin: "0 0 4px" }}>{parts[parts.length - 1]}</p> : null;
+                          return parts.length >= 3 ? <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">{parts[parts.length - 1]}</p> : null;
                         })()}
                         <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                          <span style={css.badge(t.type === "report" ? "green" : "blue")}>{t.type}</span>
-                          <span style={css.badge("default")}>{(t.sheetNames || []).length} sheets</span>
+                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${t.type === "report" ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400'}`}>{t.type}</span>
+                          <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">{(t.sheetNames || []).length} sheets</span>
                         </div>
                       </div>
-                      <input type="checkbox" checked={isSel} onChange={() => {}} style={{ accentColor: "#2563EB", width: 15, height: 15 }} />
+                      <input type="checkbox" checked={isSel} onChange={() => {}} className="accent-blue-600 w-4 h-4" />
                     </div>
-                    <div style={{ borderTop: "1px solid #F3F4F6", padding: "8px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4, flexWrap: "wrap" }}>
-                      <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                        <button 
+                    <div className="border-t border-gray-100 dark:border-gray-700 p-2 flex items-center justify-between gap-1 flex-wrap">
+                      <div className="flex gap-1 flex-wrap">
+                        <button
                           onClick={(e) => { e.stopPropagation(); openView(t); }}
-                          style={{ fontSize: 11, padding: "4px 8px", background: "#2563EB", color: "#fff", border: "1px solid #2563EB", borderRadius: 6, cursor: "pointer" }}
+                          className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
                           title="View/Edit"
                         >
                           View
                         </button>
-                        <button 
+                        <button
                           onClick={(e) => { e.stopPropagation(); openCreateReport(t); }}
-                          style={{ fontSize: 11, padding: "4px 8px", background: "#059669", color: "#fff", border: "1px solid #059669", borderRadius: 6, cursor: "pointer" }}
+                          className="text-xs px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md transition-colors"
                           title="New Report"
                         >
                           New Report
                         </button>
-                        <button 
+                        <button
                           onClick={(e) => { e.stopPropagation(); setRenameTarget(t); }}
-                          style={{ fontSize: 11, padding: "4px 8px", background: "#D97706", color: "#fff", border: "1px solid #D97706", borderRadius: 6, cursor: "pointer" }}
+                          className="text-xs px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-md transition-colors"
                           title="Rename"
                         >
                           Rename
                         </button>
                       </div>
-                      <button 
+                      <button
                         onClick={(e) => { e.stopPropagation(); deleteTpl(t.id); }}
-                        style={{ fontSize: 11, padding: "4px 8px", background: "#DC2626", color: "#fff", border: "1px solid #DC2626", borderRadius: 6, cursor: "pointer" }}
+                        className="text-xs px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
                         title="Delete"
                       >
                         Delete
@@ -1214,15 +1218,15 @@ export default function TemplateManager() {
               })}
             </div>
           ) : (
-            <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #E5E7EB", overflow: "hidden" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+            <div className="bg-white dark:bg-[#1c1c1e] rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-300">
+              <table className="w-full text-sm">
                 <thead>
-                  <tr>
-                    <th style={{ padding: "10px 14px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "#6B7280", textTransform: "uppercase", background: "#F9FAFB", borderBottom: "1px solid #E5E7EB", width: 40 }}>
-                      <input type="checkbox" checked={selected.length === filtered.length && filtered.length > 0} onChange={e => setSelected(e.target.checked ? [...filtered] : [])} style={{ accentColor: "#2563EB" }} />
+                  <tr className="bg-gray-50 dark:bg-[#252528] border-b border-gray-200 dark:border-gray-700">
+                    <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 w-10">
+                      <input type="checkbox" checked={selected.length === filtered.length && filtered.length > 0} onChange={e => setSelected(e.target.checked ? [...filtered] : [])} className="accent-blue-600" />
                     </th>
                     {["Name", "Type", "Sheets", "Created", "Actions"].map(h => (
-                      <th key={h} style={{ padding: "10px 14px", textAlign: h === "Actions" ? "right" : "left", fontSize: 11, fontWeight: 600, color: "#6B7280", textTransform: "uppercase", background: "#F9FAFB", borderBottom: "1px solid #E5E7EB" }}>{h}</th>
+                      <th key={h} className={`px-3 py-2.5 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 ${h === "Actions" ? "text-right" : "text-left"}`}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -1230,52 +1234,52 @@ export default function TemplateManager() {
                   {filtered.map(t => {
                     const isSel = !!selected.find(s => s.id === t.id);
                     return (
-                      <tr key={t.id} style={{ background: isSel ? "#EFF6FF" : "transparent", cursor: "pointer" }} onClick={() => toggleSel(t)}>
-                        <td style={{ padding: "11px 14px", borderBottom: "1px solid #F3F4F6" }}>
-                          <input type="checkbox" checked={isSel} onChange={() => {}} style={{ accentColor: "#2563EB" }} />
+                      <tr key={t.id} className={`cursor-pointer transition-colors ${isSel ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-[#252528]'}`} onClick={() => toggleSel(t)}>
+                        <td className="px-3 py-3 border-b border-gray-100 dark:border-gray-700">
+                          <input type="checkbox" checked={isSel} onChange={() => {}} className="accent-blue-600" />
                         </td>
-                        <td style={{ padding: "11px 14px", borderBottom: "1px solid #F3F4F6" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <div style={{ ...css.cardIcon, width: 28, height: 28 }}><Icon d={icons.file} size={14} /></div>
+                        <td className="px-3 py-3 border-b border-gray-100 dark:border-gray-700">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"><Icon d={icons.file} size={14} /></div>
                             {/* FIX 2: List view also shows correct display name */}
-                            <span style={{ fontWeight: 500 }}>{getDisplayName(t)}</span>
+                            <span className="font-medium text-gray-900 dark:text-white">{getDisplayName(t)}</span>
                           </div>
                         </td>
-                        <td style={{ padding: "11px 14px", borderBottom: "1px solid #F3F4F6" }}>
-                          <span style={css.badge(t.type === "report" ? "green" : "blue")}>{t.type}</span>
+                        <td className="px-3 py-3 border-b border-gray-100 dark:border-gray-700">
+                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${t.type === "report" ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400'}`}>{t.type}</span>
                         </td>
-                        <td style={{ padding: "11px 14px", borderBottom: "1px solid #F3F4F6", color: "#6B7280", fontSize: 12 }}>
+                        <td className="px-3 py-3 border-b border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400 text-xs">
                           {(t.sheetNames || []).length}
                         </td>
-                        <td style={{ padding: "11px 14px", borderBottom: "1px solid #F3F4F6", color: "#6B7280", fontSize: 12 }}>
+                        <td className="px-3 py-3 border-b border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400 text-xs">
                           {new Date(t.createdAt).toLocaleDateString()}
                         </td>
-                        <td style={{ padding: "11px 14px", borderBottom: "1px solid #F3F4F6" }}>
-                          <div style={{ display: "flex", gap: 4, justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap" }}>
-                            <button 
+                        <td className="px-3 py-3 border-b border-gray-100 dark:border-gray-700">
+                          <div className="flex gap-1 justify-end flex-wrap">
+                            <button
                               onClick={(e) => { e.stopPropagation(); openView(t); }}
-                              style={{ fontSize: 11, padding: "4px 8px", background: "#2563EB", color: "#fff", border: "1px solid #2563EB", borderRadius: 6, cursor: "pointer" }}
+                              className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
                               title="View"
                             >
                               View
                             </button>
-                            <button 
+                            <button
                               onClick={(e) => { e.stopPropagation(); openCreateReport(t); }}
-                              style={{ fontSize: 11, padding: "4px 8px", background: "#059669", color: "#fff", border: "1px solid #059669", borderRadius: 6, cursor: "pointer" }}
+                              className="text-xs px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md transition-colors"
                               title="New Report"
                             >
                               New Report
                             </button>
-                            <button 
+                            <button
                               onClick={(e) => { e.stopPropagation(); setRenameTarget(t); }}
-                              style={{ fontSize: 11, padding: "4px 8px", background: "#D97706", color: "#fff", border: "1px solid #D97706", borderRadius: 6, cursor: "pointer" }}
+                              className="text-xs px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-md transition-colors"
                               title="Rename"
                             >
                               Rename
                             </button>
-                            <button 
+                            <button
                               onClick={(e) => { e.stopPropagation(); deleteTpl(t.id); }}
-                              style={{ fontSize: 11, padding: "4px 8px", background: "#DC2626", color: "#fff", border: "1px solid #DC2626", borderRadius: 6, cursor: "pointer" }}
+                              className="text-xs px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
                               title="Delete"
                             >
                               Delete

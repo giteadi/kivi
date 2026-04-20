@@ -346,19 +346,19 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
   };
 
   return (
-    <div className="lg:ml-64 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="lg:ml-64 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0f0f10] dark:to-[#1c1c1e] transition-colors duration-300">
       <div className="p-4 lg:p-6">
         {/* Header Section */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 space-y-4 lg:space-y-0">
           <div>
-            <motion.h1 
+            <motion.h1
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="text-3xl font-bold text-gray-800"
+              className="text-3xl font-bold text-gray-800 dark:text-white"
             >
               Welcome Back, Admin
             </motion.h1>
-            <p className="text-gray-500 mt-1">Here is what is happening in your therapy center today</p>
+            <p className="text-gray-500 dark:text-gray-400 mt-1">Here is what is happening in your therapy center today</p>
           </div>
           
           <div className="flex items-center space-x-3">
@@ -373,12 +373,12 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
                 }}
                 onFocus={() => setShowSearchSuggestions(true)}
                 placeholder="Search anything..."
-                className="pl-10 pr-10 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none w-64"
+                className="pl-10 pr-10 py-2 bg-white dark:bg-[#2c2c2e] border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none w-64 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-300"
               />
               {searchQuery && (
                 <button
                   onClick={() => { setSearchQuery(''); setShowSearchSuggestions(false); }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   <FiX className="w-4 h-4" />
                 </button>
@@ -391,11 +391,11 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-100 z-30 overflow-hidden max-h-80 overflow-y-auto"
+                    className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#2c2c2e] rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 z-30 overflow-hidden max-h-80 overflow-y-auto"
                   >
                     {filteredSuggestions.length > 0 ? (
                       <>
-                        <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <div className="px-4 py-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                           Results ({filteredSuggestions.length})
                         </div>
                         {filteredSuggestions.map((item, index) => (
@@ -403,17 +403,17 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
                             key={index}
                             to={item.route}
                             onClick={() => handleSearchClick(item)}
-                            className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-blue-50 transition-colors text-left border-t border-gray-50"
+                            className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-left border-t border-gray-50 dark:border-gray-700"
                           >
-                            <div className="p-2 bg-gray-100 rounded-lg">
-                              <item.icon className="w-4 h-4 text-gray-600" />
+                            <div className="p-2 bg-gray-100 dark:bg-[#3a3a3c] rounded-lg">
+                              <item.icon className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                             </div>
-                            <span className="text-sm font-medium text-gray-800">{item.label}</span>
+                            <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{item.label}</span>
                           </Link>
                         ))}
                       </>
                     ) : (
-                      <div className="px-4 py-4 text-center text-gray-500">
+                      <div className="px-4 py-4 text-center text-gray-500 dark:text-gray-400">
                         <FiSearch className="w-8 h-8 mx-auto mb-2 opacity-50" />
                         <p className="text-sm">No results found</p>
                       </div>
@@ -437,7 +437,7 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className={`bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative ${stat.title === "Today's Sessions" || stat.route ? 'cursor-pointer' : ''}`}
+              className={`bg-white dark:bg-[#1c1c1e] rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-black/20 transition-all relative ${stat.title === "Today's Sessions" || stat.route ? 'cursor-pointer' : ''}`}
               onClick={stat.title === "Today's Sessions" ? () => setShowSessionsDropdown(!showSessionsDropdown) : undefined}
             >
               {stat.route && (
@@ -461,8 +461,8 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
                 </div>
               </div>
               <div className="mt-4">
-                <h3 className="text-2xl font-bold text-gray-800">{stat.value}</h3>
-                <p className="text-sm text-gray-500">{stat.title}</p>
+                <h3 className="text-2xl font-bold text-gray-800 dark:text-white">{stat.value}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{stat.title}</p>
               </div>
               
               {/* Dropdown for Today's Sessions */}
@@ -472,33 +472,33 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-100 z-20 overflow-hidden"
+                    className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#2c2c2e] rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 z-20 overflow-hidden"
                   >
                     <Link
                       to={routeMapping['assessment-list']}
                       onClick={() => { setActiveItem?.('assessment-list'); setShowSessionsDropdown(false); }}
-                      className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 transition-colors text-left"
+                      className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 dark:hover:bg-[#3a3a3c] transition-colors text-left"
                     >
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <FiCheckSquare className="w-4 h-4 text-blue-600" />
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                        <FiCheckSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-800">Assessment List</p>
-                        <p className="text-xs text-gray-500">View all assessments</p>
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">Assessment List</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">View all assessments</p>
                       </div>
                     </Link>
-                    <div className="border-t border-gray-100"></div>
+                    <div className="border-t border-gray-100 dark:border-gray-700"></div>
                     <Link
                       to={routeMapping['therapy-list']}
                       onClick={() => { setActiveItem?.('therapy-list'); setShowSessionsDropdown(false); }}
-                      className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 transition-colors text-left"
+                      className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 dark:hover:bg-[#3a3a3c] transition-colors text-left"
                     >
-                      <div className="p-2 bg-emerald-100 rounded-lg">
-                        <FiHeart className="w-4 h-4 text-emerald-600" />
+                      <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                        <FiHeart className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-800">Therapy List</p>
-                        <p className="text-xs text-gray-500">View all therapy sessions</p>
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">Therapy List</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">View all therapy sessions</p>
                       </div>
                     </Link>
                   </motion.div>

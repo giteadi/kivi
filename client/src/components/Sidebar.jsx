@@ -179,28 +179,28 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={false}
       animate={{ width: sidebarCollapsed ? 64 : 256 }}
       transition={{ type: "tween", duration: 0.2, ease: "easeInOut" }}
-      className="hidden lg:block bg-white shadow-lg h-screen fixed left-0 top-0 z-10 overflow-y-auto will-change-[width]"
+      className="hidden lg:block bg-white dark:bg-[#1c1c1e] shadow-lg dark:shadow-black/20 h-screen fixed left-0 top-0 z-10 overflow-y-auto will-change-[width] transition-colors duration-300"
     >
       {/* Logo */}
-      <div className="p-6 border-b">
+      <div className="p-6 border-b dark:border-gray-800">
         <div className="flex items-center justify-between">
           <div className={`flex items-center space-x-3 ${sidebarCollapsed ? 'hidden' : ''}`}>
             <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
-              <img 
-                src="https://res.cloudinary.com/bazeercloud/image/upload/q_auto/f_auto/v1775895427/ChatGPT_Image_Apr_11_2026_01_45_49_PM_trwcph.png" 
-                alt="Centrix Logo" 
+              <img
+                src="https://res.cloudinary.com/bazeercloud/image/upload/q_auto/f_auto/v1775895427/ChatGPT_Image_Apr_11_2026_01_45_49_PM_trwcph.png"
+                alt="Centrix Logo"
                 className="w-full h-full object-contain"
               />
             </div>
-            <span className="text-xl font-semibold text-gray-800">Centrix</span>
+            <span className="text-xl font-semibold text-gray-800 dark:text-white">Centrix</span>
           </div>
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2c2c2e] transition-colors dark:text-gray-300"
             title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
             {sidebarCollapsed ? <FiMenu className="w-5 h-5" /> : <FiX className="w-5 h-5" />}
@@ -213,7 +213,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
         {sections.map((section) => (
           <div key={section} className="mb-4">
             <div className={`${sidebarCollapsed ? 'px-2' : 'px-6'} mb-2`}>
-              <span className={`text-xs font-semibold text-gray-400 uppercase tracking-wider ${
+              <span className={`text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider ${
                 sidebarCollapsed ? 'hidden' : ''
               }`}>
                 {section}
@@ -236,10 +236,10 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
                     }}
                     className={`w-full flex items-center justify-between ${
                       sidebarCollapsed ? 'px-2' : 'px-6'
-                    } py-2.5 text-left duration-150 ease-out ${
+                    } py-2.5 text-left duration-150 ease-out transition-colors ${
                       isActiveItem(item.id)
-                        ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600'
-                        : 'text-gray-600 hover:bg-gray-50'
+                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-r-2 border-blue-600'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#2c2c2e]'
                     }`}
                   >
                     <div className="flex items-center">
@@ -276,10 +276,10 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
                             key={subItem.id}
                             to={routeMapping[subItem.id] || `/`}
                             onClick={() => setActiveItem(subItem.id)}
-                            className={`w-full flex items-center px-12 py-2 text-left duration-150 ease-out ${
+                            className={`w-full flex items-center px-12 py-2 text-left duration-150 ease-out transition-colors ${
                               activeItem === subItem.id
-                                ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600'
-                                : 'text-gray-600 hover:bg-gray-50'
+                                ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-r-2 border-blue-600'
+                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#2c2c2e]'
                             }`}
                           >
                             <subItem.icon className="w-4 h-4 mr-3" />

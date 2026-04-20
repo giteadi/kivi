@@ -88,21 +88,21 @@ const MobileMenu = ({ isOpen, setIsOpen, activeItem, setActiveItem }) => {
             animate={{ x: 0 }}
             exit={{ x: -300 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed left-0 top-0 w-80 h-full bg-white shadow-xl z-50 lg:hidden overflow-y-auto"
+            className="fixed left-0 top-0 w-80 h-full bg-white dark:bg-[#1c1c1e] shadow-xl dark:shadow-black/40 z-50 lg:hidden overflow-y-auto"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b">
+            <div className="flex items-center justify-between p-6 border-b dark:border-gray-800">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-sm">M</span>
                 </div>
-                <span className="text-xl font-semibold text-gray-800">MindSaid Learning</span>
+                <span className="text-xl font-semibold text-gray-800 dark:text-white">MindSaid Learning</span>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-[#2c2c2e] rounded-lg"
               >
-                <FiX className="w-5 h-5 text-gray-600" />
+                <FiX className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </button>
             </div>
 
@@ -111,7 +111,7 @@ const MobileMenu = ({ isOpen, setIsOpen, activeItem, setActiveItem }) => {
               {sections.map((section) => (
                 <div key={section} className="mb-4">
                   <div className="px-6 mb-2">
-                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                       {section}
                     </span>
                   </div>
@@ -125,8 +125,8 @@ const MobileMenu = ({ isOpen, setIsOpen, activeItem, setActiveItem }) => {
                           onClick={() => handleItemClick(item.id, item.hasSubmenu)}
                           className={`w-full flex items-center justify-between px-6 py-2.5 text-left transition-colors ${
                             isActiveItem(item.id)
-                              ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600'
-                              : 'text-gray-600 hover:bg-gray-50'
+                              ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-r-2 border-blue-600'
+                              : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2c2c2e]'
                           }`}
                         >
                           <div className="flex items-center">
@@ -160,8 +160,8 @@ const MobileMenu = ({ isOpen, setIsOpen, activeItem, setActiveItem }) => {
                                   onClick={() => handleItemClick(subItem.id)}
                                   className={`w-full flex items-center px-12 py-2 text-left transition-colors ${
                                     activeItem === subItem.id
-                                      ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600'
-                                      : 'text-gray-600 hover:bg-gray-50'
+                                      ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-r-2 border-blue-600'
+                                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2c2c2e]'
                                   }`}
                                 >
                                   <subItem.icon className="w-4 h-4 mr-3" />

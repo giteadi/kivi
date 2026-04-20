@@ -171,7 +171,7 @@ const BookingModal = ({ isOpen, onClose, selectedPlan, onSuccess }) => {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
+        className="bg-white dark:bg-[#1c1c1e] rounded-xl shadow-2xl dark:shadow-black/40 border dark:border-gray-800 w-full max-w-4xl max-h-[90vh] overflow-hidden"
       >
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6">
@@ -214,13 +214,13 @@ const BookingModal = ({ isOpen, onClose, selectedPlan, onSuccess }) => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
             >
-              <h3 className="text-lg font-semibold mb-4">Select a Date</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Select a Date</h3>
               <div className="grid grid-cols-4 gap-3">
                 {generateDates().map((date) => (
                   <button
                     key={date.toISOString()}
                     onClick={() => handleDateSelect(date.toISOString().split('T')[0])}
-                    className="p-3 border rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                    className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-gray-900 dark:text-white"
                   >
                     <div className="text-sm font-medium">
                       {date.toLocaleDateString('en-US', { weekday: 'short' })}
@@ -228,7 +228,7 @@ const BookingModal = ({ isOpen, onClose, selectedPlan, onSuccess }) => {
                     <div className="text-lg font-bold">
                       {date.getDate()}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
                       {date.toLocaleDateString('en-US', { month: 'short' })}
                     </div>
                   </button>
@@ -242,11 +242,11 @@ const BookingModal = ({ isOpen, onClose, selectedPlan, onSuccess }) => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
             >
-              <h3 className="text-lg font-semibold mb-4">Select Therapist</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Select Therapist</h3>
               {loading.therapists ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="text-gray-500 mt-2">Loading therapists...</p>
+                  <p className="text-gray-500 dark:text-gray-400 mt-2">Loading therapists...</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -289,23 +289,23 @@ const BookingModal = ({ isOpen, onClose, selectedPlan, onSuccess }) => {
                         onClick={() => handleTherapistSelect(therapist)}
                         className={`p-4 border rounded-lg cursor-pointer transition-all ${
                           selectedTherapist?.id === therapist.id
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:border-gray-300'
+                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                         }`}
                       >
                         <div className="flex items-start space-x-3">
-                          <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                            <FiUser className="w-5 h-5 text-gray-600" />
+                          <div className="w-10 h-10 bg-gray-300 dark:bg-[#2c2c2e] rounded-full flex items-center justify-center">
+                            <FiUser className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center justify-between">
-                              <h4 className="font-medium">
+                              <h4 className="font-medium text-gray-900 dark:text-white">
                                 {therapist.first_name} {therapist.last_name}
                               </h4>
                               <div className={`flex items-center space-x-1 text-xs px-2 py-1 rounded-full ${
                                 isCurrentlyAvailable
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-red-100 text-red-800'
+                                  ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                                  : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
                               }`}>
                                 <div className={`w-2 h-2 rounded-full ${
                                   isCurrentlyAvailable ? 'bg-green-500' : 'bg-red-500'
@@ -313,18 +313,18 @@ const BookingModal = ({ isOpen, onClose, selectedPlan, onSuccess }) => {
                                 <span>{isCurrentlyAvailable ? 'Available' : 'Unavailable'}</span>
                               </div>
                             </div>
-                            <p className="text-sm text-gray-600">{therapist.specialty}</p>
-                            <div className="flex items-center mt-1 text-xs text-gray-500">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">{therapist.specialty}</p>
+                            <div className="flex items-center mt-1 text-xs text-gray-500 dark:text-gray-400">
                               <FiStar className="w-3 h-3 text-yellow-500 mr-1" />
                               {therapist.experience_years} years experience
                             </div>
                             {therapist.centre_name && (
-                              <div className="flex items-center mt-1 text-xs text-gray-500">
+                              <div className="flex items-center mt-1 text-xs text-gray-500 dark:text-gray-400">
                                 <FiMapPin className="w-3 h-3 mr-1" />
                                 {therapist.centre_name}
                               </div>
                             )}
-                            <div className="flex items-center mt-2 text-xs text-gray-500">
+                            <div className="flex items-center mt-2 text-xs text-gray-500 dark:text-gray-400">
                               <FiClock className="w-3 h-3 mr-1" />
                               Available: {therapist.login_time || '09:00'} - {therapist.logout_time || '18:00'}
                             </div>
@@ -343,11 +343,11 @@ const BookingModal = ({ isOpen, onClose, selectedPlan, onSuccess }) => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
             >
-              <h3 className="text-lg font-semibold mb-4">Available Time Slots</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Available Time Slots</h3>
               {loading.timeSlots ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="text-gray-500 mt-2">Loading time slots...</p>
+                  <p className="text-gray-500 dark:text-gray-400 mt-2">Loading time slots...</p>
                 </div>
               ) : availableTimeSlots.length > 0 ? (
                 <div className="grid grid-cols-3 gap-3">
@@ -358,10 +358,10 @@ const BookingModal = ({ isOpen, onClose, selectedPlan, onSuccess }) => {
                       disabled={!slot.available}
                       className={`p-3 border rounded-lg transition-colors ${
                         !slot.available
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          ? 'bg-gray-100 dark:bg-[#2c2c2e] text-gray-400 dark:text-gray-500 cursor-not-allowed'
                           : selectedTime === slot.time
-                          ? 'border-blue-500 bg-blue-50 text-blue-600'
-                          : 'border-gray-200 hover:border-blue-500 hover:bg-blue-50'
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-900 dark:text-white'
                       }`}
                     >
                       <FiClock className="w-4 h-4 mx-auto mb-1" />
@@ -371,7 +371,7 @@ const BookingModal = ({ isOpen, onClose, selectedPlan, onSuccess }) => {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-gray-500">No time slots available</p>
+                  <p className="text-gray-500 dark:text-gray-400">No time slots available</p>
                 </div>
               )}
             </motion.div>
@@ -382,34 +382,34 @@ const BookingModal = ({ isOpen, onClose, selectedPlan, onSuccess }) => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
             >
-              <h3 className="text-lg font-semibold mb-4">Confirm Booking</h3>
-              <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Confirm Booking</h3>
+              <div className="bg-gray-50 dark:bg-[#2c2c2e] rounded-lg p-4 space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Date:</span>
-                  <span className="font-medium">{new Date(selectedDate).toLocaleDateString()}</span>
+                  <span className="text-gray-600 dark:text-gray-400">Date:</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{new Date(selectedDate).toLocaleDateString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Therapist:</span>
-                  <span className="font-medium">
+                  <span className="text-gray-600 dark:text-gray-400">Therapist:</span>
+                  <span className="font-medium text-gray-900 dark:text-white">
                     {selectedTherapist?.first_name} {selectedTherapist?.last_name}
                   </span>
                 </div>
                 {selectedPlanRedux && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Plan:</span>
-                    <span className="font-medium">{selectedPlanRedux.name}</span>
+                    <span className="text-gray-600 dark:text-gray-400">Plan:</span>
+                    <span className="font-medium text-gray-900 dark:text-white">{selectedPlanRedux.name}</span>
                   </div>
                 )}
               </div>
               
               <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Additional Notes (optional)
                 </label>
                 <textarea
                   value={bookingNotes}
                   onChange={(e) => dispatch(setBookingNotes(e.target.value))}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
                   rows={3}
                   placeholder="Any specific requirements or notes for therapist..."
                 />
@@ -419,10 +419,10 @@ const BookingModal = ({ isOpen, onClose, selectedPlan, onSuccess }) => {
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-50 px-6 py-4 flex justify-between">
+        <div className="bg-gray-50 dark:bg-[#2c2c2e] px-6 py-4 flex justify-between border-t dark:border-gray-800">
           <button
             onClick={currentStep > 1 ? () => dispatch(previousStep()) : handleClose}
-            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-[#3a3a3c] transition-colors"
           >
             {currentStep > 1 ? 'Back' : 'Cancel'}
           </button>

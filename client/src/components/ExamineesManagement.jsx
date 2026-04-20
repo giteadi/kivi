@@ -961,7 +961,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-[#0f0f10] dark:to-[#1a1a1c] flex transition-colors duration-300">
       {/* Sidebar */}
       <Sidebar 
         activeItem={activeItem} 
@@ -973,23 +973,23 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
       {/* Main Content Area */}
       <div className="flex-1 lg:ml-64">
         {/* Header */}
-        <div className="bg-white shadow-sm border-b sticky top-0 z-20">
+        <div className="bg-white dark:bg-[#1c1c1e] shadow-sm dark:shadow-black/20 border-b dark:border-gray-800 sticky top-0 z-20">
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center space-x-4">
                 <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-lg">
                 </div>
-                <div className="h-6 w-px bg-gray-200" />
-                <span className="text-gray-600 font-medium">Centrix Centre</span>
+                <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
+                <span className="text-gray-600 dark:text-gray-400 font-medium">Centrix Centre</span>
               </div>
               <div className="flex items-center space-x-4">
-                <button className="text-gray-500 hover:text-gray-700 transition-colors">
+                <button className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
                   <FiSettings className="w-5 h-5" />
                 </button>
                 <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
                   {user?.first_name ? user.first_name.substring(0, 2).toUpperCase() : 'AD'}
                 </div>
-                <span className="text-sm font-medium text-gray-700">{user?.first_name && user?.last_name ? `${user.first_name.toUpperCase()} ${user.last_name.toUpperCase()}` : 'ADMIN USER'}</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{user?.first_name && user?.last_name ? `${user.first_name.toUpperCase()} ${user.last_name.toUpperCase()}` : 'ADMIN USER'}</span>
               </div>
             </div>
           </div>
@@ -998,7 +998,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
         {/* Main Content */}
         <div className="p-4 sm:p-6 lg:p-8">
           {/* Tabs */}
-          <div className="flex space-x-1 bg-gray-100 p-1 rounded-xl mb-6 w-fit overflow-x-auto max-w-full">
+          <div className="flex space-x-1 bg-gray-100 dark:bg-[#2c2c2e] p-1 rounded-xl mb-6 w-fit overflow-x-auto max-w-full">
             {tabs.map(tab => {
               const Icon = tab.icon;
               return (
@@ -1007,8 +1007,8 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center space-x-2 px-4 sm:px-6 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 whitespace-nowrap ${
                     activeTab === tab.id
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                      ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-sm dark:shadow-black/20'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#3a3a3c]'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -1043,30 +1043,30 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                       onClick={() => onDeletePatient && onDeletePatient(selectedItems)}
                       className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                         selectedItems.length > 0
-                          ? 'bg-red-50 text-red-600 hover:bg-red-100'
-                          : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30'
+                          : 'bg-gray-100 dark:bg-[#2c2c2e] text-gray-400 dark:text-gray-500 cursor-not-allowed'
                       }`}
                     >
                       <FiTrash2 className="w-4 h-4" />
                       <span>Delete</span>
                     </button>
 
-                    <div className="h-6 w-px bg-gray-200 mx-2" />
+                    <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-2" />
 
                     <button 
                       onClick={() => setShowAssignAssessment(true)}
                       disabled={selectedItems.length === 0}
                       className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all text-sm font-medium ${
                         selectedItems.length > 0
-                          ? 'bg-blue-50 text-blue-600 hover:bg-blue-100'
-                          : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30'
+                          : 'bg-gray-100 dark:bg-[#2c2c2e] text-gray-400 dark:text-gray-500 cursor-not-allowed'
                       }`}
                     >
                       <FiUser className="w-4 h-4" />
                       <span>Assign Assessment</span>
                     </button>
 
-                    <button className="flex items-center space-x-2 px-4 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-all text-sm font-medium">
+                    <button className="flex items-center space-x-2 px-4 py-2 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-all text-sm font-medium">
                       <FiUsers className="w-4 h-4" />
                       <span>Create Group</span>
                     </button>
@@ -1075,7 +1075,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                       <button 
                         data-more-actions-button
                         onClick={() => setShowMoreActionsMenu(!showMoreActionsMenu)}
-                        className="flex items-center space-x-2 px-4 py-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-all text-sm font-medium"
+                        className="flex items-center space-x-2 px-4 py-2 bg-gray-50 dark:bg-[#2c2c2e] text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-[#3a3a3c] transition-all text-sm font-medium"
                       >
                         <FiMoreHorizontal className="w-4 h-4" />
                         <span>More Actions</span>
@@ -1083,7 +1083,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                       </button>
                       
                       {showMoreActionsMenu && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#1c1c1e] rounded-lg shadow-lg dark:shadow-black/40 border dark:border-gray-800 z-50">
                           <div className="py-1">
                             <button
                               onClick={() => handleMoreAction('viewDetails')}
@@ -1121,8 +1121,8 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                               disabled={selectedItems.length === 0}
                               className={`flex items-center space-x-2 w-full px-4 py-2 text-sm transition-colors ${
                                 selectedItems.length > 0
-                                  ? 'text-gray-700 hover:bg-gray-100'
-                                  : 'text-gray-400 cursor-not-allowed'
+                                  ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2c2c2e]'
+                                  : 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
                               }`}
                             >
                               <FiMail className="w-4 h-4" />
@@ -1145,14 +1145,14 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                     <button
                       onClick={() => setShowFilters(!showFilters)}
                       className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                        showFilters ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                        showFilters ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'bg-gray-50 dark:bg-[#2c2c2e] text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#3a3a3c]'
                       }`}
                     >
                       <FiFilter className="w-4 h-4" />
                       <span>Filters</span>
                     </button>
                     
-                    <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all">
+                    <button className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2c2c2e] rounded-lg transition-all">
                       <FiRefreshCw className="w-4 h-4" />
                     </button>
                     
@@ -1160,13 +1160,13 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                       <button 
                         data-download-button
                         onClick={() => setShowDownloadMenu(!showDownloadMenu)}
-                        className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
+                        className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2c2c2e] rounded-lg transition-all"
                       >
                         <FiDownload className="w-4 h-4" />
                       </button>
                       
                       {showDownloadMenu && (
-                        <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                        <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-[#1c1c1e] rounded-lg shadow-lg dark:shadow-black/40 border dark:border-gray-800 z-50">
                           <div className="py-1">
                             <button
                               onClick={() => handleDownload('excel')}
@@ -1202,14 +1202,14 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    className="mt-4 pt-4 border-t grid grid-cols-1 md:grid-cols-4 gap-4"
+                    className="mt-4 pt-4 border-t dark:border-gray-700 grid grid-cols-1 md:grid-cols-4 gap-4"
                   >
                     <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Status</label>
                       <select
                         value={filters.status}
                         onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900 dark:text-white transition-colors duration-300"
                       >
                         <option value="all">All Status</option>
                         <option value="Active">Active</option>
@@ -1217,22 +1217,22 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-1">Center</label>
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Center</label>
                       <select
                         value={filters.center}
                         onChange={(e) => setFilters({ ...filters, center: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900 dark:text-white transition-colors duration-300"
                       >
                         <option value="all">All Centers</option>
                         <option value="Centrix Centre">Centrix Centre</option>
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-1">Gender</label>
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Gender</label>
                       <select
                         value={filters.gender}
                         onChange={(e) => setFilters({ ...filters, gender: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900 dark:text-white transition-colors duration-300"
                       >
                         <option value="all">All Genders</option>
                         <option value="Male">Male</option>
@@ -1242,7 +1242,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                     <div className="flex items-end">
                       <button
                         onClick={() => setFilters({ status: 'all', center: 'all', gender: 'all' })}
-                        className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-all"
+                        className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#2c2c2e] rounded-lg transition-all"
                       >
                         Reset Filters
                       </button>
@@ -1254,18 +1254,18 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
               {/* Search & View Options */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <span className="text-sm text-gray-500">View:</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">View:</span>
                   <div className="relative">
                     <select
                       value={filters.status}
                       onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                      className="appearance-none px-3 py-1.5 bg-white border rounded-lg text-sm font-medium text-gray-700 hover:border-gray-300 transition-colors pr-8 cursor-pointer"
+                      className="appearance-none px-3 py-1.5 bg-white dark:bg-[#2c2c2e] border dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600 transition-colors pr-8 cursor-pointer"
                     >
                       <option value="all">All</option>
                       <option value="Active">Active</option>
                       <option value="Inactive">Inactive</option>
                     </select>
-                    <FiChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500 pointer-events-none" />
+                    <FiChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500 dark:text-gray-400 pointer-events-none" />
                   </div>
                   
                   <label className="flex items-center gap-2 cursor-pointer">
@@ -1280,7 +1280,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                   
                   <button 
                     onClick={() => setSortConfig({ key: 'lastName', direction: 'asc' })}
-                    className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
+                    className="flex items-center space-x-1 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium"
                   >
                     <FiRefreshCw className="w-4 h-4" />
                     <span>Reset Sort Order</span>
@@ -1289,43 +1289,43 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
 
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full">
                   <div className="relative w-full sm:w-auto">
-                    <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
                     <input
                       type="text"
                       placeholder="Search examinees..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 pr-4 py-2 w-full sm:w-64 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      className="pl-10 pr-4 py-2 w-full sm:w-64 border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-300"
                     />
                   </div>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
                     {filteredPatients.length} Records
                   </span>
                 </div>
               </div>
 
               {/* Data Table */}
-              <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+              <div className="bg-white dark:bg-[#1c1c1e] rounded-xl shadow-sm dark:shadow-black/20 border dark:border-gray-800 overflow-hidden">
                 {isLoading ? (
                   <div className="p-12 text-center">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4" />
-                    <p className="text-gray-500">Loading examinees...</p>
+                    <p className="text-gray-500 dark:text-gray-400">Loading examinees...</p>
                   </div>
                 ) : error ? (
                   <div className="p-12 text-center text-red-500">
-                    <p>Error loading examinees</p>
-                    <p className="text-sm">{error}</p>
+                    <p className="dark:text-red-400">Error loading examinees</p>
+                    <p className="text-sm dark:text-red-300">{error}</p>
                   </div>
                 ) : (
                   <>
                     <div className="overflow-x-auto">
                       <table className="w-full">
-                        <thead className="bg-gray-50 border-b">
+                        <thead className="bg-gray-50 dark:bg-[#2c2c2e] border-b dark:border-gray-700">
                           <tr>
                             <th className="px-4 py-3 w-12">
                               <button
                                 onClick={toggleAllSelection}
-                                className="text-gray-400 hover:text-blue-600 transition-colors"
+                                className="text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                               >
                                 {selectedItems.length === paginatedPatients.length && paginatedPatients.length > 0 ? (
                                   <FiCheckSquare className="w-5 h-5 text-blue-600" />
@@ -1390,22 +1390,22 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                             </th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                           {paginatedPatients.map((patient, index) => (
                             <motion.tr
                               key={patient.id}
                               initial={{ opacity: 0 }}
                               animate={{ opacity: 1 }}
                               transition={{ delay: index * 0.03 }}
-                              className={`hover:bg-blue-50/50 transition-colors cursor-pointer ${
-                                selectedItems.includes(patient.id) ? 'bg-blue-50/50' : ''
+                              className={`hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors cursor-pointer ${
+                                selectedItems.includes(patient.id) ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''
                               }`}
                               onClick={() => onViewPatient && onViewPatient(patient.id)}
                             >
                               <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                                 <button
                                   onClick={() => toggleSelection(patient.id)}
-                                  className="text-gray-400 hover:text-blue-600 transition-colors"
+                                  className="text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                                 >
                                   {selectedItems.includes(patient.id) ? (
                                     <FiCheckSquare className="w-5 h-5 text-blue-600" />
@@ -1414,28 +1414,28 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                                   )}
                                 </button>
                               </td>
-                              <td className="px-4 py-3 text-sm font-medium text-blue-600">
+                              <td className="px-4 py-3 text-sm font-medium text-blue-600 dark:text-blue-400">
                                 {patient.systemId}
                               </td>
-                              <td className="px-4 py-3 text-sm text-gray-900 font-medium">
+                              <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-medium">
                                 {patient.lastName}
                               </td>
-                              <td className="px-4 py-3 text-sm text-gray-900">
+                              <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
                                 {patient.firstName}
                               </td>
-                              <td className="px-4 py-3 text-sm text-gray-600 font-mono">
+                              <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 font-mono">
                                 {patient.examineeId}
                               </td>
-                              <td className="px-4 py-3 text-sm text-gray-600">
+                              <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                                 {patient.birthDate}
                               </td>
                               <td className="px-4 py-3">
                                 <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
                                   patient.gender === 'Male'
-                                    ? 'bg-blue-50 text-blue-700'
+                                    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
                                     : patient.gender === 'Female'
-                                    ? 'bg-pink-50 text-pink-700'
-                                    : 'bg-gray-50 text-gray-600'
+                                    ? 'bg-pink-50 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400'
+                                    : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                                 }`}>
                                   {patient.gender}
                                 </span>
@@ -1448,9 +1448,9 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
 
                     {filteredPatients.length === 0 && (
                       <div className="p-12 text-center">
-                        <FiUser className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                        <p className="text-gray-500 font-medium">No examinees found</p>
-                        <p className="text-sm text-gray-400 mt-1">Try adjusting your search or filters</p>
+                        <FiUser className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                        <p className="text-gray-500 dark:text-gray-400 font-medium">No examinees found</p>
+                        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Try adjusting your search or filters</p>
                       </div>
                     )}
                   </>
@@ -1459,27 +1459,27 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
 
               {/* Pagination */}
               {filteredPatients.length > 0 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl shadow-sm border p-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-[#1c1c1e] rounded-xl shadow-sm dark:shadow-black/20 border dark:border-gray-800 p-4">
                   <div className="flex items-center space-x-4">
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
                       Page {currentPage} of {totalPages}
                     </span>
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-500">Show</span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">Show</span>
                       <select
                         value={itemsPerPage}
                         onChange={(e) => {
                           setItemsPerPage(Number(e.target.value));
                           setCurrentPage(1);
                         }}
-                        className="px-2 py-1 border border-gray-200 rounded text-sm focus:ring-2 focus:ring-blue-500"
+                        className="px-2 py-1 border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded text-sm focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
                       >
                         <option value={10}>10</option>
                         <option value={25}>25</option>
                         <option value={50}>50</option>
                         <option value={100}>100</option>
                       </select>
-                      <span className="text-sm text-gray-500">per page</span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">per page</span>
                     </div>
                   </div>
 

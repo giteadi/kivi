@@ -192,17 +192,17 @@ function App() {
   // Show loading screen while checking authentication
   if (!isInitialized) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-[#1c1c1e] dark:to-[#0f0f10] flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 overflow-hidden">
-            <img 
-              src="https://res.cloudinary.com/bazeercloud/image/upload/v1765087953/Gemini_Generated_Image_o8ciwko8ciwko8ci-removebg-preview_l4nnui.png" 
-              alt="MindSaid Learning Logo" 
+            <img
+              src="https://res.cloudinary.com/bazeercloud/image/upload/v1765087953/Gemini_Generated_Image_o8ciwko8ciwko8ci-removebg-preview_l4nnui.png"
+              alt="MindSaid Learning Logo"
               className="w-full h-full object-contain"
             />
           </div>
           <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-gray-600 mt-4">Loading MindSaid Learning...</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-4">Loading MindSaid Learning...</p>
         </div>
       </div>
     );
@@ -1395,12 +1395,12 @@ ${service.target_age_group || 'Not specified'}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-xl p-6 lg:p-8 shadow-sm border text-center"
+              className="bg-white dark:bg-[#1c1c1e] rounded-xl p-6 lg:p-8 shadow-sm border dark:border-gray-800 text-center transition-colors duration-300"
             >
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4 capitalize">
+              <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4 capitalize">
                 {activeItem.replace('-', ' ')}
               </h2>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 This section is under development
               </p>
             </motion.div>
@@ -1412,7 +1412,7 @@ ${service.target_age_group || 'Not specified'}
   return (
     <ErrorBoundary>
       <SidebarContext.Provider value={{ sidebarCollapsed, setSidebarCollapsed }}>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 dark:bg-[#0f0f10] transition-colors duration-300">
           {/* Hide outer sidebar when TemplateManager is active */}
           {activeItem !== 'template-manager' && (
             <Sidebar 

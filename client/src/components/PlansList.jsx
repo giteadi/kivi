@@ -158,8 +158,8 @@ const PlansList = () => {
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Plans Management</h1>
-            <p className="text-gray-600 mt-1">Create and manage therapy plans</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Plans Management</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">Create and manage therapy plans</p>
           </div>
           <button
             onClick={handleOpenCreateModal}
@@ -171,9 +171,9 @@ const PlansList = () => {
         </div>
 
         {/* Search and Filters */}
-        <div className="bg-white rounded-lg shadow-sm p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white dark:bg-[#1c1c1e] rounded-lg shadow-sm dark:shadow-black/20 border dark:border-gray-800 p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="relative">
-            <FiSearch className="absolute left-3 top-3 text-gray-400" size={20} />
+            <FiSearch className="absolute left-3 top-3 text-gray-400 dark:text-gray-500" size={20} />
             <input
               type="text"
               placeholder="Search plans..."
@@ -182,18 +182,18 @@ const PlansList = () => {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-300"
             />
           </div>
           <div className="flex items-center gap-2">
-            <FiFilter size={20} className="text-gray-400" />
+            <FiFilter size={20} className="text-gray-400 dark:text-gray-500" />
             <select
               value={filterStatus}
               onChange={(e) => {
                 setFilterStatus(e.target.value);
                 setCurrentPage(1);
               }}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
@@ -203,10 +203,10 @@ const PlansList = () => {
         </div>
 
         {/* Plans Table */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-[#1c1c1e] rounded-lg shadow-sm dark:shadow-black/20 border dark:border-gray-800 overflow-hidden">
           {loading && (
             <div className="p-8 text-center">
-              <p className="text-gray-600">Loading plans...</p>
+              <p className="text-gray-600 dark:text-gray-400">Loading plans...</p>
             </div>
           )}
 
@@ -225,7 +225,7 @@ const PlansList = () => {
 
           {!loading && !error && filteredPlans.length === 0 && (
             <div className="p-8 text-center">
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
                 {searchTerm || filterStatus !== 'all' 
                   ? 'No plans found matching your filters' 
                   : 'No plans available yet'}
@@ -242,17 +242,17 @@ const PlansList = () => {
           {currentPlans.length > 0 && (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-gray-50 dark:bg-[#2c2c2e] border-b border-gray-200 dark:border-gray-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Type</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Price</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Duration</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
-                    <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">Actions</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Name</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Type</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Price</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Duration</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Status</th>
+                    <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   <AnimatePresence>
                     {currentPlans.map((plan) => (
                       <motion.tr
@@ -260,17 +260,17 @@ const PlansList = () => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="hover:bg-gray-50 transition-colors"
+                        className="hover:bg-gray-50 dark:hover:bg-[#2c2c2e] transition-colors"
                       >
-                        <td className="px-6 py-4 text-sm text-gray-900 font-medium">{plan.name}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{plan.type || '-'}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600">₹{plan.price || '0'}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{plan.duration || '-'} min</td>
+                        <td className="px-6 py-4 text-sm text-gray-900 dark:text-white font-medium">{plan.name}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{plan.type || '-'}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">₹{plan.price || '0'}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{plan.duration || '-'} min</td>
                         <td className="px-6 py-4">
                           <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            plan.status === 'active' 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
+                            plan.status === 'active'
+                              ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                              : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
                           }`}>
                             {plan.status || 'active'}
                           </span>
@@ -279,13 +279,13 @@ const PlansList = () => {
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => handleEditPlan(plan)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                             >
                               <FiEdit2 size={18} />
                             </button>
                             <button
                               onClick={() => handleDeletePlan(plan.id)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                             >
                               <FiTrash2 size={18} />
                             </button>
@@ -310,7 +310,7 @@ const PlansList = () => {
             >
               Previous
             </button>
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
               Page {currentPage} of {totalPages}
             </span>
             <button
@@ -330,75 +330,75 @@ const PlansList = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-lg max-w-md w-full p-6"
+            className="bg-white dark:bg-[#1c1c1e] rounded-lg max-w-md w-full p-6 border dark:border-gray-800 shadow-2xl dark:shadow-black/40"
           >
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
               {isEditing ? 'Edit Plan' : 'Create New Plan'}
             </h2>
 
             <form onSubmit={handleSavePlan} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1">Plan Name *</label>
+                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">Plan Name *</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
                   placeholder="e.g., Basic Therapy Plan"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1">Description</label>
+                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">Description</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
                   placeholder="Describe the plan..."
                   rows="3"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1">Type</label>
+                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">Type</label>
                 <input
                   type="text"
                   value={formData.type}
                   onChange={(e) => setFormData({...formData, type: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
                   placeholder="e.g., Therapy, Learning"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">Price</label>
+                  <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">Price</label>
                   <input
                     type="number"
                     value={formData.price}
                     onChange={(e) => setFormData({...formData, price: e.target.value})}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
                     placeholder="0"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">Duration (min)</label>
+                  <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">Duration (min)</label>
                   <input
                     type="number"
                     value={formData.duration}
                     onChange={(e) => setFormData({...formData, duration: e.target.value})}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
                     placeholder="60"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1">Status</label>
+                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">Status</label>
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData({...formData, status: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
                 >
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
@@ -415,7 +415,7 @@ const PlansList = () => {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 bg-gray-200 text-gray-900 py-2 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                  className="flex-1 bg-gray-200 dark:bg-[#2c2c2e] text-gray-900 dark:text-white py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-[#3a3a3c] transition-colors font-medium"
                 >
                   Cancel
                 </button>

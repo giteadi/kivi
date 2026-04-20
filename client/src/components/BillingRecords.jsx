@@ -524,14 +524,14 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
 
   /* ═══════════════════════════════════ RENDER ═══════════════════════════════════ */
   return (
-    <div className="lg:ml-64 min-h-screen bg-gray-50">
+    <div className="lg:ml-64 min-h-screen bg-gray-50 dark:bg-[#0f0f10] transition-colors duration-300">
       <div className="p-4 lg:p-6">
 
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 space-y-4 lg:space-y-0">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-800">Billing Records</h1>
-            <p className="text-gray-600">Manage patient billing and invoices</p>
+            <h1 className="text-2xl font-semibold text-gray-800 dark:text-white transition-colors duration-300">Billing Records</h1>
+            <p className="text-gray-600 dark:text-gray-400 transition-colors duration-300">Manage patient billing and invoices</p>
           </div>
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
@@ -548,20 +548,20 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
         </div>
 
         {/* Breadcrumb */}
-        <div className="flex items-center text-sm text-gray-500 mb-6">
-          <span>Home</span><span className="mx-2">›</span>
-          <span>Financial</span><span className="mx-2">›</span>
-          <span className="text-gray-800">Billing Records</span>
+        <div className="flex items-center text-sm text-gray-500 dark:text-gray-500 mb-6 transition-colors duration-300">
+          <span className="hover:text-gray-700 dark:hover:text-gray-300">Home</span><span className="mx-2">›</span>
+          <span className="hover:text-gray-700 dark:hover:text-gray-300">Financial</span><span className="mx-2">›</span>
+          <span className="text-gray-800 dark:text-gray-200">Billing Records</span>
         </div>
 
         {/* Filters */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl p-6 shadow-sm border mb-6">
+          className="bg-white dark:bg-[#1c1c1e] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-6 transition-colors duration-300">
           <div className="flex flex-col lg:flex-row lg:items-center space-y-4 lg:space-y-0 lg:space-x-4">
             <div className="flex items-center space-x-2">
-              <label className="text-sm font-medium text-gray-700">Status:</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors duration-300">Status:</label>
               <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-                className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                className="px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-[#2c2c2e] text-gray-900 dark:text-white transition-colors duration-300">
                 <option value="all">All Status</option>
                 <option value="paid">Paid</option>
                 <option value="pending">Pending</option>
@@ -570,10 +570,10 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
               </select>
             </div>
             <div className="flex-1 relative">
-              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4 transition-colors duration-300" />
               <input type="text" placeholder="Search invoices, patients, or doctors..."
                 value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-[#2c2c2e] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-300" />
             </div>
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
               className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
@@ -587,16 +587,16 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <FiRefreshCw className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-4" />
-              <p className="text-gray-500">Loading billing records...</p>
+              <p className="text-gray-500 dark:text-gray-400 transition-colors duration-300">Loading billing records...</p>
             </div>
           </div>
         )}
         {error && !loading && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-center justify-between">
-            <div className="text-red-800">{error}</div>
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6 flex items-center justify-between transition-colors duration-300">
+            <div className="text-red-800 dark:text-red-200 transition-colors duration-300">{error}</div>
             <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
               onClick={fetchBillingRecords}
-              className="flex items-center space-x-2 px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-sm">
+              className="flex items-center space-x-2 px-3 py-1 bg-red-100 dark:bg-red-800/30 hover:bg-red-200 dark:hover:bg-red-800/50 text-red-700 dark:text-red-200 rounded text-sm transition-colors duration-300">
               <FiRefreshCw className="w-4 h-4" /><span>Retry</span>
             </motion.button>
           </div>
@@ -605,11 +605,11 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
         {/* Table */}
         {!loading && !error && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-            className="bg-white rounded-xl shadow-sm border overflow-hidden">
+            className="bg-white dark:bg-[#1c1c1e] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-300">
             <table className="w-full table-fixed">
               <thead className="bg-blue-600 text-white">
                 <tr>
-                  <th className="w-12 px-3 py-3 text-left text-xs font-medium uppercase"><input type="checkbox" className="rounded" /></th>
+                  <th className="w-12 px-3 py-3 text-left text-xs font-medium uppercase"><input type="checkbox" className="rounded accent-blue-600" /></th>
                   <th className="w-28 px-3 py-3 text-left text-xs font-medium uppercase">Invoice ID</th>
                   <th className="w-48 px-3 py-3 text-left text-xs font-medium uppercase">Patient</th>
                   <th className="w-40 px-3 py-3 text-left text-xs font-medium uppercase">Doctor</th>
@@ -620,46 +620,46 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
                   <th className="w-32 px-3 py-3 text-left text-xs font-medium uppercase">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-[#1c1c1e] divide-y divide-gray-200 dark:divide-gray-700 transition-colors duration-300">
                 {currentBilling.map((bill, idx) => (
                   <motion.tr key={bill.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: idx * 0.04 }}
                     onClick={() => { setSelectedBill(bill); setShowViewModal(true); }}
-                    className="hover:bg-gray-50 transition-colors cursor-pointer">
-                    <td className="px-3 py-3" onClick={e => e.stopPropagation()}><input type="checkbox" className="rounded" /></td>
-                    <td className="px-3 py-3 text-sm font-medium text-blue-600 truncate">{bill.id}</td>
+                    className="hover:bg-gray-50 dark:hover:bg-[#252528] transition-colors cursor-pointer">
+                    <td className="px-3 py-3" onClick={e => e.stopPropagation()}><input type="checkbox" className="rounded accent-blue-600" /></td>
+                    <td className="px-3 py-3 text-sm font-medium text-blue-600 dark:text-blue-400 truncate transition-colors duration-300">{bill.id}</td>
                     <td className="px-3 py-3">
                       <div className="flex items-center">
-                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2 flex-shrink-0">
-                          <span className="text-xs font-semibold text-blue-600">{bill.patient.initials}</span>
+                        <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mr-2 flex-shrink-0 transition-colors duration-300">
+                          <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 transition-colors duration-300">{bill.patient.initials}</span>
                         </div>
                         <div className="min-w-0">
-                          <div className="text-sm font-medium text-gray-900 truncate">{bill.patient.name}</div>
-                          <div className="text-xs text-gray-500 truncate">{bill.patient.email}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-200 truncate transition-colors duration-300">{bill.patient.name}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate transition-colors duration-300">{bill.patient.email}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex items-center">
-                        <div className="w-7 h-7 bg-green-100 rounded-lg flex items-center justify-center mr-2 flex-shrink-0">
-                          <span className="text-xs font-semibold text-green-600">{bill.doctor.initials}</span>
+                        <div className="w-7 h-7 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mr-2 flex-shrink-0 transition-colors duration-300">
+                          <span className="text-xs font-semibold text-green-600 dark:text-green-400 transition-colors duration-300">{bill.doctor.initials}</span>
                         </div>
-                        <span className="text-sm text-gray-900 truncate">{bill.doctor.name}</span>
+                        <span className="text-sm text-gray-900 dark:text-gray-200 truncate transition-colors duration-300">{bill.doctor.name}</span>
                       </div>
                     </td>
                     <td className="px-3 py-3">
-                      <div className="text-sm font-medium text-gray-900 truncate">{bill.service}</div>
-                      <div className="text-xs text-gray-500 truncate">{bill.clinic}</div>
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-200 truncate transition-colors duration-300">{bill.service}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate transition-colors duration-300">{bill.clinic}</div>
                     </td>
                     <td className="px-3 py-3">
-                      <div className="text-sm font-medium text-gray-900">₹{bill.total.toLocaleString()}</div>
-                      <div className="text-xs text-gray-500">₹{bill.amount.toLocaleString()}</div>
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-200 transition-colors duration-300">₹{bill.total.toLocaleString()}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300">₹{bill.amount.toLocaleString()}</div>
                     </td>
                     <td className="px-3 py-3">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(bill.status)}`}>{bill.status}</span>
                     </td>
                     <td className="px-3 py-3">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <FiCalendar className="w-4 h-4 mr-1 text-gray-400 flex-shrink-0" />
+                      <div className="flex items-center text-sm text-gray-900 dark:text-gray-200 transition-colors duration-300">
+                        <FiCalendar className="w-4 h-4 mr-1 text-gray-400 dark:text-gray-500 flex-shrink-0 transition-colors duration-300" />
                         <span className="truncate">{bill.date}</span>
                       </div>
                     </td>
@@ -667,22 +667,22 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
                       <div className="flex items-center space-x-1">
                         <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                           onClick={() => { setSelectedBill(bill); setShowViewModal(true); }}
-                          className="text-blue-600 hover:text-blue-900 p-1 rounded" title="View Invoice">
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 p-1 rounded transition-colors duration-300" title="View Invoice">
                           <FiEye className="w-4 h-4" />
                         </motion.button>
                         <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                           onClick={() => handleEditClick(bill)}
-                          className="text-green-600 hover:text-green-900 p-1 rounded" title="Edit">
+                          className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 p-1 rounded transition-colors duration-300" title="Edit">
                           <FiEdit3 className="w-4 h-4" />
                         </motion.button>
                         <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                           onClick={() => handleDownloadPDF(bill)}
-                          className="text-purple-600 hover:text-purple-900 p-1 rounded" title="Download Invoice">
+                          className="text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 p-1 rounded transition-colors duration-300" title="Download Invoice">
                           <FiDownload className="w-4 h-4" />
                         </motion.button>
                         <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                           onClick={() => handleDeleteClick(bill)}
-                          className="text-red-600 hover:text-red-900 p-1 rounded" title="Delete">
+                          className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 p-1 rounded transition-colors duration-300" title="Delete">
                           <FiTrash2 className="w-4 h-4" />
                         </motion.button>
                       </div>
@@ -693,7 +693,7 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
             </table>
 
             {filteredBilling.length === 0 && (
-              <div className="text-center py-12 text-gray-500">
+              <div className="text-center py-12 text-gray-500 dark:text-gray-400 transition-colors duration-300">
                 <FiDollarSign className="w-12 h-12 mx-auto mb-4 opacity-50" />
                 <p className="text-lg font-medium">No billing records found</p>
                 <p className="text-sm">Try adjusting your search or filter criteria</p>
@@ -707,25 +707,25 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
             className="mt-6 flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-700">Show</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300 transition-colors duration-300">Show</span>
               <select value={itemsPerPage} onChange={e => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-                className="px-3 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500">
+                className="px-3 py-1 border border-gray-300 dark:border-gray-700 rounded text-sm focus:ring-2 focus:ring-blue-500 bg-white dark:bg-[#2c2c2e] text-gray-900 dark:text-white transition-colors duration-300">
                 {[5,10,25,50].map(n => <option key={n} value={n}>{n}</option>)}
               </select>
-              <span className="text-sm text-gray-700">entries</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300 transition-colors duration-300">entries</span>
             </div>
-            <div className="text-sm text-gray-700">
+            <div className="text-sm text-gray-700 dark:text-gray-300 transition-colors duration-300">
               Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, filteredBilling.length)} of {filteredBilling.length} entries
             </div>
             <div className="flex items-center space-x-2">
               <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
-                className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">Previous</button>
+                className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-700 rounded hover:bg-gray-50 dark:hover:bg-[#2c2c2e] dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-300">Previous</button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
                 <button key={p} onClick={() => setCurrentPage(p)}
-                  className={`px-3 py-1 text-sm border rounded ${currentPage === p ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 hover:bg-gray-50'}`}>{p}</button>
+                  className={`px-3 py-1 text-sm border rounded transition-colors duration-300 ${currentPage === p ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#2c2c2e] dark:text-gray-300'}`}>{p}</button>
               ))}
               <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
-                className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
+                className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-700 rounded hover:bg-gray-50 dark:hover:bg-[#2c2c2e] dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-300">Next</button>
             </div>
           </motion.div>
         )}
@@ -735,13 +735,13 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
         {showViewModal && selectedBill && (
           <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto">
+              className="bg-white dark:bg-[#1c1c1e] rounded-xl shadow-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto transition-colors duration-300">
 
               {/* Modal top bar */}
-              <div className="flex items-center justify-between px-6 py-3 border-b bg-gray-50 rounded-t-xl sticky top-0 z-10">
+              <div className="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#252528] rounded-t-xl sticky top-0 z-10 transition-colors duration-300">
                 <div className="flex items-center gap-2">
                   <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusColor(selectedBill.status)}`}>{selectedBill.status}</span>
-                  <span className="text-sm text-gray-500">{selectedBill.id}</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">{selectedBill.id}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
@@ -749,7 +749,7 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
                     className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">
                     <FiDownload className="w-4 h-4" /> Download Invoice
                   </motion.button>
-                  <button onClick={() => setShowViewModal(false)} className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-500">
+                  <button onClick={() => setShowViewModal(false)} className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-[#3a3a3c] text-gray-500 dark:text-gray-400 transition-colors duration-300">
                     <FiX className="w-5 h-5" />
                   </button>
                 </div>
@@ -768,33 +768,33 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
         {showEditModal && selectedBill && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-              className="bg-white rounded-xl shadow-xl max-w-md w-full">
+              className="bg-white dark:bg-[#1c1c1e] rounded-xl shadow-xl max-w-md w-full transition-colors duration-300">
               <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4 flex items-center justify-between rounded-t-xl">
                 <h2 className="text-xl font-bold text-white">Edit Invoice</h2>
                 <button onClick={() => setShowEditModal(false)} className="text-white hover:text-gray-200"><FiX className="w-6 h-6" /></button>
               </div>
               <div className="p-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Invoice ID</label>
-                  <p className="text-gray-900 font-medium">{selectedBill.id}</p>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 transition-colors duration-300">Invoice ID</label>
+                  <p className="text-gray-900 dark:text-gray-200 font-medium transition-colors duration-300">{selectedBill.id}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 transition-colors duration-300">Status</label>
                   <select value={editForm.status} onChange={e => setEditForm({ ...editForm, status: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-[#2c2c2e] text-gray-900 dark:text-white transition-colors duration-300">
                     {['Pending','Paid','Overdue','Cancelled'].map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Amount (₹)</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 transition-colors duration-300">Amount (₹)</label>
                   <input type="number" value={editForm.amount} onChange={e => setEditForm({ ...editForm, amount: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" />
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-[#2c2c2e] text-gray-900 dark:text-white transition-colors duration-300" />
                 </div>
               </div>
-              <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3 rounded-b-xl">
-                <button onClick={() => setShowEditModal(false)} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Cancel</button>
+              <div className="bg-gray-50 dark:bg-[#252528] px-6 py-4 flex justify-end space-x-3 rounded-b-xl transition-colors duration-300">
+                <button onClick={() => setShowEditModal(false)} className="px-4 py-2 bg-gray-200 dark:bg-[#3a3a3c] text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-[#4a4a4c] transition-colors duration-300">Cancel</button>
                 <button onClick={handleUpdateBilling} disabled={isUpdating}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors duration-300">
                   {isUpdating ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
@@ -807,20 +807,20 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
         {showDeleteConfirm && billToDelete && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-              className="bg-white rounded-xl shadow-xl max-w-md w-full">
+              className="bg-white dark:bg-[#1c1c1e] rounded-xl shadow-xl max-w-md w-full transition-colors duration-300">
               <div className="bg-red-600 px-6 py-4 flex items-center justify-between rounded-t-xl">
                 <h2 className="text-xl font-bold text-white">Confirm Delete</h2>
                 <button onClick={() => setShowDeleteConfirm(false)} className="text-white hover:text-gray-200"><FiX className="w-6 h-6" /></button>
               </div>
               <div className="p-6">
-                <p className="text-gray-700 mb-4">Are you sure you want to delete invoice <strong>{billToDelete.id}</strong>?</p>
-                <p className="text-sm text-gray-500">Patient: {billToDelete.patient.name}<br/>Amount: ₹{billToDelete.amount?.toLocaleString()}</p>
-                <p className="text-red-600 text-sm mt-4">This action cannot be undone.</p>
+                <p className="text-gray-700 dark:text-gray-300 mb-4 transition-colors duration-300">Are you sure you want to delete invoice <strong className="dark:text-white">{billToDelete.id}</strong>?</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">Patient: {billToDelete.patient.name}<br/>Amount: ₹{billToDelete.amount?.toLocaleString()}</p>
+                <p className="text-red-600 dark:text-red-400 text-sm mt-4 transition-colors duration-300">This action cannot be undone.</p>
               </div>
-              <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3 rounded-b-xl">
-                <button onClick={() => setShowDeleteConfirm(false)} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Cancel</button>
+              <div className="bg-gray-50 dark:bg-[#252528] px-6 py-4 flex justify-end space-x-3 rounded-b-xl transition-colors duration-300">
+                <button onClick={() => setShowDeleteConfirm(false)} className="px-4 py-2 bg-gray-200 dark:bg-[#3a3a3c] text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-[#4a4a4c] transition-colors duration-300">Cancel</button>
                 <button onClick={handleConfirmDelete} disabled={isDeleting}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors duration-300">
                   {isDeleting ? 'Deleting...' : 'Delete Invoice'}
                 </button>
               </div>

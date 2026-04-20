@@ -131,24 +131,24 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case 'active':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400';
       case 'inactive':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-400';
       case 'maintenance':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-400';
     }
   };
 
   return (
-    <div className="lg:ml-64 min-h-screen bg-gray-50">
+    <div className="lg:ml-64 min-h-screen bg-gray-50 dark:bg-[#0f0f10] transition-colors duration-300">
       <div className="p-4 lg:p-6">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 space-y-4 lg:space-y-0">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-800">All Centres</h1>
-            <p className="text-gray-600">Manage and view all learning centre locations</p>
+            <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">All Centres</h1>
+            <p className="text-gray-600 dark:text-gray-400">Manage and view all learning centre locations</p>
           </div>
           
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
@@ -174,28 +174,28 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
         </div>
 
         {/* Breadcrumb */}
-        <div className="flex items-center text-sm text-gray-500 mb-6">
+        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-6">
           <span>Home</span>
           <span className="mx-2">›</span>
           <span>Centres</span>
           <span className="mx-2">›</span>
-          <span className="text-gray-800">All Centres</span>
+          <span className="text-gray-800 dark:text-gray-300">All Centres</span>
         </div>
 
         {/* Filters */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl p-6 shadow-sm border mb-6"
+          className="bg-white dark:bg-[#1c1c1e] rounded-xl p-6 shadow-sm dark:shadow-black/20 border dark:border-gray-800 mb-6"
         >
           <div className="flex flex-col lg:flex-row lg:items-center space-y-4 lg:space-y-0 lg:space-x-4">
             {/* Status Filter */}
             <div className="flex items-center space-x-2">
-              <label className="text-sm font-medium text-gray-700">Status:</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Status:</label>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
@@ -206,13 +206,13 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
 
             {/* Search */}
             <div className="flex-1 relative">
-              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search centres, locations, or specialties..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-300"
               />
             </div>
 
@@ -231,7 +231,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
         {/* Loading State */}
         {loading && (
           <div className="text-center py-12">
-            <div className="text-gray-500">
+            <div className="text-gray-500 dark:text-gray-400">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <p className="text-lg font-medium">Loading centres...</p>
             </div>
@@ -241,7 +241,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
         {/* Error State */}
         {error && (
           <div className="text-center py-12">
-            <div className="text-red-500">
+            <div className="text-red-500 dark:text-red-400">
               <FiMapPin className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p className="text-lg font-medium">{error}</p>
               <button 
@@ -263,7 +263,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
           className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
         >
           {filteredClinics.map((clinic, index) => {
-            const badgeColor = clinic.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
+            const badgeColor = clinic.status === 'active' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-400';
             return (
             <motion.div
               key={clinic.id}
@@ -271,7 +271,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
               whileHover={{ y: -4 }}
-              className="bg-white rounded-xl p-6 shadow-sm border hover:shadow-md transition-all cursor-pointer"
+              className="bg-white dark:bg-[#1c1c1e] rounded-xl p-6 shadow-sm dark:shadow-black/20 border dark:border-gray-800 hover:shadow-md dark:hover:shadow-black/30 transition-all cursor-pointer"
               onClick={() => onViewClinic(clinic.id)}
             >
               {/* Clinic Header */}
@@ -281,8 +281,8 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
                     <span className="text-lg font-bold">{clinic.initials}</span>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-800">{clinic.name}</h3>
-                    <p className="text-sm text-gray-500">{clinic.id}</p>
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-white">{clinic.name}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{clinic.id}</p>
                   </div>
                 </div>
                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${badgeColor}`}>
@@ -292,8 +292,8 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
 
               {/* Location */}
               <div className="flex items-start space-x-2 mb-3">
-                <FiMapPin className="w-4 h-4 text-gray-400 mt-0.5" />
-                <div className="text-sm text-gray-600">
+                <FiMapPin className="w-4 h-4 text-gray-400 dark:text-gray-500 mt-0.5" />
+                <div className="text-sm text-gray-600 dark:text-gray-400">
                   <p>{clinic.address}</p>
                   <p>{clinic.city}, {clinic.state} {clinic.zipCode}</p>
                 </div>
@@ -302,42 +302,42 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
               {/* Contact */}
               <div className="space-y-2 mb-4">
                 <div className="flex items-center space-x-2">
-                  <FiPhone className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm text-gray-600">{clinic.phone}</span>
+                  <FiPhone className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                  <span className="text-sm text-gray-600 dark:text-gray-400">{clinic.phone}</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <FiMail className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm text-gray-600">{clinic.email}</span>
+                  <FiMail className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                  <span className="text-sm text-gray-600 dark:text-gray-400">{clinic.email}</span>
                 </div>
               </div>
 
               {/* Stats */}
               <div className="grid grid-cols-3 gap-4 mb-4">
                 <div className="text-center">
-                  <div className="text-lg font-bold text-blue-600">{clinic.totalDoctors}</div>
-                  <div className="text-xs text-gray-500">Therapists</div>
+                  <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{clinic.totalDoctors}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Therapists</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold text-green-600">{clinic.totalPatients}</div>
-                  <div className="text-xs text-gray-500">Examinees</div>
+                  <div className="text-lg font-bold text-green-600 dark:text-green-400">{clinic.totalPatients}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Examinees</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold text-purple-600">{clinic.totalAppointments}</div>
-                  <div className="text-xs text-gray-500">Sessions</div>
+                  <div className="text-lg font-bold text-purple-600 dark:text-purple-400">{clinic.totalAppointments}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Sessions</div>
                 </div>
               </div>
 
               {/* Specialties */}
               <div className="mb-4">
-                <div className="text-xs text-gray-500 mb-2">Specialties:</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Specialties:</div>
                 <div className="flex flex-wrap gap-1">
                   {clinic.specialties.slice(0, 2).map((specialty, idx) => (
-                    <span key={idx} className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
+                    <span key={idx} className="inline-flex px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
                       {specialty}
                     </span>
                   ))}
                   {clinic.specialties.length > 2 && (
-                    <span className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
+                    <span className="inline-flex px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
                       +{clinic.specialties.length - 2} more
                     </span>
                   )}
@@ -345,10 +345,10 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
               </div>
 
               {/* Actions */}
-              <div className="flex items-center justify-between pt-4 border-t">
+              <div className="flex items-center justify-between pt-4 border-t dark:border-gray-700">
                 <div className="flex items-center space-x-1">
                   <span className="text-yellow-400">★</span>
-                  <span className="text-sm font-medium text-gray-700">{clinic.rating}</span>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{clinic.rating}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <motion.button
@@ -358,7 +358,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
                       e.stopPropagation();
                       onViewClinic(clinic.id);
                     }}
-                    className="text-blue-600 hover:text-blue-900 p-1 rounded"
+                    className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 p-1 rounded"
                     title="View Details"
                   >
                     <FiEye className="w-4 h-4" />
@@ -370,7 +370,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
                       e.stopPropagation();
                       onEditClinic && onEditClinic(clinic.id);
                     }}
-                    className="text-green-600 hover:text-green-900 p-1 rounded"
+                    className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 p-1 rounded"
                     title="Edit"
                   >
                     <FiEdit3 className="w-4 h-4" />
@@ -382,7 +382,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
                       e.stopPropagation();
                       handleDeleteCentre(clinic.id);
                     }}
-                    className="text-red-600 hover:text-red-900 p-1 rounded"
+                    className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 p-1 rounded"
                     title="Delete"
                   >
                     <FiTrash2 className="w-4 h-4" />
@@ -397,7 +397,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
 
         {filteredClinics.length === 0 && !loading && !error && (
           <div className="text-center py-12">
-            <div className="text-gray-500">
+            <div className="text-gray-500 dark:text-gray-400">
               <FiMapPin className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p className="text-lg font-medium">No centres found</p>
               <p className="text-sm">Try adjusting your search or filter criteria</p>
@@ -413,56 +413,56 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
           transition={{ delay: 0.2 }}
           className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4"
         >
-          <div className="bg-white rounded-lg p-4 shadow-sm border">
+          <div className="bg-white dark:bg-[#1c1c1e] rounded-lg p-4 shadow-sm dark:shadow-black/20 border dark:border-gray-800">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <FiMapPin className="w-6 h-6 text-blue-600" />
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                <FiMapPin className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-blue-600">{clinics.length}</div>
-                <div className="text-sm text-gray-600">Total Centres</div>
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{clinics.length}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Total Centres</div>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg p-4 shadow-sm border">
+          <div className="bg-white dark:bg-[#1c1c1e] rounded-lg p-4 shadow-sm dark:shadow-black/20 border dark:border-gray-800">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <FiUsers className="w-6 h-6 text-green-600" />
+              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                <FiUsers className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {clinics.reduce((sum, clinic) => sum + clinic.totalDoctors, 0)}
                 </div>
-                <div className="text-sm text-gray-600">Total Therapists</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Total Therapists</div>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg p-4 shadow-sm border">
+          <div className="bg-white dark:bg-[#1c1c1e] rounded-lg p-4 shadow-sm dark:shadow-black/20 border dark:border-gray-800">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <FiUsers className="w-6 h-6 text-purple-600" />
+              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                <FiUsers className="w-6 h-6 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-purple-600">
+                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                   {clinics.reduce((sum, clinic) => sum + clinic.totalPatients, 0)}
                 </div>
-                <div className="text-sm text-gray-600">Total Examinees</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Total Examinees</div>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg p-4 shadow-sm border">
+          <div className="bg-white dark:bg-[#1c1c1e] rounded-lg p-4 shadow-sm dark:shadow-black/20 border dark:border-gray-800">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <FiCalendar className="w-6 h-6 text-yellow-600" />
+              <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+                <FiCalendar className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-yellow-600">
+                <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                   {clinics.filter(clinic => clinic.status === 'Active').length}
                 </div>
-                <div className="text-sm text-gray-600">Active Centres</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Active Centres</div>
               </div>
             </div>
           </div>
