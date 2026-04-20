@@ -97,7 +97,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
   const getMenuItems = () => {
     const adminMenuItems = [
       { id: 'dashboard', label: 'Dashboard', icon: FiHome, section: 'MAIN' },
-      { 
+      /* { 
         id: 'encounters', 
         label: 'Sessions', 
         icon: FiUsers, 
@@ -107,7 +107,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
           { id: 'assessment-list', label: 'Assessment List', icon: FiFileText },
           { id: 'therapy-list', label: 'Therapy List', icon: FiActivity }
         ]
-      },
+      }, */
       { id: 'patients', label: 'Examinees', icon: FiUser, section: 'USERS' },
     { id: 'doctors', label: 'Therapists', icon: FiUserCheck, section: 'USERS' },
     { id: 'template-manager', label: 'Assessment Templates', icon: FiFileText, section: 'USERS' },
@@ -124,7 +124,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
 
   const therapistMenuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: FiHome, section: 'MAIN' },
-    { 
+    /* { 
       id: 'encounters', 
       label: 'Sessions', 
       icon: FiUsers, 
@@ -134,7 +134,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
         { id: 'assessment-list', label: 'Assessment List', icon: FiFileText },
         { id: 'therapy-list', label: 'Therapy List', icon: FiActivity }
       ]
-    },
+    }, */
     { id: 'patients', label: 'Examinees', icon: FiUser, section: 'USERS' },
     { id: 'profile', label: 'My Profile', icon: FiUser, section: 'USERS' },
   ];
