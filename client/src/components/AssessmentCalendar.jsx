@@ -29,6 +29,15 @@ const AssessmentCalendar = () => {
   const [editingAssessment, setEditingAssessment] = useState(null);
   const [viewingAssessment, setViewingAssessment] = useState(null);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [therapists, setTherapists] = useState([]);
+  const [therapistScheduleLoading, setTherapistScheduleLoading] = useState(false);
+  const [selectedTherapistId, setSelectedTherapistId] = useState('');
+  const [workingHoursForm, setWorkingHoursForm] = useState({
+    login_time: '',
+    logout_time: '',
+    is_available: true,
+  });
+  const [workingHoursSaving, setWorkingHoursSaving] = useState(false);
   const [newAssessment, setNewAssessment] = useState({
     title: '',
     clientName: '',
@@ -92,6 +101,67 @@ const AssessmentCalendar = () => {
   useEffect(() => {
     fetchAssessments();
   }, [currentDate, selectedCenter]);
+
+  const toISODate = (date) => date.toLocaleDateString('en-CA');
+
+  const fetchTherapistSchedule = async () => {
+    try {
+      setTherapistScheduleLoading(true);
+      const date = toISODate(currentDate);
+      const res = await api.getAvailableTherapists({ date });
+      if (res?.success) {
+        setTherapists(res.data || []);
+      } else {
+        setTherapists([]);
+      }
+    } catch (error) {
+      console.error('Error fetching therapist schedule:', error);
+      setTherapists([]);
+    } finally {
+      setTherapistScheduleLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (viewMode === 'therapist' || viewMode === 'workinghours') {
+      fetchTherapistSchedule();
+    }
+  }, [viewMode, currentDate]);
+
+  useEffect(() => {
+    if (!selectedTherapistId) return;
+    const t = therapists.find(x => String(x.id) === String(selectedTherapistId));
+    if (!t) return;
+    setWorkingHoursForm({
+      login_time: t.login_time || '',
+      logout_time: t.logout_time || '',
+      is_available: t.is_available === undefined ? true : Boolean(t.is_available),
+    });
+  }, [selectedTherapistId, therapists]);
+
+  const saveWorkingHours = async () => {
+    if (!selectedTherapistId) return;
+    try {
+      setWorkingHoursSaving(true);
+      const payload = {
+        login_time: workingHoursForm.login_time,
+        logout_time: workingHoursForm.logout_time,
+        is_available: workingHoursForm.is_available,
+      };
+      const res = await api.updateTherapistAvailabilitySettings(selectedTherapistId, payload);
+      if (res?.success) {
+        toast.success('Working hours updated');
+        await fetchTherapistSchedule();
+      } else {
+        toast.error(res?.message || 'Failed to update working hours');
+      }
+    } catch (error) {
+      console.error('Error saving working hours:', error);
+      toast.error('Failed to update working hours');
+    } finally {
+      setWorkingHoursSaving(false);
+    }
+  };
 
   const fetchAssessments = async () => {
     try {
@@ -575,6 +645,7 @@ const AssessmentCalendar = () => {
           </button>
           <button
             onClick={() => {
+              setSelectedDate(new Date());
               setNewAssessment({ ...newAssessment, type: 'holiday' });
               setShowAddModal(true);
             }}
@@ -678,21 +749,226 @@ const AssessmentCalendar = () => {
       {viewMode === 'week' && renderWeekView()}
       {viewMode === 'day' && renderDayView()}
       {viewMode === 'therapist' && (
-        <div className="p-8 text-center text-gray-400 bg-[#1C1C1E]">
-          <FiCalendar className="w-16 h-16 mx-auto mb-4 opacity-50" />
-          <p className="text-lg">Therapist schedule view coming soon</p>
+        <div className="p-6 bg-white dark:bg-[#1C1C1E]">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Therapist schedule</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Date: {toISODate(currentDate)}</p>
+            </div>
+            <button
+              onClick={fetchTherapistSchedule}
+              className="px-3 py-2 text-sm rounded-lg bg-gray-100 dark:bg-[#2C2C2E] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-[#3A3A3C]"
+            >
+              Refresh
+            </button>
+          </div>
+
+          {therapistScheduleLoading ? (
+            <div className="py-10 text-center text-gray-600 dark:text-gray-400">Loading...</div>
+          ) : therapists.length === 0 ? (
+            <div className="py-10 text-center text-gray-600 dark:text-gray-400">No therapists found for this date.</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {therapists.map((t) => (
+                <div
+                  key={t.id}
+                  className="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#2C2C2E]"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="font-semibold text-gray-900 dark:text-white">
+                        {t.first_name} {t.last_name}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">{t.specialty || 'Therapist'}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">{t.centre_name || ''}</div>
+                    </div>
+                    <div className={`text-xs px-2 py-1 rounded-full ${t.is_available ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}>
+                      {t.is_available ? 'Available' : 'Unavailable'}
+                    </div>
+                  </div>
+
+                  <div className="mt-3 text-sm text-gray-700 dark:text-gray-300">
+                    <div>
+                      <span className="font-medium">Hours:</span>{' '}
+                      {t.login_time && t.logout_time ? `${t.login_time} - ${t.logout_time}` : 'Not set'}
+                    </div>
+                    <div className="mt-2">
+                      <span className="font-medium">Booked slots:</span>{' '}
+                      <span className="text-gray-600 dark:text-gray-400">{t.booked_slots || 'None'}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
       {viewMode === 'holidays' && (
-        <div className="p-8 text-center text-gray-400 bg-[#1C1C1E]">
-          <FiCalendar className="w-16 h-16 mx-auto mb-4 opacity-50" />
-          <p className="text-lg">Holidays & closures view coming soon</p>
+        <div className="p-6 bg-white dark:bg-[#1C1C1E]">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Holidays & closures</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">This month</p>
+            </div>
+            <button
+              onClick={() => {
+                setSelectedDate(new Date());
+                setNewAssessment({ ...newAssessment, type: 'holiday' });
+                setShowAddModal(true);
+              }}
+              className="px-3 py-2 text-sm rounded-lg bg-gray-100 dark:bg-[#2C2C2E] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-[#3A3A3C]"
+            >
+              Mark holiday
+            </button>
+          </div>
+
+          {(() => {
+            const holidayEvents = (assessments || []).filter(a => a.type === 'holiday' || a.type === 'halfday');
+            if (holidayEvents.length === 0) {
+              return (
+                <div className="py-10 text-center text-gray-600 dark:text-gray-400">No holidays/closures in this range.</div>
+              );
+            }
+            return (
+              <div className="space-y-3">
+                {holidayEvents
+                  .slice()
+                  .sort((a, b) => String(a.date).localeCompare(String(b.date)))
+                  .map((e) => (
+                    <div
+                      key={e.id}
+                      className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#2C2C2E]"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getAssessmentColor(e.type) }} />
+                        <div>
+                          <div className="font-medium text-gray-900 dark:text-white">{e.title}</div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">{e.date}{e.time ? ` • ${e.time}` : ''}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handleViewAssessment(e)}
+                          className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3A3C]"
+                          title="View"
+                        >
+                          <FiEye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAssessment(e.id)}
+                          className="p-2 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          title="Delete"
+                        >
+                          <FiTrash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            );
+          })()}
         </div>
       )}
       {viewMode === 'workinghours' && (
-        <div className="p-8 text-center text-gray-400 bg-[#1C1C1E]">
-          <FiCalendar className="w-16 h-16 mx-auto mb-4 opacity-50" />
-          <p className="text-lg">Working hours view coming soon</p>
+        <div className="p-6 bg-white dark:bg-[#1C1C1E]">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Working hours</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Select therapist to view/update hours.</p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#2C2C2E]">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Therapist</label>
+              <select
+                value={selectedTherapistId}
+                onChange={(e) => setSelectedTherapistId(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1C1C1E] text-gray-900 dark:text-white"
+              >
+                <option value="">Select therapist</option>
+                {therapists.map(t => (
+                  <option key={t.id} value={t.id}>
+                    {t.first_name} {t.last_name}
+                  </option>
+                ))}
+              </select>
+
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Login time</label>
+                  <input
+                    type="time"
+                    value={workingHoursForm.login_time}
+                    onChange={(e) => setWorkingHoursForm(prev => ({ ...prev, login_time: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1C1C1E] text-gray-900 dark:text-white"
+                    disabled={!selectedTherapistId}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Logout time</label>
+                  <input
+                    type="time"
+                    value={workingHoursForm.logout_time}
+                    onChange={(e) => setWorkingHoursForm(prev => ({ ...prev, logout_time: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1C1C1E] text-gray-900 dark:text-white"
+                    disabled={!selectedTherapistId}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="inline-flex items-center space-x-2 text-sm text-gray-700 dark:text-gray-300">
+                    <input
+                      type="checkbox"
+                      checked={workingHoursForm.is_available}
+                      onChange={(e) => setWorkingHoursForm(prev => ({ ...prev, is_available: e.target.checked }))}
+                      disabled={!selectedTherapistId}
+                    />
+                    <span>Available for booking</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center space-x-2">
+                <button
+                  onClick={saveWorkingHours}
+                  disabled={!selectedTherapistId || workingHoursSaving}
+                  className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
+                >
+                  {workingHoursSaving ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  onClick={fetchTherapistSchedule}
+                  className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-[#3A3A3C] text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-[#4A4A4C]"
+                >
+                  Refresh list
+                </button>
+              </div>
+
+              <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                Note: Therapist self-update route is not available; use admin to update working hours.
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#2C2C2E]">
+              <div className="text-sm font-medium text-gray-900 dark:text-white mb-2">Today snapshot</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">{toISODate(currentDate)}</div>
+              {therapistScheduleLoading ? (
+                <div className="py-8 text-center text-gray-600 dark:text-gray-400">Loading...</div>
+              ) : (
+                <div className="space-y-2 max-h-[360px] overflow-auto">
+                  {therapists.map(t => (
+                    <div key={t.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-800">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">{t.first_name} {t.last_name}</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400">{t.login_time && t.logout_time ? `${t.login_time} - ${t.logout_time}` : 'Hours not set'}</div>
+                      </div>
+                      <div className={`text-xs px-2 py-1 rounded-full ${t.is_available ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}>
+                        {t.is_available ? 'Available' : 'Unavailable'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -804,10 +1080,13 @@ const AssessmentCalendar = () => {
               <div className="p-6 border-b border-gray-800 flex items-center justify-between bg-[#2C2C2E]">
                 <h3 className="text-xl font-bold text-white flex items-center space-x-2">
                   <FiPlus className="w-5 h-5" />
-                  <span>Add Event</span>
+                  <span>{newAssessment.type === 'holiday' || newAssessment.type === 'halfday' ? 'Mark Holiday' : 'Add Event'}</span>
                 </h3>
                 <button
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => {
+                    setShowAddModal(false);
+                    setNewAssessment({ title: '', clientName: '', time: '', duration: 60, type: 'ot_si', notes: '' });
+                  }}
                   className="p-2 hover:bg-[#3A3A3C] rounded-lg text-white transition-colors"
                 >
                   <FiX className="w-5 h-5" />
@@ -834,45 +1113,49 @@ const AssessmentCalendar = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-400 mb-1">Client Name</label>
-                    <input
-                      type="text"
-                      value={newAssessment.clientName}
-                      onChange={(e) => setNewAssessment({...newAssessment, clientName: e.target.value})}
-                      placeholder="Client name"
-                      className="w-full px-3 py-2 bg-[#2C2C2E] border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-white placeholder-gray-500"
-                    />
+                {newAssessment.type !== 'holiday' && newAssessment.type !== 'halfday' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-400 mb-1">Client Name</label>
+                      <input
+                        type="text"
+                        value={newAssessment.clientName}
+                        onChange={(e) => setNewAssessment({...newAssessment, clientName: e.target.value})}
+                        placeholder="Client name"
+                        className="w-full px-3 py-2 bg-[#2C2C2E] border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-white placeholder-gray-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-400 mb-1">Time *</label>
+                      <input
+                        type="time"
+                        required
+                        value={newAssessment.time}
+                        onChange={(e) => setNewAssessment({...newAssessment, time: e.target.value})}
+                        className="w-full px-3 py-2 bg-[#2C2C2E] border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-white"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-400 mb-1">Time *</label>
-                    <input
-                      type="time"
-                      required
-                      value={newAssessment.time}
-                      onChange={(e) => setNewAssessment({...newAssessment, time: e.target.value})}
-                      className="w-full px-3 py-2 bg-[#2C2C2E] border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-white"
-                    />
-                  </div>
-                </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-400 mb-1">Duration (min)</label>
-                    <select
-                      value={newAssessment.duration}
-                      onChange={(e) => setNewAssessment({...newAssessment, duration: parseInt(e.target.value)})}
-                      className="w-full px-3 py-2 bg-[#2C2C2E] border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-white"
-                    >
-                      <option value={30}>30 min</option>
-                      <option value={45}>45 min</option>
-                      <option value={60}>1 hour</option>
-                      <option value={90}>1.5 hours</option>
-                      <option value={120}>2 hours</option>
-                    </select>
-                  </div>
-                  <div>
+                  {newAssessment.type !== 'holiday' && newAssessment.type !== 'halfday' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-400 mb-1">Duration (min)</label>
+                      <select
+                        value={newAssessment.duration}
+                        onChange={(e) => setNewAssessment({...newAssessment, duration: parseInt(e.target.value)})}
+                        className="w-full px-3 py-2 bg-[#2C2C2E] border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-white"
+                      >
+                        <option value={30}>30 min</option>
+                        <option value={45}>45 min</option>
+                        <option value={60}>1 hour</option>
+                        <option value={90}>1.5 hours</option>
+                        <option value={120}>2 hours</option>
+                      </select>
+                    </div>
+                  )}
+                  <div className={newAssessment.type === 'holiday' || newAssessment.type === 'halfday' ? 'col-span-2' : ''}>
                     <label className="block text-sm font-medium text-gray-400 mb-1">Type</label>
                     <select
                       value={newAssessment.type}
@@ -903,7 +1186,10 @@ const AssessmentCalendar = () => {
                 <div className="flex space-x-3 pt-4">
                   <button
                     type="button"
-                    onClick={() => setShowAddModal(false)}
+                    onClick={() => {
+                      setShowAddModal(false);
+                      setNewAssessment({ title: '', clientName: '', time: '', duration: 60, type: 'ot_si', notes: '' });
+                    }}
                     className="flex-1 px-4 py-2.5 border border-gray-700 text-gray-300 rounded-lg hover:bg-[#2C2C2E] transition-colors font-medium"
                   >
                     Cancel

@@ -37,6 +37,9 @@ router.put('/my/profile', authenticateToken, therapistController.updateMyProfile
 // GET /api/therapists/my/availability - Get current user's therapist availability
 router.get('/my/availability', authenticateToken, therapistController.getMyAvailability.bind(therapistController));
 
+// PUT /api/therapists/my/availability - Update current user's therapist availability
+router.put('/my/availability', authenticateToken, therapistController.updateMyAvailability.bind(therapistController));
+
 // GET /api/therapists/:id/availability - Get therapist availability
 router.get('/:id/availability', therapistController.getTherapistAvailability.bind(therapistController));
 

@@ -353,6 +353,62 @@ class TherapistController {
     }
   }
 
+  // Update current user's therapist availability (for therapist dashboard)
+  async updateMyAvailability(req, res) {
+    try {
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({
+          success: false,
+          message: 'Unauthorized'
+        });
+      }
+
+      const therapistModel = new Therapist();
+
+      // Find therapist record for current user
+      const therapistQuery = await therapistModel.query(
+        'SELECT id FROM kivi_therapists WHERE user_id = ?',
+        [req.user.id]
+      );
+
+      if (therapistQuery.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Therapist profile not found'
+        });
+      }
+
+      const therapistId = therapistQuery[0].id;
+
+      const updateData = {
+        login_time: req.body.login_time,
+        logout_time: req.body.logout_time,
+        is_available: req.body.is_available,
+        last_availability_update: new Date()
+      };
+
+      const updated = await therapistModel.updateAvailability(therapistId, updateData);
+
+      if (!updated) {
+        return res.status(404).json({
+          success: false,
+          message: 'Therapist not found or no changes made'
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Your working hours updated successfully'
+      });
+    } catch (error) {
+      console.error('Update my availability error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
   // Get current user's therapist sessions
   async getMySessions(req, res) {
     try {

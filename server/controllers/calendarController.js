@@ -195,16 +195,22 @@ exports.createEvent = async (req, res) => {
             });
         }
 
+        // For holiday/halfday events, ignore client_name, event_time, and duration
+        const isHolidayEvent = eventType === 'holiday' || eventType === 'halfday';
+        const finalClientName = isHolidayEvent ? null : (clientName || null);
+        const finalEventTime = isHolidayEvent ? null : (eventTime || null);
+        const finalDuration = isHolidayEvent ? null : (duration || 60);
+
         db.query(`
             INSERT INTO calendar_events 
             (title, client_name, event_date, event_time, duration_minutes, event_type, notes, created_by, centre_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `, [
             title,
-            clientName || null,
+            finalClientName,
             eventDate,
-            eventTime || null,
-            duration || 60,
+            finalEventTime,
+            finalDuration,
             eventType || 'assessment',
             notes || null,
             req.user ? req.user.id : null,
@@ -302,13 +308,19 @@ exports.updateEvent = async (req, res) => {
                     });
                 }
 
+                // For holiday/halfday events, ignore client_name, event_time, and duration
+                const isHolidayEvent = eventType === 'holiday' || eventType === 'halfday';
+                const finalClientName = isHolidayEvent ? null : clientName;
+                const finalEventTime = isHolidayEvent ? null : eventTime;
+                const finalDuration = isHolidayEvent ? null : duration;
+
                 db.query(`
                     UPDATE calendar_events 
                     SET title = COALESCE(?, title),
-                        client_name = COALESCE(?, client_name),
+                        client_name = ?,
                         event_date = COALESCE(?, event_date),
-                        event_time = COALESCE(?, event_time),
-                        duration_minutes = COALESCE(?, duration_minutes),
+                        event_time = ?,
+                        duration_minutes = ?,
                         event_type = COALESCE(?, event_type),
                         notes = COALESCE(?, notes),
                         status = COALESCE(?, status),
@@ -316,10 +328,10 @@ exports.updateEvent = async (req, res) => {
                     WHERE id = ?
                 `, [
                     title,
-                    clientName,
+                    finalClientName,
                     eventDate,
-                    eventTime,
-                    duration,
+                    finalEventTime,
+                    finalDuration,
                     eventType,
                     notes,
                     status,
