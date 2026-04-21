@@ -47,7 +47,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
   const [selectedItems, setSelectedItems] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [sortConfig, setSortConfig] = useState({ key: 'lastName', direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'desc' }); // Newest first
   const [showFilters, setShowFilters] = useState(false);
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [advancedSearchData, setAdvancedSearchData] = useState({
@@ -2319,13 +2319,21 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
                                 <h4 className="font-semibold text-gray-900">{pkg.name}</h4>
                                 {pkg.ageRange && (
                                   <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
                                     {pkg.ageRange}
                                   </span>
                                 )}
+                                {/* Type Badge */}
+                                <span className={`text-xs px-2 py-0.5 rounded font-medium ${
+                                  pkg.category === 'Therapy'
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : 'bg-purple-100 text-purple-700'
+                                }`}>
+                                  {pkg.category === 'Therapy' ? 'Therapy' : 'Assessment'}
+                                </span>
                               </div>
                               <p className="text-sm text-gray-600 mb-2">{pkg.description}</p>
                               <div className="flex flex-wrap gap-1">

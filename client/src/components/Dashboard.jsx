@@ -227,6 +227,14 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
       description: 'View billing records',
       color: 'from-purple-500 to-purple-600',
       onClick: () => setActiveItem?.('billing-records')
+    },
+    {
+      icon: FiMapPin,
+      title: 'Network',
+      description: 'Manage centres',
+      color: 'from-orange-500 to-orange-600',
+      route: '/centres',
+      activeItem: 'clinics'
     }
   ];
 
@@ -614,7 +622,7 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
               <FiArrowUpRight className="w-4 h-4" />
             </button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {quickActions.map((action, index) => (
               action.route ? (
                 <Link key={index} to={action.route} onClick={() => setActiveItem?.(action.activeItem || action.route.replace('/', ''))}>

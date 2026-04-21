@@ -13,11 +13,13 @@ import {
   FiCheckCircle,
   FiPhone
 } from 'react-icons/fi';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import api from '../services/api';
+import { fetchPatients } from '../store/slices/patientSlice';
 import Sidebar from './Sidebar';
 
 const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActiveItem }) => {
+  const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const [activeTab, setActiveTab] = useState('demographics');
   const [isSaving, setIsSaving] = useState(false);
@@ -225,6 +227,8 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
       const result = response;
 
       if (result.success) {
+        // Refresh the patients list to show the new examinee
+        dispatch(fetchPatients());
         onSave && onSave(result.data);
       } else {
         setErrors({ submit: result.message || 'Failed to create examinee' });
@@ -462,7 +466,6 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                             <option value="">Please Select...</option>
                             <option value="English">English</option>
                             <option value="Hindi">Hindi</option>
-                            <option value="Demographics">Demographics</option>
                             <option value="Bilingual">Bilingual</option>
                             <option value="Other">Other</option>
                           </select>

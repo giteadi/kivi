@@ -97,10 +97,10 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
   const getMenuItems = () => {
     const adminMenuItems = [
       { id: 'dashboard', label: 'Dashboard', icon: FiHome, section: 'MAIN' },
-      /* { 
-        id: 'encounters', 
-        label: 'Sessions', 
-        icon: FiUsers, 
+      /* {
+        id: 'encounters',
+        label: 'Sessions',
+        icon: FiUsers,
         section: 'MAIN',
         hasSubmenu: true,
         submenu: [
@@ -113,7 +113,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
     { id: 'template-manager', label: 'Assessment Templates', icon: FiFileText, section: 'USERS' },
     { id: 'forms', label: 'Forms', icon: FiUpload, section: 'USERS' },
     // { id: 'receptionists', label: 'Staff', icon: FiUser, section: 'USERS' }, // Temporarily disabled for future use
-    { id: 'clinics', label: 'Centres', icon: FiMapPin, section: 'CENTRE' },
+    { id: 'clinics', label: 'Centres', icon: FiMapPin, section: 'NETWORK' },
     { id: 'clinic-revenue', label: 'Centre Revenue', icon: FiTrendingUp, section: 'FINANCIAL' },
     // { id: 'doctor-revenue', label: 'Therapist Revenue', icon: FiDollarSign, section: 'FINANCIAL' }, // Temporarily disabled 
     { id: 'taxes', label: 'Taxes', icon: FiPercent, section: 'FINANCIAL' },
@@ -154,7 +154,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
 };
 
   const menuItems = getMenuItems();
-  const sections = ['MAIN', 'USERS', 'CENTRE', 'FINANCIAL', 'ADMIN'];
+  const sections = ['MAIN', 'NETWORK', 'USERS', 'FINANCIAL', 'ADMIN'];
 
   const toggleSection = (itemId) => {
     setExpandedSections(prev => ({
