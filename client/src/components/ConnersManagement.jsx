@@ -676,7 +676,7 @@ function RenameModal({ form, onClose, onRename }) {
     <div style={css.overlay} onClick={onClose}>
       <div style={{ ...css.modal, maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>✏️ Rename Coner</h3>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>✏️ Rename Conners</h3>
           <button style={css.iconBtn} onClick={onClose}><Icon d={icons.x} size={16} /></button>
         </div>
         <input
@@ -698,7 +698,7 @@ function RenameModal({ form, onClose, onRename }) {
 }
 
 // ─── Main Component ──────────────────────────────────────────────────────────────
-export default function ConersManagement() {
+export default function ConnersManagement() {
   const [forms, setForms] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
@@ -798,7 +798,7 @@ export default function ConersManagement() {
       console.error("❌ [DEBUG] Create coner folder error:", e);
       console.error("❌ [DEBUG] Error status:", e.status);
       console.error("❌ [DEBUG] Error message:", e.message);
-      alert("Failed to create coner folder: " + (e.message || "Unknown error"));
+      alert("Failed to create Conners folder: " + (e.message || "Unknown error"));
     } finally {
       setCreatingFolder(false);
     }
@@ -816,7 +816,7 @@ export default function ConersManagement() {
       setSelectedFolderId(null);
       await loadFolders();
     } catch (e) {
-      alert("Failed to rename coner folder: " + (e.message || "Unknown error"));
+      alert("Failed to rename Conners folder: " + (e.message || "Unknown error"));
     }
   };
 
@@ -831,7 +831,7 @@ export default function ConersManagement() {
       await loadFolders();
       await loadForms();
     } catch (e) {
-      alert("Failed to delete coner folder: " + (e.message || "Unknown error"));
+      alert("Failed to delete Conners folder: " + (e.message || "Unknown error"));
     }
   };
 
@@ -1246,7 +1246,7 @@ export default function ConersManagement() {
     
     // If no template_data, show error
     console.error('[DEBUG] Coner has no template_data. Please re-upload the file.');
-    alert('This coner needs to be re-uploaded to support the New Report feature. Please upload it again.');
+    alert('This Conners file needs to be re-uploaded to support the New Report feature. Please upload it again.');
   };
 
   // Save report (like TemplateManager) - FIXED: Preserve original format

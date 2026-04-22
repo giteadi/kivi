@@ -71,8 +71,13 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
     birthInformationOther: false,
     birthInformationOtherText: '',
     developmentalMilestonesOther: false,
-    developmentalMilestonesOtherText: ''
+    developmentalMilestonesOtherText: '',
+    referralSourceOther: false,
+    referralSourceOtherText: ''
   });
+
+  // State for Referral Reason text
+  const [referralReasonText, setReferralReasonText] = useState('');
 
   // Handler for History Other checkboxes
   const handleHistoryOtherChange = (field, checked) => {
@@ -638,11 +643,15 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input type="checkbox" className="rounded border-gray-300" />
-                        General or Not Specific
+                        Writing
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input type="checkbox" className="rounded border-gray-300" />
-                        Writing
+                        Reading
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        General or Not Specific
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                         <input 
@@ -662,10 +671,6 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                           className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ml-6"
                         />
                       )}
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
-                        Reading
-                      </label>
                     </div>
 
                     {/* Cognitive Evaluation */}
@@ -677,11 +682,15 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input type="checkbox" className="rounded border-gray-300" />
-                        General or Not Specific
+                        Gifted and Talented
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input type="checkbox" className="rounded border-gray-300" />
-                        Gifted and Talented
+                        Traumatic Brain Injury
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        General or Not Specific
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                         <input 
@@ -701,10 +710,6 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                           className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ml-6"
                         />
                       )}
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
-                        Traumatic Brain Injury
-                      </label>
                     </div>
 
                     {/* Behaviour Concerns */}
@@ -716,11 +721,15 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input type="checkbox" className="rounded border-gray-300" />
-                        General or Not Specific
+                        Attention/Hyperactivity
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input type="checkbox" className="rounded border-gray-300" />
-                        Attention/Hyperactivity
+                        Rule Breaking/Defiance
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        General or Not Specific
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                         <input 
@@ -753,11 +762,15 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input type="checkbox" className="rounded border-gray-300" />
-                        General or Not Specific
+                        Depression
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input type="checkbox" className="rounded border-gray-300" />
-                        Depression
+                        Personality Issues
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        General or Not Specific
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                         <input 
@@ -788,11 +801,15 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input type="checkbox" className="rounded border-gray-300" />
-                        General or Not Specific
+                        Physical/Growth
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input type="checkbox" className="rounded border-gray-300" />
-                        Physical/Growth
+                        Social Skills/Interactions (includes Autism)
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        General or Not Specific
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                         <input 
@@ -823,11 +840,15 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input type="checkbox" className="rounded border-gray-300" />
-                        General or Not Specific
+                        Expressive
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input type="checkbox" className="rounded border-gray-300" />
-                        Expressive
+                        Pragmatic
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        General or Not Specific
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                         <input 
@@ -860,11 +881,15 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input type="checkbox" className="rounded border-gray-300" />
-                        General or Not Specific
+                        Fluency
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input type="checkbox" className="rounded border-gray-300" />
-                        Fluency
+                        Voice
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        General or Not Specific
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                         <input 
@@ -897,11 +922,15 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input type="checkbox" className="rounded border-gray-300" />
-                        General or Not Specific
+                        Motor Functioning
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input type="checkbox" className="rounded border-gray-300" />
-                        Motor Functioning
+                        Pain
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        General or Not Specific
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                         <input 
@@ -934,11 +963,15 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input type="checkbox" className="rounded border-gray-300" />
-                        General or Not Specific
+                        Illegal Drugs
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input type="checkbox" className="rounded border-gray-300" />
-                        Illegal Drugs
+                        Prescription Drugs
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        General or Not Specific
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                         <input 
@@ -958,10 +991,6 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                           className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ml-6"
                         />
                       )}
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
-                        Prescription Drugs
-                      </label>
                     </div>
                   </div>
 
@@ -973,24 +1002,10 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                         <input type="checkbox" className="rounded border-gray-300" />
                         Internal Applicant
                       </label>
-                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                        <input 
-                          type="checkbox" 
-                          className="rounded border-gray-300"
-                          checked={evaluationData.employment.other}
-                          onChange={(e) => handleOtherChange('employment', e.target.checked)}
-                        />
-                        Other
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                        External Applicant
                       </label>
-                      {evaluationData.employment.other && (
-                        <input
-                          type="text"
-                          value={evaluationData.employment.otherText}
-                          onChange={(e) => handleOtherTextChange('employment', e.target.value)}
-                          placeholder="Please specify..."
-                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ml-6"
-                        />
-                      )}
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input type="checkbox" className="rounded border-gray-300" />
                         Professional Development
@@ -1880,8 +1895,29 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                               <option value="physician">Physician</option>
                               <option value="psychologist">Psychologist</option>
                               <option value="therapist">Therapist</option>
-                              <option value="other">Other</option>
                             </select>
+                          </div>
+
+                          {/* Other checkbox for Referral Source */}
+                          <div className="pt-2">
+                            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                className="rounded border-gray-300"
+                                checked={historyOtherData.referralSourceOther}
+                                onChange={(e) => handleHistoryOtherChange('referralSourceOther', e.target.checked)}
+                              />
+                              Other
+                            </label>
+                            {historyOtherData.referralSourceOther && (
+                              <input
+                                type="text"
+                                value={historyOtherData.referralSourceOtherText}
+                                onChange={(e) => handleHistoryOtherTextChange('referralSourceOtherText', e.target.value)}
+                                placeholder="Please specify referral source name..."
+                                className="w-full mt-2 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                            )}
                           </div>
                         </div>
 
@@ -1918,6 +1954,24 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                               <input type="checkbox" className="rounded border-gray-300" />
                               Vocational/Rehabilitation/Legal Issues
                             </label>
+                          </div>
+
+                          {/* Text field for other referral reasons */}
+                          <div className="mt-4 pt-3 border-t">
+                            <label className="block text-xs text-gray-600 mb-2">
+                              Other Referral Reason(s) (Please Specify):
+                            </label>
+                            <textarea
+                              rows={3}
+                              value={referralReasonText}
+                              onChange={(e) => setReferralReasonText(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                              placeholder="Enter additional referral reasons..."
+                              maxLength={500}
+                            />
+                            <div className="text-xs text-gray-500 mt-1 text-right">
+                              {500 - referralReasonText.length} characters remaining
+                            </div>
                           </div>
                         </div>
                       </div>

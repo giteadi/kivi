@@ -95,7 +95,7 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
     { label: 'Billing Records', route: '/billing', activeItem: 'billing-records', icon: FiCreditCard },
     { label: 'Queries', route: '/admin/queries', activeItem: 'queries', icon: FiMessageSquare },
     { label: 'Reports', route: '/reports', activeItem: 'report', icon: FiFileText },
-    { label: 'Conners', route: '/coners', activeItem: 'coners', icon: FiLayers },
+    { label: 'Conners', route: '/conners', activeItem: 'conners', icon: FiLayers },
   ];
 
   // Filter suggestions based on search query

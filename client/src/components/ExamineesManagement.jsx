@@ -31,6 +31,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchPatients } from '../store/slices/patientSlice';
 import Sidebar from './Sidebar';
 import InvoiceScreen from './InvoiceScreen';
+import ConnersManagement from './ConnersManagement';
 import * as XLSX from 'xlsx';
 import { Document, Packer, Paragraph, Table, TableCell, TableRow, TextRun, HeadingLevel } from 'docx';
 import jsPDF from 'jspdf';
@@ -186,7 +187,8 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
   const tabs = [
     { id: 'examinee', label: 'Examinee', icon: FiUser },
     { id: 'group', label: 'Group Administration', icon: FiUsers },
-    { id: 'report', label: 'Report', icon: FiFileText }
+    { id: 'report', label: 'Report', icon: FiFileText },
+    { id: 'conners', label: 'Conners', icon: FiUser }
   ];
 
   // MindSaid Learning Centre - Psycho-Educational Assessment Packages
@@ -215,8 +217,8 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
       category: 'PE Assessment',
       price: 38500,
       ageRange: '6.11-90 years',
-      description: 'WJ-IV Cog (Standard & Extended), WJ-IV Ach (Standard & Extended), Conners-3rd Edition',
-      includes: ['WJ-IV Cog', 'WJ-IV Ach', 'Conners-3'],
+      description: 'WJ-IV Cog (Standard & Extended), WJ-IV Ach (Standard & Extended), Conners-4th Edition',
+      includes: ['WJ-IV Cog', 'WJ-IV Ach', 'Conners-4'],
       note: 'Additional tests Rs 4500 extra'
     },
     {
@@ -682,6 +684,8 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
         case 'pdf':
           await exportToPDF(selectedData);
           break;
+        case 'conners':
+          return <ConnersManagement />;
       }
     } catch (error) {
       console.error('❌ Download failed:', error);
