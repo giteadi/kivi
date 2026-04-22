@@ -126,7 +126,9 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
     }) : '-',
     gender: patient.gender ? patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1) : '-',
     center: patient.centre_name || 'Centrix Centre',
-    status: patient.status === 'active' ? 'Active' : 'Inactive'
+    status: patient.status === 'active' ? 'Active' : 'Inactive',
+    requiresAssessment: patient.requires_assessment || patient.requiresAssessment || false,
+    requiresTherapy: patient.requires_therapy || patient.requiresTherapy || false
   }));
 
   // Filter and sort
@@ -1392,6 +1394,9 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                                 <SortIcon columnKey="gender" />
                               </button>
                             </th>
+                            <th className="px-4 py-3 text-left">
+                              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Services</span>
+                            </th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -1443,6 +1448,25 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                                 }`}>
                                   {patient.gender}
                                 </span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex flex-wrap gap-1">
+                                  {patient.requiresAssessment && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                                      <FiFileText className="w-3 h-3" />
+                                      Assessment
+                                    </span>
+                                  )}
+                                  {patient.requiresTherapy && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-medium">
+                                      <FiUser className="w-3 h-3" />
+                                      Therapy
+                                    </span>
+                                  )}
+                                  {!patient.requiresAssessment && !patient.requiresTherapy && (
+                                    <span className="text-xs text-gray-400">-</span>
+                                  )}
+                                </div>
                               </td>
                             </motion.tr>
                           ))}

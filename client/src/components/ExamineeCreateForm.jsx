@@ -11,7 +11,8 @@ import {
   FiChevronDown,
   FiInfo,
   FiCheckCircle,
-  FiPhone
+  FiPhone,
+  FiFileText
 } from 'react-icons/fi';
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../services/api';
@@ -106,10 +107,8 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
     email: '',
     comment: '',
     account: 'CENTRIX CENTRE',
-    center1: '',
-    center2: '',
-    center3: '',
-    center4: ''
+    requiresAssessment: false,
+    requiresTherapy: false
   });
 
   // Calculate age when birth date changes
@@ -212,11 +211,9 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
         email: formData.email,
         comment: formData.comment,
         centreName: formData.account,
-        customField1: formData.center1,
-        customField2: formData.center2,
-        customField3: formData.center3,
-        customField4: formData.center4,
         status: 'active',
+        requiresAssessment: formData.requiresAssessment,
+        requiresTherapy: formData.requiresTherapy,
         evaluationData: evaluationData,
         diagnosisData: expandedDiagnoses,
         historyData: historyOtherData
@@ -542,53 +539,29 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                       </div>
 
                       <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide border-b pb-2 pt-4">
-                        Center Assignments
+                        Service Requirements
                       </h3>
 
-                      <div className="space-y-3">
-                        <div>
-                          <label className={labelClass}>Center 1</label>
+                      <div className="space-y-3 pt-2">
+                        <label className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors">
                           <input
-                            type="text"
-                            value={formData.center1}
-                            onChange={(e) => handleChange('center1', e.target.value)}
-                            className={inputClass('center1')}
-                            placeholder="Enter center name"
+                            type="checkbox"
+                            checked={formData.requiresAssessment}
+                            onChange={(e) => handleChange('requiresAssessment', e.target.checked)}
+                            className="w-5 h-5 rounded border-blue-300 text-blue-600 focus:ring-blue-500"
                           />
-                        </div>
+                          <span className="text-sm font-medium text-blue-900">Assessment Required</span>
+                        </label>
 
-                        <div>
-                          <label className={labelClass}>Center 2</label>
+                        <label className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-lg cursor-pointer hover:bg-emerald-100 transition-colors">
                           <input
-                            type="text"
-                            value={formData.center2}
-                            onChange={(e) => handleChange('center2', e.target.value)}
-                            className={inputClass('center2')}
-                            placeholder="Enter center name"
+                            type="checkbox"
+                            checked={formData.requiresTherapy}
+                            onChange={(e) => handleChange('requiresTherapy', e.target.checked)}
+                            className="w-5 h-5 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
                           />
-                        </div>
-
-                        <div>
-                          <label className={labelClass}>Center 3</label>
-                          <input
-                            type="text"
-                            value={formData.center3}
-                            onChange={(e) => handleChange('center3', e.target.value)}
-                            className={inputClass('center3')}
-                            placeholder="Enter center name"
-                          />
-                        </div>
-
-                        <div>
-                          <label className={labelClass}>Center 4</label>
-                          <input
-                            type="text"
-                            value={formData.center4}
-                            onChange={(e) => handleChange('center4', e.target.value)}
-                            className={inputClass('center4')}
-                            placeholder="Enter center name"
-                          />
-                        </div>
+                          <span className="text-sm font-medium text-emerald-900">Therapy Required</span>
+                        </label>
                       </div>
                     </div>
                   </div>

@@ -115,6 +115,10 @@ CREATE TABLE kivi_students (
   medications TEXT,
   dietary_restrictions TEXT,
   
+  -- Service Requirements (for Assessment and Therapy tracking)
+  requires_assessment BOOLEAN DEFAULT FALSE COMMENT 'Student requires psycho-educational assessment',
+  requires_therapy BOOLEAN DEFAULT FALSE COMMENT 'Student requires remedial therapy',
+  
   -- Parent/Guardian Information
   parent_guardian_name VARCHAR(100),
   parent_guardian_phone VARCHAR(20),

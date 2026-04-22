@@ -188,6 +188,8 @@ class StudentController {
         language_of_testing: req.body.languageOfTesting,
         registration_date: req.body.registrationDate || new Date().toISOString().split('T')[0],
         status: req.body.status || 'active',
+        requires_assessment: req.body.requiresAssessment || false,
+        requires_therapy: req.body.requiresTherapy || false,
         evaluation_data: req.body.evaluationData ? JSON.stringify(req.body.evaluationData) : null,
         diagnosis_data: req.body.diagnosisData ? JSON.stringify(req.body.diagnosisData) : null,
         history_data: req.body.historyData ? JSON.stringify(req.body.historyData) : null
@@ -324,6 +326,8 @@ class StudentController {
         custom_field_3: req.body.customField3,
         custom_field_4: req.body.customField4,
         language_of_testing: req.body.languageOfTesting,
+        requires_assessment: req.body.requiresAssessment,
+        requires_therapy: req.body.requiresTherapy,
         evaluation_data: req.body.evaluationData ? JSON.stringify(req.body.evaluationData) : null,
         diagnosis_data: req.body.diagnosisData ? JSON.stringify(req.body.diagnosisData) : null,
         history_data: req.body.historyData ? JSON.stringify(req.body.historyData) : null
