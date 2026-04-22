@@ -143,12 +143,12 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
     
     return matchesSearch && matchesStatus && matchesCenter && matchesGender;
   }).sort((a, b) => {
-    const aValue = a[sortConfig.key] || '';
-    const bValue = b[sortConfig.key] || '';
+    const valA = String(a[sortConfig.key] ?? '');
+    const valB = String(b[sortConfig.key] ?? '');
     if (sortConfig.direction === 'asc') {
-      return aValue.localeCompare(bValue);
+      return valA.localeCompare(valB);
     }
-    return bValue.localeCompare(aValue);
+    return valB.localeCompare(valA);
   });
 
   // Pagination

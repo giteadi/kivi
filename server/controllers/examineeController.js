@@ -18,11 +18,11 @@ class ExamineeController {
         
         return {
           id: student.id,
-          firstName: student.first_name,
+          firstName: student.first_name || '',
           middleName: '',
-          lastName: student.last_name,
-          examineeId: student.student_id,
-          gender: student.gender ? student.gender.charAt(0).toUpperCase() + student.gender.slice(1) : 'Please Select...',
+          lastName: student.last_name || '',
+          examineeId: student.student_id || '',
+          gender: student.gender ? student.gender.charAt(0).toUpperCase() + student.gender.slice(1) : '',
           dob: student.date_of_birth ? new Date(student.date_of_birth).toLocaleDateString('en-GB') : '',
           email: student.email || '',
           comment: student.learning_needs || '',
