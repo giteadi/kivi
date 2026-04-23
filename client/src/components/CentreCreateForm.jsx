@@ -40,16 +40,19 @@ const CentreCreateForm = ({ onClose, onSuccess }) => {
     setError('');
 
     try {
-      // Convert specialties string to JSON array
+      // Convert specialties string to array
       const specialtiesArray = formData.specialties.split(',').map(s => s.trim()).filter(s => s);
       const servicesArray = formData.services ? formData.services.split(',').map(s => s.trim()).filter(s => s) : [];
       
+      console.log('[CentreCreateForm] specialtiesArray:', specialtiesArray);
       console.log('[CentreCreateForm] servicesArray:', servicesArray);
       
       const centreData = {
         ...formData,
-        specialties: JSON.stringify(specialtiesArray),
-        services: JSON.stringify(servicesArray)
+        specialties: specialtiesArray,
+        services: servicesArray,
+        insurance_accepted: [],
+        languages_supported: []
       };
 
       // Format established_date to YYYY-MM-DD for MySQL

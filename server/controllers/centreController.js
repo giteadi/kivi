@@ -71,16 +71,17 @@ class CentreController {
       centreData.created_at = new Date();
       centreData.updated_at = new Date();
 
-      // JSON type columns (MySQL JSON) - need JS array
+      // JSON type columns (MySQL JSON) - need JS array, but stringify for INSERT
       const jsonTypeColumns = ['specialties', 'facilities'];
       jsonTypeColumns.forEach(field => {
         if (centreData[field] !== undefined) {
           try {
-            centreData[field] = typeof centreData[field] === 'string'
+            const parsed = typeof centreData[field] === 'string'
               ? JSON.parse(centreData[field])
               : (Array.isArray(centreData[field]) ? centreData[field] : []);
+            centreData[field] = JSON.stringify(parsed);
           } catch {
-            centreData[field] = [];
+            centreData[field] = JSON.stringify([]);
           }
         }
       });
