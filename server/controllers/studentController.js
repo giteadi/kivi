@@ -1,6 +1,29 @@
 const Student = require('../models/Student');
 const cache = require('../utils/cache');
 
+// Helper function to generate short unique student ID
+// Format: First letter of first name + First letter of last name + Last 2 digits of year + Random 2 digits
+// Example: Aditya Sharma, DOB 15/05/1990 → AS9023
+function generateStudentId(firstName, lastName, dateOfBirth) {
+  const firstInitial = firstName ? firstName.charAt(0).toUpperCase() : 'X';
+  const lastInitial = lastName ? lastName.charAt(0).toUpperCase() : 'X';
+  
+  // Get last 2 digits of year from DOB or current year
+  let yearDigits;
+  if (dateOfBirth) {
+    const year = new Date(dateOfBirth).getFullYear();
+    yearDigits = year.toString().slice(-2);
+  } else {
+    yearDigits = new Date().getFullYear().toString().slice(-2);
+  }
+  
+  // Random 2 digit number (01-99) for uniqueness
+  const randomNum = Math.floor(Math.random() * 99) + 1;
+  const randomDigits = randomNum.toString().padStart(2, '0');
+  
+  return `${firstInitial}${lastInitial}${yearDigits}${randomDigits}`;
+}
+
 class StudentController {
   constructor() {
     this.studentModel = new Student();
@@ -161,7 +184,7 @@ class StudentController {
       
       // Map camelCase to snake_case for database
       const studentData = {
-        student_id: req.body.studentId || `STU${Date.now()}`,
+        student_id: req.body.studentId || generateStudentId(req.body.firstName, req.body.lastName, req.body.dateOfBirth),
         first_name: req.body.firstName,
         middle_name: req.body.middleName,
         last_name: req.body.lastName,

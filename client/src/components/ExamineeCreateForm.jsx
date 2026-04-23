@@ -206,7 +206,6 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
         firstName: formData.firstName,
         middleName: formData.middleName,
         lastName: formData.lastName,
-        studentId: formData.examineeId,
         gender: formData.gender.toLowerCase(),
         dateOfBirth: formData.birthDate,
         schoolName: formData.schoolName,
@@ -399,17 +398,6 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                             <p className="text-xs text-red-500 mt-1">{errors.lastName}</p>
                           )}
                         </div>
-                      </div>
-
-                      <div>
-                        <label className={labelClass}>Examinee ID</label>
-                        <input
-                          type="text"
-                          value={formData.examineeId}
-                          onChange={(e) => handleChange('examineeId', e.target.value)}
-                          className={inputClass('examineeId')}
-                          placeholder="Auto-generated if empty"
-                        />
                       </div>
 
                       <div className="grid grid-cols-2 gap-3">
