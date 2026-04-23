@@ -126,7 +126,8 @@ class ExamineeController {
     try {
       const {
         firstName, middleName, lastName, examineeId, gender, dob, email,
-        custom1, custom2, custom3, custom4, comment, documents, languageOfTesting
+        custom1, custom2, custom3, custom4, comment, documents, languageOfTesting,
+        schoolName, grade
       } = req.body;
 
       const studentData = {
@@ -135,6 +136,8 @@ class ExamineeController {
         student_id: examineeId,
         gender: gender?.toLowerCase(),
         date_of_birth: dob ? new Date(dob.split('/').reverse().join('-')) : null,
+        school_name: schoolName || null,
+        grade: grade || null,
         email: email,
         customField1: custom1,
         customField2: custom2,

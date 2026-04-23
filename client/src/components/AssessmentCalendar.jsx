@@ -389,7 +389,7 @@ const AssessmentCalendar = () => {
     for (let i = firstDayOfMonth - 1; i >= 0; i--) {
       const dayNum = prevMonthDays - i;
       days.push(
-        <div key={`prev-${i}`} className="h-28 p-2 border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#252527]">
+        <div key={`prev-${i}`} className="h-20 p-2 border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#252527]">
           <span className="text-sm font-semibold text-gray-400 dark:text-gray-600">{dayNum}</span>
         </div>
       );
@@ -411,7 +411,7 @@ const AssessmentCalendar = () => {
           key={day}
           whileHover={{ scale: 1.02 }}
           onClick={() => handleDateClick(day)}
-          className={`h-28 p-2 border border-gray-200 dark:border-gray-800 cursor-pointer transition-all ${
+          className={`h-20 p-2 border border-gray-200 dark:border-gray-800 cursor-pointer transition-all ${
             isToday
               ? 'ring-2 ring-blue-500 bg-gray-100 dark:bg-[#2C2C2E]'
               : 'bg-white dark:bg-[#1C1C1E] hover:bg-gray-100 dark:hover:bg-[#2C2C2E]'
@@ -457,7 +457,7 @@ const AssessmentCalendar = () => {
     const remainingSlots = totalSlots - days.length;
     for (let i = 1; i <= remainingSlots; i++) {
       days.push(
-        <div key={`next-${i}`} className="h-28 p-2 border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#252527]">
+        <div key={`next-${i}`} className="h-20 p-2 border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#252527]">
           <span className="text-sm font-semibold text-gray-400 dark:text-gray-600">{i}</span>
         </div>
       );

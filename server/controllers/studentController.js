@@ -308,6 +308,8 @@ class StudentController {
         email: req.body.email,
         phone: req.body.phone,
         date_of_birth: req.body.dateOfBirth,
+        school_name: req.body.schoolName,
+        grade: req.body.grade,
         gender: req.body.gender,
         centre_id: req.body.centreId || req.body.centre,
         centre_name: req.body.centreName,

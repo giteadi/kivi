@@ -29,6 +29,8 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
     examineeId: '',
     gender: '',
     birthDate: '',
+    schoolName: '',
+    grade: '',
     languageOfTesting: '',
     email: '',
     comment: '',
@@ -261,6 +263,8 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
         studentId: formData.examineeId,
         gender: formData.gender.toLowerCase(),
         dateOfBirth: formData.birthDate,
+        schoolName: formData.schoolName,
+        grade: formData.grade,
         languageOfTesting: formData.languageOfTesting,
         email: formData.email,
         comment: formData.comment,
@@ -366,6 +370,8 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       age: patient.date_of_birth ? calculateAge(patient.date_of_birth) : 'Not available',
       examineeId: patient.student_id || `STU${patient.id}`,
       gender: patient.gender ? patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1) : 'Not specified',
+      schoolName: patient.school_name || '',
+      grade: patient.grade || '',
       customField1: patient.custom_field_1 || patient.customField1 || '',
       customField2: patient.custom_field_2 || patient.customField2 || '',
       customField3: patient.custom_field_3 || patient.customField3 || '',
@@ -966,6 +972,28 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                           <span>Age: {age.years} years {age.months} months</span>
                         </div>
                       )}
+
+                      <div>
+                        <label className={labelClass}>School Name</label>
+                        <input
+                          type="text"
+                          value={formData.schoolName}
+                          onChange={(e) => handleChange('schoolName', e.target.value)}
+                          className={inputClass('schoolName')}
+                          placeholder="Enter school name"
+                        />
+                      </div>
+
+                      <div>
+                        <label className={labelClass}>Grade</label>
+                        <input
+                          type="text"
+                          value={formData.grade}
+                          onChange={(e) => handleChange('grade', e.target.value)}
+                          className={inputClass('grade')}
+                          placeholder="Enter grade"
+                        />
+                      </div>
 
                       <div>
                         <label className={labelClass}>Language of Testing</label>
@@ -1901,49 +1929,6 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
           </motion.div>
         )}
 
-        {/* Evaluation Section */}
-        {(examineeData?.evaluationData || examineeData?.diagnosisData || examineeData?.historyData) && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            className="bg-white rounded-xl shadow-sm border mb-6"
-          >
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-800">Evaluation & Clinical Information</h2>
-            </div>
-            
-            <div className="p-6 space-y-6">
-              {/* Reasons for Testing */}
-              <div>
-                <h3 className="text-lg font-medium text-gray-800 mb-3">Reasons for Testing</h3>
-                {renderEvaluationData()}
-              </div>
-
-              {/* Diagnoses */}
-              <div className="pt-6 border-t border-gray-200">
-                <h3 className="text-lg font-medium text-gray-800 mb-3">Diagnoses</h3>
-                {renderDiagnosisData()}
-              </div>
-
-              {/* History */}
-              <div className="pt-6 border-t border-gray-200">
-                <h3 className="text-lg font-medium text-gray-800 mb-3">History Information</h3>
-                {renderHistoryData()}
-              </div>
-
-              {/* Comment */}
-              {examineeData?.comment && (
-                <div className="pt-6 border-t border-gray-200">
-                  <h3 className="text-lg font-medium text-gray-800 mb-3">Additional Comments</h3>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-sm text-gray-700">{examineeData.comment}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
 
       </div>
       

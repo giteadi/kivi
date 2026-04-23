@@ -103,6 +103,8 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
     examineeId: '',
     gender: '',
     birthDate: '',
+    schoolName: '',
+    grade: '',
     languageOfTesting: '',
     email: '',
     comment: '',
@@ -207,6 +209,8 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
         studentId: formData.examineeId,
         gender: formData.gender.toLowerCase(),
         dateOfBirth: formData.birthDate,
+        schoolName: formData.schoolName,
+        grade: formData.grade,
         languageOfTesting: formData.languageOfTesting,
         email: formData.email,
         comment: formData.comment,
@@ -456,6 +460,28 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                           <span>Age: {age.years} years {age.months} months</span>
                         </div>
                       )}
+
+                      <div>
+                        <label className={labelClass}>School Name</label>
+                        <input
+                          type="text"
+                          value={formData.schoolName}
+                          onChange={(e) => handleChange('schoolName', e.target.value)}
+                          className={inputClass('schoolName')}
+                          placeholder="Enter school name"
+                        />
+                      </div>
+
+                      <div>
+                        <label className={labelClass}>Grade</label>
+                        <input
+                          type="text"
+                          value={formData.grade}
+                          onChange={(e) => handleChange('grade', e.target.value)}
+                          className={inputClass('grade')}
+                          placeholder="Enter grade"
+                        />
+                      </div>
 
                       <div>
                         <label className={labelClass}>Language of Testing</label>
