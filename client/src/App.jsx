@@ -1094,6 +1094,7 @@ ${service.target_age_group || 'Not specified'}
         description: updatedData.description,
         specialties: JSON.stringify(updatedData.specialties || []),
         facilities: JSON.stringify(updatedData.facilities || []),
+        services: updatedData.services || [],
         insurance_accepted: JSON.stringify(updatedData.insurance || []),
         languages_supported: JSON.stringify(updatedData.languages || []),
         parking_available: !!updatedData.parkingAvailable,

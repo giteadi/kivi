@@ -1,8 +1,7 @@
 import { motion } from 'framer-motion';
-import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiMapPin, FiPhone, FiMail, FiUsers, FiCalendar, FiFilter, FiUpload } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiMapPin, FiPhone, FiMail, FiUsers, FiCalendar, FiFilter } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import api from '../services/api';
-import ImportModal from './ImportModal';
 import FiltersPanel from './FiltersPanel';
 import CentreCreateForm from './CentreCreateForm';
 import { useToast } from './Toast';
@@ -10,7 +9,6 @@ import { useToast } from './Toast';
 const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewClinic }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState({});
   const [centres, setCentres] = useState([]);
@@ -152,15 +150,6 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
           </div>
           
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setIsImportModalOpen(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-            >
-              <FiUpload className="w-4 h-4" />
-              <span>Import Center Data</span>
-            </motion.button>
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -311,35 +300,22 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
                 </div>
               </div>
 
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div className="text-center">
-                  <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{clinic.totalDoctors}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Therapists</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-green-600 dark:text-green-400">{clinic.totalPatients}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Examinees</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-purple-600 dark:text-purple-400">{clinic.totalAppointments}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Sessions</div>
-                </div>
-              </div>
-
               {/* Specialties */}
               <div className="mb-4">
                 <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Specialties:</div>
                 <div className="flex flex-wrap gap-1">
-                  {clinic.specialties.slice(0, 2).map((specialty, idx) => (
+                  {Array.isArray(clinic.specialties) && clinic.specialties.slice(0, 2).map((specialty, idx) => (
                     <span key={idx} className="inline-flex px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
                       {specialty}
                     </span>
                   ))}
-                  {clinic.specialties.length > 2 && (
+                  {Array.isArray(clinic.specialties) && clinic.specialties.length > 2 && (
                     <span className="inline-flex px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
                       +{clinic.specialties.length - 2} more
                     </span>
+                  )}
+                  {!Array.isArray(clinic.specialties) && (
+                    <span className="text-xs text-gray-400">No specialties</span>
                   )}
                 </div>
               </div>
@@ -427,34 +403,6 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
           
           <div className="bg-white dark:bg-[#1c1c1e] rounded-lg p-4 shadow-sm dark:shadow-black/20 border dark:border-gray-800">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                <FiUsers className="w-6 h-6 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  {clinics.reduce((sum, clinic) => sum + clinic.totalDoctors, 0)}
-                </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Total Therapists</div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white dark:bg-[#1c1c1e] rounded-lg p-4 shadow-sm dark:shadow-black/20 border dark:border-gray-800">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                <FiUsers className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                  {clinics.reduce((sum, clinic) => sum + clinic.totalPatients, 0)}
-                </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Total Examinees</div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white dark:bg-[#1c1c1e] rounded-lg p-4 shadow-sm dark:shadow-black/20 border dark:border-gray-800">
-            <div className="flex items-center space-x-3">
               <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
                 <FiCalendar className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
               </div>
@@ -469,13 +417,6 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
         </motion.div>
         )}
       </div>
-
-      {/* Import Modal */}
-      <ImportModal
-        isOpen={isImportModalOpen}
-        onClose={() => setIsImportModalOpen(false)}
-        importType="clinics"
-      />
 
       {/* Filters Panel */}
       <FiltersPanel

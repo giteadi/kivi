@@ -55,9 +55,10 @@ class CentreController {
     try {
       const allowedFields = [
         'name', 'address', 'city', 'state', 'zip_code', 'country',
-        'phone', 'email', 'website', 'specialties', 'facilities',
+        'phone', 'email', 'website', 'specialties', 'facilities', 'services',
         'description', 'established_date', 'operating_hours',
-        'emergency_services', 'total_students', 'total_examinees', 'status'
+        'emergency_services', 'total_students', 'total_examinees', 'status',
+        'parking_available', 'wheelchair_accessible', 'insurance_accepted', 'languages_supported'
       ];
 
       const centreData = {};
@@ -69,6 +70,30 @@ class CentreController {
 
       centreData.created_at = new Date();
       centreData.updated_at = new Date();
+
+      // JSON type columns (MySQL JSON) - need JS array
+      const jsonTypeColumns = ['specialties', 'facilities'];
+      jsonTypeColumns.forEach(field => {
+        if (centreData[field] !== undefined) {
+          try {
+            centreData[field] = typeof centreData[field] === 'string'
+              ? JSON.parse(centreData[field])
+              : (Array.isArray(centreData[field]) ? centreData[field] : []);
+          } catch {
+            centreData[field] = [];
+          }
+        }
+      });
+
+      // TEXT type columns - need JSON string '[]'
+      const textJsonColumns = ['services', 'insurance_accepted', 'languages_supported'];
+      textJsonColumns.forEach(field => {
+        if (centreData[field] === undefined || centreData[field] === null) {
+          centreData[field] = '[]';
+        } else if (Array.isArray(centreData[field])) {
+          centreData[field] = JSON.stringify(centreData[field]);
+        }
+      });
 
       const centreId = await this.centreModel.create(centreData);
 
@@ -93,9 +118,10 @@ class CentreController {
 
       const allowedFields = [
         'name', 'address', 'city', 'state', 'zip_code', 'country',
-        'phone', 'email', 'website', 'specialties', 'facilities',
+        'phone', 'email', 'website', 'specialties', 'facilities', 'services',
         'description', 'established_date', 'operating_hours',
-        'emergency_services', 'total_students', 'total_examinees', 'status'
+        'emergency_services', 'total_students', 'total_examinees', 'status',
+        'parking_available', 'wheelchair_accessible', 'insurance_accepted', 'languages_supported'
       ];
 
       const updateData = {};
@@ -105,7 +131,48 @@ class CentreController {
         }
       });
 
-      updateData.updated_at = new Date();
+      // Date sanitize - ISO → YYYY-MM-DD
+      if (updateData.established_date) {
+        updateData.established_date = updateData.established_date.toString().split('T')[0];
+      }
+
+      // JSON type columns (MySQL JSON) - need JS array
+      const jsonTypeColumns = ['specialties', 'facilities'];
+      jsonTypeColumns.forEach(field => {
+        if (updateData[field] !== undefined) {
+          try {
+            updateData[field] = typeof updateData[field] === 'string'
+              ? JSON.parse(updateData[field])
+              : (Array.isArray(updateData[field]) ? updateData[field] : []);
+          } catch {
+            updateData[field] = [];
+          }
+        }
+      });
+
+      // TEXT type columns - need JSON string '[]'
+      const textJsonColumns = ['services', 'insurance_accepted', 'languages_supported'];
+      textJsonColumns.forEach(field => {
+        if (updateData[field] === undefined || updateData[field] === null) {
+          updateData[field] = '[]';
+        } else if (Array.isArray(updateData[field])) {
+          updateData[field] = JSON.stringify(updateData[field]);
+        } else if (typeof updateData[field] === 'string') {
+          // validate it's valid JSON
+          try {
+            JSON.parse(updateData[field]);
+            // valid, keep as is
+          } catch {
+            updateData[field] = '[]';
+          }
+        }
+      });
+
+      // updated_at in MySQL datetime format
+      updateData.updated_at = new Date()
+        .toISOString()
+        .replace('T', ' ')
+        .split('.')[0];
 
       const updated = await this.centreModel.update(id, updateData);
 

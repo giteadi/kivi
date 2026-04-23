@@ -18,18 +18,17 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
     status: 'active',
     established: '',
     operatingHours: '',
-    emergencyServices: false,
     description: '',
     specialties: [],
     facilities: [],
+    services: [],
     insurance: [],
-    languages: [],
-    parkingAvailable: false,
-    wheelchairAccessible: false
+    languages: []
   });
 
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState({});
+  const [servicesInput, setServicesInput] = useState('');
 
   // Fetch clinic data when component mounts or clinicId changes
   useEffect(() => {
@@ -56,17 +55,18 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
             email: data.email || '',
             website: data.website || '',
             status: data.status || 'active',
-            established: data.established_date || '',
+            established: data.established_date
+              ? new Date(data.established_date).toISOString().split('T')[0]
+              : '',
             operatingHours: data.operating_hours || '',
-            emergencyServices: data.emergency_services === 1 || data.emergency_services === true,
             description: data.description || '',
             specialties: parseJsonField(data.specialties),
             facilities: parseJsonField(data.facilities),
+            services: parseJsonField(data.services),
             insurance: parseJsonField(data.insurance_accepted),
-            languages: parseJsonField(data.languages_supported),
-            parkingAvailable: data.parking_available === 1 || data.parking_available === true,
-            wheelchairAccessible: data.wheelchair_accessible === 1 || data.wheelchair_accessible === true
+            languages: parseJsonField(data.languages_supported)
           });
+          setServicesInput(parseJsonField(data.services).join(', '));
         }
       } catch (error) {
         console.error('Error fetching clinic data:', error);
@@ -167,38 +167,41 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
     console.log('[ClinicEditForm] handleSubmit called');
     console.log('[ClinicEditForm] formData before save:', formData);
     
+    // Update services from input before submit
+    const servicesArray = servicesInput.split(',').map(s => s.trim()).filter(s => s);
+    console.log('[ClinicEditForm] SERVICES INPUT:', servicesInput);
+    console.log('[ClinicEditForm] SERVICES ARRAY:', servicesArray);
+    
     if (validateForm()) {
       console.log('[ClinicEditForm] validation passed, calling onSave');
-      onSave(formData);
+      const payload = {
+        name: formData.name,
+        address: formData.address,
+        country: formData.country,
+        city: formData.city,
+        state: formData.state,
+        zip_code: formData.zipCode,
+        phone: formData.phone,
+        email: formData.email,
+        website: formData.website,
+        status: formData.status,
+        description: formData.description,
+        operating_hours: formData.operatingHours,
+        specialties: JSON.stringify(formData.specialties),
+        facilities: JSON.stringify(formData.facilities),
+        services: servicesArray,
+        insurance_accepted: formData.insurance,
+        languages_supported: formData.languages,
+        established_date: formData.established
+          ? formData.established.split('T')[0]
+          : null
+      };
+      console.log('[ClinicEditForm] payload:', payload);
+      onSave(payload);
     } else {
       console.log('[ClinicEditForm] validation failed');
     }
   };
-
-  const states = [
-    'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
-    'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
-    'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
-    'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
-    'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
-  ];
-
-  const allSpecialties = [
-    'General Medicine', 'Cardiology', 'Pediatrics', 'Orthopedics',
-    'Dermatology', 'Neurology', 'Psychiatry', 'Radiology',
-    'Emergency Medicine', 'Surgery', 'Anesthesiology', 'Pathology'
-  ];
-
-  const allFacilities = [
-    'Emergency Room', 'Laboratory', 'Radiology', 'Pharmacy',
-    'Surgery Center', 'ICU', 'Maternity Ward', 'Dialysis Center',
-    'Physical Therapy', 'Cafeteria', 'Gift Shop', 'Chapel'
-  ];
-
-  const allInsurance = [
-    'Blue Cross Blue Shield', 'Aetna', 'Cigna', 'Medicare', 'Medicaid',
-    'UnitedHealthcare', 'Humana', 'Kaiser Permanente', 'Anthem'
-  ];
 
   return (
     <div className="lg:ml-64 min-h-screen bg-gray-50 dark:bg-[#0f0f10] transition-colors duration-300">
@@ -288,6 +291,19 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
                   placeholder="Enter center description"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Custom Services
+                </label>
+                <input
+                  type="text"
+                  value={servicesInput}
+                  onChange={(e) => setServicesInput(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
+                  placeholder="Enter custom services separated by commas (e.g., Speech Therapy, Occupational Therapy)"
                 />
               </div>
             </div>
@@ -448,40 +464,6 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
                   </div>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Example: 9:00 AM to 8:00 PM</p>
-              </div>
-
-              <div className="md:col-span-2">
-                <div className="flex items-center space-x-6">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.emergencyServices}
-                      onChange={(e) => handleInputChange('emergencyServices', e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Emergency Services Available</span>
-                  </label>
-
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.parkingAvailable}
-                      onChange={(e) => handleInputChange('parkingAvailable', e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Parking Available</span>
-                  </label>
-
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.wheelchairAccessible}
-                      onChange={(e) => handleInputChange('wheelchairAccessible', e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Wheelchair Accessible</span>
-                  </label>
-                </div>
               </div>
             </div>
           </motion.div>

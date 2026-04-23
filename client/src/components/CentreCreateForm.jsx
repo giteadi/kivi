@@ -16,6 +16,7 @@ const CentreCreateForm = ({ onClose, onSuccess }) => {
     email: '',
     operating_hours: '',
     specialties: '',
+    services: '',
     status: 'active'
   });
   const [loading, setLoading] = useState(false);
@@ -41,11 +42,20 @@ const CentreCreateForm = ({ onClose, onSuccess }) => {
     try {
       // Convert specialties string to JSON array
       const specialtiesArray = formData.specialties.split(',').map(s => s.trim()).filter(s => s);
+      const servicesArray = formData.services ? formData.services.split(',').map(s => s.trim()).filter(s => s) : [];
+      
+      console.log('[CentreCreateForm] servicesArray:', servicesArray);
       
       const centreData = {
         ...formData,
-        specialties: JSON.stringify(specialtiesArray)
+        specialties: JSON.stringify(specialtiesArray),
+        services: JSON.stringify(servicesArray)
       };
+
+      // Format established_date to YYYY-MM-DD for MySQL
+      if (centreData.established_date) {
+        centreData.established_date = centreData.established_date.split('T')[0];
+      }
 
       console.log('[CentreCreateForm] sending to API:', centreData);
       const data = await api.createClinic(centreData);
@@ -220,6 +230,23 @@ const CentreCreateForm = ({ onClose, onSuccess }) => {
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Learning Therapy, Behavioral Therapy, Speech Therapy"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Custom Services (comma-separated)
+              </label>
+              <input
+                type="text"
+                name="services"
+                value={formData.services}
+                onChange={(e) => {
+                  console.log('[CentreCreateForm] services input:', e.target.value);
+                  handleChange(e);
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Speech Therapy, Occupational Therapy, Physical Therapy"
               />
             </div>
 
