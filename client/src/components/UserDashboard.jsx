@@ -1539,7 +1539,7 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
                     </div>
                     <div>
                       <p className="font-medium text-orange-900">{selectedSession.centre_name}</p>
-                      <p className="text-orange-700 text-sm">Therapy Centre</p>
+                      <p className="text-orange-700 text-sm">Therapy Center</p>
                     </div>
                   </div>
                 </div>

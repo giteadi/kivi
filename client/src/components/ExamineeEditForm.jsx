@@ -141,7 +141,7 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
     }
     
     if (!formData.centreId) {
-      newErrors.centreId = 'Centre is required';
+      newErrors.centreId = 'Center is required';
     }
 
     setErrors(newErrors);
@@ -514,11 +514,11 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
 
             {/* Centre & Emergency Contact */}
             <div>
-              <h3 className="text-lg font-medium text-gray-800 mb-4">Centre & Emergency Contact</h3>
+              <h3 className="text-lg font-medium text-gray-800 mb-4">Center & Emergency Contact</h3>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Centre *
+                    Center *
                   </label>
                   <select
                     value={formData.centreId}
@@ -527,7 +527,7 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
                       errors.centreId ? 'border-red-500' : 'border-gray-300'
                     }`}
                   >
-                    <option value="">Select centre</option>
+                    <option value="">Select center</option>
                     {centres.map((centre) => (
                       <option key={centre.id} value={centre.id}>
                         {centre.name}

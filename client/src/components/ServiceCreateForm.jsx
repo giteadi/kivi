@@ -119,7 +119,7 @@ const ServiceCreateForm = ({ onSave, onCancel }) => {
     }
     
     if (!formData.centre) {
-      newErrors.centre = 'Centre is required';
+      newErrors.centre = 'Center is required';
     }
 
     setErrors(newErrors);
@@ -302,7 +302,7 @@ const ServiceCreateForm = ({ onSave, onCancel }) => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Centre *
+                  Center *
                 </label>
                 <select
                   value={formData.centre}
@@ -311,7 +311,7 @@ const ServiceCreateForm = ({ onSave, onCancel }) => {
                     errors.centre ? 'border-red-500' : 'border-gray-300'
                   }`}
                 >
-                  <option value="">Select centre</option>
+                  <option value="">Select center</option>
                   {centres.map((centre) => (
                     <option key={centre.id} value={centre.name}>
                       {centre.name}
@@ -336,7 +336,7 @@ const ServiceCreateForm = ({ onSave, onCancel }) => {
                     className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   >
                     <option value="">
-                      {loadingTherapists ? 'Loading therapists...' : formData.centreId ? 'Select therapist (optional)' : 'Select centre first'}
+                      {loadingTherapists ? 'Loading therapists...' : formData.centreId ? 'Select therapist (optional)' : 'Select center first'}
                     </option>
                     {therapists.map((therapist) => (
                       <option key={therapist.id} value={therapist.id}>
@@ -346,7 +346,7 @@ const ServiceCreateForm = ({ onSave, onCancel }) => {
                   </select>
                 </div>
                 {!formData.centreId && (
-                  <p className="mt-1 text-sm text-gray-500">Please select a centre first to see available therapists</p>
+                  <p className="mt-1 text-sm text-gray-500">Please select a center first to see available therapists</p>
                 )}
               </div>
             </div>

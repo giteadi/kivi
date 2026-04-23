@@ -37,14 +37,14 @@ const MobileMenu = ({ isOpen, setIsOpen, activeItem, setActiveItem }) => {
     { id: 'doctors', label: 'Therapists', icon: FiUserCheck, section: 'USERS' },
     { id: 'template-manager', label: 'Assessment Templates', icon: FiFileText, section: 'USERS' },
     // { id: 'receptionists', label: 'Staff', icon: FiUser, section: 'USERS' }, // Temporarily disabled
-    { id: 'clinics', label: 'Centres', icon: FiMapPin, section: 'CENTRE' },
-    { id: 'clinic-revenue', label: 'Centre Revenue', icon: FiTrendingUp, section: 'FINANCIAL' },
+    { id: 'clinics', label: 'Centers', icon: FiMapPin, section: 'CENTER' },
+    { id: 'clinic-revenue', label: 'Center Revenue', icon: FiTrendingUp, section: 'FINANCIAL' },
     // { id: 'doctor-revenue', label: 'Therapist Revenue', icon: FiDollarSign, section: 'FINANCIAL' }, // Temporarily disabled
     { id: 'taxes', label: 'Taxes', icon: FiPercent, section: 'FINANCIAL' },
     { id: 'billing-records', label: 'Billing Records', icon: FiCreditCard, section: 'FINANCIAL' },
   ];
 
-  const sections = ['MAIN', 'USERS', 'CENTRE', 'FINANCIAL'];
+  const sections = ['MAIN', 'USERS', 'CENTER', 'FINANCIAL'];
 
   const toggleSection = (itemId) => {
     setExpandedSections(prev => ({

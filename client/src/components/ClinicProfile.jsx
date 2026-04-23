@@ -1,39 +1,75 @@
 import { motion } from 'framer-motion';
-import { FiArrowLeft, FiMapPin, FiPhone, FiMail, FiGlobe, FiClock, FiUsers, FiCalendar, FiEdit3, FiStar, FiActivity, FiTrendingUp } from 'react-icons/fi';
-import { useState } from 'react';
+import { FiArrowLeft, FiMapPin, FiPhone, FiMail, FiGlobe, FiClock, FiUsers, FiCalendar, FiEdit3, FiStar, FiActivity, FiTrendingUp, FiLoader } from 'react-icons/fi';
+import { useState, useEffect } from 'react';
+import api from '../services/api';
 
-const ClinicProfile = ({ clinicId, onBack }) => {
+const ClinicProfile = ({ clinicId, onBack, onEditClinic }) => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [clinic, setClinic] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Mock clinic data - in real app, fetch based on clinicId
-  const clinic = {
-    id: 'CL001',
-    name: 'Clinic Kjaggi',
-    initials: 'CK',
-    address: '123 Medical Center Drive, Healthcare District',
-    city: 'New York',
-    state: 'NY',
-    zipCode: '10001',
-    phone: '+1 (555) 123-4567',
-    email: 'clinic_kjaggi@dashboardcare.com',
-    website: 'www.clinickjaggi.dashboard',
-    status: 'Active',
-    established: '2020-01-15',
-    totalDoctors: 8,
-    totalPatients: 245,
-    totalAppointments: 1250,
-    specialties: ['General Medicine', 'Cardiology', 'Pediatrics', 'Orthopedics'],
-    operatingHours: '8:00 AM - 8:00 PM',
-    emergencyServices: true,
-    rating: 4.8,
-    badgeColor: 'bg-blue-100 text-blue-800',
-    description: 'A leading healthcare facility providing comprehensive medical services with state-of-the-art equipment and experienced medical professionals.',
-    facilities: ['Emergency Room', 'Laboratory', 'Radiology', 'Pharmacy', 'Surgery Center', 'ICU'],
-    insurance: ['Blue Cross Blue Shield', 'Aetna', 'Cigna', 'Medicare', 'Medicaid'],
-    languages: ['English', 'Spanish', 'French'],
-    parkingAvailable: true,
-    wheelchairAccessible: true
+  const parseJsonField = (field) => {
+    if (!field) return [];
+    if (Array.isArray(field)) return field;
+    try {
+      return JSON.parse(field);
+    } catch {
+      return [];
+    }
   };
+
+  // Fetch clinic data based on clinicId
+  useEffect(() => {
+    const fetchClinic = async () => {
+      try {
+        setLoading(true);
+        const response = await api.getClinic(clinicId);
+        if (response.success) {
+          const data = response.data;
+          // Transform API data to match component structure
+          setClinic({
+            id: data.id,
+            name: data.name || 'Unknown Center',
+            initials: data.name ? data.name.substring(0, 2).toUpperCase() : 'UC',
+            address: data.address || 'Address not available',
+            city: data.city || 'Unknown City',
+            state: data.state || 'Unknown State',
+            zipCode: data.zip_code || 'N/A',
+            phone: data.phone || 'N/A',
+            email: data.email || 'N/A',
+            website: data.website || '',
+            status: data.status || 'inactive',
+            established: data.established_date || (data.created_at ? new Date(data.created_at).toISOString().split('T')[0] : 'Unknown'),
+            totalDoctors: data.total_therapists || 0,
+            totalPatients: data.total_examinees || 0,
+            totalAppointments: data.total_sessions || 0,
+            specialties: parseJsonField(data.specialties),
+            operatingHours: data.operating_hours || 'Not specified',
+            emergencyServices: data.emergency_services || false,
+            rating: data.rating || 0,
+            badgeColor: 'bg-blue-100 text-blue-800',
+            description: data.description || 'No description available.',
+            facilities: parseJsonField(data.facilities),
+            insurance: parseJsonField(data.insurance_accepted),
+            languages: parseJsonField(data.languages_supported),
+            parkingAvailable: data.parking_available || false,
+            wheelchairAccessible: data.wheelchair_accessible || false
+          });
+        } else {
+          setError('Failed to fetch clinic details');
+        }
+      } catch (err) {
+        setError('Error loading clinic data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (clinicId) {
+      fetchClinic();
+    }
+  }, [clinicId]);
 
   const doctors = [
     {
@@ -129,11 +165,40 @@ const ClinicProfile = ({ clinicId, onBack }) => {
   };
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: FiActivity },
-    { id: 'doctors', label: 'Doctors', icon: FiUsers },
-    { id: 'appointments', label: 'Appointments', icon: FiCalendar },
-    { id: 'analytics', label: 'Analytics', icon: FiTrendingUp }
+    { id: 'overview', label: 'Overview', icon: FiActivity }
+    // { id: 'doctors', label: 'Doctors', icon: FiUsers },
+    // { id: 'appointments', label: 'Appointments', icon: FiCalendar },
+    // { id: 'analytics', label: 'Analytics', icon: FiTrendingUp }
   ];
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="lg:ml-64 min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <FiLoader className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading clinic details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !clinic) {
+    return (
+      <div className="lg:ml-64 min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 text-lg mb-4">{error || 'Clinic not found'}</p>
+          <button
+            onClick={onBack}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="lg:ml-64 min-h-screen bg-gray-50">
@@ -150,18 +215,19 @@ const ClinicProfile = ({ clinicId, onBack }) => {
               <FiArrowLeft className="w-5 h-5 text-gray-600" />
             </motion.button>
             <div>
-              <h1 className="text-2xl font-semibold text-gray-800">Clinic Profile</h1>
-              <p className="text-gray-600">Detailed clinic information and management</p>
+              <h1 className="text-2xl font-semibold text-gray-800">Center Profile</h1>
+              <p className="text-gray-600">Detailed center information and management</p>
             </div>
           </div>
           
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            onClick={() => onEditClinic && onEditClinic(clinicId)}
             className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
           >
             <FiEdit3 className="w-4 h-4" />
-            <span>Edit Clinic</span>
+            <span>Edit Center</span>
           </motion.button>
         </div>
 
@@ -169,7 +235,7 @@ const ClinicProfile = ({ clinicId, onBack }) => {
         <div className="flex items-center text-sm text-gray-500 mb-6">
           <span>Home</span>
           <span className="mx-2">›</span>
-          <span>Clinics</span>
+          <span>Centers</span>
           <span className="mx-2">›</span>
           <span className="text-gray-800">{clinic.name}</span>
         </div>
@@ -345,7 +411,7 @@ const ClinicProfile = ({ clinicId, onBack }) => {
             </div>
           )}
 
-          {activeTab === 'doctors' && (
+          {/* {activeTab === 'doctors' && (
             <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
               <div className="p-6 border-b">
                 <h3 className="text-lg font-semibold text-gray-800">Medical Staff</h3>
@@ -411,9 +477,9 @@ const ClinicProfile = ({ clinicId, onBack }) => {
                 </table>
               </div>
             </div>
-          )}
+          )} */}
 
-          {activeTab === 'appointments' && (
+          {/* {activeTab === 'appointments' && (
             <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
               <div className="p-6 border-b">
                 <h3 className="text-lg font-semibold text-gray-800">Recent Appointments</h3>
@@ -465,9 +531,9 @@ const ClinicProfile = ({ clinicId, onBack }) => {
                 </table>
               </div>
             </div>
-          )}
+          )} */}
 
-          {activeTab === 'analytics' && (
+          {/* {activeTab === 'analytics' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Monthly Performance */}
               <div className="bg-white rounded-xl p-6 shadow-sm border">
@@ -516,7 +582,7 @@ const ClinicProfile = ({ clinicId, onBack }) => {
                 </div>
               </div>
             </div>
-          )}
+          )} */}
         </motion.div>
       </div>
     </div>

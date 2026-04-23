@@ -76,7 +76,6 @@ const startServer = async () => {
     app.use('/api/patients', require('./routes/patientRoutes'));
     app.use('/api/doctors', require('./routes/doctorRoutes'));
     app.use('/api/receptionists', require('./routes/receptionistRoutes'));
-    app.use('/api/clinics', require('./routes/clinicRoutes'));
     app.use('/api/services', require('./routes/serviceRoutes'));
     
     app.use('/api/encounters', require('./routes/encounterRoutes'));

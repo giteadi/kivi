@@ -1,34 +1,97 @@
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiSave, FiX, FiMapPin, FiPhone, FiMail, FiGlobe, FiClock, FiUsers } from 'react-icons/fi';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '../services/api';
+import LocationSelector from './LocationSelector';
 
 const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
-  // Mock clinic data - in real app, fetch based on clinicId
   const [formData, setFormData] = useState({
-    name: 'Clinic Kjaggi',
-    address: '123 Medical Center Drive, Healthcare District',
-    city: 'New York',
-    state: 'NY',
-    zipCode: '10001',
-    phone: '+1 (555) 123-4567',
-    email: 'clinic_kjaggi@dashboardcare.com',
-    website: 'www.clinickjaggi.dashboard',
-    status: 'Active',
-    established: '2020-01-15',
-    operatingHours: '8:00 AM - 8:00 PM',
-    emergencyServices: true,
-    description: 'A leading healthcare facility providing comprehensive medical services with state-of-the-art equipment and experienced medical professionals.',
-    specialties: ['General Medicine', 'Cardiology', 'Pediatrics', 'Orthopedics'],
-    facilities: ['Emergency Room', 'Laboratory', 'Radiology', 'Pharmacy', 'Surgery Center', 'ICU'],
-    insurance: ['Blue Cross Blue Shield', 'Aetna', 'Cigna', 'Medicare', 'Medicaid'],
-    languages: ['English', 'Spanish', 'French'],
-    parkingAvailable: true,
-    wheelchairAccessible: true
+    name: '',
+    country: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    phone: '',
+    email: '',
+    website: '',
+    status: 'active',
+    established: '',
+    operatingHours: '',
+    emergencyServices: false,
+    description: '',
+    specialties: [],
+    facilities: [],
+    insurance: [],
+    languages: [],
+    parkingAvailable: false,
+    wheelchairAccessible: false
   });
 
+  const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState({});
 
+  // Fetch clinic data when component mounts or clinicId changes
+  useEffect(() => {
+    const fetchClinicData = async () => {
+      if (!clinicId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await api.getClinic(clinicId);
+        if (response.success && response.data) {
+          const data = response.data;
+          // Map database fields (snake_case) to form fields (camelCase)
+          setFormData({
+            name: data.name || '',
+            country: data.country || 'India',
+            address: data.address || '',
+            city: data.city || '',
+            state: data.state || '',
+            zipCode: data.zip_code || '',
+            phone: data.phone || '',
+            email: data.email || '',
+            website: data.website || '',
+            status: data.status || 'active',
+            established: data.established_date || '',
+            operatingHours: data.operating_hours || '',
+            emergencyServices: data.emergency_services === 1 || data.emergency_services === true,
+            description: data.description || '',
+            specialties: parseJsonField(data.specialties),
+            facilities: parseJsonField(data.facilities),
+            insurance: parseJsonField(data.insurance_accepted),
+            languages: parseJsonField(data.languages_supported),
+            parkingAvailable: data.parking_available === 1 || data.parking_available === true,
+            wheelchairAccessible: data.wheelchair_accessible === 1 || data.wheelchair_accessible === true
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching clinic data:', error);
+        alert('Failed to load clinic data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchClinicData();
+  }, [clinicId]);
+
+  // Helper function to parse JSON fields from database
+  const parseJsonField = (field) => {
+    if (!field) return [];
+    if (Array.isArray(field)) return field;
+    try {
+      return JSON.parse(field);
+    } catch {
+      return [];
+    }
+  };
+
   const handleInputChange = (field, value) => {
+    console.log('[ClinicEditForm] handleInputChange:', { field, value });
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -65,6 +128,7 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
   };
 
   const validateForm = () => {
+    console.log('[ClinicEditForm] validateForm called with formData:', formData);
     const newErrors = {};
 
     if (!formData.name.trim()) {
@@ -83,10 +147,6 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
       newErrors.state = 'State is required';
     }
 
-    if (!formData.zipCode.trim()) {
-      newErrors.zipCode = 'ZIP code is required';
-    }
-
     if (!formData.phone.trim()) {
       newErrors.phone = 'Phone number is required';
     }
@@ -97,15 +157,21 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
       newErrors.email = 'Email is invalid';
     }
 
+    console.log('[ClinicEditForm] validation errors:', newErrors);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log('[ClinicEditForm] handleSubmit called');
+    console.log('[ClinicEditForm] formData before save:', formData);
     
     if (validateForm()) {
+      console.log('[ClinicEditForm] validation passed, calling onSave');
       onSave(formData);
+    } else {
+      console.log('[ClinicEditForm] validation failed');
     }
   };
 
@@ -137,7 +203,14 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
   return (
     <div className="lg:ml-64 min-h-screen bg-gray-50 dark:bg-[#0f0f10] transition-colors duration-300">
       <div className="p-4 lg:p-6">
-        {/* Header */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span className="ml-3 text-gray-600 dark:text-gray-400">Loading clinic data...</span>
+          </div>
+        )}
+        {!loading && (
+        <>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-4">
             <motion.button
@@ -149,8 +222,8 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
               <FiArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
             </motion.button>
             <div>
-              <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">Edit Clinic</h1>
-              <p className="text-gray-600 dark:text-gray-400">Update clinic information and settings</p>
+              <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">Edit Center</h1>
+              <p className="text-gray-600 dark:text-gray-400">Update center information and settings</p>
             </div>
           </div>
         </div>
@@ -159,9 +232,9 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
         <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-6">
           <span>Home</span>
           <span className="mx-2">›</span>
-          <span>Clinics</span>
+          <span>Centres</span>
           <span className="mx-2">›</span>
-          <span className="text-gray-800 dark:text-gray-300">Edit Clinic</span>
+          <span className="text-gray-800 dark:text-gray-300">Edit Center</span>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -176,7 +249,7 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Clinic Name *
+                  Center Name *
                 </label>
                 <input
                   type="text"
@@ -185,7 +258,7 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white ${
                     errors.name ? 'border-red-500' : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e]'
                   } transition-colors duration-300`}
-                  placeholder="Enter clinic name"
+                  placeholder="Enter center name"
                 />
                 {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
               </div>
@@ -199,9 +272,9 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
                   onChange={(e) => handleInputChange('status', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
                 >
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                  <option value="Maintenance">Maintenance</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="maintenance">Maintenance</option>
                 </select>
               </div>
 
@@ -214,7 +287,7 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
-                  placeholder="Enter clinic description"
+                  placeholder="Enter center description"
                 />
               </div>
             </div>
@@ -246,55 +319,26 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
                 {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  City *
-                </label>
-                <input
-                  type="text"
-                  value={formData.city}
-                  onChange={(e) => handleInputChange('city', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white ${
-                    errors.city ? 'border-red-500' : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e]'
-                  } transition-colors duration-300`}
-                  placeholder="Enter city"
+              <div className="md:col-span-2">
+                <LocationSelector
+                  value={{
+                    country: formData.country,
+                    state: formData.state,
+                    city: formData.city,
+                    zip_code: formData.zipCode,
+                  }}
+                  onChange={(loc) => {
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      country: loc.country,
+                      state: loc.state,
+                      city: loc.city,
+                      zipCode: loc.zip_code
+                    }));
+                    setErrors(prev => ({ ...prev, country: '', state: '', city: '', zipCode: '' }));
+                  }}
+                  errors={errors}
                 />
-                {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  State *
-                </label>
-                <select
-                  value={formData.state}
-                  onChange={(e) => handleInputChange('state', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white ${
-                    errors.state ? 'border-red-500' : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e]'
-                  } transition-colors duration-300`}
-                >
-                  <option value="">Select State</option>
-                  {states.map(state => (
-                    <option key={state} value={state}>{state}</option>
-                  ))}
-                </select>
-                {errors.state && <p className="text-red-500 text-sm mt-1">{errors.state}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  ZIP Code *
-                </label>
-                <input
-                  type="text"
-                  value={formData.zipCode}
-                  onChange={(e) => handleInputChange('zipCode', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white ${
-                    errors.zipCode ? 'border-red-500' : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e]'
-                  } transition-colors duration-300`}
-                  placeholder="Enter ZIP code"
-                />
-                {errors.zipCode && <p className="text-red-500 text-sm mt-1">{errors.zipCode}</p>}
               </div>
 
               <div>
@@ -328,19 +372,6 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
                 />
                 {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Website
-                </label>
-                <input
-                  type="url"
-                  value={formData.website}
-                  onChange={(e) => handleInputChange('website', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
-                  placeholder="Enter website URL"
-                />
-              </div>
             </div>
           </motion.div>
 
@@ -366,17 +397,57 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
                 />
               </div>
 
-              <div>
+              <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Operating Hours
                 </label>
-                <input
-                  type="text"
-                  value={formData.operatingHours}
-                  onChange={(e) => handleInputChange('operatingHours', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
-                  placeholder="e.g., 8:00 AM - 8:00 PM"
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Opening Time</label>
+                    <input
+                      type="time"
+                      value={formData.openingTime || ''}
+                      onChange={(e) => {
+                        handleInputChange('openingTime', e.target.value);
+                        // Auto-update operatingHours format
+                        const closing = formData.closingTime || '20:00';
+                        const opening = e.target.value || '09:00';
+                        const formatTime = (t) => {
+                          const [h, m] = t.split(':');
+                          const hour = parseInt(h);
+                          const ampm = hour >= 12 ? 'PM' : 'AM';
+                          const hour12 = hour % 12 || 12;
+                          return `${hour12}:${m} ${ampm}`;
+                        };
+                        handleInputChange('operatingHours', `${formatTime(opening)} - ${formatTime(closing)}`);
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Closing Time</label>
+                    <input
+                      type="time"
+                      value={formData.closingTime || ''}
+                      onChange={(e) => {
+                        handleInputChange('closingTime', e.target.value);
+                        // Auto-update operatingHours format
+                        const opening = formData.openingTime || '09:00';
+                        const closing = e.target.value || '20:00';
+                        const formatTime = (t) => {
+                          const [h, m] = t.split(':');
+                          const hour = parseInt(h);
+                          const ampm = hour >= 12 ? 'PM' : 'AM';
+                          const hour12 = hour % 12 || 12;
+                          return `${hour12}:${m} ${ampm}`;
+                        };
+                        handleInputChange('operatingHours', `${formatTime(opening)} - ${formatTime(closing)}`);
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Example: 9:00 AM to 8:00 PM</p>
               </div>
 
               <div className="md:col-span-2">
@@ -444,6 +515,8 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
             </motion.button>
           </motion.div>
         </form>
+        </>
+        )}
       </div>
     </div>
   );

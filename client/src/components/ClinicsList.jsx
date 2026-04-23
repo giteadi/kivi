@@ -43,23 +43,23 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
 
   // Delete centre
   const handleDeleteCentre = async (id) => {
-    if (window.confirm('Are you sure you want to delete this centre?')) {
+    if (window.confirm('Are you sure you want to delete this center?')) {
       try {
         const result = await api.deleteClinic(id);
         
         if (result.success) {
           // Refresh the centres list
           fetchCentres();
-          toast.success('Centre deleted successfully!', { duration: 3000 });
+          toast.success('Center deleted successfully!', { duration: 3000 });
           // Call the prop handler if it exists (for backward compatibility)
           if (onDeleteClinic) {
             onDeleteClinic(id);
           }
         } else {
-          toast.error('Failed to delete centre: ' + result.message, { duration: 4000 });
+          toast.error('Failed to delete center: ' + result.message, { duration: 4000 });
         }
       } catch (err) {
-        toast.error('Error deleting centre', { duration: 4000 });
+        toast.error('Error deleting center', { duration: 4000 });
       }
     }
   };
@@ -68,7 +68,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
   const transformCentreData = (centre) => {
     return {
       id: centre.id.toString(),
-      name: centre.name || 'Unknown Centre',
+      name: centre.name || 'Unknown Center',
       initials: centre.name ? centre.name.substring(0, 2).toUpperCase() : 'UC',
       address: centre.address || 'Address not available',
       city: centre.city || 'Unknown City',
@@ -147,8 +147,8 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 space-y-4 lg:space-y-0">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">All Centres</h1>
-            <p className="text-gray-600 dark:text-gray-400">Manage and view all learning centre locations</p>
+            <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">All Centers</h1>
+            <p className="text-gray-600 dark:text-gray-400">Manage and view all learning center locations</p>
           </div>
           
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
@@ -159,7 +159,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
               className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
             >
               <FiUpload className="w-4 h-4" />
-              <span>Import Centre Data</span>
+              <span>Import Center Data</span>
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -168,7 +168,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
               className="flex items-center space-x-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
             >
               <FiPlus className="w-4 h-4" />
-              <span>Add Centre</span>
+              <span>Add Center</span>
             </motion.button>
           </div>
         </div>
@@ -177,9 +177,9 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
         <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-6">
           <span>Home</span>
           <span className="mx-2">›</span>
-          <span>Centres</span>
+          <span>Centers</span>
           <span className="mx-2">›</span>
-          <span className="text-gray-800 dark:text-gray-300">All Centres</span>
+          <span className="text-gray-800 dark:text-gray-300">All Centers</span>
         </div>
 
         {/* Filters */}
@@ -460,7 +460,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
               </div>
               <div>
                 <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                  {clinics.filter(clinic => clinic.status === 'Active').length}
+                  {clinics.filter(clinic => clinic.status === 'active').length}
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">Active Centres</div>
               </div>
@@ -485,7 +485,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
         filterType="clinics"
       />
 
-      {/* Centre Create Form */}
+      {/* Center Create Form */}
       {isCreateModalOpen && (
         <CentreCreateForm
           onClose={() => setIsCreateModalOpen(false)}

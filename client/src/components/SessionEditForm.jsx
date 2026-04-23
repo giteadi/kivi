@@ -251,36 +251,52 @@ const SessionEditForm = ({ isOpen, onClose, onSave, sessionId }) => {
                   )}
                 </div>
 
-                {/* Booking For Section */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-medium text-gray-800 mb-4">Session Details</h3>
-                  
-                  {/* Select Centre */}
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Select Centre *
-                    </label>
-                    <div className="relative">
-                      <FiMapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <select
-                        name="centre_id"
-                        value={formData.centre_id}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="">Select Centre</option>
-                        {clinics.map(clinic => (
-                          <option key={clinic.id} value={clinic.id}>
-                            {clinic.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
+          {/* Right Column */}
+          <div className="space-y-6">
+            {/* Session Type & Duration */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Session Type
+                </label>
+                <select
+                  name="session_type"
+                  value={formData.session_type}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="individual">Individual</option>
+                  <option value="group">Group</option>
+                  <option value="assessment">Assessment</option>
+                  <option value="consultation">Consultation</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Center *
+                </label>
+                <div className="relative">
+                  <FiMapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <select
+                    name="centre_id"
+                    value={formData.centre_id}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select Center</option>
+                    {clinics.map(clinic => (
+                      <option key={clinic.id} value={clinic.id}>
+                        {clinic.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
 
-                  {/* Select Therapist */}
-                  <div className="mb-4">
+            {/* Select Therapist */}
+            <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Select Therapist *
                     </label>

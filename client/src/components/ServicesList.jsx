@@ -291,7 +291,7 @@ const ServicesList = ({ onViewService, onEditService, onDeleteService, onCreateN
                               <span className="text-xs font-semibold text-purple-600 dark:text-purple-400">{service.centre_id}</span>
                             </div>
                             <div>
-                              <div className="text-sm font-medium text-gray-900 dark:text-white">Centre {service.centre_id}</div>
+                              <div className="text-sm font-medium text-gray-900 dark:text-white">Center {service.centre_id}</div>
                               <div className="text-sm text-gray-500 dark:text-gray-400">Center Location</div>
                             </div>
                           </div>
@@ -411,7 +411,7 @@ const ServicesList = ({ onViewService, onEditService, onDeleteService, onCreateN
                               <span className="text-xs font-semibold text-purple-600 dark:text-purple-400">{service.centre_id}</span>
                             </div>
                             <div>
-                              <div className="text-xs font-medium text-gray-900 dark:text-white">Centre {service.centre_id}</div>
+                              <div className="text-xs font-medium text-gray-900 dark:text-white">Center {service.centre_id}</div>
                               <div className="text-xs text-gray-500 dark:text-gray-400">Center Location</div>
                             </div>
                           </div>

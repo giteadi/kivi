@@ -428,7 +428,7 @@ const AssessmentCalendar = () => {
             )}
           </div>
           {isSunday && dayAssessments.length === 0 && (
-            <div className="text-xs text-gray-500 dark:text-gray-500 mt-4 text-center">Centre closed</div>
+            <div className="text-xs text-gray-500 dark:text-gray-500 mt-4 text-center">Center closed</div>
           )}
           <div className="space-y-1 overflow-hidden">
             {dayAssessments.slice(0, 3).map((assessment, idx) => (
@@ -592,7 +592,7 @@ const AssessmentCalendar = () => {
       <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between bg-white dark:bg-[#1C1C1E]">
         <div className="flex items-center space-x-4">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center space-x-2">
-            <span>Centre calendar — {getCenterName()}</span>
+            <span>Center calendar — {getCenterName()}</span>
           </h2>
 
           {/* Custom Center Selector Dropdown */}

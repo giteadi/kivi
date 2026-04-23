@@ -15,11 +15,8 @@ import {
   FiInfo
 } from 'react-icons/fi';
 import api from '../services/api';
-import Sidebar from './Sidebar';
 
 const CenterVisibilitySettings = () => {
-  const [activeItem, setActiveItem] = useState('center-visibility');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [centers, setCenters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -163,28 +160,17 @@ const CenterVisibilitySettings = () => {
 
   if (loading) {
     return (
-      <div className="flex">
-        <Sidebar activeItem={activeItem} setActiveItem={setActiveItem} sidebarCollapsed={sidebarCollapsed} setSidebarCollapsed={setSidebarCollapsed} />
-        <div className="flex-1 lg:ml-64 min-h-screen bg-slate-50 dark:bg-[#0f0f10] flex items-center justify-center transition-colors duration-300">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400 transition-colors duration-300">Loading centers...</p>
-          </div>
+      <div className="lg:ml-64 min-h-screen bg-slate-50 dark:bg-[#0f0f10] flex items-center justify-center transition-colors duration-300">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400 transition-colors duration-300">Loading centers...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex">
-      <Sidebar
-        activeItem={activeItem}
-        setActiveItem={setActiveItem}
-        sidebarCollapsed={sidebarCollapsed}
-        setSidebarCollapsed={setSidebarCollapsed}
-      />
-
-      <div className="flex-1 min-h-screen bg-slate-50 dark:bg-[#0f0f10] lg:ml-64 transition-colors duration-300">
+    <div className="lg:ml-64 min-h-screen bg-slate-50 dark:bg-[#0f0f10] transition-colors duration-300">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -368,7 +354,6 @@ const CenterVisibilitySettings = () => {
           </div>
         </motion.div>
       </div>
-    </div>
   );
 };
 

@@ -102,7 +102,7 @@ const ServiceEditForm = ({ serviceId, onSave, onCancel }) => {
     }
     
     if (!formData.centre) {
-      newErrors.centre = 'Centre is required';
+      newErrors.centre = 'Center is required';
     }
     
     if (!formData.description || formData.description.trim() === '') {
@@ -293,7 +293,7 @@ const ServiceEditForm = ({ serviceId, onSave, onCancel }) => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Centre *
+                  Center *
                 </label>
                 <select
                   value={formData.centre}
@@ -302,7 +302,7 @@ const ServiceEditForm = ({ serviceId, onSave, onCancel }) => {
                     errors.centre ? 'border-red-500' : 'border-gray-300'
                   }`}
                 >
-                  <option value="">Select centre</option>
+                  <option value="">Select center</option>
                   {centres.map((centre) => (
                     <option key={centre.id} value={centre.id}>
                       {centre.name}

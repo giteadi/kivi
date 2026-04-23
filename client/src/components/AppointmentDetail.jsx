@@ -61,7 +61,7 @@ const AppointmentDetail = ({ appointmentData, onBack, onViewEncounter, onCreateN
 
     // Center details - use actual centre data if available
     data.center = {
-      name: appointmentData.clinic || 'Unknown Centre',
+      name: appointmentData.clinic || 'Unknown Center',
       id: `+${appointmentData.id}`,
       phone: appointmentData.centrePhone || 'N/A',
       initials: appointmentData.clinic ? appointmentData.clinic.split(' ').map(word => word[0]).join('').toUpperCase() : 'CC'

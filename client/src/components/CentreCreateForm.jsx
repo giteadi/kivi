@@ -2,16 +2,19 @@ import { useState } from 'react';
 import { FiX, FiSave } from 'react-icons/fi';
 import api from '../services/api';
 import { useToast } from './Toast';
+import LocationSelector from './LocationSelector';
 
 const CentreCreateForm = ({ onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     name: '',
+    country: '',
     address: '',
     city: '',
     state: '',
     zip_code: '',
     phone: '',
     email: '',
+    operating_hours: '',
     specialties: '',
     status: 'active'
   });
@@ -21,6 +24,7 @@ const CentreCreateForm = ({ onClose, onSuccess }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    console.log('[CentreCreateForm] handleChange:', { name, value });
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -29,6 +33,8 @@ const CentreCreateForm = ({ onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('[CentreCreateForm] handleSubmit called');
+    console.log('[CentreCreateForm] formData before submit:', formData);
     setLoading(true);
     setError('');
 
@@ -41,19 +47,22 @@ const CentreCreateForm = ({ onClose, onSuccess }) => {
         specialties: JSON.stringify(specialtiesArray)
       };
 
+      console.log('[CentreCreateForm] sending to API:', centreData);
       const data = await api.createClinic(centreData);
+      console.log('[CentreCreateForm] API response:', data);
 
       if (data.success) {
-        toast.success('Centre created successfully!', { duration: 3000 });
+        toast.success('Center created successfully!', { duration: 3000 });
         onSuccess && onSuccess();
         onClose();
       } else {
-        setError(data.message || 'Failed to create centre');
-        toast.error(data.message || 'Failed to create centre', { duration: 4000 });
+        setError(data.message || 'Failed to create center');
+        toast.error(data.message || 'Failed to create center', { duration: 4000 });
       }
     } catch (err) {
-      setError('Error creating centre');
-      toast.error('Error creating centre', { duration: 4000 });
+      console.error('[CentreCreateForm] error:', err);
+      setError('Error creating center');
+      toast.error('Error creating center', { duration: 4000 });
     } finally {
       setLoading(false);
     }
@@ -64,7 +73,7 @@ const CentreCreateForm = ({ onClose, onSuccess }) => {
       <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-800">Add New Centre</h2>
+          <h2 className="text-xl font-semibold text-gray-800">Add New Center</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
@@ -78,7 +87,7 @@ const CentreCreateForm = ({ onClose, onSuccess }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Centre Name *
+                Center Name *
               </label>
               <input
                 type="text"
@@ -87,7 +96,7 @@ const CentreCreateForm = ({ onClose, onSuccess }) => {
                 onChange={handleChange}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter centre name"
+                placeholder="Enter center name"
               />
             </div>
 
@@ -101,7 +110,7 @@ const CentreCreateForm = ({ onClose, onSuccess }) => {
                 value={formData.email}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="centre@example.com"
+                placeholder="center@example.com"
               />
             </div>
 
@@ -120,47 +129,16 @@ const CentreCreateForm = ({ onClose, onSuccess }) => {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                City *
-              </label>
-              <input
-                type="text"
-                name="city"
-                value={formData.city}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter city"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                State *
-              </label>
-              <input
-                type="text"
-                name="state"
-                value={formData.state}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter state"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                ZIP Code
-              </label>
-              <input
-                type="text"
-                name="zip_code"
-                value={formData.zip_code}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter ZIP code"
+            <div className="md:col-span-2">
+              <LocationSelector
+                value={{
+                  country: formData.country,
+                  state: formData.state,
+                  city: formData.city,
+                  zip_code: formData.zip_code,
+                }}
+                onChange={(loc) => setFormData(prev => ({ ...prev, ...loc }))}
+                errors={error ? {} : {}}
               />
             </div>
 
@@ -176,6 +154,59 @@ const CentreCreateForm = ({ onClose, onSuccess }) => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Enter phone number"
               />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Operating Hours
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Opening Time</label>
+                  <input
+                    type="time"
+                    name="openingTime"
+                    value={formData.openingTime || ''}
+                    onChange={(e) => {
+                      handleChange(e);
+                      const closing = formData.closingTime || '20:00';
+                      const opening = e.target.value || '09:00';
+                      const formatTime = (t) => {
+                        const [h, m] = t.split(':');
+                        const hour = parseInt(h);
+                        const ampm = hour >= 12 ? 'PM' : 'AM';
+                        const hour12 = hour % 12 || 12;
+                        return `${hour12}:${m} ${ampm}`;
+                      };
+                      setFormData(prev => ({ ...prev, operating_hours: `${formatTime(opening)} - ${formatTime(closing)}` }));
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Closing Time</label>
+                  <input
+                    type="time"
+                    name="closingTime"
+                    value={formData.closingTime || ''}
+                    onChange={(e) => {
+                      handleChange(e);
+                      const opening = formData.openingTime || '09:00';
+                      const closing = e.target.value || '20:00';
+                      const formatTime = (t) => {
+                        const [h, m] = t.split(':');
+                        const hour = parseInt(h);
+                        const ampm = hour >= 12 ? 'PM' : 'AM';
+                        const hour12 = hour % 12 || 12;
+                        return `${hour12}:${m} ${ampm}`;
+                      };
+                      setFormData(prev => ({ ...prev, operating_hours: `${formatTime(opening)} - ${formatTime(closing)}` }));
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Example: 9:00 AM to 8:00 PM</p>
             </div>
 
             <div className="md:col-span-2">
@@ -230,7 +261,7 @@ const CentreCreateForm = ({ onClose, onSuccess }) => {
               className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50"
             >
               <FiSave className="w-4 h-4" />
-              <span>{loading ? 'Creating...' : 'Create Centre'}</span>
+              <span>{loading ? 'Creating...' : 'Create Center'}</span>
             </button>
           </div>
         </form>

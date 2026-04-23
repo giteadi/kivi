@@ -65,7 +65,7 @@ const ImportModal = ({ isOpen, onClose, importType = 'patients' }) => {
       sampleFileName: 'staff_sample.csv'
     },
     clinics: {
-      title: 'Import Centre Data',
+      title: 'Import Center Data',
       requiredFields: [
         'name',
         'address',
@@ -85,7 +85,7 @@ const ImportModal = ({ isOpen, onClose, importType = 'patients' }) => {
         'therapist_name',
         'session_date',
         'session_time',
-        'centre',
+        'center',
         'service_type'
       ],
       sampleFileName: 'sessions_sample.csv'
@@ -97,7 +97,7 @@ const ImportModal = ({ isOpen, onClose, importType = 'patients' }) => {
         'therapist_name',
         'session_date',
         'session_time',
-        'centre',
+        'center',
         'service_type'
       ],
       sampleFileName: 'sessions_sample.csv'
@@ -109,7 +109,7 @@ const ImportModal = ({ isOpen, onClose, importType = 'patients' }) => {
         'category',
         'price',
         'duration',
-        'centre',
+        'center',
         'description'
       ],
       sampleFileName: 'programmes_sample.csv'

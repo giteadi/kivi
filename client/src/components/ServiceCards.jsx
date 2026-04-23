@@ -169,7 +169,7 @@ const ServiceCards = ({ onViewService, onEditService, onDeleteService, onCreateN
         <div className="border-t pt-4 space-y-2">
           <div className="flex items-center text-sm text-gray-600">
             <FiMapPin className="w-4 h-4 mr-2 text-purple-500" />
-            <span>Centre {service.centre_id}</span>
+            <span>Center {service.centre_id}</span>
           </div>
           {service.therapist_first_name && (
             <div className="flex items-center text-sm text-gray-600">

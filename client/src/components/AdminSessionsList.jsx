@@ -175,7 +175,7 @@ const AdminSessionsList = () => {
                       Therapist
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Centre
+                      Center
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Programme

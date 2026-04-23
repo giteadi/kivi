@@ -1074,13 +1074,45 @@ ${service.target_age_group || 'Not specified'}
     setActiveItem('clinics');
   };
 
-  const handleSaveClinic = (updatedData) => {
-    // In a real app, this would save to backend
-    console.log('Saving center:', updatedData);
-    alert(`Center ${updatedData.name} updated successfully!`);
-    setSelectedClinicId(null);
-    setCurrentView('clinics-list');
-    setActiveItem('clinics');
+  const handleSaveClinic = async (updatedData) => {
+    try {
+      if (!selectedClinicId) return;
+
+      const payload = {
+        name: updatedData.name,
+        address: updatedData.address,
+        city: updatedData.city,
+        state: updatedData.state,
+        zip_code: updatedData.zipCode,
+        phone: updatedData.phone,
+        email: updatedData.email,
+        website: updatedData.website,
+        status: updatedData.status,
+        established_date: updatedData.established || null,
+        operating_hours: updatedData.operatingHours,
+        emergency_services: !!updatedData.emergencyServices,
+        description: updatedData.description,
+        specialties: JSON.stringify(updatedData.specialties || []),
+        facilities: JSON.stringify(updatedData.facilities || []),
+        insurance_accepted: JSON.stringify(updatedData.insurance || []),
+        languages_supported: JSON.stringify(updatedData.languages || []),
+        parking_available: !!updatedData.parkingAvailable,
+        wheelchair_accessible: !!updatedData.wheelchairAccessible
+      };
+
+      const res = await api.updateClinic(selectedClinicId, payload);
+      if (!res?.success) {
+        throw new Error(res?.message || 'Failed to update centre');
+      }
+
+      alert(`Center ${updatedData.name} updated successfully!`);
+      setSelectedClinicId(null);
+      setCurrentView('clinics-list');
+      setActiveItem('clinics');
+    } catch (e) {
+      console.error('Failed to save clinic:', e);
+      alert('Failed to save clinic');
+    }
   };
 
   const handleCancelClinicEdit = () => {
@@ -1179,6 +1211,7 @@ ${service.target_age_group || 'Not specified'}
         <ClinicProfile
           clinicId={selectedClinicId}
           onBack={handleBackToClinics}
+          onEditClinic={handleEditClinic}
         />
       );
     }

@@ -53,11 +53,22 @@ class CentreController {
   // Create centre
   async createCentre(req, res) {
     try {
-      const centreData = {
-        ...req.body,
-        created_at: new Date(),
-        updated_at: new Date()
-      };
+      const allowedFields = [
+        'name', 'address', 'city', 'state', 'zip_code', 'country',
+        'phone', 'email', 'website', 'specialties', 'facilities',
+        'description', 'established_date', 'operating_hours',
+        'emergency_services', 'total_students', 'total_examinees', 'status'
+      ];
+
+      const centreData = {};
+      allowedFields.forEach(field => {
+        if (req.body[field] !== undefined) {
+          centreData[field] = req.body[field];
+        }
+      });
+
+      centreData.created_at = new Date();
+      centreData.updated_at = new Date();
 
       const centreId = await this.centreModel.create(centreData);
 
@@ -79,10 +90,22 @@ class CentreController {
   async updateCentre(req, res) {
     try {
       const { id } = req.params;
-      const updateData = {
-        ...req.body,
-        updated_at: new Date()
-      };
+
+      const allowedFields = [
+        'name', 'address', 'city', 'state', 'zip_code', 'country',
+        'phone', 'email', 'website', 'specialties', 'facilities',
+        'description', 'established_date', 'operating_hours',
+        'emergency_services', 'total_students', 'total_examinees', 'status'
+      ];
+
+      const updateData = {};
+      allowedFields.forEach(field => {
+        if (req.body[field] !== undefined) {
+          updateData[field] = req.body[field];
+        }
+      });
+
+      updateData.updated_at = new Date();
 
       const updated = await this.centreModel.update(id, updateData);
 

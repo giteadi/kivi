@@ -149,7 +149,7 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Centre
+            Center
           </label>
           <select
             value={filters.centre}
@@ -231,7 +231,7 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Centre
+            Center
           </label>
           <select
             value={filters.centre}
@@ -340,7 +340,7 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Centre
+            Center
           </label>
           <select
             value={filters.centre}
@@ -423,7 +423,7 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Centre
+            Center
           </label>
           <select
             value={filters.centre}
@@ -486,7 +486,7 @@ const FiltersPanel = ({ isOpen, onClose, onApplyFilters, filterType = 'patients'
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Centre Name
+            Center Name
           </label>
           <input
             type="text"

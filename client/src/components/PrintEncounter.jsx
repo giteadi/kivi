@@ -31,7 +31,7 @@ const PrintEncounter = ({ sessionData, problems, observations, notes }) => {
       email: sessionData?.student_email || 'No email'
     },
     center: {
-      name: sessionData?.centre_name || 'Unknown Centre',
+      name: sessionData?.centre_name || 'Unknown Center',
       therapist: sessionData?.therapist_first_name && sessionData?.therapist_last_name
         ? `${sessionData.therapist_first_name} ${sessionData.therapist_last_name}`
         : 'Unknown Therapist',

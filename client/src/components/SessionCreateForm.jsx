@@ -209,10 +209,10 @@ const SessionCreateForm = ({ isOpen, onClose, onSave }) => {
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h3 className="font-medium text-gray-800 mb-4">Session Details</h3>
                 
-                {/* Select Centre */}
+                {/* Select Center */}
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select Centre *
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Select Center *
                   </label>
                   <div className="relative">
                     <FiMapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -223,7 +223,7 @@ const SessionCreateForm = ({ isOpen, onClose, onSave }) => {
                       required
                       className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="">Select Centre</option>
+                      <option value="">Select Center</option>
                       {clinics.map(clinic => (
                         <option key={clinic.id} value={clinic.id}>
                           {clinic.name}

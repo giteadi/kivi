@@ -14,11 +14,8 @@ import {
   FiFilter
 } from 'react-icons/fi';
 import api from '../services/api';
-import Sidebar from './Sidebar';
 
 const Queries = () => {
-  const [activeItem, setActiveItem] = useState('queries');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [queries, setQueries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedQuery, setSelectedQuery] = useState(null);
@@ -143,14 +140,7 @@ const Queries = () => {
   };
 
   return (
-    <div className="flex">
-      <Sidebar 
-        activeItem={activeItem}
-        setActiveItem={setActiveItem}
-        sidebarCollapsed={sidebarCollapsed}
-        setSidebarCollapsed={setSidebarCollapsed}
-      />
-      <div className="flex-1 min-h-screen bg-slate-50 dark:bg-[#0f0f10] p-6 lg:ml-64 transition-colors duration-300">
+    <div className="lg:ml-64 min-h-screen bg-slate-50 dark:bg-[#0f0f10] p-6 transition-colors duration-300">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -374,7 +364,6 @@ const Queries = () => {
           )}
           </div>
         </motion.div>
-      </div>
 
       {/* Query Detail Modal */}
       {selectedQuery && (
