@@ -1,10 +1,11 @@
-const db = require('../database');
+const { getDb } = require('../database');
 
 class AssessmentPackageController {
   // Get all assessment packages
   async getPackages(req, res) {
     try {
       const { category, is_active = true } = req.query;
+      console.log('[AssessmentPackageController] getPackages called with:', { category, is_active });
 
       let query = 'SELECT * FROM kivi_assessment_packages WHERE 1=1';
       const params = [];
@@ -21,19 +22,45 @@ class AssessmentPackageController {
 
       query += ' ORDER BY price ASC';
 
+      console.log('[AssessmentPackageController] Executing query:', query, 'params:', params);
+
+      const db = getDb();
+      console.log('[AssessmentPackageController] Got DB connection');
+
       const packages = await new Promise((resolve, reject) => {
-        db.pool.query(query, params, (err, results) => {
-          if (err) reject(err);
-          else resolve(results);
+        db.query(query, params, (err, results) => {
+          if (err) {
+            console.error('[AssessmentPackageController] DB Query Error:', err);
+            reject(err);
+          } else {
+            console.log('[AssessmentPackageController] Query success, results count:', results ? results.length : 0);
+            resolve(results);
+          }
         });
       });
 
-      // Parse JSON fields
-      const formattedPackages = packages.map(pkg => ({
-        ...pkg,
-        includes: pkg.includes ? JSON.parse(pkg.includes) : [],
-        price: parseFloat(pkg.price)
-      }));
+      // Parse JSON fields with error handling
+      const formattedPackages = packages.map(pkg => {
+        let includes = [];
+        if (pkg.includes) {
+          if (Array.isArray(pkg.includes)) {
+            // Already an array (from DB)
+            includes = pkg.includes;
+          } else if (typeof pkg.includes === 'string') {
+            try {
+              includes = JSON.parse(pkg.includes);
+            } catch (e) {
+              // Not valid JSON, treat as comma-separated string
+              includes = pkg.includes.split(',').map(s => s.trim()).filter(s => s);
+            }
+          }
+        }
+        return {
+          ...pkg,
+          includes: includes,
+          price: parseFloat(pkg.price)
+        };
+      });
 
       res.json({
         success: true,
@@ -41,10 +68,11 @@ class AssessmentPackageController {
         message: 'Assessment packages retrieved successfully'
       });
     } catch (error) {
-      console.error('Get packages error:', error);
+      console.error('[AssessmentPackageController] Get packages error:', error);
+      console.error('[AssessmentPackageController] Error stack:', error.stack);
       res.status(500).json({
         success: false,
-        message: 'Failed to fetch assessment packages'
+        message: 'Failed to fetch assessment packages: ' + error.message
       });
     }
   }
@@ -54,8 +82,9 @@ class AssessmentPackageController {
     try {
       const { id } = req.params;
 
+      const db = getDb();
       const packageData = await new Promise((resolve, reject) => {
-        db.pool.query(
+        db.query(
           'SELECT * FROM kivi_assessment_packages WHERE id = ?',
           [id],
           (err, results) => {
@@ -108,10 +137,11 @@ class AssessmentPackageController {
       // Generate package ID
       const packageId = 'PKG-' + Date.now().toString(36).toUpperCase();
 
+      const db = getDb();
       const result = await new Promise((resolve, reject) => {
-        db.pool.query(
-          `INSERT INTO kivi_assessment_packages 
-           (package_id, name, category, price, age_range, description, includes, centre_id) 
+        db.query(
+          `INSERT INTO kivi_assessment_packages
+           (package_id, name, category, price, age_range, description, includes, centre_id)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             packageId,
@@ -200,8 +230,9 @@ class AssessmentPackageController {
       updates.push('updated_at = NOW()');
       params.push(id);
 
+      const db = getDb();
       const result = await new Promise((resolve, reject) => {
-        db.pool.query(
+        db.query(
           `UPDATE kivi_assessment_packages SET ${updates.join(', ')} WHERE id = ?`,
           params,
           (err, results) => {
@@ -236,9 +267,10 @@ class AssessmentPackageController {
     try {
       const { id } = req.params;
 
+      const db = getDb();
       // Check if package is assigned to any student
       const assigned = await new Promise((resolve, reject) => {
-        db.pool.query(
+        db.query(
           'SELECT COUNT(*) as count FROM kivi_student_packages WHERE package_id = ?',
           [id],
           (err, results) => {
@@ -251,7 +283,7 @@ class AssessmentPackageController {
       if (assigned.count > 0) {
         // Soft delete - just mark as inactive
         await new Promise((resolve, reject) => {
-          db.pool.query(
+          db.query(
             'UPDATE kivi_assessment_packages SET is_active = 0, updated_at = NOW() WHERE id = ?',
             [id],
             (err, results) => {
@@ -269,7 +301,7 @@ class AssessmentPackageController {
 
       // Hard delete
       const result = await new Promise((resolve, reject) => {
-        db.pool.query(
+        db.query(
           'DELETE FROM kivi_assessment_packages WHERE id = ?',
           [id],
           (err, results) => {

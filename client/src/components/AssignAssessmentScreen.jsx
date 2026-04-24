@@ -19,7 +19,7 @@ import {
 } from 'react-icons/fi';
 import api from '../services/api';
 
-const AssignAssessmentScreen = ({ examineeId, examineeName, onBack, onSave }) => {
+const AssignAssessmentScreen = ({ examineeId, examineeName, examineeEmail, onBack, onSave }) => {
   const [packages, setPackages] = useState([]);
   const [individualAssessments, setIndividualAssessments] = useState([]);
   const [selectedPackages, setSelectedPackages] = useState([]);
@@ -34,9 +34,21 @@ const AssignAssessmentScreen = ({ examineeId, examineeName, onBack, onSave }) =>
   const [adminDate, setAdminDate] = useState(new Date().toISOString().split('T')[0]);
   const [examiner, setExaminer] = useState('JAGGI, KRUTIKA');
   const [deliveryMethod, setDeliveryMethod] = useState('manual');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(examineeEmail || '');
   const [notes, setNotes] = useState('');
+
   const [isSaving, setIsSaving] = useState(false);
+
+  // Update email when examineeEmail prop changes
+  useEffect(() => {
+    setEmail(examineeEmail || '');
+  }, [examineeEmail]);
+
+  // Email Invoice Screen State
+  const [showEmailScreen, setShowEmailScreen] = useState(false);
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailBody, setEmailBody] = useState('');
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   useEffect(() => {
     fetchPackages();
@@ -180,7 +192,72 @@ const AssignAssessmentScreen = ({ examineeId, examineeName, onBack, onSave }) =>
   };
 
   const handleSendInvoice = () => {
-    alert('Invoice sent to ' + (email || 'student email'));
+    // Pre-fill email subject and body
+    const total = calculateTotal();
+    const items = [...selectedPackages, ...selectedAssessments];
+    const itemList = items.map(item => `- ${item.name}: ${formatPrice(item.price || 0)}`).join('\n');
+
+    setEmailSubject(`Assessment Invoice - ${examineeName || 'Student'}`);
+    setEmailBody(`Dear ${examineeName || 'Parent/Guardian'},
+
+Please find below the assessment details and invoice:
+
+Examinee: ${examineeName || 'N/A'}
+Examinee ID: ${examineeId || 'N/A'}
+
+Assessment Items:
+${itemList}
+
+Total Amount: ${formatPrice(total)}
+
+Please complete the payment to proceed with the assessment.
+
+Best regards,
+Kivi Educational Therapy`);
+
+    setShowEmailScreen(true);
+  };
+
+  const handleSendEmail = async () => {
+    if (!email) {
+      alert('Please enter an email address');
+      return;
+    }
+
+    setIsSendingEmail(true);
+    try {
+      const response = await api.request('/invoices/send-assessment', {
+        method: 'POST',
+        body: JSON.stringify({
+          assessmentId: `PKG-${Date.now()}`,
+          studentId: examineeId,
+          email: email,
+          firstName: examineeName?.split(' ')[0] || '',
+          lastName: examineeName?.split(' ').slice(1).join(' ') || '',
+          assessmentName: packageName || 'Custom Package',
+          assessmentType: 'Package',
+          price: calculateTotal(),
+          individualPrice: calculateTotal(),
+          itemsCount: selectedPackages.length + selectedAssessments.length,
+          adminDate: adminDate,
+          examiner: examiner,
+          subject: emailSubject,
+          message: emailBody
+        })
+      });
+
+      if (response.success) {
+        alert('Invoice email sent successfully to ' + email);
+        setShowEmailScreen(false);
+      } else {
+        alert('Failed to send email: ' + (response.message || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Email send error:', error);
+      alert('Error sending email. Please try again.');
+    } finally {
+      setIsSendingEmail(false);
+    }
   };
 
   const filteredPackages = packages.filter(pkg =>
@@ -676,6 +753,114 @@ const AssignAssessmentScreen = ({ examineeId, examineeName, onBack, onSave }) =>
                 rows={4}
                 className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
               />
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Email Invoice Screen */}
+      {showEmailScreen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-white z-[60] overflow-y-auto"
+        >
+          {/* Header */}
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+            <div className="flex items-center gap-3">
+              <FiMail className="w-5 h-5 text-white" />
+              <h2 className="text-lg font-bold text-white">Send Invoice Email</h2>
+            </div>
+            <button
+              onClick={() => setShowEmailScreen(false)}
+              className="text-white/80 hover:text-white"
+            >
+              <FiX className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="max-w-4xl mx-auto p-6 space-y-6">
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleSendEmail}
+                disabled={isSendingEmail}
+                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg text-sm font-medium hover:from-blue-600 hover:to-indigo-600 shadow-sm flex items-center gap-2 disabled:opacity-50"
+              >
+                {isSendingEmail ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <FiMail className="w-4 h-4" />
+                    Send Email
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => setShowEmailScreen(false)}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+            </div>
+
+            {/* Email Form */}
+            <div className="bg-white rounded-xl shadow-sm border p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">To:</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter recipient email..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Subject:</label>
+                <input
+                  type="text"
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)}
+                  placeholder="Email subject..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Message:</label>
+                <textarea
+                  value={emailBody}
+                  onChange={(e) => setEmailBody(e.target.value)}
+                  placeholder="Enter email message..."
+                  rows={12}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              {/* Invoice Preview */}
+              <div className="border-t pt-4 mt-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Invoice Preview:</h4>
+                <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
+                  <div className="flex justify-between mb-2">
+                    <span>Examinee:</span>
+                    <span className="font-medium">{examineeName || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between mb-2">
+                    <span>Items:</span>
+                    <span>{selectedPackages.length + selectedAssessments.length}</span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t">
+                    <span className="font-medium">Total:</span>
+                    <span className="font-bold text-blue-600">{formatPrice(calculateTotal())}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </motion.div>

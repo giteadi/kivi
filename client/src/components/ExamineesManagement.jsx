@@ -39,7 +39,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import html2canvas from 'html2canvas';
 
-const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, onCreateNewPatient, activeItem = 'patients', setActiveItem }) => {
+const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, onCreateNewPatient, activeItem = 'patients', setActiveItem, onSelectExamineeForAssignment }) => {
   const dispatch = useDispatch();
   const { patients, isLoading, error } = useSelector((state) => state.patients);
   const { user } = useSelector((state) => state.auth);
@@ -155,6 +155,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
     firstName: patient.first_name || '',
     lastName: patient.last_name || '',
     examineeId: patient.student_id || `STU${patient.id}`,
+    email: patient.email || '',
     birthDate: patient.date_of_birth ? new Date(patient.date_of_birth).toLocaleDateString('en-GB', {
       day: '2-digit',
       month: '2-digit',
@@ -1041,7 +1042,12 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                       onClick={() => {
                         if (selectedItems.length === 0) return;
                         const selectedPatient = transformedPatients.find(p => p.id === selectedItems[0]);
-                        setSelectedExamineeForAssignment(selectedPatient);
+                        // Use prop if provided, otherwise use internal state
+                        if (onSelectExamineeForAssignment) {
+                          onSelectExamineeForAssignment(selectedPatient);
+                        } else {
+                          setSelectedExamineeForAssignment(selectedPatient);
+                        }
                         window.dispatchEvent(new CustomEvent('navigate', { detail: 'assign-assessment' }));
                       }}
                       disabled={selectedItems.length === 0}

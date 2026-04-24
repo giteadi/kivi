@@ -1381,7 +1381,7 @@ ${service.target_age_group || 'Not specified'}
         />;
       
       case 'patients':
-        return <ExamineesManagement onViewPatient={handleViewPatient} onEditPatient={handleEditPatient} onDeletePatient={handleDeletePatient} onCreateNewPatient={handleCreateNewPatient} />;
+        return <ExamineesManagement onViewPatient={handleViewPatient} onEditPatient={handleEditPatient} onDeletePatient={handleDeletePatient} onCreateNewPatient={handleCreateNewPatient} onSelectExamineeForAssignment={setSelectedExamineeForAssignment} />;
       
       case 'packages':
         return <PackageManagement onBack={() => { setActiveItem('patients'); setCurrentView('patients'); navigate('/examinees'); }} />;
@@ -1391,6 +1391,7 @@ ${service.target_age_group || 'Not specified'}
           <AssignAssessmentScreen
             examineeId={selectedExamineeForAssignment?.id || selectedExamineeForAssignment?.examineeId}
             examineeName={selectedExamineeForAssignment ? `${selectedExamineeForAssignment.firstName || ''} ${selectedExamineeForAssignment.lastName || ''}`.trim() : ''}
+            examineeEmail={selectedExamineeForAssignment?.email || ''}
             onBack={() => {
               setActiveItem('patients');
               setCurrentView('patients');
