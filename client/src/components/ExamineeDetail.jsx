@@ -33,6 +33,20 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
     grade: '',
     languageOfTesting: '',
     email: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    emergencyContactName: '',
+    emergencyContactPhone: '',
+    emergencyContactRelation: '',
+    customField1: '',
+    customField2: '',
+    customField3: '',
+    customField4: '',
+    status: 'active',
+    registrationDate: '',
     comment: '',
     account: 'CENTRIX CENTRE',
     requiresAssessment: false,
@@ -229,53 +243,112 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   // Populate form data when currentPatient loads
   useEffect(() => {
     if (currentPatient) {
+      console.log('🔄 EXAMINEE DETAIL - Loading Patient Data');
+      console.log('📦 Raw currentPatient:', currentPatient);
+      
       // Parse JSON fields
       let evalData = currentPatient.evaluation_data;
       let diagData = currentPatient.diagnosis_data;
       let histData = currentPatient.history_data;
       
+      console.log('📊 Raw Data Types:');
+      console.log('  - evaluation_data type:', typeof evalData);
+      console.log('  - diagnosis_data type:', typeof diagData);
+      console.log('  - history_data type:', typeof histData);
+      
       if (typeof evalData === 'string') {
-        try { evalData = JSON.parse(evalData); } catch (e) { evalData = {}; }
+        try { 
+          evalData = JSON.parse(evalData); 
+          console.log('✅ Parsed evaluation_data:', evalData);
+        } catch (e) { 
+          console.error('❌ Error parsing evaluation_data:', e);
+          evalData = {}; 
+        }
       }
       if (typeof diagData === 'string') {
-        try { diagData = JSON.parse(diagData); } catch (e) { diagData = {}; }
+        try { 
+          diagData = JSON.parse(diagData); 
+          console.log('✅ Parsed diagnosis_data:', diagData);
+        } catch (e) { 
+          console.error('❌ Error parsing diagnosis_data:', e);
+          diagData = {}; 
+        }
       }
       if (typeof histData === 'string') {
-        try { histData = JSON.parse(histData); } catch (e) { histData = {}; }
+        try { 
+          histData = JSON.parse(histData); 
+          console.log('✅ Parsed history_data:', histData);
+        } catch (e) { 
+          console.error('❌ Error parsing history_data:', e);
+          histData = {}; 
+        }
       }
       
-      // Set form data
-      setFormData({
+      console.log('📝 Setting Form Data:');
+      const newFormData = {
         firstName: currentPatient.first_name || '',
         middleName: currentPatient.middle_name || '',
         lastName: currentPatient.last_name || '',
         examineeId: currentPatient.student_id || '',
         gender: currentPatient.gender ? currentPatient.gender.charAt(0).toUpperCase() + currentPatient.gender.slice(1) : '',
         birthDate: currentPatient.date_of_birth ? new Date(currentPatient.date_of_birth).toISOString().split('T')[0] : '',
+        schoolName: currentPatient.school_name || '',
+        grade: currentPatient.grade || '',
         languageOfTesting: currentPatient.language_of_testing || '',
         email: currentPatient.email || '',
+        phone: currentPatient.phone || '',
+        address: currentPatient.address || '',
+        city: currentPatient.city || '',
+        state: currentPatient.state || '',
+        zipCode: currentPatient.zip_code || '',
+        emergencyContactName: currentPatient.emergency_contact_name || '',
+        emergencyContactPhone: currentPatient.emergency_contact_phone || '',
+        emergencyContactRelation: currentPatient.emergency_contact_relation || '',
+        customField1: currentPatient.custom_field_1 || '',
+        customField2: currentPatient.custom_field_2 || '',
+        customField3: currentPatient.custom_field_3 || '',
+        customField4: currentPatient.custom_field_4 || '',
+        status: currentPatient.status || 'active',
+        registrationDate: currentPatient.registration_date ? new Date(currentPatient.registration_date).toISOString().split('T')[0] : '',
         comment: currentPatient.comment || '',
         account: currentPatient.centre_name || 'CENTRIX CENTRE',
         requiresAssessment: currentPatient.requires_assessment || currentPatient.requiresAssessment || false,
         requiresTherapy: currentPatient.requires_therapy || currentPatient.requiresTherapy || false
-      });
+      };
+      console.log('  Form Data:', newFormData);
+      
+      // Set form data
+      setFormData(newFormData);
+      
+      console.log('📋 Setting Evaluation Data:');
+      console.log('  - academicConcerns:', evalData?.academicConcerns);
+      console.log('  - cognitiveEvaluation:', evalData?.cognitiveEvaluation);
+      console.log('  - behaviourConcerns:', evalData?.behaviourConcerns);
       
       // Set evaluation data with defaults and merge saved data
-      setEvaluationData(prev => ({
-        academicConcerns: { ...prev.academicConcerns, ...evalData?.academicConcerns },
-        cognitiveEvaluation: { ...prev.cognitiveEvaluation, ...evalData?.cognitiveEvaluation },
-        behaviourConcerns: { ...prev.behaviourConcerns, ...evalData?.behaviourConcerns },
-        mentalHealth: { ...prev.mentalHealth, ...evalData?.mentalHealth },
-        developmentalDelay: { ...prev.developmentalDelay, ...evalData?.developmentalDelay },
-        languageConcerns: { ...prev.languageConcerns, ...evalData?.languageConcerns },
-        speechConcerns: { ...prev.speechConcerns, ...evalData?.speechConcerns },
-        physicalConcerns: { ...prev.physicalConcerns, ...evalData?.physicalConcerns },
-        substanceAbuse: { ...prev.substanceAbuse, ...evalData?.substanceAbuse },
-        employment: { ...prev.employment, ...evalData?.employment }
-      }));
+      // FIX: Ensure evalData exists and merge properly with defaults
+      const safeEvalData = evalData || {};
+      setEvaluationData(prev => {
+        const newEvalData = {
+          academicConcerns: { ...prev.academicConcerns, ...(safeEvalData.academicConcerns || {}) },
+          cognitiveEvaluation: { ...prev.cognitiveEvaluation, ...(safeEvalData.cognitiveEvaluation || {}) },
+          behaviourConcerns: { ...prev.behaviourConcerns, ...(safeEvalData.behaviourConcerns || {}) },
+          mentalHealth: { ...prev.mentalHealth, ...(safeEvalData.mentalHealth || {}) },
+          developmentalDelay: { ...prev.developmentalDelay, ...(safeEvalData.developmentalDelay || {}) },
+          languageConcerns: { ...prev.languageConcerns, ...(safeEvalData.languageConcerns || {}) },
+          speechConcerns: { ...prev.speechConcerns, ...(safeEvalData.speechConcerns || {}) },
+          physicalConcerns: { ...prev.physicalConcerns, ...(safeEvalData.physicalConcerns || {}) },
+          substanceAbuse: { ...prev.substanceAbuse, ...(safeEvalData.substanceAbuse || {}) },
+          employment: { ...prev.employment, ...(safeEvalData.employment || {}) }
+        };
+        console.log('  Final Evaluation Data:', newEvalData);
+        return newEvalData;
+      });
       
-      // Set diagnosis data
-      setDiagnosisData({
+      console.log('🏥 Setting Diagnosis Data:');
+      // FIX: Ensure diagData is properly merged with defaults
+      const safeDiagData = diagData || {};
+      const newDiagData = {
         autismSpectrum: false,
         behaviourEmotional: false,
         giftedTalented: false,
@@ -290,54 +363,59 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
         substanceAbuse: false,
         traumaticBrainInjury: false,
         other: false,
-        ...diagData
-      });
+        ...safeDiagData
+      };
+      console.log('  Diagnosis Data:', newDiagData);
       
-      // Set history data with defaults and merge saved data
+      // Set diagnosis data
+      setDiagnosisData(newDiagData);
+      
+      // Set history data - FIXED: Merge with defaults to ensure all fields exist
+      console.log('📋 Setting History Data (MERGING WITH DEFAULTS):');
+      const safeHistData = histData || {};
       setHistoryData(prev => ({
         ...prev,
-        ...histData
+        ...safeHistData
       }));
+      if (safeHistData && Object.keys(safeHistData).length > 0) {
+        console.log('  History data keys:', Object.keys(safeHistData));
+      }
       
       // Restore personal sample report data if it exists in history
       if (histData?.personalSampleReportData) {
-        setPersonalSampleReportData(prev => ({
-          ...prev,
-          ...histData.personalSampleReportData
-        }));
+        console.log('  ✅ Restoring personalSampleReportData');
+        setPersonalSampleReportData(histData.personalSampleReportData);
       }
       
       // Restore language/development sample report data if it exists in history
       if (histData?.languageSampleReportData) {
-        setLanguageSampleReportData(prev => ({
-          ...prev,
-          ...histData.languageSampleReportData
-        }));
+        console.log('  ✅ Restoring languageSampleReportData');
+        console.log('     Keys:', Object.keys(histData.languageSampleReportData));
+        setLanguageSampleReportData(histData.languageSampleReportData);
       }
       
       // Restore education sample report data if it exists in history
       if (histData?.educationSampleReportData) {
-        setEducationSampleReportData(prev => ({
-          ...prev,
-          ...histData.educationSampleReportData
-        }));
+        console.log('  ✅ Restoring educationSampleReportData');
+        console.log('     Keys:', Object.keys(histData.educationSampleReportData));
+        setEducationSampleReportData(histData.educationSampleReportData);
       }
       
       // Restore health sample report data if it exists in history
       if (histData?.healthSampleReportData) {
-        setHealthSampleReportData(prev => ({
-          ...prev,
-          ...histData.healthSampleReportData
-        }));
+        console.log('  ✅ Restoring healthSampleReportData');
+        console.log('     Keys:', Object.keys(histData.healthSampleReportData));
+        setHealthSampleReportData(histData.healthSampleReportData);
       }
       
       // Restore employment sample report data if it exists in history
       if (histData?.employmentSampleReportData) {
-        setEmploymentSampleReportData(prev => ({
-          ...prev,
-          ...histData.employmentSampleReportData
-        }));
+        console.log('  ✅ Restoring employmentSampleReportData');
+        console.log('     Keys:', Object.keys(histData.employmentSampleReportData));
+        setEmploymentSampleReportData(histData.employmentSampleReportData);
       }
+      
+      console.log('✅ All data loaded successfully');
     }
   }, [currentPatient]);
 
@@ -617,6 +695,14 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
     }));
   };
 
+  // Handler for Personal Sample Report Data
+  const handlePersonalSampleReportTextChange = (field, value) => {
+    setPersonalSampleReportData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   // Generate Employment sample report sentence
   const generateEmploymentSampleReportSentence = () => {
     const firstName = formData.firstName || 'Charlie';
@@ -630,6 +716,12 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
 
   // Save handler
   const handleSave = async () => {
+    console.log('💾 SAVE EXAMINEE - Starting Save Process');
+    console.log('📤 Current Form Data:', formData);
+    console.log('📤 Current Evaluation Data:', evaluationData);
+    console.log('📤 Current Diagnosis Data:', diagnosisData);
+    console.log('📤 Current History Data:', historyData);
+    
     setIsSaving(true);
     try {
       const apiData = {
@@ -643,6 +735,20 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
         grade: formData.grade,
         languageOfTesting: formData.languageOfTesting,
         email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
+        emergencyContactName: formData.emergencyContactName,
+        emergencyContactPhone: formData.emergencyContactPhone,
+        emergencyContactRelation: formData.emergencyContactRelation,
+        customField1: formData.customField1,
+        customField2: formData.customField2,
+        customField3: formData.customField3,
+        customField4: formData.customField4,
+        status: formData.status,
+        registrationDate: formData.registrationDate,
         comment: formData.comment,
         centreName: formData.account,
         requiresAssessment: formData.requiresAssessment,
@@ -659,23 +765,33 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
         }
       };
 
+      console.log('📦 API Data to Send:', JSON.stringify(apiData, null, 2));
+      console.log('🌐 API Endpoint:', `/students/${examineeId}`);
+      console.log('🔧 Method: PUT');
+
       const response = await api.request(`/students/${examineeId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(apiData)
       });
 
+      console.log('📥 API Response:', response);
+
       if (response.success) {
+        console.log('✅ Save Successful!');
         toast.success('Examinee updated successfully!');
         dispatch(fetchPatient(examineeId));
       } else {
+        console.error('❌ Save Failed:', response.message);
         toast.error(response.message || 'Failed to update examinee');
       }
     } catch (error) {
-      console.error('Error updating examinee:', error);
+      console.error('❌ Save Error:', error);
+      console.error('❌ Error Stack:', error.stack);
       toast.error('An error occurred while updating the examinee');
     } finally {
       setIsSaving(false);
+      console.log('💾 Save Process Complete');
     }
   };
 
@@ -1408,6 +1524,186 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                             placeholder="email@example.com"
                           />
                           <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className={labelClass}>Phone</label>
+                        <div className="relative">
+                          <input
+                            type="tel"
+                            value={formData.phone}
+                            onChange={(e) => handleChange('phone', e.target.value)}
+                            className={`${inputClass('phone')} pl-10`}
+                            placeholder="Enter phone number"
+                          />
+                          <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className={labelClass}>Address</label>
+                        <input
+                          type="text"
+                          value={formData.address}
+                          onChange={(e) => handleChange('address', e.target.value)}
+                          className={inputClass('address')}
+                          placeholder="Enter street address"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <label className={labelClass}>City</label>
+                          <input
+                            type="text"
+                            value={formData.city}
+                            onChange={(e) => handleChange('city', e.target.value)}
+                            className={inputClass('city')}
+                            placeholder="City"
+                          />
+                        </div>
+                        <div>
+                          <label className={labelClass}>State</label>
+                          <input
+                            type="text"
+                            value={formData.state}
+                            onChange={(e) => handleChange('state', e.target.value)}
+                            className={inputClass('state')}
+                            placeholder="State"
+                          />
+                        </div>
+                        <div>
+                          <label className={labelClass}>Zip Code</label>
+                          <input
+                            type="text"
+                            value={formData.zipCode}
+                            onChange={(e) => handleChange('zipCode', e.target.value)}
+                            className={inputClass('zipCode')}
+                            placeholder="Zip"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="border-t border-gray-200 pt-4 mt-4">
+                        <h4 className="text-xs font-semibold text-gray-900 uppercase tracking-wide mb-3">
+                          Emergency Contact
+                        </h4>
+                        <div className="space-y-3">
+                          <div>
+                            <label className={labelClass}>Contact Name</label>
+                            <input
+                              type="text"
+                              value={formData.emergencyContactName}
+                              onChange={(e) => handleChange('emergencyContactName', e.target.value)}
+                              className={inputClass('emergencyContactName')}
+                              placeholder="Emergency contact name"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className={labelClass}>Phone</label>
+                              <input
+                                type="tel"
+                                value={formData.emergencyContactPhone}
+                                onChange={(e) => handleChange('emergencyContactPhone', e.target.value)}
+                                className={inputClass('emergencyContactPhone')}
+                                placeholder="Contact phone"
+                              />
+                            </div>
+                            <div>
+                              <label className={labelClass}>Relation</label>
+                              <input
+                                type="text"
+                                value={formData.emergencyContactRelation}
+                                onChange={(e) => handleChange('emergencyContactRelation', e.target.value)}
+                                className={inputClass('emergencyContactRelation')}
+                                placeholder="Relation to examinee"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-gray-200 pt-4 mt-4">
+                        <h4 className="text-xs font-semibold text-gray-900 uppercase tracking-wide mb-3">
+                          Custom Fields
+                        </h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className={labelClass}>Custom Field 1</label>
+                            <input
+                              type="text"
+                              value={formData.customField1}
+                              onChange={(e) => handleChange('customField1', e.target.value)}
+                              className={inputClass('customField1')}
+                              placeholder="Custom field 1"
+                            />
+                          </div>
+                          <div>
+                            <label className={labelClass}>Custom Field 2</label>
+                            <input
+                              type="text"
+                              value={formData.customField2}
+                              onChange={(e) => handleChange('customField2', e.target.value)}
+                              className={inputClass('customField2')}
+                              placeholder="Custom field 2"
+                            />
+                          </div>
+                          <div>
+                            <label className={labelClass}>Custom Field 3</label>
+                            <input
+                              type="text"
+                              value={formData.customField3}
+                              onChange={(e) => handleChange('customField3', e.target.value)}
+                              className={inputClass('customField3')}
+                              placeholder="Custom field 3"
+                            />
+                          </div>
+                          <div>
+                            <label className={labelClass}>Custom Field 4</label>
+                            <input
+                              type="text"
+                              value={formData.customField4}
+                              onChange={(e) => handleChange('customField4', e.target.value)}
+                              className={inputClass('customField4')}
+                              placeholder="Custom field 4"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-gray-200 pt-4 mt-4">
+                        <h4 className="text-xs font-semibold text-gray-900 uppercase tracking-wide mb-3">
+                          Additional Information
+                        </h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className={labelClass}>Status</label>
+                            <div className="relative">
+                              <select
+                                value={formData.status}
+                                onChange={(e) => handleChange('status', e.target.value)}
+                                className={`${inputClass('status')} appearance-none`}
+                              >
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                              </select>
+                              <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                            </div>
+                          </div>
+                          <div>
+                            <label className={labelClass}>Registration Date</label>
+                            <div className="relative">
+                              <input
+                                type="date"
+                                value={formData.registrationDate}
+                                onChange={(e) => handleChange('registrationDate', e.target.value)}
+                                className={`${inputClass('registrationDate')} pr-10`}
+                              />
+                              <FiCalendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                            </div>
+                          </div>
                         </div>
                       </div>
 

@@ -272,6 +272,28 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
     }));
   };
 
+  // Handler for Evaluation checkboxes
+  const handleEvaluationFieldChange = (category, field, checked) => {
+    setEvaluationData(prev => ({
+      ...prev,
+      [category]: { ...prev[category], [field]: checked }
+    }));
+  };
+
+  const handleEvaluationChange = (category, checked) => {
+    setEvaluationData(prev => ({
+      ...prev,
+      [category]: { ...prev[category], other: checked }
+    }));
+  };
+
+  const handleEvaluationTextChange = (category, text) => {
+    setEvaluationData(prev => ({
+      ...prev,
+      [category]: { ...prev[category], otherText: text }
+    }));
+  };
+
   // Generate dynamic sample report sentence based on selected concerns
   const generateSampleReportSentence = () => {
     const firstName = formData.firstName || 'Charlie';
@@ -636,21 +658,20 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
               requiresTherapy: patient.requires_therapy || false
             });
             
-            // Set evaluation data
-            if (evalData && Object.keys(evalData).length > 0) {
-              setEvaluationData(prev => ({
-                academicConcerns: { ...prev.academicConcerns, ...evalData?.academicConcerns },
-                cognitiveEvaluation: { ...prev.cognitiveEvaluation, ...evalData?.cognitiveEvaluation },
-                behaviourConcerns: { ...prev.behaviourConcerns, ...evalData?.behaviourConcerns },
-                mentalHealth: { ...prev.mentalHealth, ...evalData?.mentalHealth },
-                developmentalDelay: { ...prev.developmentalDelay, ...evalData?.developmentalDelay },
-                languageConcerns: { ...prev.languageConcerns, ...evalData?.languageConcerns },
-                speechConcerns: { ...prev.speechConcerns, ...evalData?.speechConcerns },
-                physicalConcerns: { ...prev.physicalConcerns, ...evalData?.physicalConcerns },
-                substanceAbuse: { ...prev.substanceAbuse, ...evalData?.substanceAbuse },
-                employment: { ...prev.employment, ...evalData?.employment }
-              }));
-            }
+            // Set evaluation data with safe merging
+            const safeEvalData = evalData || {};
+            setEvaluationData(prev => ({
+              academicConcerns: { ...prev.academicConcerns, ...(safeEvalData.academicConcerns || {}) },
+              cognitiveEvaluation: { ...prev.cognitiveEvaluation, ...(safeEvalData.cognitiveEvaluation || {}) },
+              behaviourConcerns: { ...prev.behaviourConcerns, ...(safeEvalData.behaviourConcerns || {}) },
+              mentalHealth: { ...prev.mentalHealth, ...(safeEvalData.mentalHealth || {}) },
+              developmentalDelay: { ...prev.developmentalDelay, ...(safeEvalData.developmentalDelay || {}) },
+              languageConcerns: { ...prev.languageConcerns, ...(safeEvalData.languageConcerns || {}) },
+              speechConcerns: { ...prev.speechConcerns, ...(safeEvalData.speechConcerns || {}) },
+              physicalConcerns: { ...prev.physicalConcerns, ...(safeEvalData.physicalConcerns || {}) },
+              substanceAbuse: { ...prev.substanceAbuse, ...(safeEvalData.substanceAbuse || {}) },
+              employment: { ...prev.employment, ...(safeEvalData.employment || {}) }
+            }));
             
             // Set diagnosis data
             if (diagData && Object.keys(diagData).length > 0) {
@@ -820,11 +841,26 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) return;
+    console.log('💾 CREATE/UPDATE EXAMINEE - Starting Submit Process');
+    console.log('📍 Mode:', isEditMode ? 'EDIT' : 'CREATE');
+    console.log('📍 Examinee ID:', examineeId);
+    
+    if (!validateForm()) {
+      console.log('❌ Validation Failed');
+      return;
+    }
+    
+    console.log('✅ Validation Passed');
+    console.log('📤 Current Form Data:', formData);
+    console.log('📤 Current Evaluation Data:', evaluationData);
+    console.log('📤 Current Diagnosis Data (expandedDiagnoses):', expandedDiagnoses);
+    console.log('📤 Current History Other Data:', historyOtherData);
+    console.log('📤 Current Referral Data:', referralData);
     
     setIsSaving(true);
     try {
       const apiData = {
+        studentId: formData.examineeId,
         firstName: formData.firstName,
         middleName: formData.middleName,
         lastName: formData.lastName,
@@ -852,9 +888,17 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
         }
       };
 
+      console.log('📦 API Data to Send:', JSON.stringify(apiData, null, 2));
+      console.log('📊 Data Sizes:');
+      console.log('  - evaluationData:', JSON.stringify(apiData.evaluationData).length, 'bytes');
+      console.log('  - diagnosisData:', JSON.stringify(apiData.diagnosisData).length, 'bytes');
+      console.log('  - historyData:', JSON.stringify(apiData.historyData).length, 'bytes');
+
       let response;
       if (isEditMode && examineeId) {
         // Update existing examinee
+        console.log('🔧 Method: PUT (Update)');
+        console.log('🌐 API Endpoint:', `/students/${examineeId}`);
         response = await api.request(`/students/${examineeId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -862,6 +906,8 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
         });
       } else {
         // Create new examinee
+        console.log('🔧 Method: POST (Create)');
+        console.log('🌐 API Endpoint:', '/students');
         response = await api.request('/students', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -869,20 +915,26 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
         });
       }
 
+      console.log('📥 API Response:', response);
       const result = response;
 
       if (result.success) {
+        console.log('✅ Submit Successful!');
+        console.log('📦 Result Data:', result.data);
         // Refresh the patients list
         dispatch(fetchPatients());
         onSave && onSave(result.data);
       } else {
+        console.error('❌ Submit Failed:', result.message);
         setErrors({ submit: result.message || `Failed to ${isEditMode ? 'update' : 'create'} examinee` });
       }
     } catch (error) {
-      console.error(`Error ${isEditMode ? 'updating' : 'creating'} examinee:`, error);
+      console.error(`❌ Submit Error (${isEditMode ? 'update' : 'create'}):`, error);
+      console.error('❌ Error Stack:', error.stack);
       setErrors({ submit: `An error occurred while ${isEditMode ? 'updating' : 'creating'} the examinee` });
     } finally {
       setIsSaving(false);
+      console.log('💾 Submit Process Complete');
     }
   };
 
@@ -1288,28 +1340,48 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <h4 className="text-xs font-medium text-gray-500 uppercase">Academic Concerns:</h4>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={evaluationData.academicConcerns.maths}
+                          onChange={(e) => handleEvaluationFieldChange('academicConcerns', 'maths', e.target.checked)}
+                        />
                         Maths
                       </label>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={evaluationData.academicConcerns.writing}
+                          onChange={(e) => handleEvaluationFieldChange('academicConcerns', 'writing', e.target.checked)}
+                        />
                         Writing
                       </label>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={evaluationData.academicConcerns.reading}
+                          onChange={(e) => handleEvaluationFieldChange('academicConcerns', 'reading', e.target.checked)}
+                        />
                         Reading
                       </label>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={evaluationData.academicConcerns.general}
+                          onChange={(e) => handleEvaluationFieldChange('academicConcerns', 'general', e.target.checked)}
+                        />
                         General or Not Specific
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           className="rounded border-gray-300"
                           checked={evaluationData.academicConcerns.other}
-                          onChange={(e) => handleOtherChange('academicConcerns', e.target.checked)}
+                          onChange={(e) => handleEvaluationChange('academicConcerns', e.target.checked)}
                         />
                         Other
                       </label>
@@ -1317,7 +1389,7 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                         <input
                           type="text"
                           value={evaluationData.academicConcerns.otherText}
-                          onChange={(e) => handleOtherTextChange('academicConcerns', e.target.value)}
+                          onChange={(e) => handleEvaluationTextChange('academicConcerns', e.target.value)}
                           placeholder="Please specify..."
                           className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ml-6"
                         />
@@ -1327,28 +1399,48 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                     {/* Cognitive Evaluation */}
                     <div className="space-y-2">
                       <h4 className="text-xs font-medium text-gray-500 uppercase">Cognitive Evaluation:</h4>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={evaluationData.cognitiveEvaluation.intellectualDisability}
+                          onChange={(e) => handleEvaluationFieldChange('cognitiveEvaluation', 'intellectualDisability', e.target.checked)}
+                        />
                         Intellectual Disability
                       </label>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={evaluationData.cognitiveEvaluation.giftedTalented}
+                          onChange={(e) => handleEvaluationFieldChange('cognitiveEvaluation', 'giftedTalented', e.target.checked)}
+                        />
                         Gifted and Talented
                       </label>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={evaluationData.cognitiveEvaluation.traumaticBrainInjury}
+                          onChange={(e) => handleEvaluationFieldChange('cognitiveEvaluation', 'traumaticBrainInjury', e.target.checked)}
+                        />
                         Traumatic Brain Injury
                       </label>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={evaluationData.cognitiveEvaluation.general}
+                          onChange={(e) => handleEvaluationFieldChange('cognitiveEvaluation', 'general', e.target.checked)}
+                        />
                         General or Not Specific
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           className="rounded border-gray-300"
                           checked={evaluationData.cognitiveEvaluation.other}
-                          onChange={(e) => handleOtherChange('cognitiveEvaluation', e.target.checked)}
+                          onChange={(e) => handleEvaluationChange('cognitiveEvaluation', e.target.checked)}
                         />
                         Other
                       </label>
@@ -1356,7 +1448,7 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                         <input
                           type="text"
                           value={evaluationData.cognitiveEvaluation.otherText}
-                          onChange={(e) => handleOtherTextChange('cognitiveEvaluation', e.target.value)}
+                          onChange={(e) => handleEvaluationTextChange('cognitiveEvaluation', e.target.value)}
                           placeholder="Please specify..."
                           className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ml-6"
                         />
@@ -1366,28 +1458,39 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                     {/* Behaviour Concerns */}
                     <div className="space-y-2">
                       <h4 className="text-xs font-medium text-gray-500 uppercase">Behaviour Concerns:</h4>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={evaluationData.behaviourConcerns.aggression}
+                          onChange={(e) => handleEvaluationFieldChange('behaviourConcerns', 'aggression', e.target.checked)}
+                        />
                         Aggression
                       </label>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={evaluationData.behaviourConcerns.attentionHyperactivity}
+                          onChange={(e) => handleEvaluationFieldChange('behaviourConcerns', 'attentionHyperactivity', e.target.checked)}
+                        />
                         Attention/Hyperactivity
                       </label>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
-                        Rule Breaking/Defiance
-                      </label>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={evaluationData.behaviourConcerns.general}
+                          onChange={(e) => handleEvaluationFieldChange('behaviourConcerns', 'general', e.target.checked)}
+                        />
                         General or Not Specific
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           className="rounded border-gray-300"
                           checked={evaluationData.behaviourConcerns.other}
-                          onChange={(e) => handleOtherChange('behaviourConcerns', e.target.checked)}
+                          onChange={(e) => handleEvaluationChange('behaviourConcerns', e.target.checked)}
                         />
                         Other
                       </label>
@@ -1395,7 +1498,7 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                         <input
                           type="text"
                           value={evaluationData.behaviourConcerns.otherText}
-                          onChange={(e) => handleOtherTextChange('behaviourConcerns', e.target.value)}
+                          onChange={(e) => handleEvaluationTextChange('behaviourConcerns', e.target.value)}
                           placeholder="Please specify..."
                           className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ml-6"
                         />
@@ -1407,28 +1510,39 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                     {/* Mental Health Concerns */}
                     <div className="space-y-2">
                       <h4 className="text-xs font-medium text-gray-500 uppercase">Mental Health Concerns:</h4>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={evaluationData.mentalHealth.anxiety}
+                          onChange={(e) => handleEvaluationFieldChange('mentalHealth', 'anxiety', e.target.checked)}
+                        />
                         Anxiety
                       </label>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={evaluationData.mentalHealth.depression}
+                          onChange={(e) => handleEvaluationFieldChange('mentalHealth', 'depression', e.target.checked)}
+                        />
                         Depression
                       </label>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
-                        Personality Issues
-                      </label>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={evaluationData.mentalHealth.general}
+                          onChange={(e) => handleEvaluationFieldChange('mentalHealth', 'general', e.target.checked)}
+                        />
                         General or Not Specific
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           className="rounded border-gray-300"
                           checked={evaluationData.mentalHealth.other}
-                          onChange={(e) => handleOtherChange('mentalHealth', e.target.checked)}
+                          onChange={(e) => handleEvaluationChange('mentalHealth', e.target.checked)}
                         />
                         Other
                       </label>
@@ -1436,7 +1550,7 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                         <input
                           type="text"
                           value={evaluationData.mentalHealth.otherText}
-                          onChange={(e) => handleOtherTextChange('mentalHealth', e.target.value)}
+                          onChange={(e) => handleEvaluationTextChange('mentalHealth', e.target.value)}
                           placeholder="Please specify..."
                           className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ml-6"
                         />
@@ -1446,28 +1560,39 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                     {/* Developmental Delay */}
                     <div className="space-y-2">
                       <h4 className="text-xs font-medium text-gray-500 uppercase">Developmental Delay:</h4>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={evaluationData.developmentalDelay.motor}
+                          onChange={(e) => handleEvaluationFieldChange('developmentalDelay', 'motor', e.target.checked)}
+                        />
                         Motor
                       </label>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={evaluationData.developmentalDelay.physicalGrowth}
+                          onChange={(e) => handleEvaluationFieldChange('developmentalDelay', 'physicalGrowth', e.target.checked)}
+                        />
                         Physical/Growth
                       </label>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
-                        Social Skills/Interactions (includes Autism)
-                      </label>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={evaluationData.developmentalDelay.general}
+                          onChange={(e) => handleEvaluationFieldChange('developmentalDelay', 'general', e.target.checked)}
+                        />
                         General or Not Specific
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           className="rounded border-gray-300"
                           checked={evaluationData.developmentalDelay.other}
-                          onChange={(e) => handleOtherChange('developmentalDelay', e.target.checked)}
+                          onChange={(e) => handleEvaluationChange('developmentalDelay', e.target.checked)}
                         />
                         Other
                       </label>
@@ -1475,7 +1600,7 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                         <input
                           type="text"
                           value={evaluationData.developmentalDelay.otherText}
-                          onChange={(e) => handleOtherTextChange('developmentalDelay', e.target.value)}
+                          onChange={(e) => handleEvaluationTextChange('developmentalDelay', e.target.value)}
                           placeholder="Please specify..."
                           className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ml-6"
                         />
@@ -1485,28 +1610,39 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                     {/* Language Concerns */}
                     <div className="space-y-2">
                       <h4 className="text-xs font-medium text-gray-500 uppercase">Language Concerns:</h4>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={evaluationData.languageConcerns.receptive}
+                          onChange={(e) => handleEvaluationFieldChange('languageConcerns', 'receptive', e.target.checked)}
+                        />
                         Receptive
                       </label>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={evaluationData.languageConcerns.expressive}
+                          onChange={(e) => handleEvaluationFieldChange('languageConcerns', 'expressive', e.target.checked)}
+                        />
                         Expressive
                       </label>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
-                        Pragmatic
-                      </label>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={evaluationData.languageConcerns.general}
+                          onChange={(e) => handleEvaluationFieldChange('languageConcerns', 'general', e.target.checked)}
+                        />
                         General or Not Specific
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           className="rounded border-gray-300"
                           checked={evaluationData.languageConcerns.other}
-                          onChange={(e) => handleOtherChange('languageConcerns', e.target.checked)}
+                          onChange={(e) => handleEvaluationChange('languageConcerns', e.target.checked)}
                         />
                         Other
                       </label>
@@ -1514,7 +1650,7 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                         <input
                           type="text"
                           value={evaluationData.languageConcerns.otherText}
-                          onChange={(e) => handleOtherTextChange('languageConcerns', e.target.value)}
+                          onChange={(e) => handleEvaluationTextChange('languageConcerns', e.target.value)}
                           placeholder="Please specify..."
                           className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ml-6"
                         />
@@ -1526,28 +1662,39 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                     {/* Speech Concerns */}
                     <div className="space-y-2">
                       <h4 className="text-xs font-medium text-gray-500 uppercase">Speech Concerns:</h4>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={evaluationData.speechConcerns.articulation}
+                          onChange={(e) => handleEvaluationFieldChange('speechConcerns', 'articulation', e.target.checked)}
+                        />
                         Articulation
                       </label>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={evaluationData.speechConcerns.fluency}
+                          onChange={(e) => handleEvaluationFieldChange('speechConcerns', 'fluency', e.target.checked)}
+                        />
                         Fluency
                       </label>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
-                        Voice
-                      </label>
-                      <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={evaluationData.speechConcerns.general}
+                          onChange={(e) => handleEvaluationFieldChange('speechConcerns', 'general', e.target.checked)}
+                        />
                         General or Not Specific
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           className="rounded border-gray-300"
                           checked={evaluationData.speechConcerns.other}
-                          onChange={(e) => handleOtherChange('speechConcerns', e.target.checked)}
+                          onChange={(e) => handleEvaluationChange('speechConcerns', e.target.checked)}
                         />
                         Other
                       </label>
@@ -1555,7 +1702,7 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                         <input
                           type="text"
                           value={evaluationData.speechConcerns.otherText}
-                          onChange={(e) => handleOtherTextChange('speechConcerns', e.target.value)}
+                          onChange={(e) => handleEvaluationTextChange('speechConcerns', e.target.value)}
                           placeholder="Please specify..."
                           className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ml-6"
                         />

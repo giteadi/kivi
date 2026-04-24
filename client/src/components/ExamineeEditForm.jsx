@@ -11,12 +11,15 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
     id: '',
     firstName: '',
+    middleName: '',
     lastName: '',
     email: '',
     phone: '',
     dateOfBirth: '',
     gender: '',
     languageOfTesting: '',
+    schoolName: '',
+    grade: '',
     address: '',
     city: '',
     state: '',
@@ -28,7 +31,162 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
     learningNeeds: '',
     supportRequirements: '',
     status: 'Active',
+    comment: '',
+    requiresAssessment: false,
+    requiresTherapy: false,
     documents: [] // Array to store uploaded documents
+  });
+
+  // ✅ ADD MISSING STATES - Same as ExamineeDetail
+  const [evaluationData, setEvaluationData] = useState({
+    academicConcerns: { maths: false, general: false, writing: false, reading: false, other: false, otherText: '' },
+    cognitiveEvaluation: { intellectualDisability: false, general: false, giftedTalented: false, traumaticBrainInjury: false, other: false, otherText: '' },
+    behaviourConcerns: { aggression: false, general: false, attentionHyperactivity: false, other: false, otherText: '' },
+    mentalHealth: { anxiety: false, general: false, depression: false, other: false, otherText: '' },
+    developmentalDelay: { motor: false, general: false, physicalGrowth: false, other: false, otherText: '' },
+    languageConcerns: { receptive: false, general: false, expressive: false, other: false, otherText: '' },
+    speechConcerns: { articulation: false, general: false, fluency: false, other: false, otherText: '' },
+    physicalConcerns: { other: false, otherText: '' },
+    substanceAbuse: { other: false, otherText: '' },
+    employment: { other: false, otherText: '' }
+  });
+
+  const [diagnosisData, setDiagnosisData] = useState({
+    autismSpectrum: false,
+    behaviourEmotional: false,
+    giftedTalented: false,
+    intellectualDisability: false,
+    languageDelay: false,
+    learningDisability: false,
+    moodRelated: false,
+    motorDelay: false,
+    personalityDisorders: false,
+    schizophrenia: false,
+    speech: false,
+    substanceAbuse: false,
+    traumaticBrainInjury: false,
+    other: false
+  });
+
+  const [historyData, setHistoryData] = useState({
+    referralSourceName: '',
+    referralSourceRole: '',
+    schoolRelatedConcerns: false,
+    speechConcerns: false,
+    languageConcerns: false,
+    socialEmotionalConcerns: false,
+    cognitiveConcerns: false,
+    physicalConcerns: false,
+    vocationalRehabilitationLegal: false,
+    birthInformationOther: false,
+    birthInformationOtherText: '',
+    developmentalMilestonesOther: false,
+    developmentalMilestonesOtherText: ''
+  });
+
+  const [languageSampleReportData, setLanguageSampleReportData] = useState({
+    primaryLanguage: '',
+    exposedToEnglish: 'not_specified',
+    speakingEnglish: 'not_specified',
+    fluencyRating: 'not_specified',
+    birthComplications: 'with no apparent complications',
+    milestoneSitting: 'unknown',
+    milestoneCrawling: 'unknown',
+    milestoneStanding: 'unknown',
+    milestoneWalking: 'unknown',
+    milestoneBabbling: 'unknown',
+    milestoneFirstWords: 'unknown',
+    milestoneShortSentences: 'unknown',
+    milestoneEating: 'unknown',
+    milestoneSelfFeeding: 'unknown',
+    milestoneToiletAwake: 'unknown',
+    milestoneStayDry: 'unknown',
+    milestoneSocial: 'unknown',
+    additionalInfo: ''
+  });
+
+  const [educationSampleReportData, setEducationSampleReportData] = useState({
+    currentYear: '',
+    schoolName: '',
+    motherEducation: '',
+    fatherEducation: '',
+    examineeCompleted: false,
+    motherCompleted: false,
+    fatherCompleted: false,
+    schoolPlacement: '',
+    placementDuration: '',
+    currentResults: '',
+    currentSchoolName: '',
+    currentAttendance: '',
+    currentPerformance: '',
+    currentDifficulties: '',
+    pastAttendance: '',
+    pastPerformance: '',
+    pastDifficulties: '',
+    testPerformanceReading: 'not_specified',
+    testPerformanceMath: 'not_specified',
+    testPerformanceLanguage: 'not_specified',
+    testPerformanceOther: 'not_specified',
+    pastTestReading: 'not_specified',
+    pastTestMath: 'not_specified',
+    pastTestLanguage: 'not_specified',
+    pastTestOther: 'not_specified',
+    schoolChanges: '',
+    retainedYears: '',
+    nurseryExperience: '',
+    preschoolExperience: '',
+    personalStrengths: [],
+    personalWeaknesses: [],
+    peerStrengths: [],
+    peerWeaknesses: [],
+    learningDisabilities: [],
+    additionalInfo: ''
+  });
+
+  const [healthSampleReportData, setHealthSampleReportData] = useState({
+    healthHistorySource: '',
+    visionDate: '',
+    visionResult: '',
+    hearingDate: '',
+    hearingResult: '',
+    sensoryDysfunction: 'no_history',
+    sensoryHistory: [],
+    motorDysfunction: 'no_history',
+    fineMotorHistory: [],
+    grossMotorHistory: [],
+    pastDiagnosed: [],
+    currentDiagnosed: [],
+    pastTreated: [],
+    currentTreated: [],
+    psychiatricPast: [],
+    psychiatricCurrent: [],
+    psychiatricPastTreated: [],
+    psychiatricCurrentTreated: [],
+    neurologicalPast: [],
+    neurologicalCurrent: [],
+    neurologicalPastTreated: [],
+    neurologicalCurrentTreated: [],
+    otherPast: [],
+    otherCurrent: [],
+    otherPastTreated: [],
+    otherCurrentTreated: [],
+    currentMedications: '',
+    additionalInfo: ''
+  });
+
+  const [employmentSampleReportData, setEmploymentSampleReportData] = useState({
+    employmentStatus: '',
+    currentJob: '',
+    jobDuration: '',
+    previousJobs: '',
+    employmentHistorySource: '',
+    additionalInfo: ''
+  });
+
+  const [personalSampleReportData, setPersonalSampleReportData] = useState({
+    livingArrangement: '',
+    livesWithDetails: '',
+    additionalInfo: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -54,15 +212,60 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
         
         if (result.success) {
           const student = result.data;
-          console.log('Student data:', student);
+          console.log('🔄 EXAMINEE EDIT - Loading Student Data');
+          console.log('📦 Raw student:', student);
+          
+          // ✅ Parse JSON fields - Same as ExamineeDetail
+          let evalData = student.evaluation_data;
+          let diagData = student.diagnosis_data;
+          let histData = student.history_data;
+          
+          console.log('📊 Raw Data Types:');
+          console.log('  - evaluation_data type:', typeof evalData);
+          console.log('  - diagnosis_data type:', typeof diagData);
+          console.log('  - history_data type:', typeof histData);
+          
+          if (typeof evalData === 'string') {
+            try { 
+              evalData = JSON.parse(evalData); 
+              console.log('✅ Parsed evaluation_data:', evalData);
+            } catch (e) { 
+              console.error('❌ Error parsing evaluation_data:', e);
+              evalData = {}; 
+            }
+          }
+          if (typeof diagData === 'string') {
+            try { 
+              diagData = JSON.parse(diagData); 
+              console.log('✅ Parsed diagnosis_data:', diagData);
+            } catch (e) { 
+              console.error('❌ Error parsing diagnosis_data:', e);
+              diagData = {}; 
+            }
+          }
+          if (typeof histData === 'string') {
+            try { 
+              histData = JSON.parse(histData); 
+              console.log('✅ Parsed history_data:', histData);
+            } catch (e) { 
+              console.error('❌ Error parsing history_data:', e);
+              histData = {}; 
+            }
+          }
+          
+          // Set basic form data
           setFormData({
             id: student.id,
             firstName: student.first_name || '',
+            middleName: student.middle_name || '',
             lastName: student.last_name || '',
             email: student.email || '',
             phone: student.phone || '',
             dateOfBirth: student.date_of_birth ? student.date_of_birth.split('T')[0] : '',
             gender: student.gender || '',
+            languageOfTesting: student.language_of_testing || '',
+            schoolName: student.school_name || '',
+            grade: student.grade || '',
             address: student.address || '',
             city: student.city || '',
             state: student.state || '',
@@ -74,8 +277,87 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
             learningNeeds: student.learning_needs || '',
             supportRequirements: student.support_requirements || '',
             status: student.status || 'Active',
+            comment: student.comment || '',
+            requiresAssessment: student.requires_assessment || false,
+            requiresTherapy: student.requires_therapy || false,
             documents: student.documents ? (Array.isArray(student.documents) ? student.documents : []) : []
           });
+          
+          // ✅ Set evaluation data with defaults and merge saved data
+          console.log('📋 Setting Evaluation Data');
+          const safeEvalData = evalData || {};
+          setEvaluationData(prev => ({
+            academicConcerns: { ...prev.academicConcerns, ...(safeEvalData.academicConcerns || {}) },
+            cognitiveEvaluation: { ...prev.cognitiveEvaluation, ...(safeEvalData.cognitiveEvaluation || {}) },
+            behaviourConcerns: { ...prev.behaviourConcerns, ...(safeEvalData.behaviourConcerns || {}) },
+            mentalHealth: { ...prev.mentalHealth, ...(safeEvalData.mentalHealth || {}) },
+            developmentalDelay: { ...prev.developmentalDelay, ...(safeEvalData.developmentalDelay || {}) },
+            languageConcerns: { ...prev.languageConcerns, ...(safeEvalData.languageConcerns || {}) },
+            speechConcerns: { ...prev.speechConcerns, ...(safeEvalData.speechConcerns || {}) },
+            physicalConcerns: { ...prev.physicalConcerns, ...(safeEvalData.physicalConcerns || {}) },
+            substanceAbuse: { ...prev.substanceAbuse, ...(safeEvalData.substanceAbuse || {}) },
+            employment: { ...prev.employment, ...(safeEvalData.employment || {}) }
+          }));
+          
+          // ✅ Set diagnosis data
+          console.log('🏥 Setting Diagnosis Data');
+          const safeDiagData = diagData || {};
+          setDiagnosisData({
+            autismSpectrum: false,
+            behaviourEmotional: false,
+            giftedTalented: false,
+            intellectualDisability: false,
+            languageDelay: false,
+            learningDisability: false,
+            moodRelated: false,
+            motorDelay: false,
+            personalityDisorders: false,
+            schizophrenia: false,
+            speech: false,
+            substanceAbuse: false,
+            traumaticBrainInjury: false,
+            other: false,
+            ...safeDiagData
+          });
+          
+          // ✅ Set history data - Merge with defaults to ensure all fields exist
+          console.log('📋 Setting History Data (MERGING WITH DEFAULTS)');
+          const safeHistData = histData || {};
+          setHistoryData(prev => ({
+            ...prev,
+            ...safeHistData
+          }));
+          if (safeHistData && Object.keys(safeHistData).length > 0) {
+            console.log('  History data keys:', Object.keys(safeHistData));
+          }
+          
+          // ✅ Restore nested sample report data
+          if (histData?.personalSampleReportData) {
+            console.log('  ✅ Restoring personalSampleReportData');
+            setPersonalSampleReportData(histData.personalSampleReportData);
+          }
+          
+          if (histData?.languageSampleReportData) {
+            console.log('  ✅ Restoring languageSampleReportData');
+            setLanguageSampleReportData(histData.languageSampleReportData);
+          }
+          
+          if (histData?.educationSampleReportData) {
+            console.log('  ✅ Restoring educationSampleReportData');
+            setEducationSampleReportData(histData.educationSampleReportData);
+          }
+          
+          if (histData?.healthSampleReportData) {
+            console.log('  ✅ Restoring healthSampleReportData');
+            setHealthSampleReportData(histData.healthSampleReportData);
+          }
+          
+          if (histData?.employmentSampleReportData) {
+            console.log('  ✅ Restoring employmentSampleReportData');
+            setEmploymentSampleReportData(histData.employmentSampleReportData);
+          }
+          
+          console.log('✅ All data loaded successfully in Edit Form');
         } else {
           toast.error('Failed to fetch student data');
         }
@@ -126,10 +408,6 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email is invalid';
-    }
-    
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
     }
     
     if (!formData.dateOfBirth) {
@@ -226,10 +504,50 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
       console.log('🚀 UPDATING STUDENT - Client Side Debug:');
       console.log('📤 Student ID:', cleanStudentId);
       console.log('📤 Form Data:', JSON.stringify(formData, null, 2));
-      console.log('📤 Form Data Keys:', Object.keys(formData));
-      console.log('📤 Form Data Values:', Object.values(formData));
       
-      const result = await api.updatePatient(cleanStudentId, formData);
+      // ✅ Prepare API data with ALL nested fields - Same as ExamineeDetail
+      const apiData = {
+        firstName: formData.firstName,
+        middleName: formData.middleName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender,
+        languageOfTesting: formData.languageOfTesting,
+        schoolName: formData.schoolName,
+        grade: formData.grade,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
+        centreId: formData.centreId,
+        emergencyContactName: formData.emergencyContactName,
+        emergencyContactPhone: formData.emergencyContactPhone,
+        emergencyContactRelation: formData.emergencyContactRelation,
+        learningNeeds: formData.learningNeeds,
+        supportRequirements: formData.supportRequirements,
+        status: formData.status,
+        comment: formData.comment,
+        requiresAssessment: formData.requiresAssessment,
+        requiresTherapy: formData.requiresTherapy,
+        documents: formData.documents,
+        // ✅ Include ALL nested data
+        evaluationData: evaluationData,
+        diagnosisData: diagnosisData,
+        historyData: {
+          ...historyData,
+          personalSampleReportData: personalSampleReportData,
+          languageSampleReportData: languageSampleReportData,
+          educationSampleReportData: educationSampleReportData,
+          healthSampleReportData: healthSampleReportData,
+          employmentSampleReportData: employmentSampleReportData
+        }
+      };
+      
+      console.log('📦 Complete API Data:', JSON.stringify(apiData, null, 2));
+      
+      const result = await api.updatePatient(cleanStudentId, apiData);
       
       if (result.success) {
         toast.success('Student updated successfully');
@@ -419,6 +737,88 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
                     <option value="Other">Other</option>
                   </select>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    School Name
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.schoolName}
+                    onChange={(e) => handleInputChange('schoolName', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter school name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Grade
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.grade}
+                    onChange={(e) => handleInputChange('grade', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter grade"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Middle Name
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.middleName}
+                    onChange={(e) => handleInputChange('middleName', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter middle name"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Additional Information */}
+            <div>
+              <h3 className="text-lg font-medium text-gray-800 mb-4">Additional Information</h3>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="lg:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Comment
+                  </label>
+                  <textarea
+                    value={formData.comment}
+                    onChange={(e) => handleInputChange('comment', e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter any additional comments..."
+                  />
+                </div>
+
+                <div>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.requiresAssessment}
+                      onChange={(e) => handleInputChange('requiresAssessment', e.target.checked)}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Requires Assessment</span>
+                  </label>
+                </div>
+
+                <div>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.requiresTherapy}
+                      onChange={(e) => handleInputChange('requiresTherapy', e.target.checked)}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Requires Therapy</span>
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -449,7 +849,7 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone *
+                    Phone
                   </label>
                   <div className="relative">
                     <FiPhone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -457,15 +857,10 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
-                      className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.phone ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="Enter phone number"
                     />
                   </div>
-                  {errors.phone && (
-                    <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
-                  )}
                 </div>
 
                 <div className="lg:col-span-2">
@@ -507,6 +902,19 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
                     onChange={(e) => handleInputChange('state', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Enter state"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Zip Code
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.zipCode}
+                    onChange={(e) => handleInputChange('zipCode', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter zip code"
                   />
                 </div>
               </div>
