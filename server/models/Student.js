@@ -83,7 +83,7 @@ class Student extends BaseModel {
           }
           return {
             ...student,
-            centre_name: 'MindSaid Learning Centre',
+            centre_name: student.centre_name || 'MindSaid Learning Centre',
             last_session: null
           };
         });
@@ -100,15 +100,15 @@ class Student extends BaseModel {
     
     // ✅ FIXED: Using subqueries instead of GROUP BY to avoid JSON truncation
     const sql = `
-      SELECT 
+      SELECT
         s.*,
-        c.name as centre_name,
+        COALESCE(s.centre_name, c.name) as centre_name,
         -- Safe subqueries (NO GROUP BY ISSUE)
-        (SELECT COUNT(*) 
-         FROM kivi_sessions 
+        (SELECT COUNT(*)
+         FROM kivi_sessions
          WHERE student_id = s.id) as total_sessions,
-        (SELECT MAX(session_date) 
-         FROM kivi_sessions 
+        (SELECT MAX(session_date)
+         FROM kivi_sessions
          WHERE student_id = s.id) as last_session
       FROM kivi_students s
       LEFT JOIN kivi_centres c ON s.centre_id = c.id
