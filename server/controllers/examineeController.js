@@ -19,17 +19,32 @@ class ExamineeController {
         return {
           id: student.id,
           firstName: student.first_name || '',
-          middleName: '',
+          middleName: student.middle_name || '',
           lastName: student.last_name || '',
           examineeId: student.student_id || '',
           gender: student.gender ? student.gender.charAt(0).toUpperCase() + student.gender.slice(1) : '',
           dob: student.date_of_birth ? new Date(student.date_of_birth).toLocaleDateString('en-GB') : '',
           email: student.email || '',
-          comment: student.learning_needs || '',
-          custom1: student.customField1 || '',
-          custom2: student.customField2 || '',
-          custom3: student.customField3 || '',
-          custom4: student.customField4 || '',
+          phone: student.phone || '',
+          address: student.address || '',
+          city: student.city || '',
+          state: student.state || '',
+          zipCode: student.zip_code || '',
+          emergencyContactName: student.emergency_contact_name || '',
+          emergencyContactPhone: student.emergency_contact_phone || '',
+          emergencyContactRelation: student.emergency_contact_relation || '',
+          schoolName: student.school_name || '',
+          grade: student.grade || '',
+          languageOfTesting: student.language_of_testing || '',
+          status: student.status || 'active',
+          registrationDate: student.registration_date || '',
+          comment: student.comment || student.learning_needs || '',
+          custom1: student.custom_field_1 || '',
+          custom2: student.custom_field_2 || '',
+          custom3: student.custom_field_3 || '',
+          custom4: student.custom_field_4 || '',
+          requiresAssessment: student.requires_assessment || false,
+          requiresTherapy: student.requires_therapy || false,
           documents: (() => {
             try {
               return student.documents ? JSON.parse(student.documents) : [];
@@ -125,13 +140,15 @@ class ExamineeController {
   async createExaminee(req, res) {
     try {
       const {
-        firstName, middleName, lastName, examineeId, gender, dob, email,
+        firstName, middleName, lastName, examineeId, gender, dob, email, phone,
+        address, city, state, zipCode, emergencyContactName, emergencyContactPhone, emergencyContactRelation,
         custom1, custom2, custom3, custom4, comment, documents, languageOfTesting,
-        schoolName, grade
+        schoolName, grade, status, registrationDate, requiresAssessment, requiresTherapy
       } = req.body;
 
       const studentData = {
         first_name: firstName,
+        middle_name: middleName,
         last_name: lastName,
         student_id: examineeId,
         gender: gender?.toLowerCase(),
@@ -139,11 +156,24 @@ class ExamineeController {
         school_name: schoolName || null,
         grade: grade || null,
         email: email,
-        customField1: custom1,
-        customField2: custom2,
-        customField3: custom3,
-        customField4: custom4,
+        phone: phone,
+        address: address,
+        city: city,
+        state: state,
+        zip_code: zipCode,
+        emergency_contact_name: emergencyContactName,
+        emergency_contact_phone: emergencyContactPhone,
+        emergency_contact_relation: emergencyContactRelation,
+        custom_field_1: custom1,
+        custom_field_2: custom2,
+        custom_field_3: custom3,
+        custom_field_4: custom4,
         language_of_testing: languageOfTesting,
+        status: status || 'active',
+        registration_date: registrationDate || new Date().toISOString().split('T')[0],
+        requires_assessment: requiresAssessment || false,
+        requires_therapy: requiresTherapy || false,
+        comment: comment,
         learning_needs: comment
       };
 

@@ -57,30 +57,58 @@ class StudentController {
       const { id } = req.params;
       const cacheKey = `student:${id}`;
       
-      console.log(`🔍 GET STUDENT: Fetching student with ID: ${id}`);
+      console.log('\n' + '═'.repeat(80));
+      console.log('🔍 GET STUDENT - DETAILED FLOW');
+      console.log('═'.repeat(80));
+      console.log(`📌 Student ID: ${id}`);
+      console.log(`🗄️ Cache Key: ${cacheKey}`);
       
+      // 🔥 TEMPORARILY DISABLE CACHE FOR TESTING (uncomment after testing)
       // Try to get from cache first
-      const cachedStudent = cache.get(cacheKey);
-      if (cachedStudent) {
-        console.log(`🗄️ CACHE RETURN: Student ${id} retrieved from cache`);
-        return res.json({
-          success: true,
-          data: cachedStudent
-        });
-      }
+      // const cachedStudent = cache.get(cacheKey);
+      // if (cachedStudent) {
+      //   console.log(`✅ CACHE HIT: Student ${id} retrieved from cache`);
+      //   console.log(`📦 Cached Data Keys:`, Object.keys(cachedStudent));
+      //   console.log(`📊 Cached Data Sample:`, {
+      //     id: cachedStudent.id,
+      //     name: `${cachedStudent.first_name} ${cachedStudent.last_name}`,
+      //     school_name: cachedStudent.school_name,
+      //     grade: cachedStudent.grade,
+      //     has_evaluation_data: !!cachedStudent.evaluation_data,
+      //     has_diagnosis_data: !!cachedStudent.diagnosis_data,
+      //     has_history_data: !!cachedStudent.history_data
+      //   });
+      //   console.log('═'.repeat(80) + '\n');
+      //   return res.json({
+      //     success: true,
+      //     data: cachedStudent
+      //   });
+      // }
       
-      console.log(`💾 DB QUERY: Fetching student ${id} from database`);
+      console.log(`🗄️ CACHE DISABLED (testing mode) - Fetching fresh from database`);
+      console.log(`💾 DB QUERY: Executing getStudentWithSessions...`);
       const student = await this.studentModel.getStudentWithSessions(id);
 
       if (!student) {
-        console.log(`❌ GET FAILED: Student not found with ID: ${id}`);
+        console.log(`❌ NOT FOUND: Student with ID ${id} does not exist`);
+        console.log('═'.repeat(80) + '\n');
         return res.status(404).json({
           success: false,
           message: 'Student not found'
         });
       }
 
-      console.log(`🔍 STUDENT FOUND: ${student.first_name} ${student.last_name} (${student.student_id})`);
+      console.log(`✅ STUDENT FOUND: ${student.first_name} ${student.last_name} (${student.student_id})`);
+      console.log(`📊 Database Fields Retrieved:`);
+      console.log(`   - first_name: ${student.first_name}`);
+      console.log(`   - middle_name: ${student.middle_name || 'NULL'}`);
+      console.log(`   - last_name: ${student.last_name}`);
+      console.log(`   - school_name: ${student.school_name || 'NULL'}`);
+      console.log(`   - grade: ${student.grade || 'NULL'}`);
+      console.log(`   - language_of_testing: ${student.language_of_testing || 'NULL'}`);
+      console.log(`   - comment: ${student.comment ? student.comment.substring(0, 50) + '...' : 'NULL'}`);
+      console.log(`   - requires_assessment: ${student.requires_assessment}`);
+      console.log(`   - requires_therapy: ${student.requires_therapy}`);
 
       // Documents are already parsed in the Student model
       if (student.documents && Array.isArray(student.documents)) {
@@ -91,44 +119,91 @@ class StudentController {
         student.documents = [];
       }
 
-      // Cache the result (5 minutes TTL)
-      cache.set(cacheKey, student, 5 * 60 * 1000);
-      console.log(`🗄️ CACHE STORE: Student ${id} cached for 5 minutes`);
-
       // Parse JSON fields if they exist
+      console.log(`🔍 Parsing JSON Fields:`);
       if (student.evaluation_data && typeof student.evaluation_data === 'string') {
         try {
-          student.evaluation_data = JSON.parse(student.evaluation_data);
+          const parsed = JSON.parse(student.evaluation_data);
+          console.log(`   ✅ evaluation_data: ${student.evaluation_data.length} chars → Parsed successfully`);
+          console.log(`      Keys:`, Object.keys(parsed));
+          student.evaluation_data = parsed;
         } catch (e) {
-          console.error('Error parsing evaluation_data:', e.message);
+          console.error(`   ❌ evaluation_data: Parse error -`, e.message);
           student.evaluation_data = null;
         }
+      } else {
+        console.log(`   ℹ️ evaluation_data: ${student.evaluation_data ? 'Already parsed' : 'NULL'}`);
       }
+      
       if (student.diagnosis_data && typeof student.diagnosis_data === 'string') {
         try {
-          student.diagnosis_data = JSON.parse(student.diagnosis_data);
+          const parsed = JSON.parse(student.diagnosis_data);
+          console.log(`   ✅ diagnosis_data: ${student.diagnosis_data.length} chars → Parsed successfully`);
+          console.log(`      Keys:`, Object.keys(parsed));
+          student.diagnosis_data = parsed;
         } catch (e) {
-          console.error('Error parsing diagnosis_data:', e.message);
+          console.error(`   ❌ diagnosis_data: Parse error -`, e.message);
           student.diagnosis_data = null;
         }
+      } else {
+        console.log(`   ℹ️ diagnosis_data: ${student.diagnosis_data ? 'Already parsed' : 'NULL'}`);
       }
+      
       if (student.history_data && typeof student.history_data === 'string') {
         try {
-          student.history_data = JSON.parse(student.history_data);
+          const parsed = JSON.parse(student.history_data);
+          console.log(`   ✅ history_data: ${student.history_data.length} chars → Parsed successfully`);
+          console.log(`      Top-level Keys:`, Object.keys(parsed));
+          
+          // 🔥 CHECK NESTED DATA
+          if (parsed.languageSampleReportData) {
+            console.log(`      ✅ languageSampleReportData exists with keys:`, Object.keys(parsed.languageSampleReportData));
+          } else {
+            console.log(`      ❌ languageSampleReportData MISSING`);
+          }
+          
+          if (parsed.educationSampleReportData) {
+            console.log(`      ✅ educationSampleReportData exists with keys:`, Object.keys(parsed.educationSampleReportData));
+          } else {
+            console.log(`      ❌ educationSampleReportData MISSING`);
+          }
+          
+          if (parsed.healthSampleReportData) {
+            console.log(`      ✅ healthSampleReportData exists with keys:`, Object.keys(parsed.healthSampleReportData));
+          } else {
+            console.log(`      ❌ healthSampleReportData MISSING`);
+          }
+          
+          if (parsed.employmentSampleReportData) {
+            console.log(`      ✅ employmentSampleReportData exists with keys:`, Object.keys(parsed.employmentSampleReportData));
+          } else {
+            console.log(`      ❌ employmentSampleReportData MISSING`);
+          }
+          
+          student.history_data = parsed;
         } catch (e) {
-          console.error('Error parsing history_data:', e.message);
+          console.error(`   ❌ history_data: Parse error -`, e.message);
           student.history_data = null;
         }
+      } else {
+        console.log(`   ℹ️ history_data: ${student.history_data ? 'Already parsed' : 'NULL'}`);
       }
 
-      console.log(`✅ GET SUCCESS: Student ${id} retrieved with ${student.documents.length} documents`);
+      // Cache the result (5 minutes TTL) - DISABLED FOR TESTING
+      // cache.set(cacheKey, student, 5 * 60 * 1000);
+      // console.log(`🗄️ CACHE STORE: Student ${id} cached for 5 minutes`);
+      console.log(`🗄️ CACHE: Disabled for testing`);
+
+      console.log(`✅ GET SUCCESS: Returning student data`);
+      console.log('═'.repeat(80) + '\n');
       res.json({
         success: true,
         data: student
       });
     } catch (error) {
-      console.error(`❌ GET ERROR: Failed to fetch student ${id}:`, error);
+      console.error(`❌ GET ERROR: Failed to fetch student ${req.params.id}:`, error);
       console.error(`❌ ERROR STACK:`, error.stack);
+      console.log('═'.repeat(80) + '\n');
       res.status(500).json({
         success: false,
         message: 'Internal server error'
@@ -325,6 +400,7 @@ class StudentController {
       
       // Map camelCase to snake_case for database
       const updateData = {
+        student_id: req.body.studentId,
         first_name: req.body.firstName,
         middle_name: req.body.middleName,
         last_name: req.body.lastName,
@@ -351,6 +427,8 @@ class StudentController {
         custom_field_3: req.body.customField3,
         custom_field_4: req.body.customField4,
         language_of_testing: req.body.languageOfTesting,
+        status: req.body.status,
+        registration_date: req.body.registrationDate,
         requires_assessment: req.body.requiresAssessment,
         requires_therapy: req.body.requiresTherapy,
         evaluation_data: req.body.evaluationData ? JSON.stringify(req.body.evaluationData) : null,

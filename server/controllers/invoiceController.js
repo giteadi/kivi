@@ -159,8 +159,12 @@ class InvoiceController {
       // If assessment doesn't exist, create it first
       if (!assessmentRecord) {
         console.log('Assessment not found, creating new assessment record...');
+        const parsedStudentId = parseInt(studentId);
+        if (!parsedStudentId || isNaN(parsedStudentId)) {
+          throw new Error('Invalid student_id: ' + studentId);
+        }
         const newAssessmentId = await assessmentModel.create({
-          student_id: parseInt(studentId) || 1,
+          student_id: parsedStudentId,
           assessment_name: assessmentName || 'Educational Assessment',
           assessment_type: assessmentId || 'standard', // Use the string ID as type
           price: parseFloat(price) || 5500,

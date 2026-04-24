@@ -348,6 +348,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       console.log('🏥 Setting Diagnosis Data:');
       // FIX: Ensure diagData is properly merged with defaults
       const safeDiagData = diagData || {};
+      console.log('🐛 DEBUG - safeDiagData from API:', JSON.stringify(safeDiagData, null, 2));
       const newDiagData = {
         autismSpectrum: false,
         behaviourEmotional: false,
@@ -366,7 +367,8 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
         ...safeDiagData
       };
       console.log('  Diagnosis Data:', newDiagData);
-      
+      console.log('🐛 DEBUG - newDiagData.autismSpectrum:', newDiagData.autismSpectrum);
+
       // Set diagnosis data
       setDiagnosisData(newDiagData);
       

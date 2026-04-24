@@ -94,27 +94,47 @@ class Student extends BaseModel {
     }
   }
 
-  // Get student with sessions
+  // Get student with sessions - FIXED: No GROUP BY with JSON fields
   async getStudentWithSessions(id) {
+    console.log('🔍 Student.getStudentWithSessions - Fetching student ID:', id);
+    
+    // ✅ FIXED: Using subqueries instead of GROUP BY to avoid JSON truncation
     const sql = `
-      SELECT s.*, 
-             COUNT(sess.id) as total_sessions,
-             MAX(sess.session_date) as last_session
+      SELECT 
+        s.*,
+        c.name as centre_name,
+        -- Safe subqueries (NO GROUP BY ISSUE)
+        (SELECT COUNT(*) 
+         FROM kivi_sessions 
+         WHERE student_id = s.id) as total_sessions,
+        (SELECT MAX(session_date) 
+         FROM kivi_sessions 
+         WHERE student_id = s.id) as last_session
       FROM kivi_students s
-      LEFT JOIN kivi_sessions sess ON s.id = sess.student_id
+      LEFT JOIN kivi_centres c ON s.centre_id = c.id
       WHERE s.id = ?
-      GROUP BY s.id
     `;
+    
+    console.log('📊 Executing query without GROUP BY to preserve JSON fields');
     const results = await this.query(sql, [id]);
+    
     if (results.length > 0) {
       const student = results[0];
-      // Ensure documents is properly parsed
+      console.log('✅ Student found:', student.first_name, student.last_name);
+      console.log('📦 Raw JSON field types:');
+      console.log('   - documents:', typeof student.documents);
+      console.log('   - evaluation_data:', typeof student.evaluation_data);
+      console.log('   - diagnosis_data:', typeof student.diagnosis_data);
+      console.log('   - history_data:', typeof student.history_data);
+      
+      // Parse documents field
       if (student.documents) {
         if (typeof student.documents === 'string') {
           try {
             student.documents = JSON.parse(student.documents);
+            console.log('✅ Parsed documents:', student.documents.length, 'items');
           } catch (e) {
-            console.error('Error parsing documents:', e.message);
+            console.error('❌ Error parsing documents:', e.message);
             student.documents = [];
           }
         } else if (!Array.isArray(student.documents)) {
@@ -123,8 +143,40 @@ class Student extends BaseModel {
       } else {
         student.documents = [];
       }
+      
+      // Log JSON field sizes for debugging
+      if (student.evaluation_data) {
+        const evalSize = typeof student.evaluation_data === 'string' 
+          ? student.evaluation_data.length 
+          : JSON.stringify(student.evaluation_data).length;
+        console.log('📏 evaluation_data size:', evalSize, 'bytes');
+      }
+      
+      if (student.history_data) {
+        const histSize = typeof student.history_data === 'string' 
+          ? student.history_data.length 
+          : JSON.stringify(student.history_data).length;
+        console.log('📏 history_data size:', histSize, 'bytes');
+        
+        // Check if nested data exists
+        if (typeof student.history_data === 'string') {
+          try {
+            const parsed = JSON.parse(student.history_data);
+            console.log('🔍 history_data keys:', Object.keys(parsed));
+            console.log('   - Has languageSampleReportData:', !!parsed.languageSampleReportData);
+            console.log('   - Has educationSampleReportData:', !!parsed.educationSampleReportData);
+            console.log('   - Has healthSampleReportData:', !!parsed.healthSampleReportData);
+            console.log('   - Has employmentSampleReportData:', !!parsed.employmentSampleReportData);
+          } catch (e) {
+            console.error('❌ Error parsing history_data for inspection:', e.message);
+          }
+        }
+      }
+      
       return student;
     }
+    
+    console.log('❌ Student not found with ID:', id);
     return null;
   }
 
