@@ -77,8 +77,140 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
     referralSourceOtherText: ''
   });
 
+  // State for Referral fields
+  const [referralData, setReferralData] = useState({
+    referralSourceName: '',
+    referralSourceRole: '',
+    schoolRelatedConcerns: false,
+    speechConcerns: false,
+    languageConcerns: false,
+    socialEmotionalConcerns: false,
+    cognitiveConcerns: false,
+    physicalConcerns: false,
+    vocationalRehabilitationLegal: false
+  });
+
   // State for Referral Reason text
   const [referralReasonText, setReferralReasonText] = useState('');
+
+  // State for Sample Report Sentence
+  const [showSampleReport, setShowSampleReport] = useState(false);
+
+  // State for Personal Sample Report Sentence
+  const [showPersonalSampleReport, setShowPersonalSampleReport] = useState(false);
+  const [personalSampleReportData, setPersonalSampleReportData] = useState({
+    age: '',
+    livesWith: '',
+    siblingCount: '',
+    additionalInfo: ''
+  });
+
+  // State for Language/Development Sample Report Sentence
+  const [showLanguageSampleReport, setShowLanguageSampleReport] = useState(false);
+  const [languageSampleReportData, setLanguageSampleReportData] = useState({
+    primaryLanguage: '',
+    exposedToEnglish: 'not_specified',
+    speakingEnglish: 'not_specified',
+    fluencyRating: 'not_specified',
+    birthComplications: 'with no apparent complications',
+    milestoneSitting: 'unknown',
+    milestoneCrawling: 'unknown',
+    milestoneStanding: 'unknown',
+    milestoneWalking: 'unknown',
+    milestoneBabbling: 'unknown',
+    milestoneFirstWords: 'unknown',
+    milestoneShortSentences: 'unknown',
+    milestoneEating: 'unknown',
+    milestoneSelfFeeding: 'unknown',
+    milestoneToiletAwake: 'unknown',
+    milestoneStayDry: 'unknown',
+    milestoneSocial: 'unknown',
+    additionalInfo: ''
+  });
+
+  // State for Education Sample Report Sentence
+  const [showEducationSampleReport, setShowEducationSampleReport] = useState(false);
+  const [educationSampleReportData, setEducationSampleReportData] = useState({
+    currentYear: '',
+    schoolName: '',
+    motherEducation: '',
+    fatherEducation: '',
+    examineeCompleted: false,
+    motherCompleted: false,
+    fatherCompleted: false,
+    schoolPlacement: '',
+    placementDuration: '',
+    currentResults: '',
+    currentSchoolName: '',
+    currentAttendance: '',
+    currentPerformance: '',
+    currentDifficulties: '',
+    pastAttendance: '',
+    pastPerformance: '',
+    pastDifficulties: '',
+    testPerformanceReading: 'not_specified',
+    testPerformanceMath: 'not_specified',
+    testPerformanceLanguage: 'not_specified',
+    testPerformanceOther: 'not_specified',
+    pastTestReading: 'not_specified',
+    pastTestMath: 'not_specified',
+    pastTestLanguage: 'not_specified',
+    pastTestOther: 'not_specified',
+    schoolChanges: '',
+    retainedYears: '',
+    nurseryExperience: '',
+    preschoolExperience: '',
+    personalStrengths: [],
+    personalWeaknesses: [],
+    peerStrengths: [],
+    peerWeaknesses: [],
+    learningDisabilities: [],
+    additionalInfo: ''
+  });
+
+  // State for Health Sample Report Sentence
+  const [showHealthSampleReport, setShowHealthSampleReport] = useState(false);
+  const [healthSampleReportData, setHealthSampleReportData] = useState({
+    healthHistorySource: '',
+    visionDate: '',
+    visionResult: '',
+    hearingDate: '',
+    hearingResult: '',
+    sensoryDysfunction: 'no_history',
+    sensoryHistory: [],
+    motorDysfunction: 'no_history',
+    fineMotorHistory: [],
+    grossMotorHistory: [],
+    pastDiagnosed: [],
+    currentDiagnosed: [],
+    pastTreated: [],
+    currentTreated: [],
+    psychiatricPast: [],
+    psychiatricCurrent: [],
+    psychiatricPastTreated: [],
+    psychiatricCurrentTreated: [],
+    neurologicalPast: [],
+    neurologicalCurrent: [],
+    neurologicalPastTreated: [],
+    neurologicalCurrentTreated: [],
+    otherPast: [],
+    otherCurrent: [],
+    otherPastTreated: [],
+    otherCurrentTreated: [],
+    currentMedications: '',
+    additionalInfo: ''
+  });
+
+  // State for Employment Sample Report Sentence
+  const [showEmploymentSampleReport, setShowEmploymentSampleReport] = useState(false);
+  const [employmentSampleReportData, setEmploymentSampleReportData] = useState({
+    employmentStatus: '',
+    currentJob: '',
+    jobDuration: '',
+    previousJobs: '',
+    employmentHistorySource: '',
+    additionalInfo: ''
+  });
 
   // Handler for History Other checkboxes
   const handleHistoryOtherChange = (field, checked) => {
@@ -94,6 +226,252 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
       ...prev,
       [field]: text
     }));
+  };
+
+  // Handler for Referral fields
+  const handleReferralChange = (field, checked) => {
+    setReferralData(prev => ({
+      ...prev,
+      [field]: checked
+    }));
+  };
+
+  const handleReferralTextChange = (field, text) => {
+    setReferralData(prev => ({
+      ...prev,
+      [field]: text
+    }));
+  };
+
+  // Generate dynamic sample report sentence based on selected concerns
+  const generateSampleReportSentence = () => {
+    const firstName = formData.firstName || 'Charlie';
+    const sourceName = referralData.referralSourceName || 'Mr. Smith';
+    const sourceRole = referralData.referralSourceRole || 'teacher';
+    
+    // Build concerns list based on referralData checkboxes
+    const concerns = [];
+    
+    if (referralData.schoolRelatedConcerns) {
+      concerns.push('school-related concerns');
+    }
+    if (referralData.speechConcerns) {
+      concerns.push('speech concerns');
+    }
+    if (referralData.languageConcerns) {
+      concerns.push('language concerns');
+    }
+    if (referralData.socialEmotionalConcerns) {
+      concerns.push('social/emotional concerns');
+    }
+    if (referralData.cognitiveConcerns) {
+      concerns.push('cognitive concerns');
+    }
+    if (referralData.physicalConcerns) {
+      concerns.push('physical concerns');
+    }
+    if (referralData.vocationalRehabilitationLegal) {
+      concerns.push('vocational/rehabilitation/legal issues');
+    }
+    
+    // Build the sentence with proper grammar
+    let concernsText = '';
+    if (concerns.length === 0) {
+      concernsText = 'school-related concerns and speech concerns';
+    } else if (concerns.length === 1) {
+      concernsText = concerns[0];
+    } else if (concerns.length === 2) {
+      concernsText = `${concerns[0]} and ${concerns[1]}`;
+    } else {
+      const lastConcern = concerns[concerns.length - 1];
+      const otherConcerns = concerns.slice(0, -1).join(', ');
+      concernsText = `${otherConcerns}, and ${lastConcern}`;
+    }
+    
+    return `${firstName} was referred for an evaluation by {${sourceName}}, his/her {${sourceRole}}, secondary to {${concernsText}}.`;
+  };
+
+  // Handler for Personal Sample Report Sentence text inputs
+  const handlePersonalSampleReportTextChange = (field, text) => {
+    setPersonalSampleReportData(prev => ({
+      ...prev,
+      [field]: text
+    }));
+  };
+
+  // Generate Personal sample report sentence
+  const generatePersonalSampleReportSentence = () => {
+    const firstName = formData.firstName || 'Charlie';
+    const age = personalSampleReportData.age || '3';
+    const livesWith = personalSampleReportData.livesWith || 'his parents';
+    const siblingCount = personalSampleReportData.siblingCount || '1';
+    
+    return `${firstName} is a {${age}}-year-old child who lives with {${livesWith}}. There is {${siblingCount}} sibling residing in the same home with him/her.`;
+  };
+
+  // Handler for Language/Development Sample Report Sentence
+  const handleLanguageSampleReportTextChange = (field, value) => {
+    setLanguageSampleReportData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Generate Language/Development sample report sentence
+  const generateLanguageSampleReportSentence = () => {
+    const firstName = formData.firstName || 'Charlie';
+    const primaryLanguage = languageSampleReportData.primaryLanguage || 'English';
+    const exposedToEnglish = languageSampleReportData.exposedToEnglish === 'not_specified' ? 'since birth' : 
+      languageSampleReportData.exposedToEnglish === 'since_birth' ? 'since birth' :
+      languageSampleReportData.exposedToEnglish === 'one_to_three' ? 'for one to three years' :
+      languageSampleReportData.exposedToEnglish === 'four_to_five' ? 'for four to five years' :
+      languageSampleReportData.exposedToEnglish === 'longer_than_five' ? 'for longer than five years' :
+      languageSampleReportData.exposedToEnglish === 'other' ? 'other' : 'since birth';
+    const speakingEnglish = languageSampleReportData.speakingEnglish === 'not_specified' ? 'since first talking' :
+      languageSampleReportData.speakingEnglish === 'since_first_talking' ? 'since first talking' :
+      languageSampleReportData.speakingEnglish === 'one_to_three' ? 'for one to three years' :
+      languageSampleReportData.speakingEnglish === 'four_to_five' ? 'for four to five years' :
+      languageSampleReportData.speakingEnglish === 'longer_than_five' ? 'for longer than five years' :
+      languageSampleReportData.speakingEnglish === 'other' ? 'other' : 'since first talking';
+    const birthComplications = languageSampleReportData.birthComplications || 'with no apparent complications';
+    
+    const getMilestoneText = (value) => {
+      if (value === 'early') return 'earlier than expected';
+      if (value === 'typical') return 'within the expected time frame';
+      if (value === 'late') return 'later than expected';
+      return 'unknown';
+    };
+    
+    const sitting = getMilestoneText(languageSampleReportData.milestoneSitting);
+    const crawling = getMilestoneText(languageSampleReportData.milestoneCrawling);
+    const babbling = getMilestoneText(languageSampleReportData.milestoneBabbling);
+    const firstWords = getMilestoneText(languageSampleReportData.milestoneFirstWords);
+    const social = languageSampleReportData.milestoneSocial === 'atypical' ? 'atypical' :
+                  languageSampleReportData.milestoneSocial === 'typical' ? 'typical' :
+                  languageSampleReportData.milestoneSocial === 'delayed' ? 'delayed' : 'unknown';
+    
+    return `${firstName}'s primary language is {${primaryLanguage}}. He has been exposed to English {${exposedToEnglish}} and speaking English {${speakingEnglish}}. ${firstName} was born {${birthComplications}}. ${firstName} began {sitting alone} and {crawling} {${sitting}}. He began {babbling} and {speaking first words} {${firstWords}}. His development of social interaction skills has been {${social}} when compared to peers.`;
+  };
+
+  // Handler for Education Sample Report Sentence
+  const handleEducationSampleReportTextChange = (field, value) => {
+    setEducationSampleReportData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleEducationSampleReportCheckboxChange = (field, checked) => {
+    setEducationSampleReportData(prev => ({
+      ...prev,
+      [field]: checked
+    }));
+  };
+
+  const handleEducationArrayChange = (field, value) => {
+    setEducationSampleReportData(prev => {
+      const currentArray = prev[field] || [];
+      if (currentArray.includes(value)) {
+        return { ...prev, [field]: currentArray.filter(item => item !== value) };
+      } else {
+        return { ...prev, [field]: [...currentArray, value] };
+      }
+    });
+  };
+
+  // Generate Education sample report sentence
+  const generateEducationSampleReportSentence = () => {
+    const firstName = formData.firstName || 'Charlie';
+    const currentYear = educationSampleReportData.currentYear || 'Year 3';
+    const schoolName = educationSampleReportData.schoolName || 'Oak Tree Primary School';
+    const motherEducation = educationSampleReportData.motherEducation || 'graduate';
+    const fatherEducation = educationSampleReportData.fatherEducation || 'high school graduate';
+    
+    const strengths = educationSampleReportData.personalStrengths.length > 0 
+      ? educationSampleReportData.personalStrengths.join(', ') 
+      : 'mathematics, science, and art';
+    const weaknesses = educationSampleReportData.personalWeaknesses.length > 0 
+      ? educationSampleReportData.personalWeaknesses.join(', ') 
+      : 'language';
+    const peerStrengths = educationSampleReportData.peerStrengths.length > 0 
+      ? educationSampleReportData.peerStrengths.join(', ') 
+      : 'art';
+    const peerWeaknesses = educationSampleReportData.peerWeaknesses.length > 0 
+      ? educationSampleReportData.peerWeaknesses.join(', ') 
+      : 'language';
+    const disabilities = educationSampleReportData.learningDisabilities.length > 0 
+      ? educationSampleReportData.learningDisabilities.join(' and ') 
+      : 'reading and writing';
+    
+    return `${firstName} is currently in {${currentYear}} at {${schoolName}}. His mother is a {${motherEducation}} and his father is a {${fatherEducation}}. Thus far ${firstName} has demonstrated personal strengths in {${strengths}}, and weakness in {${weaknesses}}. When compared to his peers, he has shown strength in {${peerStrengths}} and weakness in {${peerWeaknesses}}. He has been diagnosed with a learning disability (or disorder) in the following areas: {${disabilities}}.`;
+  };
+
+  // Handler for Health Sample Report Sentence
+  const handleHealthSampleReportTextChange = (field, value) => {
+    setHealthSampleReportData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleHealthSampleReportCheckboxChange = (field, checked) => {
+    setHealthSampleReportData(prev => ({
+      ...prev,
+      [field]: checked
+    }));
+  };
+
+  const handleHealthArrayChange = (field, value) => {
+    setHealthSampleReportData(prev => {
+      const currentArray = prev[field] || [];
+      if (currentArray.includes(value)) {
+        return { ...prev, [field]: currentArray.filter(item => item !== value) };
+      } else {
+        return { ...prev, [field]: [...currentArray, value] };
+      }
+    });
+  };
+
+  // Generate Health sample report sentence
+  const generateHealthSampleReportSentence = () => {
+    const firstName = formData.firstName || 'Charlie';
+    const healthHistorySource = healthSampleReportData.healthHistorySource || 'his mother';
+    const visionResult = healthSampleReportData.visionResult || 'that he has normal visual acuity';
+    const hearingResult = healthSampleReportData.hearingResult || 'within normal limits with the assistance of a hearing aid';
+    const sensoryHistory = healthSampleReportData.sensoryHistory.length > 0 
+      ? healthSampleReportData.sensoryHistory.join(', ') 
+      : 'visual perceptual dysfunction';
+    const motorDysfunction = healthSampleReportData.motorDysfunction === 'no_history' ? 'No history of motor dysfunction was reported' : 'A history of motor dysfunction was reported';
+    const pastDiagnosed = healthSampleReportData.pastDiagnosed.length > 0 
+      ? healthSampleReportData.pastDiagnosed.join(', ') 
+      : 'asthma';
+    const pastTreated = healthSampleReportData.pastTreated.length > 0 
+      ? healthSampleReportData.pastTreated.join(', ') 
+      : 'asthma';
+    const currentDiagnosed = healthSampleReportData.currentDiagnosed.length > 0 
+      ? healthSampleReportData.currentDiagnosed.join(', ') 
+      : 'Attention-Deficit Hyperactivity Disorder';
+    
+    return `${firstName}'s health history was provided by {${healthHistorySource}}. ${firstName}'s most recent vision screening revealed {${visionResult}}. ${firstName}'s most recent hearing screening revealed that he hears {${hearingResult}}. Reported sensory problems include {${sensoryHistory}}. {${motorDysfunction}}. ${firstName} was previously diagnosed with {${pastDiagnosed}}. He received treatment for {${pastTreated}}. ${firstName} is currently diagnosed with {${currentDiagnosed}}.`;
+  };
+
+  // Handler for Employment Sample Report Sentence
+  const handleEmploymentSampleReportTextChange = (field, value) => {
+    setEmploymentSampleReportData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Generate Employment sample report sentence
+  const generateEmploymentSampleReportSentence = () => {
+    const firstName = formData.firstName || 'Charlie';
+    const employmentStatus = employmentSampleReportData.employmentStatus || 'employed';
+    const currentJob = employmentSampleReportData.currentJob || 'software engineer';
+    const jobDuration = employmentSampleReportData.jobDuration || '2 years';
+    const employmentHistorySource = employmentSampleReportData.employmentHistorySource || 'self-report';
+    
+    return `${firstName} is currently ${employmentStatus} as a {${currentJob}} for {${jobDuration}}. Employment history was provided by {${employmentHistorySource}}.`;
   };
   
   const [formData, setFormData] = useState({
@@ -219,7 +597,16 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
         requiresTherapy: formData.requiresTherapy,
         evaluationData: evaluationData,
         diagnosisData: expandedDiagnoses,
-        historyData: historyOtherData
+        historyData: {
+          ...historyOtherData,
+          ...referralData,
+          referralReasonText: referralReasonText,
+          personalSampleReportData: personalSampleReportData,
+          languageSampleReportData: languageSampleReportData,
+          educationSampleReportData: educationSampleReportData,
+          healthSampleReportData: healthSampleReportData,
+          employmentSampleReportData: employmentSampleReportData
+        }
       };
 
       const response = await api.request('/students', {
@@ -1850,11 +2237,25 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                   </div>
 
                   {/* Sample Report Sentence */}
-                  <div className="border rounded-lg overflow-hidden">
-                    <button className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left">
-                      <span className="text-xs font-medium">⊞</span>
+                  <div className="border rounded-lg overflow-hidden mb-4">
+                    <button 
+                      onClick={() => setShowSampleReport(!showSampleReport)}
+                      className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                    >
+                      <span className="text-xs font-medium">{showSampleReport ? '⊟' : '⊞'}</span>
                       <span className="font-medium text-xs">Sample Report Sentence</span>
                     </button>
+                    
+                    {showSampleReport && (
+                      <div className="p-4 bg-white border-t">
+                        <p className="text-xs text-gray-600 mb-3 italic bg-gray-50 p-3 rounded border">
+                          {generateSampleReportSentence()}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2">
+                          This sentence is automatically generated from the Referral Source and Referral Reason(s) fields below.
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {historySubTab === 'referral' && (
@@ -1864,18 +2265,24 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                         {/* Referral Source */}
                         <div className="space-y-4">
                           <h3 className="text-sm font-semibold text-blue-800">Referral Source</h3>
-                          
+
                           <div>
                             <label className="block text-xs text-gray-600 mb-1">Name of the Referral Source:</label>
                             <input
                               type="text"
+                              value={referralData.referralSourceName}
+                              onChange={(e) => handleReferralTextChange('referralSourceName', e.target.value)}
                               className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             />
                           </div>
 
                           <div>
                             <label className="block text-xs text-gray-600 mb-1">Role of the Referral Source:</label>
-                            <select className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
+                            <select
+                              value={referralData.referralSourceRole}
+                              onChange={(e) => handleReferralTextChange('referralSourceRole', e.target.value)}
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                            >
                               <option value="">Please Select...</option>
                               <option value="teacher">Teacher</option>
                               <option value="parent">Parent</option>
@@ -1911,34 +2318,69 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                         {/* Referral Reason(s) */}
                         <div className="space-y-3">
                           <h3 className="text-sm font-semibold text-blue-800">Referral Reason(s)</h3>
-                          
+
                           <div className="space-y-2">
                             <label className="flex items-center gap-2 text-xs text-gray-700">
-                              <input type="checkbox" className="rounded border-gray-300" />
+                              <input
+                                type="checkbox"
+                                className="rounded border-gray-300"
+                                checked={referralData.schoolRelatedConcerns}
+                                onChange={(e) => handleReferralChange('schoolRelatedConcerns', e.target.checked)}
+                              />
                               School Related Concerns
                             </label>
                             <label className="flex items-center gap-2 text-xs text-gray-700">
-                              <input type="checkbox" className="rounded border-gray-300" />
+                              <input
+                                type="checkbox"
+                                className="rounded border-gray-300"
+                                checked={referralData.speechConcerns}
+                                onChange={(e) => handleReferralChange('speechConcerns', e.target.checked)}
+                              />
                               Speech Concerns
                             </label>
                             <label className="flex items-center gap-2 text-xs text-gray-700">
-                              <input type="checkbox" className="rounded border-gray-300" />
+                              <input
+                                type="checkbox"
+                                className="rounded border-gray-300"
+                                checked={referralData.languageConcerns}
+                                onChange={(e) => handleReferralChange('languageConcerns', e.target.checked)}
+                              />
                               Language Concerns
                             </label>
                             <label className="flex items-center gap-2 text-xs text-gray-700">
-                              <input type="checkbox" className="rounded border-gray-300" />
+                              <input
+                                type="checkbox"
+                                className="rounded border-gray-300"
+                                checked={referralData.socialEmotionalConcerns}
+                                onChange={(e) => handleReferralChange('socialEmotionalConcerns', e.target.checked)}
+                              />
                               Social/Emotional Concerns
                             </label>
                             <label className="flex items-center gap-2 text-xs text-gray-700">
-                              <input type="checkbox" className="rounded border-gray-300" />
+                              <input
+                                type="checkbox"
+                                className="rounded border-gray-300"
+                                checked={referralData.cognitiveConcerns}
+                                onChange={(e) => handleReferralChange('cognitiveConcerns', e.target.checked)}
+                              />
                               Cognitive Concerns
                             </label>
                             <label className="flex items-center gap-2 text-xs text-gray-700">
-                              <input type="checkbox" className="rounded border-gray-300" />
+                              <input
+                                type="checkbox"
+                                className="rounded border-gray-300"
+                                checked={referralData.physicalConcerns}
+                                onChange={(e) => handleReferralChange('physicalConcerns', e.target.checked)}
+                              />
                               Physical Concerns
                             </label>
                             <label className="flex items-center gap-2 text-xs text-gray-700">
-                              <input type="checkbox" className="rounded border-gray-300" />
+                              <input
+                                type="checkbox"
+                                className="rounded border-gray-300"
+                                checked={referralData.vocationalRehabilitationLegal}
+                                onChange={(e) => handleReferralChange('vocationalRehabilitationLegal', e.target.checked)}
+                              />
                               Vocational/Rehabilitation/Legal Issues
                             </label>
                           </div>
@@ -1967,6 +2409,72 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
 
                   {historySubTab === 'personal' && (
                     <>
+                      {/* Sample Report Sentence for Personal */}
+                      <div className="border rounded-lg overflow-hidden mb-4">
+                        <button 
+                          onClick={() => setShowPersonalSampleReport(!showPersonalSampleReport)}
+                          className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                        >
+                          <span className="text-xs font-medium">{showPersonalSampleReport ? '⊟' : '⊞'}</span>
+                          <span className="font-medium text-xs">Sample Report Sentence</span>
+                        </button>
+                        
+                        {showPersonalSampleReport && (
+                          <div className="p-4 bg-white border-t">
+                            <p className="text-xs text-gray-600 mb-3 italic bg-gray-50 p-3 rounded border">
+                              {generatePersonalSampleReportSentence()}
+                            </p>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div>
+                                <label className="block text-xs text-gray-600 mb-1">Age (years):</label>
+                                <input
+                                  type="text"
+                                  value={personalSampleReportData.age}
+                                  onChange={(e) => handlePersonalSampleReportTextChange('age', e.target.value)}
+                                  placeholder="e.g., 3"
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-xs text-gray-600 mb-1">Lives With:</label>
+                                <input
+                                  type="text"
+                                  value={personalSampleReportData.livesWith}
+                                  onChange={(e) => handlePersonalSampleReportTextChange('livesWith', e.target.value)}
+                                  placeholder="e.g., his parents"
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-xs text-gray-600 mb-1">Number of Siblings:</label>
+                                <input
+                                  type="text"
+                                  value={personalSampleReportData.siblingCount}
+                                  onChange={(e) => handlePersonalSampleReportTextChange('siblingCount', e.target.value)}
+                                  placeholder="e.g., 1"
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Additional Info */}
+                            <div className="mt-4">
+                              <label className="block text-xs text-gray-600 mb-1">Additional Information:</label>
+                              <textarea
+                                value={personalSampleReportData.additionalInfo}
+                                onChange={(e) => handlePersonalSampleReportTextChange('additionalInfo', e.target.value)}
+                                placeholder="Enter any additional details..."
+                                rows="2"
+                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
                       {/* Personal Content */}
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Family Information */}
@@ -2093,6 +2601,181 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
 
                   {historySubTab === 'language' && (
                     <>
+                      {/* Sample Report Sentence for Language/Development */}
+                      <div className="border rounded-lg overflow-hidden mb-4">
+                        <button 
+                          onClick={() => setShowLanguageSampleReport(!showLanguageSampleReport)}
+                          className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                        >
+                          <span className="text-xs font-medium">{showLanguageSampleReport ? '⊟' : '⊞'}</span>
+                          <span className="font-medium text-xs">Sample Report Sentence</span>
+                        </button>
+                        
+                        {showLanguageSampleReport && (
+                          <div className="p-4 bg-white border-t">
+                            <p className="text-xs text-gray-600 mb-3 italic bg-gray-50 p-3 rounded border">
+                              {generateLanguageSampleReportSentence()}
+                            </p>
+                            
+                            {/* Language Section */}
+                            <div className="mb-6">
+                              <h4 className="text-xs font-semibold text-blue-700 mb-3">Language</h4>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                  <label className="block text-xs text-gray-600 mb-1">Primary Language:</label>
+                                  <input
+                                    type="text"
+                                    value={languageSampleReportData.primaryLanguage}
+                                    onChange={(e) => handleLanguageSampleReportTextChange('primaryLanguage', e.target.value)}
+                                    placeholder="e.g., English"
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="mb-4">
+                                <label className="block text-xs text-gray-600 mb-1">Exposed to English:</label>
+                                <select 
+                                  value={languageSampleReportData.exposedToEnglish}
+                                  onChange={(e) => handleLanguageSampleReportTextChange('exposedToEnglish', e.target.value)}
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                                >
+                                  <option value="not_specified">Not Specified</option>
+                                  <option value="since_birth">Since Birth</option>
+                                  <option value="one_to_three">For One to Three Years</option>
+                                  <option value="four_to_five">For Four to Five Years</option>
+                                  <option value="longer_than_five">For Longer Than Five Years</option>
+                                  <option value="other">Other</option>
+                                </select>
+                              </div>
+
+                              <div className="mb-4">
+                                <label className="block text-xs text-gray-600 mb-1">Speaking English:</label>
+                                <select 
+                                  value={languageSampleReportData.speakingEnglish}
+                                  onChange={(e) => handleLanguageSampleReportTextChange('speakingEnglish', e.target.value)}
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                                >
+                                  <option value="not_specified">Not Specified</option>
+                                  <option value="since_first_talking">Since First Talking</option>
+                                  <option value="one_to_three">For One to Three Years</option>
+                                  <option value="four_to_five">For Four to Five Years</option>
+                                  <option value="longer_than_five">For Longer Than Five Years</option>
+                                  <option value="other">Other</option>
+                                </select>
+                              </div>
+
+                              <div className="mb-4">
+                                <label className="block text-xs text-gray-600 mb-1">Examiner Rating of English Fluency:</label>
+                                <select 
+                                  value={languageSampleReportData.fluencyRating}
+                                  onChange={(e) => handleLanguageSampleReportTextChange('fluencyRating', e.target.value)}
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                                >
+                                  <option value="not_specified">Not Specified</option>
+                                  <option value="adequate">Adequate</option>
+                                  <option value="somewhat_adequate">Somewhat Adequate</option>
+                                  <option value="poor">Poor</option>
+                                </select>
+                              </div>
+                            </div>
+
+                            {/* Development Section */}
+                            <div className="mb-4">
+                              <h4 className="text-xs font-semibold text-blue-700 mb-3">Development</h4>
+                              
+                              <div className="mb-4">
+                                <label className="block text-xs text-gray-600 mb-1">Birth Information:</label>
+                                <select 
+                                  value={languageSampleReportData.birthComplications}
+                                  onChange={(e) => handleLanguageSampleReportTextChange('birthComplications', e.target.value)}
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                                >
+                                  <option value="with no apparent complications">Was Born With No Apparent Complications</option>
+                                  <option value="was born premature">Was Born Premature</option>
+                                  <option value="weighed less than 5 1/2 pounds at birth">Weighed Less Than 5 1/2 Pounds at Birth</option>
+                                  <option value="spent time in a neonatal intensive care unit">Spent Time in a Neonatal Intensive Care Unit</option>
+                                  <option value="required assistance with breathing">Required Assistance With Breathing</option>
+                                  <option value="was born past due date">Was Born Past Due Date</option>
+                                  <option value="other">Other</option>
+                                </select>
+                              </div>
+
+                              <div className="mb-4">
+                                <label className="text-xs font-semibold text-gray-700 mb-2 block">Developmental Milestones:</label>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  {[
+                                    { key: 'milestoneSitting', label: 'Sitting Alone' },
+                                    { key: 'milestoneCrawling', label: 'Crawling' },
+                                    { key: 'milestoneStanding', label: 'Standing Alone' },
+                                    { key: 'milestoneWalking', label: 'Walking Alone' },
+                                    { key: 'milestoneBabbling', label: 'Babbling' },
+                                    { key: 'milestoneFirstWords', label: 'Speaking First Words' },
+                                    { key: 'milestoneShortSentences', label: 'Speaking Short Sentences' },
+                                    { key: 'milestoneEating', label: 'Eating Solids' },
+                                    { key: 'milestoneSelfFeeding', label: 'Self-Feeding' },
+                                    { key: 'milestoneToiletAwake', label: 'Using Toilet When Awake' },
+                                    { key: 'milestoneStayDry', label: 'Staying Dry at Night' },
+                                  ].map((milestone) => (
+                                    <div key={milestone.key} className="space-y-1">
+                                      <label className="text-xs text-gray-600">{milestone.label}</label>
+                                      <div className="flex gap-2">
+                                        {['early', 'typical', 'late', 'unknown'].map((option) => (
+                                          <label key={option} className="flex items-center gap-1 text-xs cursor-pointer">
+                                            <input 
+                                              type="radio" 
+                                              name={milestone.key}
+                                              value={option}
+                                              checked={languageSampleReportData[milestone.key] === option}
+                                              onChange={(e) => handleLanguageSampleReportTextChange(milestone.key, e.target.value)}
+                                              className="rounded border-gray-300"
+                                            />
+                                            <span className="capitalize">{option}</span>
+                                          </label>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+
+                                <div className="mt-4">
+                                  <label className="text-xs text-gray-600">Social Interaction</label>
+                                  <div className="flex gap-2">
+                                    {['atypical', 'typical', 'delayed', 'unknown'].map((option) => (
+                                      <label key={option} className="flex items-center gap-1 text-xs cursor-pointer">
+                                        <input 
+                                          type="radio" 
+                                          name="milestoneSocial"
+                                          value={option}
+                                          checked={languageSampleReportData.milestoneSocial === option}
+                                          onChange={(e) => handleLanguageSampleReportTextChange('milestoneSocial', e.target.value)}
+                                          className="rounded border-gray-300"
+                                        />
+                                        <span className="capitalize">{option}</span>
+                                      </label>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Additional Info */}
+                              <div className="mt-4">
+                                <label className="block text-xs text-gray-600 mb-1">Additional Information:</label>
+                                <textarea
+                                  value={languageSampleReportData.additionalInfo}
+                                  onChange={(e) => handleLanguageSampleReportTextChange('additionalInfo', e.target.value)}
+                                  placeholder="Enter any additional details..."
+                                  rows="2"
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
                       {/* Language Content */}
                       <div className="space-y-6">
                         <h3 className="text-sm font-semibold text-blue-800">Language</h3>
@@ -2318,6 +3001,194 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
 
                   {historySubTab === 'education' && (
                     <>
+                      {/* Sample Report Sentence for Education */}
+                      <div className="border rounded-lg overflow-hidden mb-4">
+                        <button 
+                          onClick={() => setShowEducationSampleReport(!showEducationSampleReport)}
+                          className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                        >
+                          <span className="text-xs font-medium">{showEducationSampleReport ? '⊟' : '⊞'}</span>
+                          <span className="font-medium text-xs">Sample Report Sentence</span>
+                        </button>
+                        
+                        {showEducationSampleReport && (
+                          <div className="p-4 bg-white border-t">
+                            <p className="text-xs text-gray-600 mb-3 italic bg-gray-50 p-3 rounded border">
+                              {generateEducationSampleReportSentence()}
+                            </p>
+                            
+                            {/* Education Level Section */}
+                            <div className="mb-6">
+                              <h4 className="text-xs font-semibold text-blue-700 mb-3">Highest Level of Education</h4>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <div>
+                                  <label className="block text-xs text-gray-600 mb-1">Current Year:</label>
+                                  <input
+                                    type="text"
+                                    value={educationSampleReportData.currentYear}
+                                    onChange={(e) => handleEducationSampleReportTextChange('currentYear', e.target.value)}
+                                    placeholder="e.g., Year 3"
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-gray-600 mb-1">School Name:</label>
+                                  <input
+                                    type="text"
+                                    value={educationSampleReportData.schoolName}
+                                    onChange={(e) => handleEducationSampleReportTextChange('schoolName', e.target.value)}
+                                    placeholder="e.g., Oak Tree Primary School"
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                  <label className="block text-xs text-gray-600 mb-1">Mother's Education:</label>
+                                  <select 
+                                    value={educationSampleReportData.motherEducation}
+                                    onChange={(e) => handleEducationSampleReportTextChange('motherEducation', e.target.value)}
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                                  >
+                                    <option value="">Please Select...</option>
+                                    <option value="some high school">Some High School</option>
+                                    <option value="high school graduate">High School Graduate</option>
+                                    <option value="some college">Some College</option>
+                                    <option value="college graduate">College Graduate</option>
+                                    <option value="some graduate school">Some Graduate School</option>
+                                    <option value="graduate degree">Graduate Degree</option>
+                                    <option value="other">Other</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-gray-600 mb-1">Father's Education:</label>
+                                  <select 
+                                    value={educationSampleReportData.fatherEducation}
+                                    onChange={(e) => handleEducationSampleReportTextChange('fatherEducation', e.target.value)}
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                                  >
+                                    <option value="">Please Select...</option>
+                                    <option value="some high school">Some High School</option>
+                                    <option value="high school graduate">High School Graduate</option>
+                                    <option value="some college">Some College</option>
+                                    <option value="college graduate">College Graduate</option>
+                                    <option value="some graduate school">Some Graduate School</option>
+                                    <option value="graduate degree">Graduate Degree</option>
+                                    <option value="other">Other</option>
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Strengths and Weaknesses Section */}
+                            <div className="mb-4">
+                              <h4 className="text-xs font-semibold text-blue-700 mb-3">Academic Performance - Strengths and Weaknesses</h4>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                  <label className="text-xs text-gray-600 mb-2 block">Personal Strengths (select up to three):</label>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {['reading', 'writing', 'mathematics', 'language', 'science', 'art', 'athletics', 'music', 'other'].map((item) => (
+                                      <label key={item} className="flex items-center gap-1 text-xs cursor-pointer">
+                                        <input 
+                                          type="checkbox" 
+                                          checked={educationSampleReportData.personalStrengths.includes(item)}
+                                          onChange={() => handleEducationArrayChange('personalStrengths', item)}
+                                          className="rounded border-gray-300"
+                                        />
+                                        <span className="capitalize">{item}</span>
+                                      </label>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="text-xs text-gray-600 mb-2 block">Personal Weaknesses (select up to three):</label>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {['reading', 'writing', 'mathematics', 'language', 'science', 'art', 'athletics', 'music', 'other'].map((item) => (
+                                      <label key={item} className="flex items-center gap-1 text-xs cursor-pointer">
+                                        <input 
+                                          type="checkbox" 
+                                          checked={educationSampleReportData.personalWeaknesses.includes(item)}
+                                          onChange={() => handleEducationArrayChange('personalWeaknesses', item)}
+                                          className="rounded border-gray-300"
+                                        />
+                                        <span className="capitalize">{item}</span>
+                                      </label>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                  <label className="text-xs text-gray-600 mb-2 block">Strengths Compared to Peers (select up to three):</label>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {['reading', 'writing', 'mathematics', 'language', 'science', 'art', 'athletics', 'music', 'other'].map((item) => (
+                                      <label key={item} className="flex items-center gap-1 text-xs cursor-pointer">
+                                        <input 
+                                          type="checkbox" 
+                                          checked={educationSampleReportData.peerStrengths.includes(item)}
+                                          onChange={() => handleEducationArrayChange('peerStrengths', item)}
+                                          className="rounded border-gray-300"
+                                        />
+                                        <span className="capitalize">{item}</span>
+                                      </label>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="text-xs text-gray-600 mb-2 block">Weaknesses Compared to Peers (select up to three):</label>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {['reading', 'writing', 'mathematics', 'language', 'science', 'art', 'athletics', 'music', 'other'].map((item) => (
+                                      <label key={item} className="flex items-center gap-1 text-xs cursor-pointer">
+                                        <input 
+                                          type="checkbox" 
+                                          checked={educationSampleReportData.peerWeaknesses.includes(item)}
+                                          onChange={() => handleEducationArrayChange('peerWeaknesses', item)}
+                                          className="rounded border-gray-300"
+                                        />
+                                        <span className="capitalize">{item}</span>
+                                      </label>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="mb-4">
+                                <label className="text-xs text-gray-600 mb-2 block">Diagnosed Specific Learning Disorders/Disabilities:</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                  {['reading', 'writing', 'mathematics', 'other', 'other2', 'other3'].map((item) => (
+                                    <label key={item} className="flex items-center gap-1 text-xs cursor-pointer">
+                                      <input 
+                                        type="checkbox" 
+                                        checked={educationSampleReportData.learningDisabilities.includes(item)}
+                                        onChange={() => handleEducationArrayChange('learningDisabilities', item)}
+                                        className="rounded border-gray-300"
+                                      />
+                                      <span className="capitalize">{item}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Additional Info */}
+                              <div className="mt-4">
+                                <label className="block text-xs text-gray-600 mb-1">Additional Information:</label>
+                                <textarea
+                                  value={educationSampleReportData.additionalInfo}
+                                  onChange={(e) => handleEducationSampleReportTextChange('additionalInfo', e.target.value)}
+                                  placeholder="Enter any additional details..."
+                                  rows="2"
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
                       {/* Education Content */}
                       <div className="space-y-6">
                         <div>
@@ -2335,14 +3206,6 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                         {/* Highest Level of Education */}
                         <div className="space-y-4">
                           <h3 className="text-sm font-semibold text-blue-800">Highest Level of Education</h3>
-                          
-                          {/* Sample Report Sentence */}
-                          <div className="border rounded-lg overflow-hidden">
-                            <button className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left">
-                              <span className="text-xs font-medium">⊞</span>
-                              <span className="font-medium text-xs">Sample Report Sentence</span>
-                            </button>
-                          </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="space-y-2">
@@ -2734,6 +3597,261 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
 
                   {historySubTab === 'health' && (
                     <>
+                      {/* Sample Report Sentence for Health */}
+                      <div className="border rounded-lg overflow-hidden mb-4">
+                        <button 
+                          onClick={() => setShowHealthSampleReport(!showHealthSampleReport)}
+                          className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                        >
+                          <span className="text-xs font-medium">{showHealthSampleReport ? '⊟' : '⊞'}</span>
+                          <span className="font-medium text-xs">Sample Report Sentence</span>
+                        </button>
+                        
+                        {showHealthSampleReport && (
+                          <div className="p-4 bg-white border-t">
+                            <p className="text-xs text-gray-600 mb-3 italic bg-gray-50 p-3 rounded border">
+                              {generateHealthSampleReportSentence()}
+                            </p>
+                            
+                            {/* Health History Source */}
+                            <div className="mb-6">
+                              <h4 className="text-xs font-semibold text-blue-700 mb-3">Health History According to:</h4>
+                              <div>
+                                <label className="block text-xs text-gray-600 mb-1">Source:</label>
+                                <select 
+                                  value={healthSampleReportData.healthHistorySource}
+                                  onChange={(e) => handleHealthSampleReportTextChange('healthHistorySource', e.target.value)}
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                                >
+                                  <option value="">Please Select...</option>
+                                  <option value="his mother">Mother</option>
+                                  <option value="his father">Father</option>
+                                  <option value="his guardian">Guardian</option>
+                                  <option value="self">Self</option>
+                                  <option value="records">Medical Records</option>
+                                  <option value="other">Other</option>
+                                </select>
+                              </div>
+                            </div>
+
+                            {/* Vision and Hearing */}
+                            <div className="mb-6">
+                              <h4 className="text-xs font-semibold text-blue-700 mb-3">Vision and Hearing Conditions</h4>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                  <label className="block text-xs text-gray-600 mb-1">Date of Vision Screening:</label>
+                                  <input
+                                    type="text"
+                                    value={healthSampleReportData.visionDate}
+                                    onChange={(e) => handleHealthSampleReportTextChange('visionDate', e.target.value)}
+                                    placeholder="e.g., 01/01/2024"
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-gray-600 mb-1">Results of Vision Screening:</label>
+                                  <select 
+                                    value={healthSampleReportData.visionResult}
+                                    onChange={(e) => handleHealthSampleReportTextChange('visionResult', e.target.value)}
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                                  >
+                                    <option value="">Please Select...</option>
+                                    <option value="that he has normal visual acuity">Normal visual acuity</option>
+                                    <option value="normal visual acuity with the aid of corrective lenses">Normal visual acuity with corrective lenses</option>
+                                    <option value="a need for follow-up vision screening">Need for follow-up vision screening</option>
+                                    <option value="a need for a complete vision examination">Need for complete vision examination</option>
+                                    <option value="other">Other</option>
+                                  </select>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-xs text-gray-600 mb-1">Date of Hearing Screening:</label>
+                                  <input
+                                    type="text"
+                                    value={healthSampleReportData.hearingDate}
+                                    onChange={(e) => handleHealthSampleReportTextChange('hearingDate', e.target.value)}
+                                    placeholder="e.g., 01/01/2024"
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-gray-600 mb-1">Results of Hearing Screening:</label>
+                                  <select 
+                                    value={healthSampleReportData.hearingResult}
+                                    onChange={(e) => handleHealthSampleReportTextChange('hearingResult', e.target.value)}
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                                  >
+                                    <option value="">Please Select...</option>
+                                    <option value="within normal limits">Within normal limits</option>
+                                    <option value="within normal limits with the assistance of a hearing aid">Within normal limits when aided</option>
+                                    <option value="needs a referral to assess the functioning of the inner ear">Needs referral for inner ear assessment</option>
+                                    <option value="a need for a follow-up hearing screening">Need for follow-up hearing screening</option>
+                                    <option value="further assessment needed; refer to audiologist">Further assessment needed</option>
+                                    <option value="other">Other</option>
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Sensory and Motor */}
+                            <div className="mb-6">
+                              <h4 className="text-xs font-semibold text-blue-700 mb-3">Sensory or Motor Conditions</h4>
+                              
+                              <div className="mb-4">
+                                <label className="text-xs text-gray-600 mb-2 block">Sensory Conditions:</label>
+                                <div className="flex gap-4 mb-2">
+                                  <label className="flex items-center gap-1 text-xs cursor-pointer">
+                                    <input 
+                                      type="radio" 
+                                      name="sensoryDysfunction"
+                                      value="no_history"
+                                      checked={healthSampleReportData.sensoryDysfunction === 'no_history'}
+                                      onChange={(e) => handleHealthSampleReportTextChange('sensoryDysfunction', e.target.value)}
+                                      className="rounded border-gray-300"
+                                    />
+                                    No history of sensory dysfunction
+                                  </label>
+                                  <label className="flex items-center gap-1 text-xs cursor-pointer">
+                                    <input 
+                                      type="radio" 
+                                      name="sensoryDysfunction"
+                                      value="history"
+                                      checked={healthSampleReportData.sensoryDysfunction === 'history'}
+                                      onChange={(e) => handleHealthSampleReportTextChange('sensoryDysfunction', e.target.value)}
+                                      className="rounded border-gray-300"
+                                    />
+                                    A history of sensory dysfunction
+                                  </label>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                  {['sensory modulation dysfunction', 'sensory integration dysfunction', 'visual perceptual dysfunction', 'visual processing', 'auditory processing', 'other'].map((item) => (
+                                    <label key={item} className="flex items-center gap-1 text-xs cursor-pointer">
+                                      <input 
+                                        type="checkbox" 
+                                        checked={healthSampleReportData.sensoryHistory.includes(item)}
+                                        onChange={() => handleHealthArrayChange('sensoryHistory', item)}
+                                        className="rounded border-gray-300"
+                                      />
+                                      <span className="capitalize">{item}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="mb-4">
+                                <label className="text-xs text-gray-600 mb-2 block">Motor Conditions:</label>
+                                <div className="flex gap-4 mb-2">
+                                  <label className="flex items-center gap-1 text-xs cursor-pointer">
+                                    <input 
+                                      type="radio" 
+                                      name="motorDysfunction"
+                                      value="no_history"
+                                      checked={healthSampleReportData.motorDysfunction === 'no_history'}
+                                      onChange={(e) => handleHealthSampleReportTextChange('motorDysfunction', e.target.value)}
+                                      className="rounded border-gray-300"
+                                    />
+                                    No history of motor dysfunction
+                                  </label>
+                                  <label className="flex items-center gap-1 text-xs cursor-pointer">
+                                    <input 
+                                      type="radio" 
+                                      name="motorDysfunction"
+                                      value="history"
+                                      checked={healthSampleReportData.motorDysfunction === 'history'}
+                                      onChange={(e) => handleHealthSampleReportTextChange('motorDysfunction', e.target.value)}
+                                      className="rounded border-gray-300"
+                                    />
+                                    A history of motor dysfunction
+                                  </label>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Health Conditions */}
+                            <div className="mb-4">
+                              <h4 className="text-xs font-semibold text-blue-700 mb-3">Health Conditions</h4>
+                              
+                              <div className="mb-4">
+                                <label className="text-xs text-gray-600 mb-2 block">Medical Conditions - Previously Diagnosed:</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                  {['asthma', 'diabetes', 'heart disease', 'hypertension', 'other'].map((item) => (
+                                    <label key={item} className="flex items-center gap-1 text-xs cursor-pointer">
+                                      <input 
+                                        type="checkbox" 
+                                        checked={healthSampleReportData.pastDiagnosed.includes(item)}
+                                        onChange={() => handleHealthArrayChange('pastDiagnosed', item)}
+                                        className="rounded border-gray-300"
+                                      />
+                                      <span className="capitalize">{item}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="mb-4">
+                                <label className="text-xs text-gray-600 mb-2 block">Medical Conditions - Currently Diagnosed:</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                  {['asthma', 'diabetes', 'heart disease', 'hypertension', 'other'].map((item) => (
+                                    <label key={item} className="flex items-center gap-1 text-xs cursor-pointer">
+                                      <input 
+                                        type="checkbox" 
+                                        checked={healthSampleReportData.currentDiagnosed.includes(item)}
+                                        onChange={() => handleHealthArrayChange('currentDiagnosed', item)}
+                                        className="rounded border-gray-300"
+                                      />
+                                      <span className="capitalize">{item}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="mb-4">
+                                <label className="text-xs text-gray-600 mb-2 block">Psychiatric Conditions - Currently Diagnosed:</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                  {['Attention-deficit hyperactivity disorder', 'Autism spectrum disorder', 'Anxiety', 'Depression', 'other'].map((item) => (
+                                    <label key={item} className="flex items-center gap-1 text-xs cursor-pointer">
+                                      <input 
+                                        type="checkbox" 
+                                        checked={healthSampleReportData.psychiatricCurrent.includes(item)}
+                                        onChange={() => handleHealthArrayChange('psychiatricCurrent', item)}
+                                        className="rounded border-gray-300"
+                                      />
+                                      <span className="capitalize">{item}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="mb-4">
+                                <label className="block text-xs text-gray-600 mb-1">Current Medications:</label>
+                                <textarea
+                                  value={healthSampleReportData.currentMedications}
+                                  onChange={(e) => handleHealthSampleReportTextChange('currentMedications', e.target.value)}
+                                  placeholder="List current medications..."
+                                  rows="2"
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                              </div>
+
+                              {/* Additional Info */}
+                              <div className="mt-4">
+                                <label className="block text-xs text-gray-600 mb-1">Additional Information:</label>
+                                <textarea
+                                  value={healthSampleReportData.additionalInfo}
+                                  onChange={(e) => handleHealthSampleReportTextChange('additionalInfo', e.target.value)}
+                                  placeholder="Enter any additional details..."
+                                  rows="2"
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
                       {/* Health Content */}
                       <div className="space-y-6">
                         <div>
@@ -3119,16 +4237,111 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
 
                   {historySubTab === 'employment' && (
                     <>
+                      {/* Sample Report Sentence for Employment */}
+                      <div className="border rounded-lg overflow-hidden mb-4">
+                        <button 
+                          onClick={() => setShowEmploymentSampleReport(!showEmploymentSampleReport)}
+                          className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                        >
+                          <span className="text-xs font-medium">{showEmploymentSampleReport ? '⊟' : '⊞'}</span>
+                          <span className="font-medium text-xs">Sample Report Sentence</span>
+                        </button>
+                        
+                        {showEmploymentSampleReport && (
+                          <div className="p-4 bg-white border-t">
+                            <p className="text-xs text-gray-600 mb-3 italic bg-gray-50 p-3 rounded border">
+                              {generateEmploymentSampleReportSentence()}
+                            </p>
+                            
+                            {/* Employment Information */}
+                            <div className="mb-6">
+                              <h4 className="text-xs font-semibold text-blue-700 mb-3">Employment Information</h4>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                  <label className="block text-xs text-gray-600 mb-1">Employment Status:</label>
+                                  <select 
+                                    value={employmentSampleReportData.employmentStatus}
+                                    onChange={(e) => handleEmploymentSampleReportTextChange('employmentStatus', e.target.value)}
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                                  >
+                                    <option value="">Please Select...</option>
+                                    <option value="employed">Employed</option>
+                                    <option value="unemployed">Unemployed</option>
+                                    <option value="self-employed">Self-Employed</option>
+                                    <option value="retired">Retired</option>
+                                    <option value="student">Student</option>
+                                    <option value="other">Other</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-gray-600 mb-1">Current Job/Position:</label>
+                                  <input
+                                    type="text"
+                                    value={employmentSampleReportData.currentJob}
+                                    onChange={(e) => handleEmploymentSampleReportTextChange('currentJob', e.target.value)}
+                                    placeholder="e.g., Software Engineer"
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                  <label className="block text-xs text-gray-600 mb-1">Duration in Current Position:</label>
+                                  <input
+                                    type="text"
+                                    value={employmentSampleReportData.jobDuration}
+                                    onChange={(e) => handleEmploymentSampleReportTextChange('jobDuration', e.target.value)}
+                                    placeholder="e.g., 2 years"
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-gray-600 mb-1">Employment History Source:</label>
+                                  <select 
+                                    value={employmentSampleReportData.employmentHistorySource}
+                                    onChange={(e) => handleEmploymentSampleReportTextChange('employmentHistorySource', e.target.value)}
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                                  >
+                                    <option value="">Please Select...</option>
+                                    <option value="self-report">Self-Report</option>
+                                    <option value="employer">Employer</option>
+                                    <option value="records">Employment Records</option>
+                                    <option value="other">Other</option>
+                                  </select>
+                                </div>
+                              </div>
+
+                              <div className="mb-4">
+                                <label className="block text-xs text-gray-600 mb-1">Previous Jobs:</label>
+                                <textarea
+                                  value={employmentSampleReportData.previousJobs}
+                                  onChange={(e) => handleEmploymentSampleReportTextChange('previousJobs', e.target.value)}
+                                  placeholder="List previous job positions..."
+                                  rows="2"
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                              </div>
+
+                              {/* Additional Info */}
+                              <div className="mt-4">
+                                <label className="block text-xs text-gray-600 mb-1">Additional Information:</label>
+                                <textarea
+                                  value={employmentSampleReportData.additionalInfo}
+                                  onChange={(e) => handleEmploymentSampleReportTextChange('additionalInfo', e.target.value)}
+                                  placeholder="Enter any additional details..."
+                                  rows="2"
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
                       {/* Employment Content */}
                       <div className="space-y-6">
-                        {/* Sample Report Sentence */}
-                        <div className="border rounded-lg overflow-hidden">
-                          <button className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left">
-                            <span className="text-xs font-medium">⊞</span>
-                            <span className="font-medium text-xs">Sample Report Sentence</span>
-                          </button>
-                        </div>
-
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                           {/* Current Employment */}
                           <div className="space-y-4">
