@@ -459,8 +459,3 @@ CREATE TABLE IF NOT EXISTS calendar_events (
 - `PUT /api/calendar/:id` - Update event
 - `DELETE /api/calendar/:id` - Delete event
 - `GET /api/calendar/stats` - Get event statistics
-
-### Backend Files
-- `/server/controllers/calendarController.js` - Calendar CRUD operations
-- `/server/routes/calendarRoutes.js` - Calendar API routes
-- `/server/migrations/create_calendar_events_table.sql` - Database schema

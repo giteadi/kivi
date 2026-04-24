@@ -77,6 +77,9 @@ import TemplateManager from './components/TemplateManager';
 import FormsManagement from './components/FormsManagement';
 import ConnersManagement from './components/ConnersManagement';
 import ExamineesManagement from './components/ExamineesManagement';
+import PackageManagement from './components/PackageManagement';
+import AssessmentToolsManagement from './components/AssessmentToolsManagement';
+import AssignAssessmentScreen from './components/AssignAssessmentScreen';
 import AssessmentList from './components/AssessmentList';
 import TherapyList from './components/TherapyList';
 import Queries from './components/Queries';
@@ -109,6 +112,7 @@ function App() {
   const [selectedReceptionistId, setSelectedReceptionistId] = useState(null);
   const [selectedClinicId, setSelectedClinicId] = useState(null);
   const [selectedServiceId, setSelectedServiceId] = useState(null);
+  const [selectedExamineeForAssignment, setSelectedExamineeForAssignment] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSessionCreateModalOpen, setIsSessionCreateModalOpen] = useState(false);
   const [isSessionEditModalOpen, setIsSessionEditModalOpen] = useState(false);
@@ -189,6 +193,29 @@ function App() {
     checkAuth();
   }, [dispatch]);
 
+  // Listen for custom navigate events from components
+  useEffect(() => {
+    const handleNavigate = (event) => {
+      const destination = event.detail;
+      if (destination === 'packages') {
+        setActiveItem('packages');
+        setCurrentView('packages');
+        navigate('/packages');
+      } else if (destination === 'assign-assessment') {
+        setActiveItem('assign-assessment');
+        setCurrentView('assign-assessment');
+        navigate('/assign-assessment');
+      } else if (destination === 'assessment-tools') {
+        setActiveItem('assessment-tools');
+        setCurrentView('assessment-tools');
+        navigate('/assessment-tools');
+      }
+    };
+
+    window.addEventListener('navigate', handleNavigate);
+    return () => window.removeEventListener('navigate', handleNavigate);
+  }, [navigate]);
+
   // Show loading screen while checking authentication
   if (!isInitialized) {
     return (
@@ -264,6 +291,8 @@ function App() {
     const itemToRoute = {
       'dashboard': '/dashboard',
       'patients': '/examinees',
+      'packages': '/packages',
+      'assessment-tools': '/assessment-tools',
       'doctors': '/therapists',
       'template-manager': '/templates',
       'clinics': '/centres',
@@ -1354,6 +1383,34 @@ ${service.target_age_group || 'Not specified'}
       case 'patients':
         return <ExamineesManagement onViewPatient={handleViewPatient} onEditPatient={handleEditPatient} onDeletePatient={handleDeletePatient} onCreateNewPatient={handleCreateNewPatient} />;
       
+      case 'packages':
+        return <PackageManagement onBack={() => { setActiveItem('patients'); setCurrentView('patients'); navigate('/examinees'); }} />;
+      
+      case 'assign-assessment':
+        return (
+          <AssignAssessmentScreen
+            examineeId={selectedExamineeForAssignment?.id}
+            examineeName={`${selectedExamineeForAssignment?.firstName} ${selectedExamineeForAssignment?.lastName}`}
+            onBack={() => {
+              setActiveItem('patients');
+              setCurrentView('patients');
+              setSelectedExamineeForAssignment(null);
+              navigate('/examinees');
+            }}
+            onSave={(packageData) => {
+              console.log('Package saved:', packageData);
+              alert('Package assigned successfully!');
+              setActiveItem('patients');
+              setCurrentView('patients');
+              setSelectedExamineeForAssignment(null);
+              navigate('/examinees');
+            }}
+          />
+        );
+      
+      case 'assessment-tools':
+        return <AssessmentToolsManagement onBack={() => { setActiveItem('patients'); setCurrentView('patients'); navigate('/examinees'); }} />;
+      
       case 'groups':
         return <GroupAdministration />;
       
@@ -1509,6 +1566,38 @@ ${service.target_age_group || 'Not specified'}
             <Route path="/examinees/:id" element={renderContent()} />
             <Route path="/examinees/create" element={renderContent()} />
             <Route path="/examinees/:id/edit" element={renderContent()} />
+            <Route path="/packages" element={
+              currentView === 'packages' ? (
+                <PackageManagement onBack={() => { setActiveItem('patients'); setCurrentView('patients'); navigate('/examinees'); }} />
+              ) : renderContent()
+            } />
+            <Route path="/assessment-tools" element={
+              currentView === 'assessment-tools' ? (
+                <AssessmentToolsManagement onBack={() => { setActiveItem('patients'); setCurrentView('patients'); navigate('/examinees'); }} />
+              ) : renderContent()
+            } />
+            <Route path="/assign-assessment" element={
+              currentView === 'assign-assessment' ? (
+                <AssignAssessmentScreen
+                  examineeId={selectedExamineeForAssignment?.id}
+                  examineeName={`${selectedExamineeForAssignment?.firstName} ${selectedExamineeForAssignment?.lastName}`}
+                  onBack={() => {
+                    setActiveItem('patients');
+                    setCurrentView('patients');
+                    setSelectedExamineeForAssignment(null);
+                    navigate('/examinees');
+                  }}
+                  onSave={(packageData) => {
+                    console.log('Package saved:', packageData);
+                    alert('Package assigned successfully!');
+                    setActiveItem('patients');
+                    setCurrentView('patients');
+                    setSelectedExamineeForAssignment(null);
+                    navigate('/examinees');
+                  }}
+                />
+              ) : renderContent()
+            } />
             <Route path="/therapists" element={
               currentView === 'doctors' || currentView === 'doctors-list' ? (
                 <DoctorsList 

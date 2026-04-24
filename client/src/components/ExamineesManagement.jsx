@@ -23,6 +23,7 @@ import {
   FiAlertTriangle,
   FiFile,
   FiEdit,
+  FiEdit3,
   FiEye,
   FiMail,
   FiPrinter
@@ -70,6 +71,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
     gender: 'all'
   });
   const [showAssignAssessment, setShowAssignAssessment] = useState(false);
+  const [selectedExamineeForAssignment, setSelectedExamineeForAssignment] = useState(null);
   const [selectedAssessments, setSelectedAssessments] = useState([]);
   const [packageName, setPackageName] = useState('');
   const [assessmentTab, setAssessmentTab] = useState('all');
@@ -89,9 +91,43 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
   const [includeSubAccounts, setIncludeSubAccounts] = useState(false);
   const ASSESSMENT_PRICE = 5500;
 
+  // State for API-fetched packages
+  const [assessmentPackages, setAssessmentPackages] = useState([]);
+  const [packagesLoading, setPackagesLoading] = useState(false);
+
   useEffect(() => {
     dispatch(fetchPatients());
+    fetchAssessmentPackages();
   }, [dispatch]);
+
+  // Fetch packages from API
+  const fetchAssessmentPackages = async () => {
+    try {
+      setPackagesLoading(true);
+      const response = await api.request('/assessment-packages');
+      if (response.success && response.data) {
+        // Format packages to match existing structure
+        const formattedPackages = response.data.map(pkg => ({
+          id: pkg.id.toString(),
+          dbId: pkg.id,
+          name: pkg.name,
+          category: pkg.category,
+          price: pkg.price,
+          ageRange: pkg.age_range,
+          description: pkg.description,
+          includes: pkg.includes || [],
+          isActive: pkg.is_active
+        }));
+        setAssessmentPackages(formattedPackages);
+      }
+    } catch (err) {
+      console.error('Failed to fetch packages:', err);
+      // Fallback to empty array - will show error state
+      setAssessmentPackages([]);
+    } finally {
+      setPackagesLoading(false);
+    }
+  };
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -191,63 +227,8 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
     { id: 'report', label: 'Report', icon: FiFileText }
   ];
 
-  // MindSaid Learning Centre - Psycho-Educational Assessment Packages
-  const assessmentPackages = [
-    {
-      id: 'pe-basic',
-      name: 'Psycho-Educational Assessment',
-      category: 'PE Assessment',
-      price: 18500,
-      ageRange: '6.11-16.11 years',
-      description: 'WISC-IV (Manual scoring), WRAT-V (Computerised), WJ-III Ach (Computerised), ADHDT-2',
-      includes: ['WISC-IV Manual', 'WRAT-V', 'WJ-III Ach', 'ADHDT-2']
-    },
-    {
-      id: 'pe-standard',
-      name: 'Psycho-Educational Assessment',
-      category: 'PE Assessment',
-      price: 22500,
-      ageRange: '6.11-16.11 years',
-      description: 'WISC-V (Computerised), WRAT-V (Computerised), WJ-III Ach (Computerised), Brown\'s EF/A Scales',
-      includes: ['WISC-V', 'WRAT-V', 'WJ-III Ach', 'Brown EF/A']
-    },
-    {
-      id: 'pe-comprehensive',
-      name: 'Psycho-Educational Assessment',
-      category: 'PE Assessment',
-      price: 38500,
-      ageRange: '6.11-90 years',
-      description: 'WJ-IV Cog (Standard & Extended), WJ-IV Ach (Standard & Extended), Conners-4th Edition',
-      includes: ['WJ-IV Cog', 'WJ-IV Ach', 'Conners-4'],
-      note: 'Additional tests Rs 4500 extra'
-    },
-    {
-      id: 'autism-eval',
-      name: 'Autism Evaluation',
-      category: 'Specialized',
-      price: 22500,
-      description: 'ISAA, CARS-2, WJ-III Ach, DSM-5 ADHD/Autism, School Checklists, VABS (Computerised)',
-      includes: ['ISAA', 'CARS-2', 'WJ-III Ach', 'DSM-5', 'VABS']
-    },
-    {
-      id: 'early-years',
-      name: 'Early Years Assessment',
-      category: 'Early Childhood',
-      price: 28500,
-      ageRange: '2.6-7.11 years',
-      description: 'WJ IV ECAD (with software), WJ-III Form-C, ADHDT-2, DSM-5, ISAA, GARS, GRS',
-      includes: ['WJ IV ECAD', 'WJ-III Form-C', 'ADHDT-2', 'ISAA', 'GARS', 'GRS']
-    },
-    {
-      id: 'remedial',
-      name: 'Remedial Sessions',
-      category: 'Therapy',
-      price: 2500,
-      description: 'Per hour remedial therapy sessions. WRAT-5 available in any Indian language.',
-      includes: ['1 Hour Session'],
-      note: 'WRAT-5 in any Indian language'
-    }
-  ];
+  // Assessment packages now fetched from API
+  // Fallback empty array until API loads
 
   // Individual assessments for reference
   const assessments = [
@@ -1055,8 +1036,13 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
 
                     <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-2" />
 
-                    <button 
-                      onClick={() => setShowAssignAssessment(true)}
+                    <button
+                      onClick={() => {
+                        if (selectedItems.length === 0) return;
+                        const selectedPatient = transformedPatients.find(p => p.id === selectedItems[0]);
+                        setSelectedExamineeForAssignment(selectedPatient);
+                        window.dispatchEvent(new CustomEvent('navigate', { detail: 'assign-assessment' }));
+                      }}
                       disabled={selectedItems.length === 0}
                       className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all text-sm font-medium ${
                         selectedItems.length > 0
@@ -2315,12 +2301,46 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                         <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
-                        MindSaid Assessment Packages
+                        Assessment Packages
                       </h3>
-                      <span className="text-xs text-gray-500">Psycho-Educational Evaluations</span>
+                      <button
+                        onClick={() => {
+                          setShowAssignAssessment(false);
+                          window.dispatchEvent(new CustomEvent('navigate', { detail: 'packages' }));
+                        }}
+                        className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                      >
+                        <FiEdit3 className="w-3 h-3" />
+                        Manage Packages
+                      </button>
                     </div>
+
+                    {/* Loading State */}
+                    {packagesLoading && (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        <span className="ml-2 text-sm text-gray-600">Loading packages...</span>
+                      </div>
+                    )}
+
+                    {/* Empty State */}
+                    {!packagesLoading && assessmentPackages.length === 0 && (
+                      <div className="text-center py-6 bg-gray-50 rounded-lg">
+                        <p className="text-sm text-gray-500 mb-3">No packages found</p>
+                        <button
+                          onClick={() => {
+                            setShowAssignAssessment(false);
+                            window.dispatchEvent(new CustomEvent('navigate', { detail: 'packages' }));
+                          }}
+                          className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
+                        >
+                          Create Package
+                        </button>
+                      </div>
+                    )}
+
                     <div className="space-y-3">
-                      {assessmentPackages.map((pkg) => (
+                      {!packagesLoading && assessmentPackages.map((pkg) => (
                         <div
                           key={pkg.id}
                           onClick={() => {

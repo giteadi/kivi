@@ -41,7 +41,14 @@ A comprehensive educational therapy management system built with **React**, **Re
 - Tax management
 - Payment status tracking
 
-### 🔧 **Services Management**
+### � **Assessment Packages** (New)
+- Dynamic package creation and management
+- Checkbox-based package selection for examinees
+- Price editing with automatic calculations
+- Category-based organization (PE Assessment, Therapy, Specialized)
+- Default packages: PE-BASIC (₹18,500), PE-STANDARD (₹22,500), etc.
+
+### �🔧 **Services Management**
 - Category-based service organization
 - Pricing and duration management
 - Service usage analytics

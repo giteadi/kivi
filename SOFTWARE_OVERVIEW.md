@@ -15,6 +15,7 @@
 |---------|-------------|-------|---------|
 | **MAIN** | Dashboard | `/dashboard` | Main dashboard with stats and analytics |
 | **USERS** | Examinees | `/examinees` | Manage students/examinees |
+| **USERS** | Assessment Packages | `/packages` | Manage assessment packages & pricing |
 | **NETWORK** | Centres | `/centres` | Manage therapy centers/clinics |
 | **USERS** | Therapists | `/therapists` | Manage therapists/doctors |
 | **USERS** | Assessment Templates | `/templates` | Create/manage assessment templates |
@@ -83,6 +84,7 @@
 | `ExamineeEditForm` | `ExamineeEditForm.jsx` | Edit examinee details |
 | `ExamineeDetail` | `ExamineeDetail.jsx` | View examinee profile |
 | `ExamineeGroupReport` | `ExamineeGroupReport.jsx` | Group reports for examinees |
+| `PackageManagement` | `PackageManagement.jsx` | Assessment packages CRUD management |
 | `DoctorsList` | `DoctorsList.jsx` | List all therapists |
 | `DoctorProfile` | `DoctorProfile.jsx` | View therapist profile |
 | `DoctorEditForm` | `DoctorEditForm.jsx` | Edit therapist details |

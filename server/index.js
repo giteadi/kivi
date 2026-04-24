@@ -58,6 +58,8 @@ const startServer = async () => {
     app.use('/api/assessments', require('./routes/assessmentRoutes')); // Added assessment routes
     app.use('/api/assessment-results', require('./routes/assessmentResultRoutes')); // Assessment item results
     app.use('/api/invoices', require('./routes/invoiceRoutes')); // Invoice email routes
+    app.use('/api/assessment-packages', require('./routes/assessmentPackageRoutes')); // Assessment packages
+    app.use('/api/individual-assessments', require('./routes/individualAssessmentRoutes')); // Individual assessments
     
     // Direct assessment routes (temporary fix)
     app.post('/api/assessments/:id', async (req, res) => {

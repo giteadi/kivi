@@ -20,7 +20,9 @@ import {
   FiX,
   FiMessageSquare,
   FiShield,
-  FiUpload
+  FiUpload,
+  FiPackage,
+  FiTool
 } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
@@ -35,6 +37,8 @@ const routeMapping = {
   'assessment-list': '/encounters/assessments',
   'therapy-list': '/encounters/therapies',
   'patients': '/examinees',
+  'packages': '/packages',
+  'assessment-tools': '/assessment-tools',
   'doctors': '/therapists',
   'template-manager': '/templates',
   'forms': '/forms',
@@ -138,6 +142,8 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
         ]
       }, */
       { id: 'patients', label: 'Examinees', icon: FiUser, section: 'USERS' },
+      { id: 'packages', label: 'Assessment Packages', icon: FiPackage, section: 'USERS' },
+      { id: 'assessment-tools', label: 'Assessment Tools', icon: FiTool, section: 'USERS' },
     { id: 'doctors', label: 'Therapists', icon: FiUserCheck, section: 'USERS' },
     { id: 'template-manager', label: 'Assessment Templates', icon: FiFileText, section: 'USERS' },
     { id: 'forms', label: 'Forms', icon: FiUpload, section: 'USERS' },
