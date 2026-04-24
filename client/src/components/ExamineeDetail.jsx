@@ -88,14 +88,9 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   // State for Sample Report Sentence
   const [showSampleReport, setShowSampleReport] = useState(false);
 
-  // State for Personal Sample Report Sentence
-  const [showPersonalSampleReport, setShowPersonalSampleReport] = useState(false);
-  const [personalSampleReportData, setPersonalSampleReportData] = useState({
-    age: '',
-    livesWith: '',
-    siblingCount: '',
-    additionalInfo: ''
-  });
+  // State for Current Living Arrangements
+  const [currentLivingArrangement, setCurrentLivingArrangement] = useState('');
+  const [currentLivingArrangementOther, setCurrentLivingArrangementOther] = useState('');
 
   // State for Language/Development Sample Report Sentence
   const [showLanguageSampleReport, setShowLanguageSampleReport] = useState(false);
@@ -460,23 +455,6 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   };
 
   // Handler for Personal Sample Report Sentence text inputs
-  const handlePersonalSampleReportTextChange = (field, text) => {
-    setPersonalSampleReportData(prev => ({
-      ...prev,
-      [field]: text
-    }));
-  };
-
-  // Generate Personal sample report sentence
-  const generatePersonalSampleReportSentence = () => {
-    const firstName = formData.firstName || 'Charlie';
-    const age = personalSampleReportData.age || '3';
-    const livesWith = personalSampleReportData.livesWith || 'his parents';
-    const siblingCount = personalSampleReportData.siblingCount || '1';
-    
-    return `${firstName} is a {${age}}-year-old child who lives with {${livesWith}}. There is {${siblingCount}} sibling residing in the same home with him/her.`;
-  };
-
   // Handler for Language/Development Sample Report Sentence
   const handleLanguageSampleReportTextChange = (field, value) => {
     setLanguageSampleReportData(prev => ({
@@ -2176,72 +2154,6 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
 
                     {historySubTab === 'personal' && (
                       <div className="space-y-6">
-                        {/* Sample Report Sentence for Personal */}
-                        <div className="border rounded-lg overflow-hidden mb-4">
-                          <button 
-                            onClick={() => setShowPersonalSampleReport(!showPersonalSampleReport)}
-                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
-                          >
-                            <span className="text-sm font-medium">{showPersonalSampleReport ? '⊟' : '⊞'}</span>
-                            <span className="font-medium text-sm">Sample Report Sentence</span>
-                          </button>
-                          
-                          {showPersonalSampleReport && (
-                            <div className="p-4 bg-white border-t">
-                              <p className="text-sm text-gray-600 mb-3 italic bg-gray-50 p-3 rounded border">
-                                {generatePersonalSampleReportSentence()}
-                              </p>
-                              
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                  <label className={labelClass}>Age (years):</label>
-                                  <input
-                                    type="text"
-                                    value={personalSampleReportData.age}
-                                    onChange={(e) => handlePersonalSampleReportTextChange('age', e.target.value)}
-                                    placeholder="e.g., 3"
-                                    className={inputClass('personalAge')}
-                                  />
-                                </div>
-
-                                <div>
-                                  <label className={labelClass}>Lives With:</label>
-                                  <input
-                                    type="text"
-                                    value={personalSampleReportData.livesWith}
-                                    onChange={(e) => handlePersonalSampleReportTextChange('livesWith', e.target.value)}
-                                    placeholder="e.g., his parents"
-                                    className={inputClass('personalLivesWith')}
-                                  />
-                                </div>
-
-                                <div>
-                                  <label className={labelClass}>Number of Siblings:</label>
-                                  <input
-                                    type="text"
-                                    value={personalSampleReportData.siblingCount}
-                                    onChange={(e) => handlePersonalSampleReportTextChange('siblingCount', e.target.value)}
-                                    placeholder="e.g., 1"
-                                    className={inputClass('personalSiblingCount')}
-                                  />
-                                </div>
-                              </div>
-
-                              {/* Additional Info */}
-                              <div className="mt-4">
-                                <label className={labelClass}>Additional Information:</label>
-                                <textarea
-                                  value={personalSampleReportData.additionalInfo}
-                                  onChange={(e) => handlePersonalSampleReportTextChange('additionalInfo', e.target.value)}
-                                  placeholder="Enter any additional details..."
-                                  rows="2"
-                                  className={inputClass('personalAdditionalInfo')}
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
                         <h4 className="text-sm font-semibold text-blue-700">Personal Information</h4>
                         <p className="text-sm text-gray-500">Personal history details can be added here.</p>
                       </div>
