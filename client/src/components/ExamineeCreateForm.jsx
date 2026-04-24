@@ -19,11 +19,15 @@ import api from '../services/api';
 import { fetchPatients } from '../store/slices/patientSlice';
 import Sidebar from './Sidebar';
 
-const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActiveItem }) => {
+const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActiveItem, examineeId = null, isEditMode = false }) => {
+  console.log('🚀 ExamineeCreateForm MOUNTED!');
+  console.log('📍 Props:', { examineeId, isEditMode, activeItem });
+  
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const [activeTab, setActiveTab] = useState('demographics');
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [age, setAge] = useState({ years: 0, months: 0 });
   
@@ -584,6 +588,172 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
     }
   }, [formData.birthDate]);
 
+  // Fetch examinee data in edit mode
+  useEffect(() => {
+    const fetchExamineeData = async () => {
+      if (isEditMode && examineeId) {
+        setIsLoading(true);
+        try {
+          const response = await api.getPatient(examineeId);
+          if (response.success && response.data) {
+            const patient = response.data;
+            
+            // Parse JSON fields
+            let evalData = patient.evaluation_data;
+            let diagData = patient.diagnosis_data;
+            let histData = patient.history_data;
+            
+            console.log('🔍 EDIT MODE DEBUG:');
+            console.log('📊 Raw evalData:', evalData, 'Type:', typeof evalData);
+            console.log('📊 Raw diagData:', diagData, 'Type:', typeof diagData);
+            console.log('📊 Raw histData:', histData, 'Type:', typeof histData);
+            
+            if (typeof evalData === 'string') {
+              try { evalData = JSON.parse(evalData); console.log('✅ Parsed evalData:', evalData); } catch (e) { console.error('❌ Error parsing evalData:', e); evalData = {}; }
+            }
+            if (typeof diagData === 'string') {
+              try { diagData = JSON.parse(diagData); console.log('✅ Parsed diagData:', diagData); } catch (e) { console.error('❌ Error parsing diagData:', e); diagData = {}; }
+            }
+            if (typeof histData === 'string') {
+              try { histData = JSON.parse(histData); console.log('✅ Parsed histData:', histData); } catch (e) { console.error('❌ Error parsing histData:', e); histData = {}; }
+            }
+            
+            // Set form data
+            setFormData({
+              firstName: patient.first_name || '',
+              middleName: patient.middle_name || '',
+              lastName: patient.last_name || '',
+              examineeId: patient.student_id || '',
+              gender: patient.gender ? patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1) : '',
+              birthDate: patient.date_of_birth ? new Date(patient.date_of_birth).toISOString().split('T')[0] : '',
+              schoolName: patient.school_name || '',
+              grade: patient.grade || '',
+              languageOfTesting: patient.language_of_testing || '',
+              email: patient.email || '',
+              comment: patient.comment || '',
+              account: patient.centre_name || 'CENTRIX CENTRE',
+              requiresAssessment: patient.requires_assessment || false,
+              requiresTherapy: patient.requires_therapy || false
+            });
+            
+            // Set evaluation data
+            if (evalData && Object.keys(evalData).length > 0) {
+              setEvaluationData(prev => ({
+                academicConcerns: { ...prev.academicConcerns, ...evalData?.academicConcerns },
+                cognitiveEvaluation: { ...prev.cognitiveEvaluation, ...evalData?.cognitiveEvaluation },
+                behaviourConcerns: { ...prev.behaviourConcerns, ...evalData?.behaviourConcerns },
+                mentalHealth: { ...prev.mentalHealth, ...evalData?.mentalHealth },
+                developmentalDelay: { ...prev.developmentalDelay, ...evalData?.developmentalDelay },
+                languageConcerns: { ...prev.languageConcerns, ...evalData?.languageConcerns },
+                speechConcerns: { ...prev.speechConcerns, ...evalData?.speechConcerns },
+                physicalConcerns: { ...prev.physicalConcerns, ...evalData?.physicalConcerns },
+                substanceAbuse: { ...prev.substanceAbuse, ...evalData?.substanceAbuse },
+                employment: { ...prev.employment, ...evalData?.employment }
+              }));
+            }
+            
+            // Set diagnosis data
+            if (diagData && Object.keys(diagData).length > 0) {
+              setExpandedDiagnoses(prev => ({
+                ...prev,
+                ...diagData
+              }));
+            }
+            
+            // Set history data
+            if (histData && Object.keys(histData).length > 0) {
+              console.log('📝 Setting history data. Keys:', Object.keys(histData));
+              console.log('📝 histData content:', JSON.stringify(histData, null, 2));
+              
+              setHistoryOtherData(prev => ({
+                ...prev,
+                ...histData
+              }));
+              
+              // Set referral data
+              setReferralData(prev => ({
+                ...prev,
+                referralSourceName: histData.referralSourceName || '',
+                referralSourceRole: histData.referralSourceRole || '',
+                schoolRelatedConcerns: histData.schoolRelatedConcerns || false,
+                speechConcerns: histData.speechConcerns || false,
+                languageConcerns: histData.languageConcerns || false,
+                socialEmotionalConcerns: histData.socialEmotionalConcerns || false,
+                cognitiveConcerns: histData.cognitiveConcerns || false,
+                physicalConcerns: histData.physicalConcerns || false,
+                vocationalRehabilitationLegal: histData.vocationalRehabilitationLegal || false
+              }));
+              console.log('✅ Referral data set');
+              
+              // Set referral reason text
+              if (histData.referralReasonText) {
+                setReferralReasonText(histData.referralReasonText);
+                console.log('✅ Referral reason text set');
+              }
+              
+              // Set language sample report data
+              if (histData.languageSampleReportData) {
+                console.log('📝 Setting language sample report data:', histData.languageSampleReportData);
+                setLanguageSampleReportData(prev => ({
+                  ...prev,
+                  ...histData.languageSampleReportData
+                }));
+                console.log('✅ Language sample report data set');
+              } else {
+                console.log('⚠️ No languageSampleReportData in histData');
+              }
+              
+              // Set education sample report data
+              if (histData.educationSampleReportData) {
+                console.log('📝 Setting education sample report data:', histData.educationSampleReportData);
+                setEducationSampleReportData(prev => ({
+                  ...prev,
+                  ...histData.educationSampleReportData
+                }));
+                console.log('✅ Education sample report data set');
+              } else {
+                console.log('⚠️ No educationSampleReportData in histData');
+              }
+              
+              // Set health sample report data
+              if (histData.healthSampleReportData) {
+                console.log('📝 Setting health sample report data:', histData.healthSampleReportData);
+                setHealthSampleReportData(prev => ({
+                  ...prev,
+                  ...histData.healthSampleReportData
+                }));
+                console.log('✅ Health sample report data set');
+              } else {
+                console.log('⚠️ No healthSampleReportData in histData');
+              }
+              
+              // Set employment sample report data
+              if (histData.employmentSampleReportData) {
+                console.log('📝 Setting employment sample report data:', histData.employmentSampleReportData);
+                setEmploymentSampleReportData(prev => ({
+                  ...prev,
+                  ...histData.employmentSampleReportData
+                }));
+                console.log('✅ Employment sample report data set');
+              } else {
+                console.log('⚠️ No employmentSampleReportData in histData');
+              }
+            } else {
+              console.log('⚠️ No history data or empty histData');
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching examinee data:', error);
+          setErrors({ submit: 'Failed to load examinee data' });
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    
+    fetchExamineeData();
+  }, [isEditMode, examineeId]);
+
   // Fetch centers on mount
   useEffect(() => {
     fetchCenters();
@@ -675,7 +845,6 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
           ...historyOtherData,
           ...referralData,
           referralReasonText: referralReasonText,
-          personalSampleReportData: personalSampleReportData,
           languageSampleReportData: languageSampleReportData,
           educationSampleReportData: educationSampleReportData,
           healthSampleReportData: healthSampleReportData,
@@ -683,25 +852,35 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
         }
       };
 
-      const response = await api.request('/students', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(apiData)
-      });
+      let response;
+      if (isEditMode && examineeId) {
+        // Update existing examinee
+        response = await api.request(`/students/${examineeId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(apiData)
+        });
+      } else {
+        // Create new examinee
+        response = await api.request('/students', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(apiData)
+        });
+      }
 
-      // api.request() already returns parsed JSON data
       const result = response;
 
       if (result.success) {
-        // Refresh the patients list to show the new examinee
+        // Refresh the patients list
         dispatch(fetchPatients());
         onSave && onSave(result.data);
       } else {
-        setErrors({ submit: result.message || 'Failed to create examinee' });
+        setErrors({ submit: result.message || `Failed to ${isEditMode ? 'update' : 'create'} examinee` });
       }
     } catch (error) {
-      console.error('Error creating examinee:', error);
-      setErrors({ submit: 'An error occurred while creating the examinee' });
+      console.error(`Error ${isEditMode ? 'updating' : 'creating'} examinee:`, error);
+      setErrors({ submit: `An error occurred while ${isEditMode ? 'updating' : 'creating'} the examinee` });
     } finally {
       setIsSaving(false);
     }
@@ -724,6 +903,30 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
 
   const labelClass = "block text-xs font-medium text-gray-600 mb-1";
   const requiredMark = <span className="text-red-500 ml-0.5">*</span>;
+
+  // Debug logs for rendering
+  console.log('🎨 RENDER DEBUG:');
+  console.log('📍 activeTab:', activeTab);
+  console.log('📍 historySubTab:', historySubTab);
+  console.log('📍 isEditMode:', isEditMode);
+  console.log('📍 isLoading:', isLoading);
+  console.log('📍 languageSampleReportData:', languageSampleReportData);
+  console.log('📍 educationSampleReportData:', educationSampleReportData);
+  console.log('📍 healthSampleReportData:', healthSampleReportData);
+  console.log('📍 employmentSampleReportData:', employmentSampleReportData);
+
+  // Show loading state while fetching data in edit mode
+  if (isLoading) {
+    console.log('⏳ Showing loading state...');
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading examinee data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex">
@@ -748,7 +951,7 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                   <span className="font-medium">Back</span>
                 </button>
                 <div className="h-6 w-px bg-gray-200" />
-                <h1 className="text-xl font-semibold text-gray-900">New Examinee</h1>
+                <h1 className="text-xl font-semibold text-gray-900">{isEditMode ? 'Edit Examinee' : 'New Examinee'}</h1>
               </div>
               <div className="flex items-center space-x-3">
                 <button
@@ -757,7 +960,7 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                   className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg hover:from-emerald-600 hover:to-teal-600 transition-all shadow-sm hover:shadow-md text-sm font-medium disabled:opacity-50"
                 >
                   <FiSave className="w-4 h-4" />
-                  <span>{isSaving ? 'Saving...' : 'Save'}</span>
+                  <span>{isSaving ? 'Saving...' : (isEditMode ? 'Update' : 'Save')}</span>
                 </button>
                 <button
                   onClick={onCancel}

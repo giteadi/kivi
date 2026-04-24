@@ -1217,8 +1217,9 @@ ${service.target_age_group || 'Not specified'}
     // Handle examinee edit form
     if (currentView === 'patient-edit') {
       return (
-        <ExamineeEditForm
-          studentId={selectedPatientId}
+        <ExamineeCreateForm
+          examineeId={selectedPatientId}
+          isEditMode={true}
           onSave={handleSavePatient}
           onCancel={handleCancelPatientEdit}
         />

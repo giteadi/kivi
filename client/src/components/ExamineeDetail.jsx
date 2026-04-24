@@ -198,6 +198,13 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
     employmentHistorySource: '',
     additionalInfo: ''
   });
+
+  // State for Personal Sample Report Data
+  const [personalSampleReportData, setPersonalSampleReportData] = useState({
+    livingArrangement: '',
+    livesWithDetails: '',
+    additionalInfo: ''
+  });
   
   const [age, setAge] = useState({ years: 0, months: 0 });
   const [errors, setErrors] = useState({});
@@ -2161,23 +2168,11 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
 
                     {historySubTab === 'languageDevelopment' && (
                       <div className="space-y-6">
-                        {/* Sample Report Sentence for Language/Development */}
-                        <div className="border rounded-lg overflow-hidden mb-4">
-                          <button 
-                            onClick={() => setShowLanguageSampleReport(!showLanguageSampleReport)}
-                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
-                          >
-                            <span className="text-sm font-medium">{showLanguageSampleReport ? '⊟' : '⊞'}</span>
-                            <span className="font-medium text-sm">Sample Report Sentence</span>
-                          </button>
-                          
-                          {showLanguageSampleReport && (
-                            <div className="p-4 bg-white border-t">
-                              <p className="text-sm text-gray-600 mb-3 italic bg-gray-50 p-3 rounded border">
-                                {generateLanguageSampleReportSentence()}
-                              </p>
-                              
-                              {/* Language Section */}
+                        {/* Language and Development Content */}
+                        <h3 className="text-sm font-semibold text-blue-800">Language and Development</h3>
+                        <p className="text-xs text-gray-600 mb-4">Language and developmental history can be added here.</p>
+                        
+                        {/* Language Section */}
                               <div className="mb-6">
                                 <h4 className="text-sm font-semibold text-blue-700 mb-3">Language</h4>
                                 
@@ -2332,36 +2327,25 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                   />
                                 </div>
                               </div>
-                            </div>
-                          )}
-                        </div>
-
-                        <h4 className="text-sm font-semibold text-blue-700">Language and Development</h4>
+                        
+                        <h4 className="text-sm font-semibold text-blue-700 mt-6">Additional Information</h4>
                         <p className="text-sm text-gray-500">Language and developmental history can be added here.</p>
                       </div>
                     )}
 
                     {historySubTab === 'education' && (
                       <div className="space-y-6">
-                        {/* Sample Report Sentence for Education */}
-                        <div className="border rounded-lg overflow-hidden mb-4">
-                          <button 
-                            onClick={() => setShowEducationSampleReport(!showEducationSampleReport)}
-                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
-                          >
-                            <span className="text-sm font-medium">{showEducationSampleReport ? '⊟' : '⊞'}</span>
-                            <span className="font-medium text-sm">Sample Report Sentence</span>
-                          </button>
-                          
-                          {showEducationSampleReport && (
-                            <div className="p-4 bg-white border-t">
-                              <p className="text-sm text-gray-600 mb-3 italic bg-gray-50 p-3 rounded border">
-                                {generateEducationSampleReportSentence()}
-                              </p>
-                              
-                              {/* Education Level Section */}
-                              <div className="mb-6">
-                                <h4 className="text-sm font-semibold text-blue-700 mb-3">Highest Level of Education</h4>
+                        {/* Education Content */}
+                        <h3 className="text-sm font-semibold text-blue-800">Education</h3>
+                        
+                        {/* Education fields will go here */}
+                        <p className="text-sm text-gray-600 mb-3 italic bg-gray-50 p-3 rounded border">
+                          {generateEducationSampleReportSentence()}
+                        </p>
+                        
+                        {/* Education Level Section */}
+                        <div className="mb-6">
+                          <h4 className="text-sm font-semibold text-blue-700 mb-3">Highest Level of Education</h4>
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                   <div>
@@ -2527,40 +2511,24 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                   />
                                 </div>
                               </div>
-                            </div>
-                          )}
-                        </div>
-
-                        <h4 className="text-sm font-semibold text-blue-700">Education</h4>
+                        
+                        <h4 className="text-sm font-semibold text-blue-700 mt-6">Additional Information</h4>
                         <p className="text-sm text-gray-500">Educational history can be added here.</p>
                       </div>
                     )}
 
                     {historySubTab === 'health' && (
                       <div className="space-y-6">
-                        {/* Sample Report Sentence for Health */}
-                        <div className="border rounded-lg overflow-hidden mb-4">
-                          <button 
-                            onClick={() => setShowHealthSampleReport(!showHealthSampleReport)}
-                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
-                          >
-                            <span className="text-sm font-medium">{showHealthSampleReport ? '⊟' : '⊞'}</span>
-                            <span className="font-medium text-sm">Sample Report Sentence</span>
-                          </button>
-                          
-                          {showHealthSampleReport && (
-                            <div className="p-4 bg-white border-t">
-                              <p className="text-sm text-gray-600 mb-3 italic bg-gray-50 p-3 rounded border">
-                                {generateHealthSampleReportSentence()}
-                              </p>
-                              
-                              {/* Health History Source */}
-                              <div className="mb-6">
-                                <h4 className="text-sm font-semibold text-blue-700 mb-3">Health History According to:</h4>
-                                <div>
-                                  <label className={labelClass}>Source:</label>
-                                  <select 
-                                    value={healthSampleReportData.healthHistorySource}
+                        {/* Health Content */}
+                        <h3 className="text-sm font-semibold text-blue-800">Health</h3>
+                        
+                        {/* Health History Source */}
+                        <div className="mb-6">
+                          <h4 className="text-sm font-semibold text-blue-700 mb-3">Health History According to:</h4>
+                          <div>
+                            <label className={labelClass}>Source:</label>
+                            <select 
+                              value={healthSampleReportData.healthHistorySource}
                                     onChange={(e) => handleHealthSampleReportTextChange('healthHistorySource', e.target.value)}
                                     className={`${inputClass('healthHistorySource')} appearance-none`}
                                   >
@@ -2789,32 +2757,17 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                   />
                                 </div>
                               </div>
-                            </div>
-                          )}
-                        </div>
-
-                        <h4 className="text-sm font-semibold text-blue-700">Health</h4>
+                        
+                        <h4 className="text-sm font-semibold text-blue-700 mt-6">Additional Information</h4>
                         <p className="text-sm text-gray-500">Health history can be added here.</p>
                       </div>
                     )}
 
                     {historySubTab === 'employment' && (
                       <div className="space-y-6">
-                        {/* Sample Report Sentence for Employment */}
-                        <div className="border rounded-lg overflow-hidden mb-4">
-                          <button 
-                            onClick={() => setShowEmploymentSampleReport(!showEmploymentSampleReport)}
-                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
-                          >
-                            <span className="text-sm font-medium">{showEmploymentSampleReport ? '⊟' : '⊞'}</span>
-                            <span className="font-medium text-sm">Sample Report Sentence</span>
-                          </button>
-                          
-                          {showEmploymentSampleReport && (
-                            <div className="p-4 bg-white border-t">
-                              <p className="text-sm text-gray-600 mb-3 italic bg-gray-50 p-3 rounded border">
-                                {generateEmploymentSampleReportSentence()}
-                              </p>
+                        {/* Employment Content */}
+                        <h3 className="text-sm font-semibold text-blue-800">Employment</h3>
+                        <p className="text-sm text-gray-500 mb-4">Employment history can be added here.</p>
                               
                               {/* Employment Information */}
                               <div className="mb-6">
@@ -2899,12 +2852,6 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                   />
                                 </div>
                               </div>
-                            </div>
-                          )}
-                        </div>
-
-                        <h4 className="text-sm font-semibold text-blue-700">Employment</h4>
-                        <p className="text-sm text-gray-500">Employment history can be added here.</p>
                       </div>
                     )}
                   </motion.div>
