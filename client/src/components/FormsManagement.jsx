@@ -77,7 +77,7 @@ const css = {
                           { background: "transparent", borderColor: "#D1D5DB" }),
   }),
   iconBtn:   { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 6, border: "1px solid", background: "transparent", cursor: "pointer" },
-  toolbar:   { padding: "10px 24px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" },
+  toolbar:   { padding: "10px 24px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", background: "#fff", zIndex: 5, position: "relative", borderBottom: "1px solid #E5E7EB" },
   content:   { padding: 24, display: "flex", gap: 24 },
   folderTree: { width: 280, minWidth: 280, borderRadius: 12, overflow: "hidden", display: "flex", flexDirection: "column" },
   folderTreeHeader: { padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" },

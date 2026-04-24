@@ -32,6 +32,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchPatients } from '../store/slices/patientSlice';
 import Sidebar from './Sidebar';
 import InvoiceScreen from './InvoiceScreen';
+import api from '../services/api';
 import * as XLSX from 'xlsx';
 import { Document, Packer, Paragraph, Table, TableCell, TableRow, TextRun, HeadingLevel } from 'docx';
 import jsPDF from 'jspdf';

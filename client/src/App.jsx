@@ -1389,8 +1389,8 @@ ${service.target_age_group || 'Not specified'}
       case 'assign-assessment':
         return (
           <AssignAssessmentScreen
-            examineeId={selectedExamineeForAssignment?.id}
-            examineeName={`${selectedExamineeForAssignment?.firstName} ${selectedExamineeForAssignment?.lastName}`}
+            examineeId={selectedExamineeForAssignment?.id || selectedExamineeForAssignment?.examineeId}
+            examineeName={selectedExamineeForAssignment ? `${selectedExamineeForAssignment.firstName || ''} ${selectedExamineeForAssignment.lastName || ''}`.trim() : ''}
             onBack={() => {
               setActiveItem('patients');
               setCurrentView('patients');
@@ -1579,8 +1579,8 @@ ${service.target_age_group || 'Not specified'}
             <Route path="/assign-assessment" element={
               currentView === 'assign-assessment' ? (
                 <AssignAssessmentScreen
-                  examineeId={selectedExamineeForAssignment?.id}
-                  examineeName={`${selectedExamineeForAssignment?.firstName} ${selectedExamineeForAssignment?.lastName}`}
+                  examineeId={selectedExamineeForAssignment?.id || selectedExamineeForAssignment?.examineeId}
+                  examineeName={selectedExamineeForAssignment ? `${selectedExamineeForAssignment.firstName || ''} ${selectedExamineeForAssignment.lastName || ''}`.trim() : ''}
                   onBack={() => {
                     setActiveItem('patients');
                     setCurrentView('patients');

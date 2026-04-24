@@ -59,7 +59,7 @@ const css = {
                           { background: "transparent", borderColor: "#D1D5DB" }),
   }),
   iconBtn:   { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 6, border: "1px solid", background: "transparent", cursor: "pointer" },
-  toolbar:   { padding: "10px 24px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" },
+  toolbar:   { padding: "10px 24px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", background: "#fff", zIndex: 5, position: "relative", borderBottom: "1px solid #E5E7EB" },
   content:   { padding: 24 },
   card: (sel) => ({ borderRadius: 12, border: sel ? "2px solid #3B82F6" : "1px solid", overflow: "hidden", cursor: "pointer", transition: "all 0.15s" }),
   cardIcon:  { width: 36, height: 36, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },

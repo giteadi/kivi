@@ -1,11 +1,11 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  FiHome, 
-  FiCalendar, 
-  FiUsers, 
-  FiUser, 
-  FiUserCheck, 
+import {
+  FiHome,
+  FiCalendar,
+  FiUsers,
+  FiUser,
+  FiUserCheck,
   FiMapPin,
   FiChevronDown,
   FiChevronRight,
@@ -20,9 +20,7 @@ import {
   FiX,
   FiMessageSquare,
   FiShield,
-  FiUpload,
-  FiPackage,
-  FiTool
+  FiUpload
 } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
@@ -37,8 +35,6 @@ const routeMapping = {
   'assessment-list': '/encounters/assessments',
   'therapy-list': '/encounters/therapies',
   'patients': '/examinees',
-  'packages': '/packages',
-  'assessment-tools': '/assessment-tools',
   'doctors': '/therapists',
   'template-manager': '/templates',
   'forms': '/forms',
@@ -142,9 +138,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
         ]
       }, */
       { id: 'patients', label: 'Examinees', icon: FiUser, section: 'USERS' },
-      { id: 'packages', label: 'Assessment Packages', icon: FiPackage, section: 'USERS' },
-      { id: 'assessment-tools', label: 'Assessment Tools', icon: FiTool, section: 'USERS' },
-    { id: 'doctors', label: 'Therapists', icon: FiUserCheck, section: 'USERS' },
+      { id: 'doctors', label: 'Therapists', icon: FiUserCheck, section: 'USERS' },
     { id: 'template-manager', label: 'Assessment Templates', icon: FiFileText, section: 'USERS' },
     { id: 'forms', label: 'Forms', icon: FiUpload, section: 'USERS' },
     // { id: 'receptionists', label: 'Staff', icon: FiUser, section: 'USERS' }, // Temporarily disabled for future use
