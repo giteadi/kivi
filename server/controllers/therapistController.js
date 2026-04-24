@@ -74,8 +74,8 @@ class TherapistController {
           email: therapistData.email,
           password: therapistData.password || 'therapist123', // Use provided password or default
           role: 'therapist',
-          first_name: therapistData.first_name,
-          last_name: therapistData.last_name,
+          first_name: therapistData.first_name || therapistData.firstName || 'Therapist',
+          last_name: therapistData.last_name || therapistData.lastName || '',
           phone: therapistData.phone,
           is_active: true
         };
@@ -117,9 +117,24 @@ class TherapistController {
       });
     } catch (error) {
       console.error('Create therapist error:', error);
+      
+      // Handle specific error cases
+      if (error.code === 'ER_DUP_ENTRY') {
+        if (error.sqlMessage && error.sqlMessage.includes('email')) {
+          return res.status(409).json({
+            success: false,
+            message: 'A user with this email already exists'
+          });
+        }
+        return res.status(409).json({
+          success: false,
+          message: 'Duplicate entry found'
+        });
+      }
+      
       res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: error.message || 'Internal server error'
       });
     }
   }
