@@ -13,29 +13,31 @@ const formatDateForInput = (dateString) => {
 const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
     id: '',
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     phone: '',
     password: '',
-    clinic: '',
+    centre: '',
+    centreId: '',
     specialty: '',
     qualification: '',
     experience: '',
     status: 'Active',
-    availability: 'Available',
-    joinDate: '',
+    joiningDate: '',
     dateOfBirth: '',
     gender: '',
     address: '',
+    city: '',
+    state: '',
+    zipCode: '',
     licenseNumber: '',
-    consultationFee: '',
-    workingHours: '',
+    loginTime: '09:00',
+    logoutTime: '18:00',
+    isAvailable: true,
     emergencyContactName: '',
-    emergencyContactRelation: '',
     emergencyContactPhone: '',
-    specializations: '',
-    certifications: '',
-    languages: ''
+    bio: ''
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,10 +46,20 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
   const [updateSuccess, setUpdateSuccess] = useState(false);
   const [passwordUpdated, setPasswordUpdated] = useState(false);
 
-  const clinics = ['Clinic Kjaggi', 'Green Valley Clinic', 'Sunrise Health Center', 'Downtown Family Clinic'];
-  const specialties = ['General Medicine', 'Cardiology', 'Pediatrics', 'Orthopedics', 'Dermatology', 'Neurology', 'Psychiatry'];
+  const [centres, setCentres] = useState([]);
+  const [loadingCentres, setLoadingCentres] = useState(false);
+
+  const specialties = [
+    'Learning Therapy',
+    'Behavioral Therapy',
+    'Speech Therapy',
+    'Occupational Therapy',
+    'Educational Psychology',
+    'Special Needs Support',
+    'Child Development',
+    'Family Counseling'
+  ];
   const statuses = ['Active', 'On Leave', 'Inactive'];
-  const availabilities = ['Available', 'Busy', 'Unavailable'];
   const genders = ['Male', 'Female', 'Other'];
 
   const handleInputChange = (field, value) => {
@@ -65,42 +77,62 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
     }
   };
 
+  // Fetch centres from database
+  useEffect(() => {
+    const fetchCentres = async () => {
+      setLoadingCentres(true);
+      try {
+        const response = await api.request('/centres', {
+          method: 'GET'
+        });
+        if (response.success && response.data) {
+          setCentres(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching centres:', error);
+      } finally {
+        setLoadingCentres(false);
+      }
+    };
+    fetchCentres();
+  }, []);
+
   // Fetch therapist data when component mounts
   useEffect(() => {
     const fetchTherapistData = async () => {
       try {
-        // Extract numeric ID from doctorId (handle both string "#4" and number 4)
         const numericId = typeof doctorId === 'string' ? doctorId.replace('#', '') : doctorId;
-        
         const result = await api.getDoctor(numericId);
 
         if (result.success) {
           const therapist = result.data;
           setFormData({
             id: therapist.id,
-            name: `${therapist.first_name} ${therapist.last_name}`,
+            firstName: therapist.first_name || '',
+            lastName: therapist.last_name || '',
             email: therapist.email,
             phone: therapist.phone,
-            password: therapist.password || '', // Show current password from database
-            clinic: therapist.centre_name || '',
+            password: '',
+            centre: therapist.centre_name || '',
+            centreId: therapist.centre_id || '',
             specialty: therapist.specialty,
             qualification: therapist.qualification,
             experience: therapist.experience_years || '',
             status: therapist.status === 'active' ? 'Active' : 'Inactive',
-            availability: 'Available',
-            joinDate: formatDateForInput(therapist.joining_date),
+            joiningDate: formatDateForInput(therapist.joining_date),
             dateOfBirth: formatDateForInput(therapist.date_of_birth),
             gender: therapist.gender,
             address: therapist.address,
+            city: therapist.city || '',
+            state: therapist.state || '',
+            zipCode: therapist.zip_code || '',
             licenseNumber: therapist.license_number,
-            consultationFee: therapist.session_fee || '',
-            workingHours: '9:00 AM - 6:00 PM', // Default, could be enhanced
+            loginTime: therapist.login_time ? therapist.login_time.substring(0, 5) : '09:00',
+            logoutTime: therapist.logout_time ? therapist.logout_time.substring(0, 5) : '18:00',
+            isAvailable: therapist.is_available !== false,
             emergencyContactName: therapist.emergency_contact_name,
-            emergencyContactRelation: '',
             emergencyContactPhone: therapist.emergency_contact_phone,
-            specializations: therapist.bio || '',
-            certifications: '',
-            languages: ''
+            bio: therapist.bio || ''
           });
         } else {
           toast.error('Failed to load therapist data');
@@ -121,15 +153,13 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
+    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
     if (!formData.email.trim()) newErrors.email = 'Email is required';
     if (!formData.phone.trim()) newErrors.phone = 'Phone is required';
-    if (!formData.address.trim()) newErrors.address = 'Address is required';
+    if (!formData.specialty.trim()) newErrors.specialty = 'Specialty is required';
     if (!formData.qualification.trim()) newErrors.qualification = 'Qualification is required';
-    if (!formData.licenseNumber.trim()) newErrors.licenseNumber = 'License number is required';
-    if (!formData.consultationFee.trim()) newErrors.consultationFee = 'Consultation fee is required';
-    if (!formData.emergencyContactName.trim()) newErrors.emergencyContactName = 'Emergency contact name is required';
-    if (!formData.emergencyContactPhone.trim()) newErrors.emergencyContactPhone = 'Emergency contact phone is required';
+    if (!formData.centre.trim()) newErrors.centre = 'Center is required';
     
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -171,21 +201,21 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
     try {
       // Prepare therapist data for API
       const therapistData = {
-        first_name: formData.name.split(' ')[0] || '',
-        last_name: formData.name.split(' ').slice(1).join(' ') || '',
+        first_name: formData.firstName,
+        last_name: formData.lastName,
         email: formData.email,
         phone: formData.phone,
         specialty: formData.specialty,
         qualification: formData.qualification,
         license_number: formData.licenseNumber,
         experience_years: parseInt(formData.experience) || 0,
-        session_fee: parseFloat(formData.consultationFee) || 0,
-        bio: formData.specializations,
+        bio: formData.bio,
         date_of_birth: formatDateForInput(formData.dateOfBirth),
         gender: formData.gender,
         address: formData.address,
         emergency_contact_name: formData.emergencyContactName,
         emergency_contact_phone: formData.emergencyContactPhone,
+        joining_date: formatDateForInput(formData.joiningDate),
         status: formData.status.toLowerCase()
       };
 
@@ -196,6 +226,14 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
       if (isPasswordUpdate) {
         therapistData.password = formData.password;
       }
+
+      // Add availability data
+      therapistData.login_time = formData.loginTime + ':00';
+      therapistData.logout_time = formData.logoutTime + ':00';
+      therapistData.is_available = formData.isAvailable;
+      therapistData.city = formData.city;
+      therapistData.state = formData.state;
+      therapistData.zip_code = formData.zipCode;
 
       const result = await api.updateDoctor(formData.id, therapistData);
 
@@ -299,7 +337,7 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
               <span className="text-gray-800">Edit Therapist</span>
             </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
           {/* Personal Information */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -310,22 +348,38 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
               <FiUser className="w-5 h-5 text-blue-600" />
               <h3 className="text-lg font-semibold text-gray-800">Personal Information</h3>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name <span className="text-red-500">*</span>
+                  First Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  value={formData.firstName}
+                  onChange={(e) => handleInputChange('firstName', e.target.value)}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.name ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                    errors.firstName ? 'border-red-500 bg-red-50' : 'border-gray-300'
                   }`}
-                  placeholder="Enter full name"
+                  placeholder="Enter first name"
                 />
-                {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
+                {errors.firstName && <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Last Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.lastName}
+                  onChange={(e) => handleInputChange('lastName', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.lastName ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                  }`}
+                  placeholder="Enter last name"
+                />
+                {errors.lastName && <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>}
               </div>
 
               <div>
@@ -349,6 +403,7 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
                   onChange={(e) => handleInputChange('gender', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
+                  <option value="">Select gender</option>
                   {genders.map(gender => (
                     <option key={gender} value={gender}>{gender}</option>
                   ))}
@@ -357,18 +412,54 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
 
               <div className="md:col-span-2 lg:col-span-3">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Address <span className="text-red-500">*</span>
+                  Address
+                </label>
+                <textarea
+                  value={formData.address}
+                  onChange={(e) => handleInputChange('address', e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter full address"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  City
                 </label>
                 <input
                   type="text"
-                  value={formData.address}
-                  onChange={(e) => handleInputChange('address', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.address ? 'border-red-500 bg-red-50' : 'border-gray-300'
-                  }`}
-                  placeholder="Enter full address"
+                  value={formData.city}
+                  onChange={(e) => handleInputChange('city', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter city"
                 />
-                {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  State
+                </label>
+                <input
+                  type="text"
+                  value={formData.state}
+                  onChange={(e) => handleInputChange('state', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter state"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Zip Code
+                </label>
+                <input
+                  type="text"
+                  value={formData.zipCode}
+                  onChange={(e) => handleInputChange('zipCode', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter zip code"
+                />
               </div>
             </div>
           </motion.div>
@@ -472,17 +563,21 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Specialty
+                  Specialty <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={formData.specialty}
                   onChange={(e) => handleInputChange('specialty', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.specialty ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                  }`}
                 >
+                  <option value="">Select specialty</option>
                   {specialties.map(specialty => (
                     <option key={specialty} value={specialty}>{specialty}</option>
                   ))}
                 </select>
+                {errors.specialty && <p className="mt-1 text-sm text-red-600">{errors.specialty}</p>}
               </div>
 
               <div>
@@ -516,126 +611,47 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  License Number <span className="text-red-500">*</span>
+                  License Number
                 </label>
                 <input
                   type="text"
                   value={formData.licenseNumber}
                   onChange={(e) => handleInputChange('licenseNumber', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.licenseNumber ? 'border-red-500 bg-red-50' : 'border-gray-300'
-                  }`}
-                  placeholder="Medical license number"
-                />
-                {errors.licenseNumber && <p className="mt-1 text-sm text-red-600">{errors.licenseNumber}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Consultation Fee (₹) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  value={formData.consultationFee}
-                  onChange={(e) => handleInputChange('consultationFee', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.consultationFee ? 'border-red-500 bg-red-50' : 'border-gray-300'
-                  }`}
-                  placeholder="Consultation fee"
-                />
-                {errors.consultationFee && <p className="mt-1 text-sm text-red-600">{errors.consultationFee}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Working Hours
-                </label>
-                <input
-                  type="text"
-                  value={formData.workingHours}
-                  onChange={(e) => handleInputChange('workingHours', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., 9:00 AM - 6:00 PM"
+                  placeholder="Enter license number"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Languages
-                </label>
-                <input
-                  type="text"
-                  value={formData.languages}
-                  onChange={(e) => handleInputChange('languages', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Languages spoken (comma separated)"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Specializations
-                </label>
-                <textarea
-                  value={formData.specializations}
-                  onChange={(e) => handleInputChange('specializations', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  rows="2"
-                  placeholder="Areas of specialization (comma separated)"
-                />
-              </div>
-
-              <div className="md:col-span-2 lg:col-span-3">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Certifications
-                </label>
-                <textarea
-                  value={formData.certifications}
-                  onChange={(e) => handleInputChange('certifications', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  rows="2"
-                  placeholder="Professional certifications (comma separated)"
-                />
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Employment Information */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-white rounded-xl p-6 shadow-sm border"
-          >
-            <div className="flex items-center space-x-2 mb-6">
-              <FiDollarSign className="w-5 h-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-800">Employment Information</h3>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Primary Clinic
+                  Center <span className="text-red-500">*</span>
                 </label>
                 <select
-                  value={formData.clinic}
-                  onChange={(e) => handleInputChange('clinic', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  value={formData.centre}
+                  onChange={(e) => handleInputChange('centre', e.target.value)}
+                  disabled={loadingCentres}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.centre ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                  } ${loadingCentres ? 'bg-gray-100' : ''}`}
                 >
-                  {clinics.map(clinic => (
-                    <option key={clinic} value={clinic}>{clinic}</option>
+                  <option value="">{loadingCentres ? 'Loading centers...' : 'Select center'}</option>
+                  {centres.map((centre) => (
+                    <option key={centre.id} value={centre.name || centre.centre_name}>
+                      {centre.name || centre.centre_name}
+                    </option>
                   ))}
                 </select>
+                {errors.centre && <p className="mt-1 text-sm text-red-600">{errors.centre}</p>}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Join Date
+                  Joining Date
                 </label>
                 <input
                   type="date"
-                  value={formData.joinDate}
-                  onChange={(e) => handleInputChange('joinDate', e.target.value)}
+                  value={formData.joiningDate}
+                  onChange={(e) => handleInputChange('joiningDate', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
@@ -654,25 +670,78 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
                   ))}
                 </select>
               </div>
+            </div>
+          </motion.div>
+
+          {/* Availability Settings */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="bg-white rounded-xl p-6 shadow-sm border"
+          >
+            <div className="flex items-center space-x-2 mb-6">
+              <FiAward className="w-5 h-5 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-800">Availability Settings</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Login Time
+                </label>
+                <input
+                  type="time"
+                  value={formData.loginTime}
+                  onChange={(e) => handleInputChange('loginTime', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Availability
+                  Logout Time
                 </label>
-                <select
-                  value={formData.availability}
-                  onChange={(e) => handleInputChange('availability', e.target.value)}
+                <input
+                  type="time"
+                  value={formData.logoutTime}
+                  onChange={(e) => handleInputChange('logoutTime', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {availabilities.map(availability => (
-                    <option key={availability} value={availability}>{availability}</option>
-                  ))}
-                </select>
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Availability Status
+                </label>
+                <div className="flex items-center space-x-4 mt-2">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="availability"
+                      checked={formData.isAvailable}
+                      onChange={() => handleInputChange('isAvailable', true)}
+                      className="mr-2"
+                    />
+                    <span className="text-sm">Available</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="availability"
+                      checked={!formData.isAvailable}
+                      onChange={() => handleInputChange('isAvailable', false)}
+                      className="mr-2"
+                    />
+                    <span className="text-sm">Unavailable</span>
+                  </label>
+                </div>
               </div>
             </div>
           </motion.div>
 
-          {/* Emergency Contact */}
+
+          {/* Emergency Contact & Bio */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -681,53 +750,47 @@ const DoctorEditForm = ({ doctorId, onSave, onCancel }) => {
           >
             <div className="flex items-center space-x-2 mb-6">
               <FiMapPin className="w-5 h-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-800">Emergency Contact</h3>
+              <h3 className="text-lg font-semibold text-gray-800">Emergency Contact & Bio</h3>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Contact Name <span className="text-red-500">*</span>
+                  Emergency Contact Name
                 </label>
                 <input
                   type="text"
                   value={formData.emergencyContactName}
                   onChange={(e) => handleInputChange('emergencyContactName', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.emergencyContactName ? 'border-red-500 bg-red-50' : 'border-gray-300'
-                  }`}
-                  placeholder="Emergency contact name"
-                />
-                {errors.emergencyContactName && <p className="mt-1 text-sm text-red-600">{errors.emergencyContactName}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Relation
-                </label>
-                <input
-                  type="text"
-                  value={formData.emergencyContactRelation}
-                  onChange={(e) => handleInputChange('emergencyContactRelation', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Relation to doctor"
+                  placeholder="Enter emergency contact name"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Contact Phone <span className="text-red-500">*</span>
+                  Emergency Contact Phone
                 </label>
                 <input
                   type="tel"
                   value={formData.emergencyContactPhone}
                   onChange={(e) => handleInputChange('emergencyContactPhone', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.emergencyContactPhone ? 'border-red-500 bg-red-50' : 'border-gray-300'
-                  }`}
-                  placeholder="Emergency contact phone"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter emergency contact phone"
                 />
-                {errors.emergencyContactPhone && <p className="mt-1 text-sm text-red-600">{errors.emergencyContactPhone}</p>}
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Bio
+                </label>
+                <textarea
+                  value={formData.bio}
+                  onChange={(e) => handleInputChange('bio', e.target.value)}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter therapist bio and background..."
+                />
               </div>
             </div>
           </motion.div>

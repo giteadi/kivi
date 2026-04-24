@@ -46,13 +46,13 @@ const DoctorRevenue = () => {
 
         setDoctorRevenueData(transformedData);
       } else {
-        setError(result.message || 'Failed to fetch doctor revenue data');
-        toast.error(result.message || 'Failed to fetch doctor revenue data');
+        setError(result.message || 'Failed to fetch therapist revenue data');
+        toast.error(result.message || 'Failed to fetch therapist revenue data');
       }
     } catch (error) {
-      console.error('Error fetching doctor revenue:', error);
-      setError('Error loading doctor revenue data');
-      toast.error('Error loading doctor revenue data');
+      console.error('Error fetching therapist revenue:', error);
+      setError('Error loading therapist revenue data');
+      toast.error('Error loading therapist revenue data');
     } finally {
       setLoading(false);
     }
@@ -85,8 +85,8 @@ const DoctorRevenue = () => {
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 space-y-4 lg:space-y-0">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-800">Doctor Revenue</h1>
-            <p className="text-gray-600">Revenue analysis by doctor performance</p>
+            <h1 className="text-2xl font-semibold text-gray-800">Therapist Revenue</h1>
+            <p className="text-gray-600">Revenue analysis by therapist performance</p>
           </div>
           
           <div className="flex items-center space-x-3">
@@ -107,7 +107,7 @@ const DoctorRevenue = () => {
           <span className="mx-2">›</span>
           <span>Financial</span>
           <span className="mx-2">›</span>
-          <span className="text-gray-800">Doctor Revenue</span>
+          <span className="text-gray-800">Therapist Revenue</span>
         </div>
 
         {/* Search */}
@@ -121,7 +121,7 @@ const DoctorRevenue = () => {
               <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="Search doctors or clinics..."
+                placeholder="Search therapists or clinics..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -143,7 +143,7 @@ const DoctorRevenue = () => {
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <FiRefreshCw className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-4" />
-              <p className="text-gray-500">Loading doctor revenue data...</p>
+              <p className="text-gray-500">Loading therapist revenue data...</p>
             </div>
           </div>
         )}
@@ -166,7 +166,7 @@ const DoctorRevenue = () => {
           </div>
         )}
 
-        {/* Doctor Revenue Table */}
+        {/* Therapist Revenue Table */}
         {!loading && !error && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -188,7 +188,7 @@ const DoctorRevenue = () => {
                     Revenue
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                    Doctor
+                    Therapist
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                     Clinic
@@ -246,7 +246,7 @@ const DoctorRevenue = () => {
             <div className="text-center py-12">
               <div className="text-gray-500">
                 <FiUser className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium">No doctor revenue data found</p>
+                <p className="text-lg font-medium">No therapist revenue data found</p>
                 <p className="text-sm">Try adjusting your search criteria</p>
               </div>
             </div>
@@ -269,7 +269,7 @@ const DoctorRevenue = () => {
               </div>
               <div>
                 <div className="text-2xl font-bold text-blue-600">{doctorRevenueData.length}</div>
-                <div className="text-sm text-gray-600">Total Doctors</div>
+                <div className="text-sm text-gray-600">Total Therapists</div>
               </div>
             </div>
           </div>

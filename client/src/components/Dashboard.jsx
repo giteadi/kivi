@@ -235,6 +235,14 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
       color: 'from-orange-500 to-orange-600',
       route: '/centres',
       activeItem: 'clinics'
+    },
+    {
+      icon: FiActivity,
+      title: 'Conners',
+      description: 'ADHD Assessment',
+      color: 'from-red-500 to-red-600',
+      route: '/conners',
+      activeItem: 'conners'
     }
   ];
 

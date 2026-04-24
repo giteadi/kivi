@@ -511,7 +511,7 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
   /* ── Export CSV ── */
   const handleExport = () => {
     const csv = [
-      ['Invoice ID', 'Patient', 'Doctor', 'Service', 'Amount', 'Status', 'Date'],
+      ['Invoice ID', 'Patient', 'Therapist', 'Service', 'Amount', 'Status', 'Date'],
       ...filteredBilling.map(b => [b.id, b.patient.name, b.doctor.name, b.service, b.amount, b.status, b.date])
     ].map(r => r.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -571,7 +571,7 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
             </div>
             <div className="flex-1 relative">
               <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4 transition-colors duration-300" />
-              <input type="text" placeholder="Search invoices, patients, or doctors..."
+              <input type="text" placeholder="Search invoices, patients, or therapists..."
                 value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-[#2c2c2e] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-300" />
             </div>
@@ -612,7 +612,7 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
                   <th className="w-12 px-3 py-3 text-left text-xs font-medium uppercase"><input type="checkbox" className="rounded accent-blue-600" /></th>
                   <th className="w-28 px-3 py-3 text-left text-xs font-medium uppercase">Invoice ID</th>
                   <th className="w-48 px-3 py-3 text-left text-xs font-medium uppercase">Patient</th>
-                  <th className="w-40 px-3 py-3 text-left text-xs font-medium uppercase">Doctor</th>
+                  <th className="w-40 px-3 py-3 text-left text-xs font-medium uppercase">Therapist</th>
                   <th className="w-32 px-3 py-3 text-left text-xs font-medium uppercase">Service</th>
                   <th className="w-28 px-3 py-3 text-left text-xs font-medium uppercase">Amount</th>
                   <th className="w-24 px-3 py-3 text-left text-xs font-medium uppercase">Status</th>

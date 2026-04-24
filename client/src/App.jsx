@@ -653,20 +653,32 @@ function App() {
       
       // Remove client-side id and prepare data for API
       const therapistData = {
-        first_name: updatedData.firstName,
-        last_name: updatedData.lastName,
+        first_name: updatedData.first_name || updatedData.firstName,
+        last_name: updatedData.last_name || updatedData.lastName,
         email: updatedData.email,
         phone: updatedData.phone,
+        password: updatedData.password,
         specialty: updatedData.specialty,
-        license_number: updatedData.licenseNumber,
-        joining_date: updatedData.joiningDate,
-        centre_id: 1, // Default centre, should be configurable
-        status: 'active'
+        qualification: updatedData.qualification || 'Not specified',
+        license_number: updatedData.license_number || updatedData.licenseNumber || '',
+        experience_years: updatedData.experience_years || updatedData.experience || 0,
+        centre_id: updatedData.centre_id || 1,
+        joining_date: updatedData.joining_date || updatedData.joiningDate || new Date().toISOString().split('T')[0],
+        date_of_birth: updatedData.date_of_birth || updatedData.dateOfBirth || null,
+        gender: updatedData.gender || null,
+        address: updatedData.address || null,
+        city: updatedData.city || null,
+        state: updatedData.state || null,
+        zip_code: updatedData.zip_code || updatedData.zipCode || null,
+        emergency_contact_name: updatedData.emergency_contact_name || updatedData.emergencyContactName || null,
+        emergency_contact_phone: updatedData.emergency_contact_phone || updatedData.emergencyContactPhone || null,
+        bio: updatedData.bio || null,
+        status: updatedData.status || 'active'
       };
 
       console.log(' Sending therapist data:', therapistData);
 
-      const response = await api.request('/therapists', {
+      const result = await api.request('/therapists', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -674,21 +686,20 @@ function App() {
         body: JSON.stringify(therapistData),
       });
 
-      const result = await response.json();
       console.log(' Therapist creation response:', result);
 
       if (result.success) {
-        toast.success(`Therapist ${updatedData.firstName} ${updatedData.lastName} created successfully!`);
+        toast.success(`Therapist ${therapistData.first_name} ${therapistData.last_name} created successfully!`);
         setCurrentView('doctors-list');
         setActiveItem('doctors');
         // Refresh the doctors list
         dispatch(fetchDoctors());
       } else {
-        toast.error(`Failed to create therapist: ${result.message}`);
+        toast.error(`Failed to create therapist: ${result.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error(' Error saving therapist:', error);
-      toast.error('Failed to save therapist. Please try again.');
+      toast.error(`Failed to save therapist: ${error.message || 'Please try again.'}`);
     }
   };
 
@@ -1163,7 +1174,7 @@ ${service.target_age_group || 'Not specified'}
       );
     }
 
-    // Handle doctor edit form
+    // Handle therapist edit form
     if (currentView === 'doctor-edit') {
       return (
         <DoctorEditForm
@@ -1228,7 +1239,7 @@ ${service.target_age_group || 'Not specified'}
       );
     }
 
-    // Handle doctor profile view
+    // Handle therapist profile view
     if (currentView === 'doctor-profile') {
       return (
         <DoctorProfile

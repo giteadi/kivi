@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiSave, FiX, FiUser, FiMail, FiPhone, FiLock, FiAward, FiEye, FiEyeOff } from 'react-icons/fi';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '../services/api';
 
 const TherapistCreateForm = ({ onSave, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -16,6 +17,7 @@ const TherapistCreateForm = ({ onSave, onCancel }) => {
     licenseNumber: '',
     experience: '',
     centre: '',
+    centreId: '',
     joiningDate: '',
     address: '',
     city: '',
@@ -32,6 +34,8 @@ const TherapistCreateForm = ({ onSave, onCancel }) => {
 
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
+  const [centres, setCentres] = useState([]);
+  const [loadingCentres, setLoadingCentres] = useState(false);
 
   const specialties = [
     'Learning Therapy',
@@ -44,22 +48,30 @@ const TherapistCreateForm = ({ onSave, onCancel }) => {
     'Family Counseling'
   ];
 
-  const centres = [
-    'Centrix Centre',
-    'Green Valley Learning Centre', 
-    'Sunrise Learning Centre',
-    'Downtown Learning Centre'
-  ];
-
-  // Map centre names to IDs (assuming these are the IDs in database)
-  const getCentreId = (centreName) => {
-    const centreMap = {
-      'Centrix Centre': 1,
-      'Green Valley Learning Centre': 2,
-      'Sunrise Learning Centre': 3,
-      'Downtown Learning Centre': 4
+  // Fetch centres from database
+  useEffect(() => {
+    const fetchCentres = async () => {
+      setLoadingCentres(true);
+      try {
+        const response = await api.request('/centres', {
+          method: 'GET'
+        });
+        if (response.success && response.data) {
+          setCentres(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching centres:', error);
+      } finally {
+        setLoadingCentres(false);
+      }
     };
-    return centreMap[centreName] || 1;
+    fetchCentres();
+  }, []);
+
+  // Get centre ID from selected centre
+  const getCentreId = (centreName) => {
+    const centre = centres.find(c => c.name === centreName || c.centre_name === centreName);
+    return centre ? centre.id : null;
   };
 
   const handleInputChange = (field, value) => {
@@ -434,14 +446,15 @@ const TherapistCreateForm = ({ onSave, onCancel }) => {
                   <select
                     value={formData.centre}
                     onChange={(e) => handleInputChange('centre', e.target.value)}
+                    disabled={loadingCentres}
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                       errors.centre ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    } ${loadingCentres ? 'bg-gray-100' : ''}`}
                   >
-                    <option value="">Select center</option>
+                    <option value="">{loadingCentres ? 'Loading centers...' : 'Select center'}</option>
                     {centres.map((centre) => (
-                      <option key={centre} value={centre}>
-                        {centre}
+                      <option key={centre.id} value={centre.name || centre.centre_name}>
+                        {centre.name || centre.centre_name}
                       </option>
                     ))}
                   </select>

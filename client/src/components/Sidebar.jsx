@@ -68,8 +68,37 @@ const routeMapping = {
 
 const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCollapsed, setSidebarCollapsed }) => {
   const [expandedSections, setExpandedSections] = useState({});
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
   const { user } = useSelector((state) => state.auth);
   const location = useLocation();
+
+  // Update date/time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Format date/time in 12-hour format with AM/PM
+  const formatDateTime = () => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    const day = days[currentDateTime.getDay()];
+    const date = currentDateTime.getDate();
+    const month = months[currentDateTime.getMonth()];
+    const year = currentDateTime.getFullYear();
+    
+    let hours = currentDateTime.getHours();
+    const minutes = currentDateTime.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    
+    hours = hours % 12;
+    hours = hours ? hours : 12; // 0 should be 12
+    
+    return `${day}, ${date} ${month} ${year}, ${hours}:${minutes} ${ampm}`;
+  };
   
   // Get current route from URL
   const getCurrentRoute = () => {
@@ -206,6 +235,15 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
             {sidebarCollapsed ? <FiMenu className="w-5 h-5" /> : <FiX className="w-5 h-5" />}
           </button>
         </div>
+        
+        {/* Date and Time */}
+        {!sidebarCollapsed && (
+          <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+            <div className="flex items-center justify-center text-xs text-gray-500 dark:text-gray-400">
+              <span className="font-medium">{formatDateTime()}</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Menu Items */}

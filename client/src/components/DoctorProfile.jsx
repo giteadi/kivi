@@ -15,12 +15,12 @@ const DoctorProfile = ({ doctorId, onBack, onEditProfile }) => {
   // Fetch doctor data from API
   useEffect(() => {
     const fetchDoctorData = async () => {
-      console.log('🔍 Fetching doctor profile for ID:', doctorId);
+      console.log('🔍 Fetching therapist profile for ID:', doctorId);
       console.log('🔢 Numeric ID:', numericId);
       
       if (!numericId) {
-        console.error('❌ No doctor ID provided');
-        setError('No doctor ID provided');
+        console.error('❌ No therapist ID provided');
+        setError('No therapist ID provided');
         setIsLoading(false);
         return;
       }
@@ -90,12 +90,12 @@ const DoctorProfile = ({ doctorId, onBack, onEditProfile }) => {
           setDoctorData(transformedData);
         } else {
           console.error('❌ API returned error:', result.message);
-          setError(result.message || 'Failed to load doctor data');
+          setError(result.message || 'Failed to load therapist data');
         }
       } catch (error) {
-        console.error('❌ Error fetching doctor data:', error);
+        console.error('❌ Error fetching therapist data:', error);
         console.error('❌ Error details:', error.message);
-        setError('Error loading doctor data');
+        setError('Error loading therapist data');
       } finally {
         console.log('✅ Fetch completed, setting loading to false');
         setIsLoading(false);
@@ -350,7 +350,7 @@ const DoctorProfile = ({ doctorId, onBack, onEditProfile }) => {
           <div className="flex items-center justify-center min-h-screen">
             <div className="text-center">
               <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading doctor profile...</p>
+              <p className="text-gray-600">Loading therapist profile...</p>
             </div>
           </div>
         )}
@@ -389,8 +389,8 @@ const DoctorProfile = ({ doctorId, onBack, onEditProfile }) => {
                   <FiArrowLeft className="w-5 h-5 text-blue-600" />
                 </motion.button>
                 <div>
-                  <h1 className="text-2xl font-semibold text-gray-800">Doctor Profile</h1>
-                  <p className="text-gray-600">Complete doctor information and schedule</p>
+                  <h1 className="text-2xl font-semibold text-gray-800">Therapist Profile</h1>
+                  <p className="text-gray-600">Complete therapist information and schedule</p>
                 </div>
               </div>
               
@@ -409,12 +409,12 @@ const DoctorProfile = ({ doctorId, onBack, onEditProfile }) => {
             <div className="flex items-center text-sm text-gray-500 mb-6">
               <span>Home</span>
               <span className="mx-2">›</span>
-              <span>Doctors</span>
+              <span>Therapists</span>
               <span className="mx-2">›</span>
-              <span className="text-gray-800">Doctor Profile</span>
+              <span className="text-gray-800">Therapist Profile</span>
             </div>
 
-            {/* Doctor Header Card */}
+            {/* Therapist Header Card */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -429,7 +429,7 @@ const DoctorProfile = ({ doctorId, onBack, onEditProfile }) => {
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                     <div>
                       <h2 className="text-2xl font-bold text-gray-800">{doctorData.name}</h2>
-                      <p className="text-gray-600">Doctor ID: {doctorData.id}</p>
+                      <p className="text-gray-600">Therapist ID: {doctorData.id}</p>
                       <p className="text-gray-600">{doctorData.specialty} • {doctorData.clinic}</p>
                     </div>
                     

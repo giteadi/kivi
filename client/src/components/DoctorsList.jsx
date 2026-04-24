@@ -18,19 +18,19 @@ const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDo
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Load doctors on component mount
+  // Load therapists on component mount
   useEffect(() => {
-    console.log('🚀 DoctorsList component mounted, fetching doctors...');
+    console.log('🚀 DoctorsList component mounted, fetching therapists...');
     dispatch(fetchDoctors());
   }, [dispatch]);
 
   // Refresh data function
   const handleRefresh = async () => {
-    console.log('🔄 Refreshing doctors data...');
+    console.log('🔄 Refreshing therapists data...');
     setIsRefreshing(true);
     try {
       await dispatch(fetchDoctors()).unwrap();
-      console.log('✅ Doctors data refreshed successfully!');
+      console.log('✅ Therapists data refreshed successfully!');
     } catch (error) {
       console.error('❌ Failed to refresh data:', error);
     } finally {
@@ -55,7 +55,7 @@ const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDo
 
   // Transform API data to match frontend format
   const transformedDoctors = doctors.map(doctor => {
-    console.log('🔄 Transforming doctor data:', doctor);
+    console.log('🔄 Transforming therapist data:', doctor);
     return {
       id: doctor.id, // ✅ Keep original ID for API calls
       displayId: `#${doctor.id}`, // ✅ Use displayId for UI
@@ -97,12 +97,12 @@ const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDo
     };
   });
 
-  const filteredDoctors = transformedDoctors.filter(doctor => {
-    const matchesSearch = doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         doctor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         doctor.specialty.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesClinic = filterClinic === 'all' || doctor.clinic === filterClinic;
-    const matchesSpecialty = filterSpecialty === 'all' || doctor.specialty === filterSpecialty;
+  const filteredDoctors = transformedDoctors.filter(therapist => {
+    const matchesSearch = therapist.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         therapist.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         therapist.specialty.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesClinic = filterClinic === 'all' || therapist.clinic === filterClinic;
+    const matchesSpecialty = filterSpecialty === 'all' || therapist.specialty === filterSpecialty;
     return matchesSearch && matchesClinic && matchesSpecialty;
   });
 
@@ -261,7 +261,7 @@ const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDo
           </div>
         </motion.div>
 
-        {/* Doctors Table */}
+        {/* Therapists Table */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -272,13 +272,13 @@ const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDo
             <div className="text-center py-12">
               <div className="text-gray-500 dark:text-gray-400">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-lg font-medium">Loading doctors...</p>
+                <p className="text-lg font-medium">Loading therapists...</p>
               </div>
             </div>
           ) : error ? (
             <div className="text-center py-12">
               <div className="text-red-500 dark:text-red-400">
-                <p className="text-lg font-medium">Error loading doctors</p>
+                <p className="text-lg font-medium">Error loading therapists</p>
                 <p className="text-sm dark:text-red-300">{error}</p>
               </div>
             </div>
