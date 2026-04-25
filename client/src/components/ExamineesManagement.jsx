@@ -816,6 +816,11 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
       alert('No assessment selected. Please select an assessment first.');
       return;
     }
+    
+    if (!selectedItems || selectedItems.length === 0) {
+      alert('No examinee selected. Please select an examinee first.');
+      return;
+    }
 
     setIsSavingAssessment(true);
     try {
@@ -842,8 +847,8 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          assessmentId: parseInt(assessmentId) || 1,
-          studentId: parseInt(selectedItems[0]) || 1,
+          assessmentId: parseInt(assessmentId),
+          studentId: parseInt(selectedItems[0]),
           items: items,
           completionPercentage: completionPercentage,
           totalScore: null,
@@ -881,6 +886,11 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
     
     if (!hasAssessment && !hasPackage) {
       alert('No assessment or package selected.');
+      return;
+    }
+    
+    if (!selectedItems || selectedItems.length === 0) {
+      alert('Please select an examinee first.');
       return;
     }
 
@@ -1046,7 +1056,10 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                         if (onSelectExamineeForAssignment) {
                           onSelectExamineeForAssignment(selectedPatient);
                         }
-                        window.dispatchEvent(new CustomEvent('navigate', { detail: 'assign-assessment' }));
+                        // Delay navigation to allow React state to update
+                        setTimeout(() => {
+                          window.dispatchEvent(new CustomEvent('navigate', { detail: 'assign-assessment' }));
+                        }, 100);
                       }}
                       disabled={selectedItems.length === 0}
                       className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all text-sm font-medium ${

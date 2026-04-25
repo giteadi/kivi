@@ -40,6 +40,16 @@ class AssessmentResultController {
           message: 'Missing required fields: assessmentId, studentId, items'
         });
       }
+
+      // Validate studentId is a valid number greater than 0
+      const parsedStudentId = parseInt(studentId);
+      if (isNaN(parsedStudentId) || parsedStudentId <= 0) {
+        console.log('❌ [saveResults] Validation FAILED - Invalid studentId:', studentId);
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid studentId. Please select a valid examinee.'
+        });
+      }
       
       console.log('✅ [saveResults] Validation PASSED');
       

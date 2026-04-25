@@ -160,7 +160,7 @@ class InvoiceController {
       if (!assessmentRecord) {
         console.log('Assessment not found, creating new assessment record...');
         const parsedStudentId = parseInt(studentId);
-        if (!parsedStudentId || isNaN(parsedStudentId)) {
+        if (!parsedStudentId || isNaN(parsedStudentId) || parsedStudentId <= 0) {
           throw new Error('Invalid student_id: ' + studentId);
         }
         const newAssessmentId = await assessmentModel.create({

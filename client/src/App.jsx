@@ -1399,9 +1399,36 @@ ${service.target_age_group || 'Not specified'}
               setSelectedExamineeForAssignment(null);
               navigate('/examinees');
             }}
-            onSave={(packageData) => {
+            onSave={async (packageData) => {
               console.log('Package saved:', packageData);
-              alert('Package assigned successfully!');
+              try {
+                // Create assessment in database
+                const assessmentPayload = {
+                  examineeId: packageData.examineeId,
+                  assessmentName: packageData.name || 'Custom Package',
+                  assessmentType: 'Package',
+                  deliveryMethod: packageData.deliveryMethod || 'Manual',
+                  scheduledDate: packageData.adminDate || new Date().toISOString().split('T')[0],
+                  scheduledTime: '09:00:00',
+                  duration: 60,
+                  examiner: packageData.examiner,
+                  notes: packageData.notes,
+                  price: packageData.totalPrice,
+                  invoice_sent: true,
+                  invoice_sent_date: new Date().toISOString(),
+                  payment_status: 'pending'
+                };
+                
+                const response = await api.post('/assessments', assessmentPayload);
+                if (response.success) {
+                  toast.success('Assessment saved and invoice generated!');
+                } else {
+                  toast.error('Failed to save assessment');
+                }
+              } catch (error) {
+                console.error('Save assessment error:', error);
+                toast.error('Error saving assessment');
+              }
               setActiveItem('patients');
               setCurrentView('patients');
               setSelectedExamineeForAssignment(null);
@@ -1589,9 +1616,36 @@ ${service.target_age_group || 'Not specified'}
                     setSelectedExamineeForAssignment(null);
                     navigate('/examinees');
                   }}
-                  onSave={(packageData) => {
+                  onSave={async (packageData) => {
                     console.log('Package saved:', packageData);
-                    alert('Package assigned successfully!');
+                    try {
+                      // Create assessment in database
+                      const assessmentPayload = {
+                        examineeId: packageData.examineeId,
+                        assessmentName: packageData.name || 'Custom Package',
+                        assessmentType: 'Package',
+                        deliveryMethod: packageData.deliveryMethod || 'Manual',
+                        scheduledDate: packageData.adminDate || new Date().toISOString().split('T')[0],
+                        scheduledTime: '09:00:00',
+                        duration: 60,
+                        examiner: packageData.examiner,
+                        notes: packageData.notes,
+                        price: packageData.totalPrice,
+                        invoice_sent: true,
+                        invoice_sent_date: new Date().toISOString(),
+                        payment_status: 'pending'
+                      };
+                      
+                      const response = await api.post('/assessments', assessmentPayload);
+                      if (response.success) {
+                        toast.success('Assessment saved and invoice generated!');
+                      } else {
+                        toast.error('Failed to save assessment');
+                      }
+                    } catch (error) {
+                      console.error('Save assessment error:', error);
+                      toast.error('Error saving assessment');
+                    }
                     setActiveItem('patients');
                     setCurrentView('patients');
                     setSelectedExamineeForAssignment(null);

@@ -19,7 +19,26 @@ import {
 } from 'react-icons/fi';
 import api from '../services/api';
 
-const AssignAssessmentScreen = ({ examineeId, examineeName, examineeEmail, onBack, onSave }) => {
+const AssignAssessmentScreen = ({ examineeId: propExamineeId, examineeName: propExamineeName, examineeEmail: propExamineeEmail, onBack, onSave }) => {
+  // Use localStorage fallback if props are empty (e.g., after page refresh)
+  const [savedExaminee, setSavedExaminee] = useState(() => {
+    const saved = localStorage.getItem('selectedExamineeForAssignment');
+    return saved ? JSON.parse(saved) : null;
+  });
+  
+  const examineeId = propExamineeId || savedExaminee?.id || savedExaminee?.examineeId;
+  const examineeName = propExamineeName || savedExaminee?.name || (savedExaminee?.firstName && savedExaminee?.lastName ? `${savedExaminee.firstName} ${savedExaminee.lastName}` : '');
+  const examineeEmail = propExamineeEmail || savedExaminee?.email;
+  
+  // Save to localStorage when props change
+  useEffect(() => {
+    if (propExamineeId) {
+      const data = { id: propExamineeId, name: propExamineeName, email: propExamineeEmail };
+      localStorage.setItem('selectedExamineeForAssignment', JSON.stringify(data));
+      setSavedExaminee(data);
+    }
+  }, [propExamineeId, propExamineeName, propExamineeEmail]);
+  
   const [packages, setPackages] = useState([]);
   const [individualAssessments, setIndividualAssessments] = useState([]);
   const [selectedPackages, setSelectedPackages] = useState([]);

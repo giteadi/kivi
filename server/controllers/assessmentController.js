@@ -28,13 +28,16 @@ class AssessmentController {
   // Create new assessment
   async createAssessment(req, res) {
     try {
-      console.log('Request body received:', req.body);
+      console.log('📥 Request body received:', JSON.stringify(req.body, null, 2));
+      console.log('📌 examineeId:', req.body.examineeId);
+      console.log('📌 deliveryMethod:', req.body.deliveryMethod);
+      console.log('📌 invoice_sent_date (raw):', req.body.invoice_sent_date);
       
       // Map camelCase to snake_case for database
       const assessmentData = {
         student_id: req.body.examineeId,
         assessment_type: req.body.assessmentType,
-        delivery_method: req.body.deliveryMethod,
+        delivery_method: req.body.deliveryMethod === 'manual' ? 'offline' : req.body.deliveryMethod,
         scheduled_date: req.body.scheduledDate,
         scheduled_time: req.body.scheduledTime,
         duration: req.body.duration,
@@ -42,9 +45,15 @@ class AssessmentController {
         room: req.body.room,
         materials: req.body.materials,
         notes: req.body.notes,
+        price: req.body.price,
+        invoice_sent: req.body.invoice_sent || false,
+        invoice_sent_date: req.body.invoice_sent_date ? new Date(req.body.invoice_sent_date) : null,
+        payment_status: req.body.payment_status || 'pending',
         status: 'Scheduled',
         created_at: new Date()
       };
+      
+      console.log('📤 Processed assessmentData:', JSON.stringify(assessmentData, null, 2));
 
       // Only include assessment_name if provided
       if (req.body.assessmentName && req.body.assessmentName.trim()) {

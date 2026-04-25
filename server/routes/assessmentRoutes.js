@@ -12,10 +12,10 @@ router.get('/test', (req, res) => {
 
 // Routes
 router.get('/students/:studentId/assessments', assessmentController.getAssessments.bind(assessmentController));
-router.post('/assessments', assessmentController.createAssessment.bind(assessmentController));
-router.put('/assessments/:id', assessmentController.updateAssessment.bind(assessmentController));
-router.post('/assessments/:id', assessmentController.updateAssessment.bind(assessmentController)); // Temporary POST route for update
-router.delete('/assessments/:id', assessmentController.deleteAssessment.bind(assessmentController));
-router.post('/assessments/generate-report', assessmentController.generateReport.bind(assessmentController));
+router.post('/', assessmentController.createAssessment.bind(assessmentController));
+router.put('/:id', assessmentController.updateAssessment.bind(assessmentController));
+router.post('/:id', assessmentController.updateAssessment.bind(assessmentController)); // Temporary POST route for update
+router.delete('/:id', assessmentController.deleteAssessment.bind(assessmentController));
+router.post('/generate-report', assessmentController.generateReport.bind(assessmentController));
 
 module.exports = router;
