@@ -101,12 +101,12 @@ const css = {
   breadcrumbSeparator: {},
   card: (sel) => ({ borderRadius: 12, overflow: "hidden", cursor: "pointer", transition: "all 0.15s" }),
   cardIcon:  { width: 36, height: 36, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  panel:     { position: "fixed", inset: 0, zIndex: 50, display: "flex", flexDirection: "column" },
+  panel:     { position: "fixed", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", height: "100vh" },
   panelHeader: { padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, flexShrink: 0, background: "#fff", zIndex: 10, position: "relative" },
   sheetTabs: { borderBottom: "1px solid", padding: "6px 14px", display: "flex", alignItems: "center", gap: 6, overflowX: "auto", flexShrink: 0, background: "#fff", zIndex: 5, position: "relative" },
   tab: (a) => ({ padding: "5px 14px", borderRadius: 6, fontSize: 12, fontWeight: 500, cursor: "pointer", border: "1px solid", whiteSpace: "nowrap", flexShrink: 0 }),
   modal:     { borderRadius: 14, padding: 28, maxWidth: 500, width: "90%", margin: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.15)" },
-  overlay:   { position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 40, display: "flex", alignItems: "center", justifyContent: "center" },
+  overlay:   { position: "fixed", inset: 0, background: "#ffffff", zIndex: 40, display: "flex", alignItems: "center", justifyContent: "center" },
   input:     { width: "100%", padding: "9px 12px", borderRadius: 8, fontSize: 14, outline: "none", boxSizing: "border-box" },
   badge: (c) => ({ display: "inline-block", padding: "2px 8px", borderRadius: 12, fontSize: 11, fontWeight: 500 }),
 };
@@ -967,124 +967,135 @@ export default function FormsManagement() {
     return cache;
   }
 
-  function reEvaluateFormulas(sheetData) {
-    return sheetData.map((row, rIdx) =>
-      row.map((cell, cIdx) => {
-        const key = `${rIdx}_${cIdx}`;
-        const formula = formulaCacheRef.current[key];
-        if (formula) {
-          try {
-            return evalFormula(formula, sheetData);
-          } catch {
-            return cell;
-          }
-        }
-        return cell;
-      })
-    );
+// ✅ REPLACED: Multi-pass cascading formula evaluator with ordered evaluation
+function reEvaluateFormulas(sheetData, cache) {
+  const activeCache = cache || formulaCacheRef.current;
+  if (!activeCache || Object.keys(activeCache).length === 0) return sheetData;
+  let nextData = sheetData.map(row => [...(row || [])]);
+
+  // Separate IF-only formulas from SUM/mixed formulas
+  // IF formulas (col C, rows 2-108) must be evaluated BEFORE
+  // SUM formulas (row 9, cols E-Q) that depend on them
+  const allKeys = Object.keys(activeCache);
+  const ifKeys  = allKeys.filter(k => {
+    const f = (activeCache[k] || "").toUpperCase();
+    return f.includes("IF(") && !f.includes("SUM(");
+  });
+  const otherKeys = allKeys.filter(k => {
+    const f = (activeCache[k] || "").toUpperCase();
+    return !f.includes("IF(") || f.includes("SUM(");
+  });
+  // Always: IF formulas first, then everything else
+  const orderedKeys = [...ifKeys, ...otherKeys];
+
+  // 5 passes ensures cascaded dependencies resolve
+  for (let pass = 0; pass < 5; pass++) {
+    for (const key of orderedKeys) {
+      const [rStr, cStr] = key.split("_");
+      const r = Number(rStr);
+      const c = Number(cStr);
+      if (!nextData[r]) continue;
+      try {
+        nextData[r][c] = evalFormula(activeCache[key], nextData);
+      } catch {
+        // keep existing value on error
+      }
+    }
   }
+  return nextData;
+}
 
-  // Evaluate IF formulas in Excel data
-  function evaluateIfFormulas(sheetData) {
-    return sheetData.map((row, rIdx) => 
-      row.map((cell, cIdx) => {
-        if (typeof cell === 'string' && cell.startsWith('=')) {
-          try {
-            return evalSimpleIF(cell, sheetData);
-          } catch {
-            return cell;
-          }
+// ✅ REPLACED: Native JS evaluator — supports +,-,*,/,SUM(),IF()
+function evalFormula(formula, grid) {
+  if (!formula) return "";
+  let expr = formula.toString().trim();
+  if (expr.startsWith("=")) expr = expr.slice(1);
+  let e = expr.toUpperCase();
+
+  const getCellValue = (ref) => {
+    const m = ref.match(/^([A-Z]+)(\d+)$/i);
+    if (!m) return 0;
+    const c = m[1].toUpperCase().charCodeAt(0) - 65;
+    const r = parseInt(m[2]) - 1;
+    const cell = grid[r]?.[c];
+    const raw = (cell && typeof cell === "object") ? (cell.raw ?? cell.value ?? "") : cell;
+    if (raw === "" || raw === null || raw === undefined) return 0;
+    const val = parseFloat(String(raw));
+    return isNaN(val) ? 0 : val;
+  };
+
+  // Step 1: Resolve SUM() — compute actual numeric total inline
+  e = e.replace(/SUM\(([^)]+)\)/g, (_, inner) => {
+    let total = 0;
+    inner.split(",").forEach(part => {
+      part = part.trim();
+      const range = part.match(/^([A-Z]+)(\d+):([A-Z]+)(\d+)$/);
+      if (range) {
+        const c1 = range[1].charCodeAt(0) - 65, r1 = parseInt(range[2]) - 1;
+        const c2 = range[3].charCodeAt(0) - 65, r2 = parseInt(range[4]) - 1;
+        for (let r = Math.min(r1,r2); r <= Math.max(r1,r2); r++)
+          for (let c = Math.min(c1,c2); c <= Math.max(c1,c2); c++)
+            total += getCellValue(String.fromCharCode(c+65) + (r+1));
+      } else {
+        total += getCellValue(part);
+      }
+    });
+    return String(total);
+  });
+
+  // Step 2: Replace all cell refs with their numeric values
+  // Use a function-based replace so each ref gets its own lookup
+  e = e.replace(/([A-Z]+)(\d+)/g, (match) => String(getCellValue(match)));
+
+  // Step 3: Strip quoted number strings "3" → 3
+  e = e.replace(/"(\d+(?:\.\d+)?)"/g, "$1");
+
+  // Step 4: Remove trailing commas before ) 
+  e = e.replace(/,\s*\)/g, ")");
+
+  // Step 5: Convert nested IF(cond,t,f) → JS ternary char-by-char
+  function convertIFs(s) {
+    let out = "", i = 0;
+    while (i < s.length) {
+      if (s.slice(i, i+3) === "IF(") {
+        i += 3;
+        let depth = 0, args = [], cur = "";
+        while (i < s.length) {
+          const ch = s[i];
+          if (ch === "(") { depth++; cur += ch; }
+          else if (ch === ")") {
+            if (depth === 0) { args.push(cur.trim()); i++; break; }
+            depth--; cur += ch;
+          } else if (ch === "," && depth === 0) {
+            args.push(cur.trim()); cur = "";
+          } else { cur += ch; }
+          i++;
         }
-        return cell;
-      })
-    );
+        if (args.length >= 3)
+          out += `((${convertIFs(args[0])})?(${convertIFs(args[1])}):(${convertIFs(args[2])}))`;
+        else if (args.length === 2)
+          out += `((${convertIFs(args[0])})?(${convertIFs(args[1])}):(0))`;
+        else out += "0";
+      } else { out += s[i++]; }
+    }
+    return out;
   }
+  e = convertIFs(e);
 
-  function evalFormula(formula, grid) {
-    const resolveRef = (ref) => {
-      ref = ref.trim();
-      const rangeMatch = ref.match(/^([A-Z]+)(\d+):([A-Z]+)(\d+)$/);
-      if (rangeMatch) {
-        const c1 = rangeMatch[1].charCodeAt(0) - 65;
-        const r1 = parseInt(rangeMatch[2]) - 1;
-        const c2 = rangeMatch[3].charCodeAt(0) - 65;
-        const r2 = parseInt(rangeMatch[4]) - 1;
-        const vals = [];
-        for (let r = r1; r <= r2; r++) {
-          for (let c = c1; c <= c2; c++) {
-            vals.push(parseFloat(grid[r]?.[c]) || 0);
-          }
-        }
-        return vals;
-      }
-      const cellMatch = ref.match(/^([A-Z]+)(\d+)$/);
-      if (cellMatch) {
-        const col = cellMatch[1].charCodeAt(0) - 65;
-        const row = parseInt(cellMatch[2]) - 1;
-        return parseFloat(grid[row]?.[col]) || 0;
-      }
-      return parseFloat(ref) || 0;
-    };
+  // Step 6: Excel <> → JS !==, bare = → ===
+  e = e.replace(/<>/g, "!==");
+  e = e.replace(/(?<![<>=!])=(?![>=])/g, "===");
 
-    const evalSUM = (inner) => {
-      const parts = inner.split(/[+,]/);
-      let total = 0;
-      parts.forEach(part => {
-        const val = resolveRef(part.trim());
-        if (Array.isArray(val)) {
-          total += val.reduce((a, b) => a + b, 0);
-        } else {
-          total += val;
-        }
-      });
-      return total;
-    };
-
-    const evalExpr = (expr) => {
-      expr = expr.trim();
-      
-      if (expr.toUpperCase().startsWith('IF(')) {
-        const inner = expr.slice(3, -1);
-        let depth = 0, commas = [];
-        for (let i = 0; i < inner.length; i++) {
-          if (inner[i] === '(') depth++;
-          else if (inner[i] === ')') depth--;
-          else if (inner[i] === ',' && depth === 0) commas.push(i);
-        }
-        if (commas.length < 2) return '';
-        const condStr = inner.slice(0, commas[0]).trim();
-        const trueVal = inner.slice(commas[0]+1, commas[1]).trim().replace(/"/g, '');
-        const falseExpr = inner.slice(commas[1]+1).trim();
-        const condMatch = condStr.match(/^(.+?)\s*([<>!=]+)\s*(.+)$/);
-        if (!condMatch) return '';
-        const leftRaw = resolveRef(condMatch[1]);
-        const left = Array.isArray(leftRaw) ? leftRaw[0] : leftRaw;
-        const op = condMatch[2];
-        const right = parseFloat(condMatch[3]);
-        let result = false;
-        if (op === '<')  result = left < right;
-        if (op === '>')  result = left > right;
-        if (op === '<=') result = left <= right;
-        if (op === '>=') result = left >= right;
-        if (op === '=')  result = left === right;
-        if (op === '<>') result = left !== right;
-        if (result) return trueVal;
-        if (falseExpr.toUpperCase().startsWith('IF(')) return evalExpr(falseExpr);
-        return falseExpr.replace(/"/g, '') || '';
-      }
-
-      if (expr.toUpperCase().startsWith('SUM(')) {
-        const inner = expr.slice(4, -1);
-        return evalSUM(inner);
-      }
-
-      const val = resolveRef(expr);
-      return Array.isArray(val) ? val[0] : val;
-    };
-
-    const formulaBody = formula.startsWith('=') ? formula.slice(1) : formula;
-    return evalExpr(formulaBody);
-  }
+  // Step 7: Evaluate
+  try {
+    const result = new Function(`return (${e})`)();
+    if (result === null || result === undefined) return 0;
+    if (typeof result === "boolean") return result ? 1 : 0;
+    if (typeof result === "string") { const n = parseFloat(result); return isNaN(n) ? result : n; }
+    if (!isFinite(result) || isNaN(result)) return 0;
+    return Number.isInteger(result) ? result : parseFloat(result.toFixed(4));
+  } catch { return 0; }
+}
 
   // Extract header from HTML content (like TemplateManager)
   const extractHeaderFromHtml = (html) => {
@@ -1160,13 +1171,18 @@ export default function FormsManagement() {
           const finalHeader = headerHtml || DEFAULT_REPORT_HEADER;
           clonedData = [["__html__", finalHeader + "<p><br></p>"]];
         } else {
-          // ✅ Excel data → keep structure, clear data rows
-          const rowCount = clonedData.length;
-          const colCount = Math.max(...clonedData.map(r => r?.length || 0));
-          // Header row rakho (row 0), baaki clear karo
-          clonedData = clonedData.map((row, idx) => {
-            if (idx === 0) return [...row]; // header row as-is
-            return Array(colCount).fill(""); // data rows blank
+          // ✅ Excel data → preserve structure, keep formulas, clear only values
+          clonedData = clonedData.map((row, rIdx) => {
+            return row.map((cell, cIdx) => {
+              // Header row (row 0) - keep as-is
+              if (rIdx === 0) return cell;
+              // Keep formulas (strings starting with =)
+              if (typeof cell === "string" && cell.startsWith("=")) {
+                return cell;
+              }
+              // Clear all other values
+              return "";
+            });
           });
         }
 
@@ -1181,20 +1197,20 @@ export default function FormsManagement() {
         reportSheetNames.push(fallbackName);
       }
 
-      // 🔥 Detect original format from template name
-      const detectFormat = (fileName) => {
-        const ext = fileName?.split('.').pop()?.toLowerCase();
-        if (['xlsx', 'xls', 'csv'].includes(ext)) return 'excel';
-        if (['doc', 'docx'].includes(ext)) return 'word';
-        return 'html';
-      };
+      // 🔥 Detect original format from DATA (not file name)
+      // If first sheet has __html__ as first cell = Word, else = Excel
+      const firstSheetName = reportSheetNames[0];
+      const firstSheetData = reportSheets[firstSheetName];
+      const isWord = firstSheetData?.[0]?.[0] === "__html__";
+      const format = isWord ? 'word' : 'excel';
+      console.log('[DEBUG] Detected format from data:', format, '(isWord:', isWord, ')');
 
       setReportPanel({
         templateName: form.name,
         allSheets: reportSheetNames,
         allData: reportSheets,
         patientName: "",
-        format: detectFormat(form.name), // 🔥 Track original format
+        format: format, // 🔥 Track original format based on DATA
       });
       return;
     }
@@ -1345,7 +1361,8 @@ export default function FormsManagement() {
       // ✅ CRITICAL FIX: Send template_data for proper reopen
       const templateData = {
         sheets: allData,
-        sheetNames: sheetList
+        sheetNames: sheetList,
+        formulaCaches: sheets.map(s => s.formulaCache || {})
       };
       formData.append('template_data', JSON.stringify(templateData));
 
@@ -1373,24 +1390,105 @@ export default function FormsManagement() {
 
         const sheets = form.template_data.sheets;
         const sheetNames = form.template_data.sheetNames || Object.keys(sheets);
+        const savedCaches = form.template_data?.formulaCaches || [];
 
         console.log("[DEBUG] Sheet names:", sheetNames);
         console.log("[DEBUG] First sheet data:", sheets[sheetNames[0]]);
 
-        // Convert to sheet objects
-        const loadedSheets = sheetNames.map((name) => ({
-          name,
-          data: sheets[name] || [],
-          formulaCache: {},
+        // Check karo kya koi bhi cache mein formulas hain
+        const hasSavedFormulas = savedCaches.some(cache => Object.keys(cache || {}).length > 0);
+        const hasRawFormulas = Object.values(sheets).some(sheetData => 
+          (sheetData || []).some(row => (row || []).some(cell => typeof cell === 'string' && cell.startsWith('=')))
+        );
+
+        // ✅ Agar formulas nahi hain toh original file se extract karo
+        if (!hasSavedFormulas && !hasRawFormulas && form.id) {
+          console.log("[DEBUG] No formulas found in template_data, downloading original file...");
+          try {
+            const token = localStorage.getItem("token");
+            const response = await fetch(
+              `https://dashboard.iplanbymsl.in/api/forms/${form.id}/download`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            if (response.ok) {
+              const blob = await response.blob();
+              const arrayBuf = await blob.arrayBuffer();
+              const workbook = XLSX.read(arrayBuf, { type: "array", cellFormula: true });
+              
+              const loadedSheets = sheetNames.map((name, idx) => {
+                const wsName = workbook.SheetNames[idx] || workbook.SheetNames[0];
+                const ws = workbook.Sheets[wsName];
+                if (!ws || !ws['!ref']) return { name, data: sheets[name] || [], formulaCache: {} };
+                
+                const formulaCache = {};
+                const range = XLSX.utils.decode_range(ws['!ref']);
+                for (let r = range.s.r; r <= range.e.r; r++) {
+                  for (let c = range.s.c; c <= range.e.c; c++) {
+                    const cellAddr = XLSX.utils.encode_cell({ r, c });
+                    const cell = ws[cellAddr];
+                    if (cell?.f) formulaCache[`${r}_${c}`] = '=' + cell.f;
+                  }
+                }
+                return { name, data: sheets[name] || [], formulaCache };
+              });
+              
+              formulaCacheRef.current = loadedSheets[0]?.formulaCache || {};
+              console.log("[DEBUG] Extracted formula cache from original file:", formulaCacheRef.current);
+              
+              const evaluatedSheets = loadedSheets.map(s => ({
+                ...s,
+                data: reEvaluateFormulas(s.data, s.formulaCache)
+              }));
+              
+              setSheets(evaluatedSheets);
+              setSheetData(evaluatedSheets[0]?.data || []);
+              setActiveSheet(0);
+              setShowViewer(true);
+              setLoading(false);
+              return;
+            }
+          } catch (err) {
+            console.warn("[DEBUG] Could not extract formulas from original file:", err.message);
+          }
+        }
+
+        // Normal flow: Convert to sheet objects with proper formula cache
+        const loadedSheets = sheetNames.map((name, index) => {
+          const rawData = sheets[name] || [];
+          // ✅ Pehle saved cache check karo, nahi toh scan karo
+          let formulaCache = savedCaches[index] || {};
+          if (Object.keys(formulaCache).length === 0) {
+            // Fallback: scan raw data for formulas (backward compatibility)
+            rawData.forEach((row, rIdx) => {
+              (row || []).forEach((cell, cIdx) => {
+                if (typeof cell === 'string' && cell.startsWith('=')) {
+                  formulaCache[`${rIdx}_${cIdx}`] = cell;
+                }
+              });
+            });
+          }
+          return { name, data: rawData, formulaCache };
+        });
+
+        // ✅ Pehli sheet ka formula cache set karo
+        formulaCacheRef.current = loadedSheets[0]?.formulaCache || {};
+        
+        // ✅ Ab evaluate karo display ke liye
+        const evaluatedSheets = loadedSheets.map(s => ({
+          ...s,
+          // ✅ Har sheet ka apna cache use karo
+          data: reEvaluateFormulas(s.data, s.formulaCache)
         }));
 
-        setSheets(loadedSheets);
-        setSheetData(sheets[sheetNames[0]] || []);
+        setSheets(evaluatedSheets);
+        setSheetData(evaluatedSheets[0]?.data || []);
         setActiveSheet(0);
         setShowViewer(true);
         setLoading(false);
 
         console.log("[DEBUG] ✅ Direct render complete");
+        console.log("Formula cache:", formulaCacheRef.current);
+        console.log("Sheet data sample:", evaluatedSheets[0]?.data?.slice(0, 3));
         return;
       }
 
@@ -1463,7 +1561,8 @@ export default function FormsManagement() {
         // Evaluate karo
         const evaluatedSheets = loadedSheets.map(s => ({
           ...s,
-          data: reEvaluateFormulas(s.data)
+          // ✅ Har sheet apna khud ka cache use karegi
+          data: reEvaluateFormulas(s.data, s.formulaCache)
         }));
 
         setSheets(evaluatedSheets);
@@ -1506,7 +1605,9 @@ export default function FormsManagement() {
             
             formulaCacheRef.current = loadedSheets[0]?.formulaCache || {};
             const evaluatedSheets = loadedSheets.map(s => ({
-              ...s, data: reEvaluateFormulas(s.data)
+              ...s, 
+              // ✅ Har sheet apna khud ka cache use karegi
+              data: reEvaluateFormulas(s.data, s.formulaCache)
             }));
             
             setSheets(evaluatedSheets);
@@ -1748,7 +1849,8 @@ export default function FormsManagement() {
 
       const evaluatedSheets = clearedSheets.map(s => ({
         ...s,
-        data: reEvaluateFormulas(s.data)
+        // ✅ Har sheet apna khud ka cache use karegi
+        data: reEvaluateFormulas(s.data, s.formulaCache)
       }));
 
       setSelectedForm({ 
@@ -1771,12 +1873,16 @@ export default function FormsManagement() {
 
   // Update cell
   const handleCellChange = (rowIdx, colIdx, value) => {
+    // Agar yeh cell formula cell hai toh user edit nahi kar sakta
+    const key = `${rowIdx}_${colIdx}`;
+    if (formulaCacheRef.current[key]) return; // formula cell - readonly
+    
     setSheetData(prev => {
       const next = prev.map(r => [...r]);
       if (!next[rowIdx]) next[rowIdx] = [];
       next[rowIdx][colIdx] = value;
-      // Answer badalne ke baad formulas re-evaluate karo
-      return reEvaluateFormulas(next);
+      // ✅ Cache explicitly pass karo
+      return reEvaluateFormulas(next, formulaCacheRef.current);
     });
   };
 
@@ -1852,19 +1958,66 @@ export default function FormsManagement() {
     const nameRaw = prompt('Enter patient name:', defaultName);
     if (!nameRaw?.trim()) return;
     
-    // Always use .docx extension to preserve HTML header
-    const fileName = `${nameRaw.trim()}.docx`;
+    // 🔥 Detect file type from CURRENT SHEET DATA (not extension)
+    const currentSheetData = sheets[activeSheet]?.data || [];
+    const isWord = currentSheetData?.[0]?.[0] === "__html__";
+    const isExcel = !isWord;
+    const fileName = isExcel ? `${nameRaw.trim()}.xlsx` : `${nameRaw.trim()}.docx`;
 
     setLoading(true);
     try {
-      // Create DOCX with header instead of Excel to preserve MindSaid header
-      // Use the entered name as sheet name in template_data
       const sheetName = nameRaw.trim();
-      const sheetData = [["__html__", DEFAULT_REPORT_HEADER + "<p><br></p>"]];
+      let blob;
+      let templateData;
       
-      const blob = await createDocxBlob(sheetData);
-      if (!blob) {
-        throw new Error("Failed to create DOCX blob");
+      if (isExcel) {
+        // Create Excel file - preserve formulas if mode is 'with_formulas'
+        let sheetData;
+        const formulaCache = formulaCacheRef.current;
+        if (mode === 'with_formulas' && Object.keys(formulaCache).length > 0) {
+          // Copy structure with empty values but preserve formulas
+          sheetData = currentSheetData.map((row, rIdx) => 
+            row.map((cell, cIdx) => {
+              // Keep header row (row 0)
+              if (rIdx === 0) return cell;
+              // Check if this cell has a formula
+              const formulaKey = `${rIdx}_${cIdx}`;
+              if (formulaCache[formulaKey]) {
+                return formulaCache[formulaKey]; // Keep formula
+              }
+              return ""; // Empty value for data cells
+            })
+          );
+        } else {
+          // Blank sheet — keep header row, create fresh empty data rows
+          const headerRow = currentSheetData[0] ? [...currentSheetData[0]] : ["Patient Name"];
+          const colCount = headerRow.length || 3;
+          sheetData = [
+            headerRow,
+            ...Array(20).fill(null).map(() => Array(colCount).fill(""))
+          ];
+        }
+        blob = sheetDataToXlsxBlob(sheetData);
+        if (!blob) {
+          throw new Error("Failed to create Excel blob");
+        }
+        templateData = {
+          sheetNames: [sheetName],
+          sheets: { [sheetName]: sheetData },
+          formulaCaches: [formulaCacheRef.current] // Save formula cache for Excel
+        };
+      } else {
+        // Create DOCX with header for Word/HTML files
+        const sheetData = [["__html__", DEFAULT_REPORT_HEADER + "<p><br></p>"]];
+        blob = await createDocxBlob(sheetData);
+        if (!blob) {
+          throw new Error("Failed to create DOCX blob");
+        }
+        templateData = {
+          sheetNames: [sheetName],
+          sheets: { [sheetName]: sheetData },
+          formulaCaches: [{}] // No formulas for Word docs
+        };
       }
       
       const formData = new FormData();
@@ -1873,11 +2026,6 @@ export default function FormsManagement() {
       if (currentFolderId) {
         formData.append('folder_id', String(currentFolderId));
       }
-      // Add template_data with sheet name for proper display
-      const templateData = {
-        sheetNames: [sheetName],
-        sheets: { [sheetName]: sheetData }
-      };
       formData.append('template_data', JSON.stringify(templateData));
 
       await api.post('/forms/upload', formData);
@@ -1899,21 +2047,32 @@ export default function FormsManagement() {
       // Build updated sheets object
       const updatedSheets = {};
       sheets.forEach((sheet, idx) => {
-        if (idx === activeSheet) {
-          // Use current sheetData for active sheet
-          updatedSheets[sheet.name] = sheetData;
-        } else {
-          // Keep other sheets as-is
-          updatedSheets[sheet.name] = sheet.data;
-        }
+        let data = idx === activeSheet ? sheetData : sheet.data;
+        const cache = idx === activeSheet ? formulaCacheRef.current : (sheet.formulaCache || {});
+        
+        // ✅ KEY FIX: Formula cells ko unki formula string se save karo, evaluated value se nahi
+        const dataWithFormulas = data.map((row, rIdx) =>
+          row.map((cell, cIdx) => {
+            const formulaKey = `${rIdx}_${cIdx}`;
+            const formulaStr = cache[formulaKey];
+            // ✅ Ensure formula string = se start hoti hai
+            if (formulaStr) {
+              return formulaStr.startsWith('=') ? formulaStr : '=' + formulaStr;
+            }
+            return cell;
+          })
+        );
+        
+        updatedSheets[sheet.name] = dataWithFormulas;
       });
       
       const sheetNames = sheets.map(s => s.name);
       
-      // Build template_data object
+      // Build template_data object with formula caches
       const templateData = {
         sheets: updatedSheets,
-        sheetNames: sheetNames
+        sheetNames: sheetNames,
+        formulaCaches: sheets.map((s, idx) => idx === activeSheet ? formulaCacheRef.current : (s.formulaCache || {}))
       };
       
       // Update form with new template_data
@@ -2042,8 +2201,10 @@ export default function FormsManagement() {
                   style={css.tab(activeSheet === i)} 
                   onClick={() => { 
                     setActiveSheet(i); 
-                    formulaCacheRef.current = sheets[i]?.formulaCache || buildFormulaCache(s.data);
-                    setSheetData(reEvaluateFormulas(s.data)); 
+                    const newCache = sheets[i]?.formulaCache || buildFormulaCache(sheets[i]?.data);
+                    formulaCacheRef.current = newCache;
+                    // ✅ Cache explicitly pass karo
+                    setSheetData(reEvaluateFormulas(sheets[i]?.data, newCache)); 
                   }}
                 >
                   {s.name}
@@ -2066,7 +2227,7 @@ export default function FormsManagement() {
           </div>
 
           {/* Sheet Editor */}
-          <div style={{ flex: 1, overflow: "auto", padding: 0, background: "#F9FAFB" }}>
+          <div style={{ flex: 1, overflow: "auto", padding: 0, background: "#F9FAFB", minHeight: 0, display: "flex", flexDirection: "column" }}>
             {sheetData[0]?.[0] === "__html__" ? (
               <ReportSheetViewer
                 ref={viewerRef}
@@ -2075,100 +2236,24 @@ export default function FormsManagement() {
                 onDataChange={(newData) => setSheetData(newData)}
               />
             ) : (
-              <div style={{ overflow: "auto", borderRadius: 8, border: "1px solid #E5E7EB", background: "#fff" }}>
-                <table style={{ borderCollapse: "collapse", width: "max-content", minWidth: "100%" }}>
-                  <thead>
-                    <tr style={{ background: "#F3F4F6", position: "sticky", top: 0, zIndex: 2 }}>
-                      {/* Row number header */}
-                      <th style={{ 
-                        border: "1px solid #E5E7EB", padding: "8px 6px", 
-                        fontSize: 12, color: "#9CA3AF", width: 40, minWidth: 40,
-                        textAlign: "center", fontWeight: 500
-                      }}>#</th>
-                      {(sheetData[0] || []).map((cell, cIdx) => (
-                        <th key={cIdx} style={{ 
-                          border: "1px solid #E5E7EB", padding: 0,
-                          minWidth: 120, maxWidth: 240,
-                          position: "relative"
-                        }}>
-                          <div style={{ display: "flex", alignItems: "center" }}>
-                            <input
-                              value={cell ?? ""}
-                              onChange={(e) => handleCellChange(0, cIdx, e.target.value)}
-                              style={{ 
-                                flex: 1,
-                                padding: "8px 10px", 
-                                border: "none", 
-                                outline: "none",
-                                fontSize: 13,
-                                background: "transparent",
-                                fontWeight: 700,
-                                color: "#1F2937",
-                                width: "100%",
-                                minWidth: 100,
-                              }}
-                            />
-                            <button 
-                              style={{ 
-                                flexShrink: 0, padding: "4px 6px",
-                                background: "transparent", border: "none",
-                                cursor: "pointer", color: "#DC2626", fontSize: 14,
-                                opacity: 0.5,
-                              }}
-                              onClick={() => handleDeleteCol(cIdx)}
-                              title="Delete column"
-                            >×</button>
-                          </div>
-                        </th>
-                      ))}
-                      {/* Add column placeholder */}
-                      <th style={{ border: "1px solid #E5E7EB", width: 40, minWidth: 40 }} />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sheetData.slice(1).map((row, rIdx) => (
-                      <tr key={rIdx} style={{ background: rIdx % 2 === 0 ? "#fff" : "#F9FAFB" }}>
-                        {/* Row number */}
-                        <td style={{ 
-                          border: "1px solid #E5E7EB", padding: "4px 6px",
-                          fontSize: 12, color: "#9CA3AF", textAlign: "center",
-                          background: "#F9FAFB", userSelect: "none"
-                        }}>{rIdx + 1}</td>
-                        {/* Pad row to match header column count */}
-                        {Array.from({ length: sheetData[0]?.length || 0 }).map((_, cIdx) => (
-                          <td key={cIdx} style={{ border: "1px solid #E5E7EB", padding: 0 }}>
-                            <input
-                              value={row[cIdx] ?? ""}
-                              onChange={(e) => handleCellChange(rIdx + 1, cIdx, e.target.value)}
-                              style={{ 
-                                width: "100%", 
-                                padding: "7px 10px", 
-                                border: "none", 
-                                outline: "none",
-                                fontSize: 13,
-                                background: "transparent",
-                                color: "#374151",
-                              }}
-                            />
-                          </td>
-                        ))}
-                        {/* Delete row button */}
-                        <td style={{ border: "1px solid #E5E7EB", padding: "0 4px", textAlign: "center" }}>
-                          <button 
-                            style={{ 
-                              background: "transparent", border: "none",
-                              cursor: "pointer", color: "#DC2626", fontSize: 16,
-                              opacity: 0.4, padding: "2px 4px"
-                            }}
-                            onClick={() => handleDeleteRow(rIdx + 1)}
-                            title="Delete row"
-                          >×</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <ReportSheetViewer
+                data={sheetData}
+                formulaCache={formulaCacheRef.current}
+                readOnly={false}
+                onDataChange={(newData) => {
+                  setSheetData(newData);
+                  // Also update the sheets array to keep in sync
+                  setSheets(prev => {
+                    const copy = [...prev];
+                    copy[activeSheet] = {
+                      ...copy[activeSheet],
+                      data: newData,
+                      formulaCache: formulaCacheRef.current
+                    };
+                    return copy;
+                  });
+                }}
+              />
             )}
           </div>
         </div>

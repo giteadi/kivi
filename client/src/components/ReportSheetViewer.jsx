@@ -1,8 +1,9 @@
-// ReportSheetViewer.jsx — iframe designMode editor
+// ReportSheetViewer.jsx — iframe designMode editor + Excel grid mode
 // Fixed: script tag pollution in saved HTML
 // Fixed: stale closure on notify — doc ref stored in useRef
+// NEW: Excel grid mode with formula support
 
-import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from "react";
+import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle, useState } from "react";
 
 // ─── Convert 2D array → HTML ──────────────────────────────────────────────────
 function arrayToHtml(data) {
@@ -60,6 +61,163 @@ function esc(s) {
 }
 
 function htmlToData(html) { return [["__html__", html]]; }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// EXCEL GRID MODE HELPERS
+// ══════════════════════════════════════════════════════════════════════════════
+
+// Check if data is Excel grid (2D array) vs HTML mode
+function isExcelData(data) {
+  if (!data || !Array.isArray(data) || data.length === 0) return false;
+  const first = data[0];
+  // Excel: first row is an array, HTML: first row is ["__html__", ...]
+  return Array.isArray(first) && first[0] !== "__html__";
+}
+
+// Build formula cache from 2D data
+function buildFormulaCache(sheetData) {
+  const cache = {};
+  sheetData.forEach((row, rIdx) => {
+    row.forEach((cell, cIdx) => {
+      if (typeof cell === 'string' && cell.startsWith('=')) {
+        cache[`${rIdx}_${cIdx}`] = cell;
+      }
+    });
+  });
+  return cache;
+}
+
+// Multi-pass formula evaluator
+function reEvaluateFormulas(sheetData, cache) {
+  if (!cache || Object.keys(cache).length === 0) return sheetData;
+  console.log('[DEBUG] reEvaluateFormulas called:', { cacheSize: Object.keys(cache).length });
+  let nextData = sheetData.map(row => [...(row || [])]);
+
+  // Separate IF-only formulas from SUM/mixed formulas
+  // IF formulas (col C, rows 2-108) must be evaluated BEFORE
+  // SUM formulas (row 9, cols E-Q) that depend on them
+  const allKeys = Object.keys(cache);
+  const ifKeys  = allKeys.filter(k => {
+    const f = (cache[k] || "").toUpperCase();
+    return f.includes("IF(") && !f.includes("SUM(");
+  });
+  const otherKeys = allKeys.filter(k => {
+    const f = (cache[k] || "").toUpperCase();
+    return !f.includes("IF(") || f.includes("SUM(");
+  });
+  // Always: IF formulas first, then everything else
+  const orderedKeys = [...ifKeys, ...otherKeys];
+
+  // 5 passes ensures cascaded dependencies resolve
+  for (let pass = 0; pass < 5; pass++) {
+    for (const key of orderedKeys) {
+      const [rStr, cStr] = key.split("_");
+      const r = Number(rStr);
+      const c = Number(cStr);
+      if (!nextData[r]) continue;
+      try {
+        const result = evalFormula(cache[key], nextData);
+        console.log('[DEBUG] Formula evaluated:', { key, formula: cache[key], result, pass });
+        nextData[r][c] = result;
+      } catch (err) {
+        console.error('[DEBUG] Formula error:', { key, formula: cache[key], error: err.message });
+      }
+    }
+  }
+  return nextData;
+}
+
+// Formula evaluator
+function evalFormula(formula, grid) {
+  if (!formula) return "";
+  let expr = formula.toString().trim();
+  if (expr.startsWith("=")) expr = expr.slice(1);
+  let e = expr.toUpperCase();
+
+  const getCellValue = (ref) => {
+    const m = ref.match(/^([A-Z]+)(\d+)$/i);
+    if (!m) return 0;
+    const c = m[1].toUpperCase().charCodeAt(0) - 65;
+    const r = parseInt(m[2]) - 1;
+    const cell = grid[r]?.[c];
+    const raw = (cell && typeof cell === "object") ? (cell.raw ?? cell.value ?? "") : cell;
+    if (raw === "" || raw === null || raw === undefined) return 0;
+    const val = parseFloat(String(raw));
+    return isNaN(val) ? 0 : val;
+  };
+
+  // Step 1: Resolve SUM() — compute actual numeric total inline
+  e = e.replace(/SUM\(([^)]+)\)/g, (_, inner) => {
+    let total = 0;
+    inner.split(",").forEach(part => {
+      part = part.trim();
+      const range = part.match(/^([A-Z]+)(\d+):([A-Z]+)(\d+)$/);
+      if (range) {
+        const c1 = range[1].charCodeAt(0) - 65, r1 = parseInt(range[2]) - 1;
+        const c2 = range[3].charCodeAt(0) - 65, r2 = parseInt(range[4]) - 1;
+        for (let r = Math.min(r1,r2); r <= Math.max(r1,r2); r++)
+          for (let c = Math.min(c1,c2); c <= Math.max(c1,c2); c++)
+            total += getCellValue(String.fromCharCode(c+65) + (r+1));
+      } else {
+        total += getCellValue(part);
+      }
+    });
+    return String(total);
+  });
+
+  // Step 2: Replace all cell refs with their numeric values
+  // Use a function-based replace so each ref gets its own lookup
+  e = e.replace(/([A-Z]+)(\d+)/g, (match) => String(getCellValue(match)));
+
+  // Step 3: Strip quoted number strings "3" → 3
+  e = e.replace(/"(\d+(?:\.\d+)?)"/g, "$1");
+
+  // Step 4: Remove trailing commas before ) 
+  e = e.replace(/,\s*\)/g, ")");
+
+  // Step 5: Convert nested IF(cond,t,f) → JS ternary char-by-char
+  function convertIFs(s) {
+    let out = "", i = 0;
+    while (i < s.length) {
+      if (s.slice(i, i+3) === "IF(") {
+        i += 3;
+        let depth = 0, args = [], cur = "";
+        while (i < s.length) {
+          const ch = s[i];
+          if (ch === "(") { depth++; cur += ch; }
+          else if (ch === ")") {
+            if (depth === 0) { args.push(cur.trim()); i++; break; }
+            depth--; cur += ch;
+          } else if (ch === "," && depth === 0) {
+            args.push(cur.trim()); cur = "";
+          } else { cur += ch; }
+          i++;
+        }
+        if (args.length >= 3)
+          out += `((${convertIFs(args[0])})?(${convertIFs(args[1])}):(${convertIFs(args[2])}))`;
+        else if (args.length === 2)
+          out += `((${convertIFs(args[0])})?(${convertIFs(args[1])}):(0))`;
+        else out += "0";
+      } else { out += s[i++]; }
+    }
+    return out;
+  }
+  e = convertIFs(e);
+
+  // Step 6: Excel <> → JS !==, bare = → ===
+  e = e.replace(/<>/g, "!==");
+  e = e.replace(/(?<![<>=!])=(?![>=])/g, "===");
+
+  // Step 7: Evaluate
+  try {
+    const result = new Function(`return (${e})`)();
+    if (result === null || result === undefined) return 0;
+    if (typeof result === "boolean") return result ? 1 : 0;
+    if (typeof result === "string") { const n = parseFloat(result); return isNaN(n) ? result : n; }
+    if (!isFinite(result) || isNaN(result)) return 0;
+    return Number.isInteger(result) ? result : parseFloat(result.toFixed(4));
+  } catch { return 0; }
+}
 
 function getHtml(data) {
   if (!data) return null;
@@ -123,8 +281,173 @@ function buildDoc(bodyHtml) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// EXCEL GRID COMPONENT (with formulas)
+// ══════════════════════════════════════════════════════════════════════════════
+function ExcelGrid({ data, formulaCache: externalFormulaCache, readOnly, onDataChange }) {
+  const [sheetData, setSheetData] = useState(data || []);
+  const formulaCacheRef = useRef({});
+
+  // Build formula cache on mount (use external cache if provided)
+  useEffect(() => {
+    formulaCacheRef.current = externalFormulaCache || buildFormulaCache(data || []);
+    console.log('[DEBUG] ExcelGrid mount - formulaCache:', formulaCacheRef.current);
+    // Initial formula evaluation
+    const evaluated = reEvaluateFormulas(data || [], formulaCacheRef.current);
+    setSheetData(evaluated);
+  }, []);
+
+  // Update data when prop changes
+  // Only sync cache when it changes externally (not data)
+  useEffect(() => {
+    if (externalFormulaCache && Object.keys(externalFormulaCache).length > 0) {
+      formulaCacheRef.current = externalFormulaCache;
+    }
+  }, [externalFormulaCache]);
+
+  const handleCellChange = (rowIdx, colIdx, value) => {
+    console.log('[DEBUG] ExcelGrid handleCellChange:', { rowIdx, colIdx, value, type: typeof value });
+    if (readOnly) return;
+    
+    // Formula cells are readonly
+    const key = `${rowIdx}_${colIdx}`;
+    if (formulaCacheRef.current[key]) {
+      console.log('[DEBUG] Cell is formula cell, readonly:', key);
+      return;
+    }
+
+    setSheetData(prev => {
+      const next = prev.map(r => [...r]);
+      if (!next[rowIdx]) next[rowIdx] = [];
+      // Safe numeric input handling
+      next[rowIdx][colIdx] = value === "" ? "" : isNaN(value) ? value : Number(value);
+      console.log('[DEBUG] Updated cell:', { rowIdx, colIdx, newValue: next[rowIdx][colIdx], type: typeof next[rowIdx][colIdx] });
+      
+      // Re-evaluate formulas
+      const recalculated = reEvaluateFormulas(next, formulaCacheRef.current);
+      console.log('[DEBUG] Recalculated data sample:', recalculated.slice(0, 5));
+      
+      // Notify parent with delay to avoid React lifecycle error
+      if (onDataChange) {
+        setTimeout(() => onDataChange(recalculated), 0);
+      }
+      
+      return recalculated;
+    });
+  };
+
+  if (!sheetData || sheetData.length === 0) {
+    return <div style={{ padding: 40, textAlign: "center", color: "#666" }}>Empty sheet</div>;
+  }
+
+  const headerRow = sheetData[0] || [];
+  const dataRows = sheetData.slice(1);
+
+  return (
+    <div style={{ flex: 1, overflow: "auto", background: "#F9FAFB", padding: 16 }}>
+      <table style={{ borderCollapse: "collapse", width: "100%", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
+        <thead>
+          <tr>
+            <th style={{ border: "1px solid #E5E7EB", padding: "8px", background: "#F3F4F6", width: 40 }}>#</th>
+            {headerRow.map((cell, cIdx) => (
+              <th key={cIdx} style={{ 
+                border: "1px solid #E5E7EB", 
+                padding: "8px 10px", 
+                background: "#F3F4F6",
+                fontSize: 13,
+                fontWeight: 600,
+                color: "#374151",
+                minWidth: 100
+              }}>
+                {readOnly ? (
+                  <span>{cell ?? ""}</span>
+                ) : (
+                  <input
+                    value={cell ?? ""}
+                    onChange={(e) => handleCellChange(0, cIdx, e.target.value)}
+                    style={{ 
+                      width: "100%", 
+                      border: "none", 
+                      background: "transparent",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "#374151",
+                      outline: "none"
+                    }}
+                  />
+                )}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {dataRows.map((row, rIdx) => (
+            <tr key={rIdx} style={{ background: rIdx % 2 === 0 ? "#fff" : "#F9FAFB" }}>
+              <td style={{ 
+                border: "1px solid #E5E7EB", 
+                padding: "6px 8px", 
+                textAlign: "center",
+                fontSize: 12,
+                color: "#9CA3AF",
+                background: "#F3F4F6"
+              }}>{rIdx + 1}</td>
+              {Array.from({ length: headerRow.length }).map((_, cIdx) => {
+                const key = `${rIdx + 1}_${cIdx}`;
+                const isFormula = !!formulaCacheRef.current[key];
+                const rawValue = row?.[cIdx];
+                // Handle NaN, Infinity, null, undefined - convert to safe string
+                const safeValue = (rawValue === null || rawValue === undefined || Number.isNaN(rawValue) || rawValue === Infinity || rawValue === -Infinity) ? "" : String(rawValue);
+                
+                return (
+                  <td key={cIdx} style={{ 
+                    border: "1px solid #E5E7EB", 
+                    padding: 0,
+                    background: isFormula ? "#FFF9C4" : "transparent"
+                  }}>
+                    {readOnly || isFormula ? (
+                      <div style={{ 
+                        padding: "7px 10px", 
+                        fontSize: 13,
+                        color: isFormula ? "#856404" : "#374151",
+                        fontWeight: isFormula ? 600 : 400,
+                        minHeight: 20
+                      }} title={isFormula ? `Formula: ${formulaCacheRef.current[key]}` : ""}>
+                        {safeValue}
+                      </div>
+                    ) : (
+                      <input
+                        value={safeValue}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          // Safe numeric input handling
+                          const parsed = val === "" ? "" : isNaN(val) ? val : Number(val);
+                          handleCellChange(rIdx + 1, cIdx, parsed);
+                        }}
+                        style={{ 
+                          width: "100%", 
+                          padding: "7px 10px", 
+                          border: "none", 
+                          outline: "none",
+                          fontSize: 13,
+                          background: "transparent",
+                          color: "#374151",
+                        }}
+                      />
+                    )}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 const ReportSheetViewer = forwardRef(function ReportSheetViewer({
   data,
+  formulaCache,
   readOnly = false,
   onDataChange,
   onCreateReport,
@@ -332,6 +655,11 @@ const ReportSheetViewer = forwardRef(function ReportSheetViewer({
   // data intentionally NOT in deps — sirf mount pe doc.write() hona chahiye
   // sheet switch ke liye parent mein key={activeSheet} already hai, jo remount karta hai
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // EXCEL MODE: Check if data is 2D array (Excel grid)
+  // ═══════════════════════════════════════════════════════════════════════════
+  const isExcel = isExcelData(data);
+
   const topColor = reportMode ? "#064E3B" : "#1E40AF";
 
   return (
@@ -344,9 +672,10 @@ const ReportSheetViewer = forwardRef(function ReportSheetViewer({
       }}>
         <span>{reportMode ? "✏️ Patient Report Editor" : "📄 Template Editor"}</span>
         <span style={{ opacity: 0.65, fontSize: 11 }}>
-          {readOnly
-            ? "Read-only preview"
-            : "Click anywhere to edit · Ctrl+A select all · Ctrl+C/V copy/paste · Ctrl+B bold"}
+          {isExcel 
+            ? (readOnly ? "Excel Grid (Read-only)" : "Excel Grid · Editable cells with formulas")
+            : (readOnly ? "Read-only preview" : "Click anywhere to edit · Ctrl+A select all · Ctrl+C/V copy/paste · Ctrl+B bold")
+          }
         </span>
         {!reportMode && onCreateReport && (
           <button
@@ -360,19 +689,34 @@ const ReportSheetViewer = forwardRef(function ReportSheetViewer({
         )}
       </div>
 
-      <div style={{ flex: 1, overflow: "auto", background: "#E8E8E4", padding: "28px 20px" }}>
-        <div style={{
-          maxWidth: 860, margin: "0 auto",
-          boxShadow: "0 4px 24px rgba(0,0,0,0.15), 0 1px 4px rgba(0,0,0,0.08)",
-          borderRadius: 2, background: "#fff",
-        }}>
-          <iframe
-            ref={iframeRef}
-            style={{ width: "100%", minHeight: 1000, border: "none", display: "block", borderRadius: 2 }}
-            title="editor"
-          />
+      {/* ════════════════════════════════════════════════════════════════════════
+          EXCEL MODE: Render grid with formulas
+          ═══════════════════════════════════════════════════════════════════════ */}
+      {isExcel ? (
+        <ExcelGrid 
+          data={data} 
+          formulaCache={formulaCache}
+          readOnly={readOnly} 
+          onDataChange={onDataChange}
+        />
+      ) : (
+        /* ════════════════════════════════════════════════════════════════════════
+           HTML/WORD MODE: Render iframe editor
+           ═══════════════════════════════════════════════════════════════════════ */
+        <div style={{ flex: 1, overflow: "auto", background: "#E8E8E4", padding: "28px 20px" }}>
+          <div style={{
+            maxWidth: 860, margin: "0 auto",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.15), 0 1px 4px rgba(0,0,0,0.08)",
+            borderRadius: 2, background: "#fff",
+          }}>
+            <iframe
+              ref={iframeRef}
+              style={{ width: "100%", minHeight: 1000, border: "none", display: "block", borderRadius: 2 }}
+              title="editor"
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 });

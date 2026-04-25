@@ -1604,6 +1604,10 @@ export default function ConnersManagement() {
 
   // Update cell
   const handleCellChange = (rowIdx, colIdx, value) => {
+    // Agar yeh cell formula cell hai toh user edit nahi kar sakta
+    const key = `${rowIdx}_${colIdx}`;
+    if (formulaCacheRef.current[key]) return; // formula cell - readonly
+    
     setSheetData(prev => {
       const next = prev.map(r => [...r]);
       if (!next[rowIdx]) next[rowIdx] = [];
@@ -1896,7 +1900,12 @@ export default function ConnersManagement() {
                           <td key={cIdx} style={{ border: "1px solid #E5E7EB", padding: 0 }}>
                             <input
                               value={row[cIdx] ?? ""}
-                              onChange={(e) => handleCellChange(rIdx + 1, cIdx, e.target.value)}
+                              onChange={(e) => {
+                                    const val = e.target.value;
+                                    // Column B (index 1) should be numeric for formulas
+                                    const parsed = (cIdx === 1 && val !== "") ? Number(val) : val;
+                                    handleCellChange(rIdx + 1, cIdx, parsed);
+                                  }}
                               style={{ 
                                 width: "100%", 
                                 padding: "7px 10px", 
