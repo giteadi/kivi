@@ -1013,20 +1013,40 @@ export default function ConnersManagement() {
   };
 
   function reEvaluateFormulas(sheetData) {
-    return sheetData.map((row, rIdx) =>
-      row.map((cell, cIdx) => {
-        const key = `${rIdx}_${cIdx}`;
-        const formula = formulaCacheRef.current[key];
-        if (formula) {
-          try {
-            return evalFormula(formula, sheetData);
-          } catch {
-            return cell;
-          }
+    const cache = formulaCacheRef.current;
+    if (!cache || Object.keys(cache).length === 0) return sheetData;
+    let nextData = sheetData.map(row => [...(row || [])]);
+
+    // Separate IF-only formulas from SUM/mixed formulas
+    // IF formulas (col C, rows 2-108) must be evaluated BEFORE
+    // SUM formulas (row 9, cols E-Q) that depend on them
+    const allKeys = Object.keys(cache);
+    const ifKeys  = allKeys.filter(k => {
+      const f = (cache[k] || "").toUpperCase();
+      return f.includes("IF(") && !f.includes("SUM(");
+    });
+    const otherKeys = allKeys.filter(k => {
+      const f = (cache[k] || "").toUpperCase();
+      return !f.includes("IF(") || f.includes("SUM(");
+    });
+    // Always: IF formulas first, then everything else
+    const orderedKeys = [...ifKeys, ...otherKeys];
+
+    // 5 passes ensures cascaded dependencies resolve
+    for (let pass = 0; pass < 5; pass++) {
+      for (const key of orderedKeys) {
+        const [rStr, cStr] = key.split("_");
+        const r = Number(rStr);
+        const c = Number(cStr);
+        if (!nextData[r]) continue;
+        try {
+          nextData[r][c] = evalFormula(cache[key], nextData);
+        } catch {
+          // keep existing value on error
         }
-        return cell;
-      })
-    );
+      }
+    }
+    return nextData;
   }
 
   // Evaluate IF formulas in Excel data
@@ -1046,89 +1066,94 @@ export default function ConnersManagement() {
   }
 
   function evalFormula(formula, grid) {
-    const resolveRef = (ref) => {
-      ref = ref.trim();
-      const rangeMatch = ref.match(/^([A-Z]+)(\d+):([A-Z]+)(\d+)$/);
-      if (rangeMatch) {
-        const c1 = rangeMatch[1].charCodeAt(0) - 65;
-        const r1 = parseInt(rangeMatch[2]) - 1;
-        const c2 = rangeMatch[3].charCodeAt(0) - 65;
-        const r2 = parseInt(rangeMatch[4]) - 1;
-        const vals = [];
-        for (let r = r1; r <= r2; r++) {
-          for (let c = c1; c <= c2; c++) {
-            vals.push(parseFloat(grid[r]?.[c]) || 0);
-          }
-        }
-        return vals;
-      }
-      const cellMatch = ref.match(/^([A-Z]+)(\d+)$/);
-      if (cellMatch) {
-        const col = cellMatch[1].charCodeAt(0) - 65;
-        const row = parseInt(cellMatch[2]) - 1;
-        return parseFloat(grid[row]?.[col]) || 0;
-      }
-      return parseFloat(ref) || 0;
+    if (!formula) return "";
+    let expr = formula.toString().trim();
+    if (expr.startsWith("=")) expr = expr.slice(1);
+    let e = expr.toUpperCase();
+
+    const getCellValue = (ref) => {
+      const m = ref.match(/^([A-Z]+)(\d+)$/i);
+      if (!m) return 0;
+      const c = m[1].toUpperCase().charCodeAt(0) - 65;
+      const r = parseInt(m[2]) - 1;
+      const cell = grid[r]?.[c];
+      const raw = (cell && typeof cell === "object") ? (cell.raw ?? cell.value ?? "") : cell;
+      if (raw === "" || raw === null || raw === undefined) return 0;
+      const val = parseFloat(String(raw));
+      return isNaN(val) ? 0 : val;
     };
 
-    const evalSUM = (inner) => {
-      const parts = inner.split(/[+,]/);
+    // Step 1: Resolve SUM() — compute actual numeric total inline
+    e = e.replace(/SUM\(([^)]+)\)/g, (_, inner) => {
       let total = 0;
-      parts.forEach(part => {
-        const val = resolveRef(part.trim());
-        if (Array.isArray(val)) {
-          total += val.reduce((a, b) => a + b, 0);
+      inner.split(",").forEach(part => {
+        part = part.trim();
+        const range = part.match(/^([A-Z]+)(\d+):([A-Z]+)(\d+)$/);
+        if (range) {
+          const c1 = range[1].charCodeAt(0) - 65, r1 = parseInt(range[2]) - 1;
+          const c2 = range[3].charCodeAt(0) - 65, r2 = parseInt(range[4]) - 1;
+          for (let r = Math.min(r1,r2); r <= Math.max(r1,r2); r++)
+            for (let c = Math.min(c1,c2); c <= Math.max(c1,c2); c++)
+              total += getCellValue(String.fromCharCode(c+65) + (r+1));
         } else {
-          total += val;
+          total += getCellValue(part);
         }
       });
-      return total;
-    };
+      return String(total);
+    });
 
-    const evalExpr = (expr) => {
-      expr = expr.trim();
-      
-      if (expr.toUpperCase().startsWith('IF(')) {
-        const inner = expr.slice(3, -1);
-        let depth = 0, commas = [];
-        for (let i = 0; i < inner.length; i++) {
-          if (inner[i] === '(') depth++;
-          else if (inner[i] === ')') depth--;
-          else if (inner[i] === ',' && depth === 0) commas.push(i);
-        }
-        if (commas.length < 2) return '';
-        const condStr = inner.slice(0, commas[0]).trim();
-        const trueVal = inner.slice(commas[0]+1, commas[1]).trim().replace(/"/g, '');
-        const falseExpr = inner.slice(commas[1]+1).trim();
-        const condMatch = condStr.match(/^(.+?)\s*([<>!=]+)\s*(.+)$/);
-        if (!condMatch) return '';
-        const leftRaw = resolveRef(condMatch[1]);
-        const left = Array.isArray(leftRaw) ? leftRaw[0] : leftRaw;
-        const op = condMatch[2];
-        const right = parseFloat(condMatch[3]);
-        let result = false;
-        if (op === '<')  result = left < right;
-        if (op === '>')  result = left > right;
-        if (op === '<=') result = left <= right;
-        if (op === '>=') result = left >= right;
-        if (op === '=')  result = left === right;
-        if (op === '<>') result = left !== right;
-        if (result) return trueVal;
-        if (falseExpr.toUpperCase().startsWith('IF(')) return evalExpr(falseExpr);
-        return falseExpr.replace(/"/g, '') || '';
+    // Step 2: Replace all cell refs with their numeric values
+    // Use a function-based replace so each ref gets its own lookup
+    e = e.replace(/([A-Z]+)(\d+)/g, (match) => String(getCellValue(match)));
+
+    // Step 3: Strip quoted number strings "3" → 3
+    e = e.replace(/"(\d+(?:\.\d+)?)"/g, "$1");
+
+    // Step 4: Remove trailing commas before ) 
+    e = e.replace(/,\s*\)/g, ")");
+
+    // Step 5: Convert nested IF(cond,t,f) → JS ternary char-by-char
+    function convertIFs(s) {
+      let out = "", i = 0;
+      while (i < s.length) {
+        if (s.slice(i, i+3) === "IF(") {
+          i += 3;
+          let depth = 0, args = [], cur = "";
+          while (i < s.length) {
+            const ch = s[i];
+            if (ch === "(") { depth++; cur += ch; }
+            else if (ch === ")") {
+              if (depth === 0) { args.push(cur.trim()); i++; break; }
+              depth--; cur += ch;
+            } else if (ch === "," && depth === 0) {
+              args.push(cur.trim()); cur = "";
+            } else { cur += ch; }
+            i++;
+          }
+          if (args.length >= 3)
+            out += `((${convertIFs(args[0])})?(${convertIFs(args[1])}):(${convertIFs(args[2])}))`;
+          else if (args.length === 2)
+            out += `((${convertIFs(args[0])})?(${convertIFs(args[1])}):(0))`;
+          else out += "0";
+        } else { out += s[i++]; }
       }
+      return out;
+    }
+    e = convertIFs(e);
 
-      if (expr.toUpperCase().startsWith('SUM(')) {
-        const inner = expr.slice(4, -1);
-        return evalSUM(inner);
-      }
+    // Step 6: Excel <> → JS !==, bare = → ===
+    e = e.replace(/<>/g, "!==");
+    e = e.replace(/(?<![<>=!])=(?![>=])/g, "===");
 
-      const val = resolveRef(expr);
-      return Array.isArray(val) ? val[0] : val;
-    };
-
-    const formulaBody = formula.startsWith('=') ? formula.slice(1) : formula;
-    return evalExpr(formulaBody);
+    // Step 7: Evaluate
+    try {
+      const result = new Function(`return (${e})`)();
+      if (result === null || result === undefined) return 0;
+      if (typeof result === "boolean") return result ? 1 : 0;
+      if (typeof result === "string") { const n = parseFloat(result); return isNaN(n) ? result : n; }
+      if (!isFinite(result) || isNaN(result)) return 0;
+      return Number.isInteger(result) ? result : parseFloat(result.toFixed(4));
+    } catch { return 0; }
   }
 
   // Extract header from HTML content (like TemplateManager)
@@ -1611,7 +1636,12 @@ export default function ConnersManagement() {
     setSheetData(prev => {
       const next = prev.map(r => [...r]);
       if (!next[rowIdx]) next[rowIdx] = [];
-      next[rowIdx][colIdx] = value;
+      // Prevent NaN from being stored - convert to empty string
+      if (typeof value === 'number' && Number.isNaN(value)) {
+        next[rowIdx][colIdx] = "";
+      } else {
+        next[rowIdx][colIdx] = value;
+      }
       // Answer badalne ke baad formulas re-evaluate karo
       return reEvaluateFormulas(next);
     });
@@ -1898,24 +1928,45 @@ export default function ConnersManagement() {
                         {/* Pad row to match header column count */}
                         {Array.from({ length: sheetData[0]?.length || 0 }).map((_, cIdx) => (
                           <td key={cIdx} style={{ border: "1px solid #E5E7EB", padding: 0 }}>
-                            <input
-                              value={row[cIdx] ?? ""}
-                              onChange={(e) => {
+                            {(() => {
+                              const key = `${rIdx + 1}_${cIdx}`;
+                              const isFormula = !!formulaCacheRef.current[key];
+                              const rawValue = row[cIdx];
+                              // Safe string conversion to prevent NaN warning
+                              const safeValue = (rawValue === null || rawValue === undefined || Number.isNaN(rawValue) || rawValue === Infinity || rawValue === -Infinity) ? "" : String(rawValue);
+                              return (
+                                <input
+                                  value={safeValue}
+                                  onChange={(e) => {
                                     const val = e.target.value;
                                     // Column B (index 1) should be numeric for formulas
-                                    const parsed = (cIdx === 1 && val !== "") ? Number(val) : val;
-                                    handleCellChange(rIdx + 1, cIdx, parsed);
+                                    // Validate: only allow numeric input, reject alphabets
+                                    if (cIdx === 1 && val !== "") {
+                                      const num = Number(val);
+                                      if (Number.isNaN(num)) {
+                                        return; // Reject non-numeric input
+                                      }
+                                      handleCellChange(rIdx + 1, cIdx, num);
+                                    } else {
+                                      handleCellChange(rIdx + 1, cIdx, val);
+                                    }
                                   }}
-                              style={{ 
-                                width: "100%", 
-                                padding: "7px 10px", 
-                                border: "none", 
-                                outline: "none",
-                                fontSize: 13,
-                                background: "transparent",
-                                color: "#374151",
-                              }}
-                            />
+                                  readOnly={isFormula}
+                                  title={isFormula ? `Formula: ${formulaCacheRef.current[key]}` : ""}
+                                  style={{ 
+                                    width: "100%", 
+                                    padding: "7px 10px", 
+                                    border: "none", 
+                                    outline: "none",
+                                    fontSize: 13,
+                                    background: isFormula ? "#FFF9C4" : "transparent", // yellow = formula
+                                    color: isFormula ? "#856404" : "#374151",
+                                    cursor: isFormula ? "default" : "text",
+                                    fontWeight: isFormula ? 600 : 400,
+                                  }}
+                                />
+                              );
+                            })()}
                           </td>
                         ))}
                         {/* Delete row button */}

@@ -1880,7 +1880,12 @@ function evalFormula(formula, grid) {
     setSheetData(prev => {
       const next = prev.map(r => [...r]);
       if (!next[rowIdx]) next[rowIdx] = [];
-      next[rowIdx][colIdx] = value;
+      // Prevent NaN from being stored - convert to empty string
+      if (typeof value === 'number' && Number.isNaN(value)) {
+        next[rowIdx][colIdx] = "";
+      } else {
+        next[rowIdx][colIdx] = value;
+      }
       // ✅ Cache explicitly pass karo
       return reEvaluateFormulas(next, formulaCacheRef.current);
     });
