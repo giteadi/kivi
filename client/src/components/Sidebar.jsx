@@ -126,7 +126,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
   const getMenuItems = () => {
     const adminMenuItems = [
       { id: 'dashboard', label: 'Dashboard', icon: FiHome, section: 'MAIN' },
-      { id: 'clinic-revenue', label: 'Center Revenue', icon: FiTrendingUp, section: 'MAIN' },
+      // { id: 'clinic-revenue', label: 'Center Revenue', icon: FiTrendingUp, section: 'MAIN' }, // Hidden
       /* {
         id: 'encounters',
         label: 'Sessions',
