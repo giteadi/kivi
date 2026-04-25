@@ -1052,6 +1052,13 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                       onClick={() => {
                         if (selectedItems.length === 0) return;
                         const selectedPatient = transformedPatients.find(p => p.id === selectedItems[0]);
+                        // Save to localStorage for persistence
+                        localStorage.setItem('selectedExamineeForAssignment', JSON.stringify({
+                          id: selectedPatient.id,
+                          firstName: selectedPatient.firstName,
+                          lastName: selectedPatient.lastName,
+                          email: selectedPatient.email
+                        }));
                         // Set state and navigate to screen
                         if (onSelectExamineeForAssignment) {
                           onSelectExamineeForAssignment(selectedPatient);

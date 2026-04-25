@@ -245,6 +245,11 @@ Kivi Educational Therapy`);
 
     setIsSendingEmail(true);
     try {
+      // Generate item list for email
+      const total = calculateTotal();
+      const items = [...selectedPackages, ...selectedAssessments];
+      const itemList = items.map(item => `- ${item.name}: ${formatPrice(item.price || 0)}`).join('\n');
+
       const response = await api.request('/invoices/send-assessment', {
         method: 'POST',
         body: JSON.stringify({
@@ -260,8 +265,8 @@ Kivi Educational Therapy`);
           itemsCount: selectedPackages.length + selectedAssessments.length,
           adminDate: adminDate,
           examiner: examiner,
-          subject: emailSubject,
-          message: emailBody
+          subject: `Assessment Invoice - ${examineeName}`,
+          message: `Dear ${examineeName},\n\nPlease find below the assessment details and invoice:\n\nExaminee: ${examineeName}\nExaminee ID: ${examineeId || 'N/A'}\n\nAssessment Items:\n${itemList}\n\nTotal Amount: ${formatPrice(total)}\n\nPlease complete the payment to proceed with the assessment.\n\nBest regards,\nKivi Educational Therapy`
         })
       });
 
@@ -837,28 +842,6 @@ Kivi Educational Therapy`);
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter recipient email..."
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Subject:</label>
-                <input
-                  type="text"
-                  value={emailSubject}
-                  onChange={(e) => setEmailSubject(e.target.value)}
-                  placeholder="Email subject..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Message:</label>
-                <textarea
-                  value={emailBody}
-                  onChange={(e) => setEmailBody(e.target.value)}
-                  placeholder="Enter email message..."
-                  rows={12}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
 

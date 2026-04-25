@@ -991,7 +991,6 @@ class InvoiceController {
         Opp. Infinity Mall, Link Road, Andheri (W),<br />
         Mumbai, Maharashtra 400053<br />
         India<br /><br />
-        Phone: +022 49742555<br />
         Mobile: +91 8928186952<br />
         www.mindsaidlearning.com
       </div>
