@@ -126,6 +126,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
   const getMenuItems = () => {
     const adminMenuItems = [
       { id: 'dashboard', label: 'Dashboard', icon: FiHome, section: 'MAIN' },
+      { id: 'clinic-revenue', label: 'Center Revenue', icon: FiTrendingUp, section: 'MAIN' },
       /* {
         id: 'encounters',
         label: 'Sessions',
@@ -143,9 +144,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
     { id: 'forms', label: 'Forms', icon: FiUpload, section: 'USERS' },
     // { id: 'receptionists', label: 'Staff', icon: FiUser, section: 'USERS' }, // Temporarily disabled for future use
     { id: 'clinics', label: 'Centers', icon: FiMapPin, section: 'NETWORK' },
-    { id: 'clinic-revenue', label: 'Center Revenue', icon: FiTrendingUp, section: 'FINANCIAL' },
     // { id: 'doctor-revenue', label: 'Therapist Revenue', icon: FiDollarSign, section: 'FINANCIAL' }, // Temporarily disabled 
-    { id: 'taxes', label: 'Taxes', icon: FiPercent, section: 'FINANCIAL' },
     { id: 'billing-records', label: 'Billing Records', icon: FiCreditCard, section: 'FINANCIAL' },
     { id: 'queries', label: 'Queries', icon: FiMessageSquare, section: 'ADMIN' },
     { id: 'center-visibility', label: 'Center Visibility', icon: FiShield, section: 'ADMIN' },
