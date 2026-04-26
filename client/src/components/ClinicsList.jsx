@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiMapPin, FiPhone, FiMail, FiUsers, FiCalendar, FiFilter } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiMapPin, FiPhone, FiMail, FiUsers, FiCalendar, FiFilter, FiClock } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import FiltersPanel from './FiltersPanel';
@@ -289,7 +289,7 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
               </div>
 
               {/* Contact */}
-              <div className="space-y-2 mb-4">
+              <div className="space-y-2 mb-3">
                 <div className="flex items-center space-x-2">
                   <FiPhone className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                   <span className="text-sm text-gray-600 dark:text-gray-400">{clinic.phone}</span>
@@ -298,6 +298,16 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
                   <FiMail className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                   <span className="text-sm text-gray-600 dark:text-gray-400">{clinic.email}</span>
                 </div>
+              </div>
+
+              {/* Operating Hours */}
+              <div className="flex items-center space-x-2 mb-4">
+                <FiClock className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  {clinic.operatingHours && clinic.operatingHours !== 'Not specified' 
+                    ? clinic.operatingHours 
+                    : 'Hours not specified'}
+                </span>
               </div>
 
               {/* Specialties */}

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { FiArrowLeft, FiSave, FiX, FiMapPin, FiPhone, FiMail, FiGlobe, FiClock, FiUsers } from 'react-icons/fi';
+import { FiArrowLeft, FiSave, FiX, FiMapPin, FiPhone, FiMail, FiGlobe, FiClock, FiUsers, FiPlus } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import LocationSelector from './LocationSelector';
@@ -28,7 +28,6 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
 
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState({});
-  const [servicesInput, setServicesInput] = useState('');
 
   // Fetch clinic data when component mounts or clinicId changes
   useEffect(() => {
@@ -66,7 +65,6 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
             insurance: parseJsonField(data.insurance_accepted),
             languages: parseJsonField(data.languages_supported)
           });
-          setServicesInput(parseJsonField(data.services).join(', '));
         }
       } catch (error) {
         console.error('Error fetching clinic data:', error);
@@ -167,9 +165,8 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
     console.log('[ClinicEditForm] handleSubmit called');
     console.log('[ClinicEditForm] formData before save:', formData);
     
-    // Update services from input before submit
-    const servicesArray = servicesInput.split(',').map(s => s.trim()).filter(s => s);
-    console.log('[ClinicEditForm] SERVICES INPUT:', servicesInput);
+    // Filter out empty services before submit
+    const servicesArray = formData.services.filter(s => s.trim() !== '');
     console.log('[ClinicEditForm] SERVICES ARRAY:', servicesArray);
     
     if (validateForm()) {
@@ -189,7 +186,7 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
         operating_hours: formData.operatingHours,
         specialties: JSON.stringify(formData.specialties),
         facilities: JSON.stringify(formData.facilities),
-        services: servicesArray,
+        services: JSON.stringify(servicesArray),
         insurance_accepted: formData.insurance,
         languages_supported: formData.languages,
         established_date: formData.established
@@ -298,13 +295,40 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Custom Services
                 </label>
-                <input
-                  type="text"
-                  value={servicesInput}
-                  onChange={(e) => setServicesInput(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
-                  placeholder="Enter custom services separated by commas (e.g., Speech Therapy, Occupational Therapy)"
-                />
+                <div className="space-y-2">
+                  {formData.services.map((service, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={service}
+                        onChange={(e) => handleArrayChange('services', index, e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
+                        placeholder="Enter service name (e.g., Speech Therapy)"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeArrayItem('services', index)}
+                        className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                        title="Remove service"
+                      >
+                        <FiX className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => addArrayItem('services')}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors border border-dashed border-blue-300 dark:border-blue-700"
+                  >
+                    <FiPlus className="w-4 h-4" />
+                    Add Service
+                  </button>
+                  {formData.services.length === 0 && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+                      No custom services added yet. Click "Add Service" to add one.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </motion.div>
