@@ -67,20 +67,180 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   });
   
   const [diagnosisData, setDiagnosisData] = useState({
-    autismSpectrum: false,
-    behaviourEmotional: false,
-    giftedTalented: false,
-    intellectualDisability: false,
-    languageDelay: false,
-    learningDisability: false,
-    moodRelated: false,
-    motorDelay: false,
-    personalityDisorders: false,
-    schizophrenia: false,
-    speech: false,
-    substanceAbuse: false,
-    traumaticBrainInjury: false,
-    other: false
+    autismSpectrum: {
+      aspergers: false,
+      autistic: false,
+      childhoodDisintegrative: false,
+      pervasiveDevelopmental: false,
+      retts: false,
+      other: false
+    },
+    behaviourEmotional: {
+      adhd: false,
+      conduct: false,
+      disruptive: false,
+      emotional: false,
+      intermittentExplosive: false,
+      kleptomania: false,
+      oppositionalDefiant: false,
+      pathologicalGambling: false,
+      pyromania: false,
+      trichotillomania: false,
+      other: false
+    },
+    giftedTalented: {
+      gifted: false
+    },
+    intellectualDisability: {
+      borderline: false,
+      cognitiveDelay: false,
+      mild: false,
+      moderate: false,
+      profound: false,
+      severe: false,
+      other: false
+    },
+    languageDelay: {
+      expressive: false,
+      delay: false,
+      mixed: false,
+      phonological: false,
+      other: false
+    },
+    learningDisability: {
+      reading: false,
+      mathematics: false,
+      disorder: false,
+      writing: false,
+      nonverbal: false,
+      other: false
+    },
+    moodRelated: {
+      acuteStress: false,
+      agoraphobia: false,
+      anorexia: false,
+      bipolar: false,
+      bulimia: false,
+      conversion: false,
+      cyclothymic: false,
+      depressive: false,
+      dysthymic: false,
+      generalizedAnxiety: false,
+      majorDepressive: false,
+      ocd: false,
+      pain: false,
+      panic: false,
+      ptsd: false,
+      separationAnxiety: false,
+      socialPhobia: false,
+      somatization: false,
+      specificPhobia: false,
+      other: false
+    },
+    motorDelay: {
+      developmentalCoordination: false,
+      dyspraxia: false,
+      motorDelay: false,
+      paraplegia: false,
+      quadriplegia: false,
+      stereotypic: false,
+      other: false
+    },
+    personalityDisorders: {
+      antisocial: false,
+      avoidant: false,
+      borderline: false,
+      dependent: false,
+      histrionic: false,
+      narcissistic: false,
+      ocd: false,
+      ocpd: false,
+      paranoid: false,
+      schizoid: false,
+      schizotypal: false,
+      other: false
+    },
+    schizophrenia: {
+      briefPsychotic: false,
+      delusional: false,
+      schizoaffective: false,
+      catatonic: false,
+      disorganized: false,
+      paranoid: false,
+      residual: false,
+      undifferentiated: false,
+      schizophreniform: false,
+      other: false
+    },
+    speech: {
+      aphasia: false,
+      apraxia: false,
+      articulation: false,
+      brocas: false,
+      centralAuditory: false,
+      dysarthria: false,
+      fluency: false,
+      receptive: false,
+      voice: false,
+      other: false
+    },
+    substanceAbuse: {
+      alcoholAbuse: false,
+      alcoholDependence: false,
+      polysubstanceAbuse: false,
+      polysubstanceDependence: false,
+      substanceAbuse: false,
+      substanceDependence: false,
+      other: false
+    },
+    traumaticBrainInjury: {
+      tbi: false,
+      mild: false,
+      moderate: false,
+      severe: false,
+      other: false
+    },
+    other: {
+      adjustment: false,
+      cognitive: false,
+      creutzfeldtJakob: false,
+      alzheimers: false,
+      depersonalization: false,
+      dissociative: false,
+      epilepsy: false,
+      factitious: false,
+      genderIdentity: false,
+      huntingtons: false,
+      leftStroke: false,
+      leftEpilepsy: false,
+      mildCognitive: false,
+      parkinsons: false,
+      picks: false,
+      insomnia: false,
+      rightStroke: false,
+      rightEpilepsy: false,
+      seizure: false,
+      stroke: false,
+      tic: false,
+      tourettes: false,
+      vascularDementia: false
+    }
+  });
+  const [expandedDiagnoses, setExpandedDiagnoses] = useState({
+    autismSpectrum: true,
+    behaviourEmotional: true,
+    giftedTalented: true,
+    intellectualDisability: true,
+    languageDelay: true,
+    learningDisability: true,
+    moodRelated: true,
+    motorDelay: true,
+    personalityDisorders: true,
+    schizophrenia: true,
+    speech: true,
+    substanceAbuse: true,
+    traumaticBrainInjury: true,
+    other: true
   });
   
   const [historyData, setHistoryData] = useState({
@@ -328,6 +488,8 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       // Set evaluation data with defaults and merge saved data
       // FIX: Ensure evalData exists and merge properly with defaults
       const safeEvalData = evalData || {};
+      console.log('🔍 DEBUG - Saved evaluation_data from API:', JSON.stringify(safeEvalData, null, 2));
+      console.log('🔍 DEBUG - Keys in academicConcerns:', Object.keys(safeEvalData.academicConcerns || {}));
       setEvaluationData(prev => {
         const newEvalData = {
           academicConcerns: { ...prev.academicConcerns, ...(safeEvalData.academicConcerns || {}) },
@@ -342,32 +504,378 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
           employment: { ...prev.employment, ...(safeEvalData.employment || {}) }
         };
         console.log('  Final Evaluation Data:', newEvalData);
+        console.log('  Final academicConcerns keys:', Object.keys(newEvalData.academicConcerns));
         return newEvalData;
       });
       
       console.log('🏥 Setting Diagnosis Data:');
-      // FIX: Ensure diagData is properly merged with defaults
+      // FIX: Ensure diagData is properly merged with defaults for nested structure
       const safeDiagData = diagData || {};
       console.log('🐛 DEBUG - safeDiagData from API:', JSON.stringify(safeDiagData, null, 2));
-      const newDiagData = {
-        autismSpectrum: false,
-        behaviourEmotional: false,
-        giftedTalented: false,
-        intellectualDisability: false,
-        languageDelay: false,
-        learningDisability: false,
-        moodRelated: false,
-        motorDelay: false,
-        personalityDisorders: false,
-        schizophrenia: false,
-        speech: false,
-        substanceAbuse: false,
-        traumaticBrainInjury: false,
-        other: false,
-        ...safeDiagData
-      };
+      
+      // Check if data is in old flat format or new nested format
+      const isOldFormat = typeof safeDiagData.autismSpectrum === 'boolean';
+      console.log('🐛 DEBUG - Is old flat format:', isOldFormat);
+      
+      let newDiagData;
+      
+      if (isOldFormat) {
+        // Convert old flat format to new nested format
+        console.log('🔄 Converting old flat format to new nested format');
+        newDiagData = {
+          autismSpectrum: {
+            aspergers: false,
+            autistic: false,
+            childhoodDisintegrative: false,
+            pervasiveDevelopmental: false,
+            retts: false,
+            other: false,
+            // If old format had this as true, mark all sub-options as true for backward compatibility
+            ...(safeDiagData.autismSpectrum ? { aspergers: true, autistic: true, childhoodDisintegrative: true, pervasiveDevelopmental: true, retts: true, other: true } : {})
+          },
+          behaviourEmotional: {
+            adhd: false,
+            conduct: false,
+            disruptive: false,
+            emotional: false,
+            intermittentExplosive: false,
+            kleptomania: false,
+            oppositionalDefiant: false,
+            pathologicalGambling: false,
+            pyromania: false,
+            trichotillomania: false,
+            other: false,
+            ...(safeDiagData.behaviourEmotional ? { adhd: true, conduct: true, disruptive: true, emotional: true, intermittentExplosive: true, kleptomania: true, oppositionalDefiant: true, pathologicalGambling: true, pyromania: true, trichotillomania: true, other: true } : {})
+          },
+          giftedTalented: {
+            gifted: false,
+            ...(safeDiagData.giftedTalented ? { gifted: true } : {})
+          },
+          intellectualDisability: {
+            borderline: false,
+            cognitiveDelay: false,
+            mild: false,
+            moderate: false,
+            profound: false,
+            severe: false,
+            other: false,
+            ...(safeDiagData.intellectualDisability ? { borderline: true, cognitiveDelay: true, mild: true, moderate: true, profound: true, severe: true, other: true } : {})
+          },
+          languageDelay: {
+            expressive: false,
+            delay: false,
+            mixed: false,
+            phonological: false,
+            other: false,
+            ...(safeDiagData.languageDelay ? { expressive: true, delay: true, mixed: true, phonological: true, other: true } : {})
+          },
+          learningDisability: {
+            reading: false,
+            mathematics: false,
+            disorder: false,
+            writing: false,
+            nonverbal: false,
+            other: false,
+            ...(safeDiagData.learningDisability ? { reading: true, mathematics: true, disorder: true, writing: true, nonverbal: true, other: true } : {})
+          },
+          moodRelated: {
+            acuteStress: false,
+            agoraphobia: false,
+            anorexia: false,
+            bipolar: false,
+            bulimia: false,
+            conversion: false,
+            cyclothymic: false,
+            depressive: false,
+            dysthymic: false,
+            generalizedAnxiety: false,
+            majorDepressive: false,
+            ocd: false,
+            pain: false,
+            panic: false,
+            ptsd: false,
+            separationAnxiety: false,
+            socialPhobia: false,
+            somatization: false,
+            specificPhobia: false,
+            other: false,
+            ...(safeDiagData.moodRelated ? { acuteStress: true, agoraphobia: true, anorexia: true, bipolar: true, bulimia: true, conversion: true, cyclothymic: true, depressive: true, dysthymic: true, generalizedAnxiety: true, majorDepressive: true, ocd: true, pain: true, panic: true, ptsd: true, separationAnxiety: true, socialPhobia: true, somatization: true, specificPhobia: true, other: true } : {})
+          },
+          motorDelay: {
+            developmentalCoordination: false,
+            dyspraxia: false,
+            motorDelay: false,
+            paraplegia: false,
+            quadriplegia: false,
+            stereotypic: false,
+            other: false,
+            ...(safeDiagData.motorDelay ? { developmentalCoordination: true, dyspraxia: true, motorDelay: true, paraplegia: true, quadriplegia: true, stereotypic: true, other: true } : {})
+          },
+          personalityDisorders: {
+            antisocial: false,
+            avoidant: false,
+            borderline: false,
+            dependent: false,
+            histrionic: false,
+            narcissistic: false,
+            ocd: false,
+            ocpd: false,
+            paranoid: false,
+            schizoid: false,
+            schizotypal: false,
+            other: false,
+            ...(safeDiagData.personalityDisorders ? { antisocial: true, avoidant: true, borderline: true, dependent: true, histrionic: true, narcissistic: true, ocd: true, ocpd: true, paranoid: true, schizoid: true, schizotypal: true, other: true } : {})
+          },
+          schizophrenia: {
+            briefPsychotic: false,
+            delusional: false,
+            schizoaffective: false,
+            catatonic: false,
+            disorganized: false,
+            paranoid: false,
+            residual: false,
+            undifferentiated: false,
+            schizophreniform: false,
+            other: false,
+            ...(safeDiagData.schizophrenia ? { briefPsychotic: true, delusional: true, schizoaffective: true, catatonic: true, disorganized: true, paranoid: true, residual: true, undifferentiated: true, schizophreniform: true, other: true } : {})
+          },
+          speech: {
+            aphasia: false,
+            apraxia: false,
+            articulation: false,
+            brocas: false,
+            centralAuditory: false,
+            dysarthria: false,
+            fluency: false,
+            receptive: false,
+            voice: false,
+            other: false,
+            ...(safeDiagData.speech ? { aphasia: true, apraxia: true, articulation: true, brocas: true, centralAuditory: true, dysarthria: true, fluency: true, receptive: true, voice: true, other: true } : {})
+          },
+          substanceAbuse: {
+            alcoholAbuse: false,
+            alcoholDependence: false,
+            polysubstanceAbuse: false,
+            polysubstanceDependence: false,
+            substanceAbuse: false,
+            substanceDependence: false,
+            other: false,
+            ...(safeDiagData.substanceAbuse ? { alcoholAbuse: true, alcoholDependence: true, polysubstanceAbuse: true, polysubstanceDependence: true, substanceAbuse: true, substanceDependence: true, other: true } : {})
+          },
+          traumaticBrainInjury: {
+            tbi: false,
+            mild: false,
+            moderate: false,
+            severe: false,
+            other: false,
+            ...(safeDiagData.traumaticBrainInjury ? { tbi: true, mild: true, moderate: true, severe: true, other: true } : {})
+          },
+          other: {
+            adjustment: false,
+            cognitive: false,
+            creutzfeldtJakob: false,
+            alzheimers: false,
+            depersonalization: false,
+            dissociative: false,
+            epilepsy: false,
+            factitious: false,
+            genderIdentity: false,
+            huntingtons: false,
+            leftStroke: false,
+            leftEpilepsy: false,
+            mildCognitive: false,
+            parkinsons: false,
+            picks: false,
+            insomnia: false,
+            rightStroke: false,
+            rightEpilepsy: false,
+            seizure: false,
+            stroke: false,
+            tic: false,
+            tourettes: false,
+            vascularDementia: false,
+            ...(safeDiagData.other ? { adjustment: true, cognitive: true, creutzfeldtJakob: true, alzheimers: true, depersonalization: true, dissociative: true, epilepsy: true, factitious: true, genderIdentity: true, huntingtons: true, leftStroke: true, leftEpilepsy: true, mildCognitive: true, parkinsons: true, picks: true, insomnia: true, rightStroke: true, rightEpilepsy: true, seizure: true, stroke: true, tic: true, tourettes: true, vascularDementia: true } : {})
+          }
+        };
+      } else {
+        // Use new nested format directly
+        console.log('✅ Using new nested format');
+        newDiagData = {
+          autismSpectrum: {
+            aspergers: false,
+            autistic: false,
+            childhoodDisintegrative: false,
+            pervasiveDevelopmental: false,
+            retts: false,
+            other: false,
+            ...(safeDiagData.autismSpectrum || {})
+          },
+          behaviourEmotional: {
+            adhd: false,
+            conduct: false,
+            disruptive: false,
+            emotional: false,
+            intermittentExplosive: false,
+            kleptomania: false,
+            oppositionalDefiant: false,
+            pathologicalGambling: false,
+            pyromania: false,
+            trichotillomania: false,
+            other: false,
+            ...(safeDiagData.behaviourEmotional || {})
+          },
+          giftedTalented: {
+            gifted: false,
+            ...(safeDiagData.giftedTalented || {})
+          },
+          intellectualDisability: {
+            borderline: false,
+            cognitiveDelay: false,
+            mild: false,
+            moderate: false,
+            profound: false,
+            severe: false,
+            other: false,
+            ...(safeDiagData.intellectualDisability || {})
+          },
+          languageDelay: {
+            expressive: false,
+            delay: false,
+            mixed: false,
+            phonological: false,
+            other: false,
+            ...(safeDiagData.languageDelay || {})
+          },
+          learningDisability: {
+            reading: false,
+            mathematics: false,
+            disorder: false,
+            writing: false,
+            nonverbal: false,
+            other: false,
+            ...(safeDiagData.learningDisability || {})
+          },
+          moodRelated: {
+            acuteStress: false,
+            agoraphobia: false,
+            anorexia: false,
+            bipolar: false,
+            bulimia: false,
+            conversion: false,
+            cyclothymic: false,
+            depressive: false,
+            dysthymic: false,
+            generalizedAnxiety: false,
+            majorDepressive: false,
+            ocd: false,
+            pain: false,
+            panic: false,
+            ptsd: false,
+            separationAnxiety: false,
+            socialPhobia: false,
+            somatization: false,
+            specificPhobia: false,
+            other: false,
+            ...(safeDiagData.moodRelated || {})
+          },
+          motorDelay: {
+            developmentalCoordination: false,
+            dyspraxia: false,
+            motorDelay: false,
+            paraplegia: false,
+            quadriplegia: false,
+            stereotypic: false,
+            other: false,
+            ...(safeDiagData.motorDelay || {})
+          },
+          personalityDisorders: {
+            antisocial: false,
+            avoidant: false,
+            borderline: false,
+            dependent: false,
+            histrionic: false,
+            narcissistic: false,
+            ocd: false,
+            ocpd: false,
+            paranoid: false,
+            schizoid: false,
+            schizotypal: false,
+            other: false,
+            ...(safeDiagData.personalityDisorders || {})
+          },
+          schizophrenia: {
+            briefPsychotic: false,
+            delusional: false,
+            schizoaffective: false,
+            catatonic: false,
+            disorganized: false,
+            paranoid: false,
+            residual: false,
+            undifferentiated: false,
+            schizophreniform: false,
+            other: false,
+            ...(safeDiagData.schizophrenia || {})
+          },
+          speech: {
+            aphasia: false,
+            apraxia: false,
+            articulation: false,
+            brocas: false,
+            centralAuditory: false,
+            dysarthria: false,
+            fluency: false,
+            receptive: false,
+            voice: false,
+            other: false,
+            ...(safeDiagData.speech || {})
+          },
+          substanceAbuse: {
+            alcoholAbuse: false,
+            alcoholDependence: false,
+            polysubstanceAbuse: false,
+            polysubstanceDependence: false,
+            substanceAbuse: false,
+            substanceDependence: false,
+            other: false,
+            ...(safeDiagData.substanceAbuse || {})
+          },
+          traumaticBrainInjury: {
+            tbi: false,
+            mild: false,
+            moderate: false,
+            severe: false,
+            other: false,
+            ...(safeDiagData.traumaticBrainInjury || {})
+          },
+          other: {
+            adjustment: false,
+            cognitive: false,
+            creutzfeldtJakob: false,
+            alzheimers: false,
+            depersonalization: false,
+            dissociative: false,
+            epilepsy: false,
+            factitious: false,
+            genderIdentity: false,
+            huntingtons: false,
+            leftStroke: false,
+            leftEpilepsy: false,
+            mildCognitive: false,
+            parkinsons: false,
+            picks: false,
+            insomnia: false,
+            rightStroke: false,
+            rightEpilepsy: false,
+            seizure: false,
+            stroke: false,
+            tic: false,
+            tourettes: false,
+            vascularDementia: false,
+            ...(safeDiagData.other || {})
+          }
+        };
+      }
       console.log('  Diagnosis Data:', newDiagData);
-      console.log('🐛 DEBUG - newDiagData.autismSpectrum:', newDiagData.autismSpectrum);
 
       // Set diagnosis data
       setDiagnosisData(newDiagData);
@@ -472,8 +980,18 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
     }));
   };
 
-  const toggleDiagnosis = (category) => {
+  const toggleDiagnosis = (category, subOption) => {
     setDiagnosisData(prev => ({
+      ...prev,
+      [category]: {
+        ...prev[category],
+        [subOption]: !prev[category][subOption]
+      }
+    }));
+  };
+
+  const toggleDiagnosisCategory = (category) => {
+    setExpandedDiagnoses(prev => ({
       ...prev,
       [category]: !prev[category]
     }));
@@ -1847,29 +2365,84 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                               <input 
                                 type="checkbox" 
                                 className="rounded border-gray-300"
+                                checked={evaluationData.academicConcerns.reading}
+                                onChange={(e) => handleEvaluationFieldChange('academicConcerns', 'reading', e.target.checked)}
+                              />
+                              Reading
+                            </label>
+                            {/* Dynamic checkboxes */}
+                            {Object.keys(evaluationData.academicConcerns)
+                              .filter(key => !['maths', 'general', 'writing', 'reading', 'other', 'otherText'].includes(key))
+                              .map(key => (
+                                <div key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                                  <label className="flex items-center gap-2 cursor-pointer">
+                                    <input 
+                                      type="checkbox" 
+                                      className="rounded border-gray-300"
+                                      checked={evaluationData.academicConcerns[key]}
+                                      onChange={(e) => handleEvaluationFieldChange('academicConcerns', key, e.target.checked)}
+                                    />
+                                    {key}
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEvaluationData(prev => {
+                                        const newAcademicConcerns = { ...prev.academicConcerns };
+                                        delete newAcademicConcerns[key];
+                                        return {
+                                          ...prev,
+                                          academicConcerns: newAcademicConcerns
+                                        };
+                                      });
+                                    }}
+                                    className="text-red-500 hover:text-red-700 text-xs"
+                                    title="Remove this option"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              ))}
+                            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                              <input 
+                                type="checkbox" 
+                                className="rounded border-gray-300"
                                 checked={evaluationData.academicConcerns.other}
                                 onChange={(e) => handleEvaluationChange('academicConcerns', e.target.checked)}
                               />
                               Other
                             </label>
                             {evaluationData.academicConcerns.other && (
-                              <input
-                                type="text"
-                                value={evaluationData.academicConcerns.otherText}
-                                onChange={(e) => handleEvaluationTextChange('academicConcerns', e.target.value)}
-                                placeholder="Please specify..."
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ml-6"
-                              />
+                              <div className="ml-6 w-full space-y-2">
+                                <input
+                                  type="text"
+                                  value={evaluationData.academicConcerns.otherText}
+                                  onChange={(e) => handleEvaluationTextChange('academicConcerns', e.target.value)}
+                                  placeholder="Please specify..."
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (evaluationData.academicConcerns.otherText && evaluationData.academicConcerns.otherText.trim()) {
+                                      const newOption = evaluationData.academicConcerns.otherText.trim();
+                                      setEvaluationData(prev => ({
+                                        ...prev,
+                                        academicConcerns: {
+                                          ...prev.academicConcerns,
+                                          [newOption]: true,
+                                          other: false,
+                                          otherText: ''
+                                        }
+                                      }));
+                                    }
+                                  }}
+                                  className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                  + Add as new checkbox option
+                                </button>
+                              </div>
                             )}
-                            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                              <input 
-                                type="checkbox" 
-                                className="rounded border-gray-300"
-                                checked={evaluationData.academicConcerns.reading}
-                                onChange={(e) => handleEvaluationFieldChange('academicConcerns', 'reading', e.target.checked)}
-                              />
-                              Reading
-                            </label>
                           </div>
 
                           {/* Cognitive Evaluation */}
@@ -1906,29 +2479,84 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                               <input 
                                 type="checkbox" 
                                 className="rounded border-gray-300"
+                                checked={evaluationData.cognitiveEvaluation.traumaticBrainInjury}
+                                onChange={(e) => handleEvaluationFieldChange('cognitiveEvaluation', 'traumaticBrainInjury', e.target.checked)}
+                              />
+                              Traumatic Brain Injury
+                            </label>
+                            {/* Dynamic checkboxes */}
+                            {Object.keys(evaluationData.cognitiveEvaluation)
+                              .filter(key => !['intellectualDisability', 'general', 'giftedTalented', 'traumaticBrainInjury', 'other', 'otherText'].includes(key))
+                              .map(key => (
+                                <div key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                                  <label className="flex items-center gap-2 cursor-pointer">
+                                    <input 
+                                      type="checkbox" 
+                                      className="rounded border-gray-300"
+                                      checked={evaluationData.cognitiveEvaluation[key]}
+                                      onChange={(e) => handleEvaluationFieldChange('cognitiveEvaluation', key, e.target.checked)}
+                                    />
+                                    {key}
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEvaluationData(prev => {
+                                        const newCognitiveEvaluation = { ...prev.cognitiveEvaluation };
+                                        delete newCognitiveEvaluation[key];
+                                        return {
+                                          ...prev,
+                                          cognitiveEvaluation: newCognitiveEvaluation
+                                        };
+                                      });
+                                    }}
+                                    className="text-red-500 hover:text-red-700 text-xs"
+                                    title="Remove this option"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              ))}
+                            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                              <input 
+                                type="checkbox" 
+                                className="rounded border-gray-300"
                                 checked={evaluationData.cognitiveEvaluation.other}
                                 onChange={(e) => handleEvaluationChange('cognitiveEvaluation', e.target.checked)}
                               />
                               Other
                             </label>
                             {evaluationData.cognitiveEvaluation.other && (
-                              <input
-                                type="text"
-                                value={evaluationData.cognitiveEvaluation.otherText}
-                                onChange={(e) => handleEvaluationTextChange('cognitiveEvaluation', e.target.value)}
-                                placeholder="Please specify..."
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ml-6"
-                              />
+                              <div className="ml-6 w-full space-y-2">
+                                <input
+                                  type="text"
+                                  value={evaluationData.cognitiveEvaluation.otherText}
+                                  onChange={(e) => handleEvaluationTextChange('cognitiveEvaluation', e.target.value)}
+                                  placeholder="Please specify..."
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (evaluationData.cognitiveEvaluation.otherText && evaluationData.cognitiveEvaluation.otherText.trim()) {
+                                      const newOption = evaluationData.cognitiveEvaluation.otherText.trim();
+                                      setEvaluationData(prev => ({
+                                        ...prev,
+                                        cognitiveEvaluation: {
+                                          ...prev.cognitiveEvaluation,
+                                          [newOption]: true,
+                                          other: false,
+                                          otherText: ''
+                                        }
+                                      }));
+                                    }
+                                  }}
+                                  className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                  + Add as new checkbox option
+                                </button>
+                              </div>
                             )}
-                            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                              <input 
-                                type="checkbox" 
-                                className="rounded border-gray-300"
-                                checked={evaluationData.cognitiveEvaluation.traumaticBrainInjury}
-                                onChange={(e) => handleEvaluationFieldChange('cognitiveEvaluation', 'traumaticBrainInjury', e.target.checked)}
-                              />
-                              Traumatic Brain Injury
-                            </label>
                           </div>
 
                           {/* Behaviour Concerns */}
@@ -1961,6 +2589,39 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                               />
                               Attention/Hyperactivity
                             </label>
+                            {/* Dynamic checkboxes */}
+                            {Object.keys(evaluationData.behaviourConcerns)
+                              .filter(key => !['aggression', 'general', 'attentionHyperactivity', 'other', 'otherText'].includes(key))
+                              .map(key => (
+                                <div key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                                  <label className="flex items-center gap-2 cursor-pointer">
+                                    <input 
+                                      type="checkbox" 
+                                      className="rounded border-gray-300"
+                                      checked={evaluationData.behaviourConcerns[key]}
+                                      onChange={(e) => handleEvaluationFieldChange('behaviourConcerns', key, e.target.checked)}
+                                    />
+                                    {key}
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEvaluationData(prev => {
+                                        const newBehaviourConcerns = { ...prev.behaviourConcerns };
+                                        delete newBehaviourConcerns[key];
+                                        return {
+                                          ...prev,
+                                          behaviourConcerns: newBehaviourConcerns
+                                        };
+                                      });
+                                    }}
+                                    className="text-red-500 hover:text-red-700 text-xs"
+                                    title="Remove this option"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              ))}
                             <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                               <input 
                                 type="checkbox" 
@@ -1971,13 +2632,35 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                               Other
                             </label>
                             {evaluationData.behaviourConcerns.other && (
-                              <input
-                                type="text"
-                                value={evaluationData.behaviourConcerns.otherText}
-                                onChange={(e) => handleEvaluationTextChange('behaviourConcerns', e.target.value)}
-                                placeholder="Please specify..."
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ml-6"
-                              />
+                              <div className="ml-6 w-full space-y-2">
+                                <input
+                                  type="text"
+                                  value={evaluationData.behaviourConcerns.otherText}
+                                  onChange={(e) => handleEvaluationTextChange('behaviourConcerns', e.target.value)}
+                                  placeholder="Please specify..."
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (evaluationData.behaviourConcerns.otherText && evaluationData.behaviourConcerns.otherText.trim()) {
+                                      const newOption = evaluationData.behaviourConcerns.otherText.trim();
+                                      setEvaluationData(prev => ({
+                                        ...prev,
+                                        behaviourConcerns: {
+                                          ...prev.behaviourConcerns,
+                                          [newOption]: true,
+                                          other: false,
+                                          otherText: ''
+                                        }
+                                      }));
+                                    }
+                                  }}
+                                  className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                  + Add as new checkbox option
+                                </button>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -2013,6 +2696,39 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                               />
                               Depression
                             </label>
+                            {/* Dynamic checkboxes */}
+                            {Object.keys(evaluationData.mentalHealth)
+                              .filter(key => !['anxiety', 'general', 'depression', 'other', 'otherText'].includes(key))
+                              .map(key => (
+                                <div key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                                  <label className="flex items-center gap-2 cursor-pointer">
+                                    <input 
+                                      type="checkbox" 
+                                      className="rounded border-gray-300"
+                                      checked={evaluationData.mentalHealth[key]}
+                                      onChange={(e) => handleEvaluationFieldChange('mentalHealth', key, e.target.checked)}
+                                    />
+                                    {key}
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEvaluationData(prev => {
+                                        const newMentalHealth = { ...prev.mentalHealth };
+                                        delete newMentalHealth[key];
+                                        return {
+                                          ...prev,
+                                          mentalHealth: newMentalHealth
+                                        };
+                                      });
+                                    }}
+                                    className="text-red-500 hover:text-red-700 text-xs"
+                                    title="Remove this option"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              ))}
                             <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                               <input 
                                 type="checkbox" 
@@ -2023,13 +2739,35 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                               Other
                             </label>
                             {evaluationData.mentalHealth.other && (
-                              <input
-                                type="text"
-                                value={evaluationData.mentalHealth.otherText}
-                                onChange={(e) => handleEvaluationTextChange('mentalHealth', e.target.value)}
-                                placeholder="Please specify..."
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ml-6"
-                              />
+                              <div className="ml-6 w-full space-y-2">
+                                <input
+                                  type="text"
+                                  value={evaluationData.mentalHealth.otherText}
+                                  onChange={(e) => handleEvaluationTextChange('mentalHealth', e.target.value)}
+                                  placeholder="Please specify..."
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (evaluationData.mentalHealth.otherText && evaluationData.mentalHealth.otherText.trim()) {
+                                      const newOption = evaluationData.mentalHealth.otherText.trim();
+                                      setEvaluationData(prev => ({
+                                        ...prev,
+                                        mentalHealth: {
+                                          ...prev.mentalHealth,
+                                          [newOption]: true,
+                                          other: false,
+                                          otherText: ''
+                                        }
+                                      }));
+                                    }
+                                  }}
+                                  className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                  + Add as new checkbox option
+                                </button>
+                              </div>
                             )}
                           </div>
 
@@ -2061,8 +2799,41 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                 checked={evaluationData.developmentalDelay.physicalGrowth}
                                 onChange={(e) => handleEvaluationFieldChange('developmentalDelay', 'physicalGrowth', e.target.checked)}
                               />
-                              Physical/Growth
+                              Physical Growth
                             </label>
+                            {/* Dynamic checkboxes */}
+                            {Object.keys(evaluationData.developmentalDelay)
+                              .filter(key => !['motor', 'general', 'physicalGrowth', 'other', 'otherText'].includes(key))
+                              .map(key => (
+                                <div key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                                  <label className="flex items-center gap-2 cursor-pointer">
+                                    <input 
+                                      type="checkbox" 
+                                      className="rounded border-gray-300"
+                                      checked={evaluationData.developmentalDelay[key]}
+                                      onChange={(e) => handleEvaluationFieldChange('developmentalDelay', key, e.target.checked)}
+                                    />
+                                    {key}
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEvaluationData(prev => {
+                                        const newDevelopmentalDelay = { ...prev.developmentalDelay };
+                                        delete newDevelopmentalDelay[key];
+                                        return {
+                                          ...prev,
+                                          developmentalDelay: newDevelopmentalDelay
+                                        };
+                                      });
+                                    }}
+                                    className="text-red-500 hover:text-red-700 text-xs"
+                                    title="Remove this option"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              ))}
                             <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                               <input 
                                 type="checkbox" 
@@ -2073,13 +2844,35 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                               Other
                             </label>
                             {evaluationData.developmentalDelay.other && (
-                              <input
-                                type="text"
-                                value={evaluationData.developmentalDelay.otherText}
-                                onChange={(e) => handleEvaluationTextChange('developmentalDelay', e.target.value)}
-                                placeholder="Please specify..."
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ml-6"
-                              />
+                              <div className="ml-6 w-full space-y-2">
+                                <input
+                                  type="text"
+                                  value={evaluationData.developmentalDelay.otherText}
+                                  onChange={(e) => handleEvaluationTextChange('developmentalDelay', e.target.value)}
+                                  placeholder="Please specify..."
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (evaluationData.developmentalDelay.otherText && evaluationData.developmentalDelay.otherText.trim()) {
+                                      const newOption = evaluationData.developmentalDelay.otherText.trim();
+                                      setEvaluationData(prev => ({
+                                        ...prev,
+                                        developmentalDelay: {
+                                          ...prev.developmentalDelay,
+                                          [newOption]: true,
+                                          other: false,
+                                          otherText: ''
+                                        }
+                                      }));
+                                    }
+                                  }}
+                                  className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                  + Add as new checkbox option
+                                </button>
+                              </div>
                             )}
                           </div>
 
@@ -2113,6 +2906,39 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                               />
                               Expressive
                             </label>
+                            {/* Dynamic checkboxes */}
+                            {Object.keys(evaluationData.languageConcerns)
+                              .filter(key => !['receptive', 'general', 'expressive', 'other', 'otherText'].includes(key))
+                              .map(key => (
+                                <div key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                                  <label className="flex items-center gap-2 cursor-pointer">
+                                    <input 
+                                      type="checkbox" 
+                                      className="rounded border-gray-300"
+                                      checked={evaluationData.languageConcerns[key]}
+                                      onChange={(e) => handleEvaluationFieldChange('languageConcerns', key, e.target.checked)}
+                                    />
+                                    {key}
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEvaluationData(prev => {
+                                        const newLanguageConcerns = { ...prev.languageConcerns };
+                                        delete newLanguageConcerns[key];
+                                        return {
+                                          ...prev,
+                                          languageConcerns: newLanguageConcerns
+                                        };
+                                      });
+                                    }}
+                                    className="text-red-500 hover:text-red-700 text-xs"
+                                    title="Remove this option"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              ))}
                             <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                               <input 
                                 type="checkbox" 
@@ -2123,13 +2949,35 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                               Other
                             </label>
                             {evaluationData.languageConcerns.other && (
-                              <input
-                                type="text"
-                                value={evaluationData.languageConcerns.otherText}
-                                onChange={(e) => handleEvaluationTextChange('languageConcerns', e.target.value)}
-                                placeholder="Please specify..."
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ml-6"
-                              />
+                              <div className="ml-6 w-full space-y-2">
+                                <input
+                                  type="text"
+                                  value={evaluationData.languageConcerns.otherText}
+                                  onChange={(e) => handleEvaluationTextChange('languageConcerns', e.target.value)}
+                                  placeholder="Please specify..."
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (evaluationData.languageConcerns.otherText && evaluationData.languageConcerns.otherText.trim()) {
+                                      const newOption = evaluationData.languageConcerns.otherText.trim();
+                                      setEvaluationData(prev => ({
+                                        ...prev,
+                                        languageConcerns: {
+                                          ...prev.languageConcerns,
+                                          [newOption]: true,
+                                          other: false,
+                                          otherText: ''
+                                        }
+                                      }));
+                                    }
+                                  }}
+                                  className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                  + Add as new checkbox option
+                                </button>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -2165,6 +3013,39 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                               />
                               Fluency
                             </label>
+                            {/* Dynamic checkboxes */}
+                            {Object.keys(evaluationData.speechConcerns)
+                              .filter(key => !['articulation', 'general', 'fluency', 'other', 'otherText'].includes(key))
+                              .map(key => (
+                                <div key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                                  <label className="flex items-center gap-2 cursor-pointer">
+                                    <input 
+                                      type="checkbox" 
+                                      className="rounded border-gray-300"
+                                      checked={evaluationData.speechConcerns[key]}
+                                      onChange={(e) => handleEvaluationFieldChange('speechConcerns', key, e.target.checked)}
+                                    />
+                                    {key}
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEvaluationData(prev => {
+                                        const newSpeechConcerns = { ...prev.speechConcerns };
+                                        delete newSpeechConcerns[key];
+                                        return {
+                                          ...prev,
+                                          speechConcerns: newSpeechConcerns
+                                        };
+                                      });
+                                    }}
+                                    className="text-red-500 hover:text-red-700 text-xs"
+                                    title="Remove this option"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              ))}
                             <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                               <input 
                                 type="checkbox" 
@@ -2175,13 +3056,35 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                               Other
                             </label>
                             {evaluationData.speechConcerns.other && (
-                              <input
-                                type="text"
-                                value={evaluationData.speechConcerns.otherText}
-                                onChange={(e) => handleEvaluationTextChange('speechConcerns', e.target.value)}
-                                placeholder="Please specify..."
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ml-6"
-                              />
+                              <div className="ml-6 w-full space-y-2">
+                                <input
+                                  type="text"
+                                  value={evaluationData.speechConcerns.otherText}
+                                  onChange={(e) => handleEvaluationTextChange('speechConcerns', e.target.value)}
+                                  placeholder="Please specify..."
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (evaluationData.speechConcerns.otherText && evaluationData.speechConcerns.otherText.trim()) {
+                                      const newOption = evaluationData.speechConcerns.otherText.trim();
+                                      setEvaluationData(prev => ({
+                                        ...prev,
+                                        speechConcerns: {
+                                          ...prev.speechConcerns,
+                                          [newOption]: true,
+                                          other: false,
+                                          otherText: ''
+                                        }
+                                      }));
+                                    }
+                                  }}
+                                  className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                  + Add as new checkbox option
+                                </button>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -2190,53 +3093,1392 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
 
                     {evaluationSubTab === 'diagnoses' && (
                       <div className="space-y-4">
-                        <p className="text-sm text-gray-600 mb-4">
+                        <p className="text-sm text-gray-600 mb-2">
                           Please select a diagnosis for this examinee. You may select more than one diagnosis.
                         </p>
                         <p className="text-sm text-gray-500 mb-4">
                           Click the [+] to expand and [-] to collapse a category.
                         </p>
 
-                        {/* Diagnosis Categories */}
-                        {Object.entries({
-                          autismSpectrum: 'Autism Spectrum Disorder',
-                          behaviourEmotional: 'Behaviour/Emotional Disorder',
-                          intellectualDisability: 'Intellectual Disability',
-                          giftedTalented: 'Gifted and Talented',
-                          languageDelay: 'Language Delay/Disorder',
-                          learningDisability: 'Learning Disability',
-                          moodRelated: 'Mood Related Disorder',
-                          motorDelay: 'Motor Delay/Disorder',
-                          personalityDisorders: 'Personality Disorders',
-                          schizophrenia: 'Schizophrenia and Other Psychotic Disorders',
-                          speech: 'Speech Disorder',
-                          substanceAbuse: 'Substance Abuse',
-                          traumaticBrainInjury: 'Traumatic Brain Injury',
-                          other: 'Other'
-                        }).map(([key, label]) => (
-                          <div key={key} className="border rounded-lg overflow-hidden">
-                            <button
-                              onClick={() => toggleDiagnosis(key)}
-                              className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
-                            >
-                              <span className="text-sm font-medium">{diagnosisData[key] ? '⊟' : '⊞'}</span>
-                              <span className="font-medium text-sm">{label}</span>
-                            </button>
-                            {diagnosisData[key] && (
-                              <div className="px-4 py-2 pl-10 space-y-1">
-                                <label className="flex items-center gap-2 text-sm text-gray-700">
-                                  <input 
-                                    type="checkbox" 
-                                    className="rounded border-gray-300"
-                                    checked={diagnosisData[key]}
-                                    onChange={() => toggleDiagnosis(key)}
-                                  />
-                                  {label} Selected
-                                </label>
-                              </div>
-                            )}
-                          </div>
-                        ))}
+                        {/* Autism Spectrum Disorder */}
+                        <div className="border rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => toggleDiagnosisCategory('autismSpectrum')}
+                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                          >
+                            <span className="text-sm font-medium">{expandedDiagnoses.autismSpectrum ? '⊟' : '⊞'}</span>
+                            <span className="font-medium text-sm">Autism Spectrum Disorder</span>
+                          </button>
+                          {expandedDiagnoses.autismSpectrum && (
+                            <div className="px-4 py-2 pl-10 space-y-1">
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.autismSpectrum.aspergers}
+                                  onChange={() => toggleDiagnosis('autismSpectrum', 'aspergers')}
+                                />
+                                Asperger's Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.autismSpectrum.autistic}
+                                  onChange={() => toggleDiagnosis('autismSpectrum', 'autistic')}
+                                />
+                                Autistic Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.autismSpectrum.childhoodDisintegrative}
+                                  onChange={() => toggleDiagnosis('autismSpectrum', 'childhoodDisintegrative')}
+                                />
+                                Childhood Disintegrative Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.autismSpectrum.pervasiveDevelopmental}
+                                  onChange={() => toggleDiagnosis('autismSpectrum', 'pervasiveDevelopmental')}
+                                />
+                                Pervasive Developmental Delay/Disability
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.autismSpectrum.retts}
+                                  onChange={() => toggleDiagnosis('autismSpectrum', 'retts')}
+                                />
+                                Rett's Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.autismSpectrum.other}
+                                  onChange={() => toggleDiagnosis('autismSpectrum', 'other')}
+                                />
+                                Other
+                              </label>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Behaviour/Emotional Disorder */}
+                        <div className="border rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => toggleDiagnosisCategory('behaviourEmotional')}
+                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                          >
+                            <span className="text-sm font-medium">{expandedDiagnoses.behaviourEmotional ? '⊟' : '⊞'}</span>
+                            <span className="font-medium text-sm">Behaviour/Emotional Disorder</span>
+                          </button>
+                          {expandedDiagnoses.behaviourEmotional && (
+                            <div className="px-4 py-2 pl-10 space-y-1">
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.behaviourEmotional.adhd}
+                                  onChange={() => toggleDiagnosis('behaviourEmotional', 'adhd')}
+                                />
+                                Attention Deficit/Hyperactivity Disorder (any type)
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.behaviourEmotional.conduct}
+                                  onChange={() => toggleDiagnosis('behaviourEmotional', 'conduct')}
+                                />
+                                Conduct Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.behaviourEmotional.disruptive}
+                                  onChange={() => toggleDiagnosis('behaviourEmotional', 'disruptive')}
+                                />
+                                Disruptive Behavior Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.behaviourEmotional.emotional}
+                                  onChange={() => toggleDiagnosis('behaviourEmotional', 'emotional')}
+                                />
+                                Emotional Disturbance
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.behaviourEmotional.intermittentExplosive}
+                                  onChange={() => toggleDiagnosis('behaviourEmotional', 'intermittentExplosive')}
+                                />
+                                Intermittent Explosive Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.behaviourEmotional.kleptomania}
+                                  onChange={() => toggleDiagnosis('behaviourEmotional', 'kleptomania')}
+                                />
+                                Kleptomania
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.behaviourEmotional.oppositionalDefiant}
+                                  onChange={() => toggleDiagnosis('behaviourEmotional', 'oppositionalDefiant')}
+                                />
+                                Oppositional Defiant Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.behaviourEmotional.pathologicalGambling}
+                                  onChange={() => toggleDiagnosis('behaviourEmotional', 'pathologicalGambling')}
+                                />
+                                Pathological Gambling
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.behaviourEmotional.pyromania}
+                                  onChange={() => toggleDiagnosis('behaviourEmotional', 'pyromania')}
+                                />
+                                Pyromania
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.behaviourEmotional.trichotillomania}
+                                  onChange={() => toggleDiagnosis('behaviourEmotional', 'trichotillomania')}
+                                />
+                                Trichotillomania
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.behaviourEmotional.other}
+                                  onChange={() => toggleDiagnosis('behaviourEmotional', 'other')}
+                                />
+                                Other
+                              </label>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Intellectual Disability */}
+                        <div className="border rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => toggleDiagnosisCategory('intellectualDisability')}
+                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                          >
+                            <span className="text-sm font-medium">{expandedDiagnoses.intellectualDisability ? '⊟' : '⊞'}</span>
+                            <span className="font-medium text-sm">Intellectual Disability</span>
+                          </button>
+                          {expandedDiagnoses.intellectualDisability && (
+                            <div className="px-4 py-2 pl-10 space-y-1">
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.intellectualDisability.borderline}
+                                  onChange={() => toggleDiagnosis('intellectualDisability', 'borderline')}
+                                />
+                                Borderline Intellectual Functioning
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.intellectualDisability.cognitiveDelay}
+                                  onChange={() => toggleDiagnosis('intellectualDisability', 'cognitiveDelay')}
+                                />
+                                Cognitive Developmental Delay
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.intellectualDisability.mild}
+                                  onChange={() => toggleDiagnosis('intellectualDisability', 'mild')}
+                                />
+                                Intellectual Disability Mild (formerly called Mild Mental Retardation)
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.intellectualDisability.moderate}
+                                  onChange={() => toggleDiagnosis('intellectualDisability', 'moderate')}
+                                />
+                                Intellectual Disability Moderate (formerly called Moderate Mental Retardation)
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.intellectualDisability.profound}
+                                  onChange={() => toggleDiagnosis('intellectualDisability', 'profound')}
+                                />
+                                Intellectual Disability Profound (formerly called Profound Mental Retardation)
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.intellectualDisability.severe}
+                                  onChange={() => toggleDiagnosis('intellectualDisability', 'severe')}
+                                />
+                                Intellectual Disability Severe (formerly called Severe Mental Retardation)
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.intellectualDisability.other}
+                                  onChange={() => toggleDiagnosis('intellectualDisability', 'other')}
+                                />
+                                Other
+                              </label>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Gifted and Talented */}
+                        <div className="border rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => toggleDiagnosisCategory('giftedTalented')}
+                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                          >
+                            <span className="text-sm font-medium">{expandedDiagnoses.giftedTalented ? '⊟' : '⊞'}</span>
+                            <span className="font-medium text-sm">Gifted and Talented</span>
+                          </button>
+                          {expandedDiagnoses.giftedTalented && (
+                            <div className="px-4 py-2 pl-10 space-y-1">
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.giftedTalented.gifted}
+                                  onChange={() => toggleDiagnosis('giftedTalented', 'gifted')}
+                                />
+                                Gifted and Talented
+                              </label>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Language Delay/Disorder */}
+                        <div className="border rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => toggleDiagnosisCategory('languageDelay')}
+                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                          >
+                            <span className="text-sm font-medium">{expandedDiagnoses.languageDelay ? '⊟' : '⊞'}</span>
+                            <span className="font-medium text-sm">Language Delay/Disorder</span>
+                          </button>
+                          {expandedDiagnoses.languageDelay && (
+                            <div className="px-4 py-2 pl-10 space-y-1">
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.languageDelay.expressive}
+                                  onChange={() => toggleDiagnosis('languageDelay', 'expressive')}
+                                />
+                                Expressive Language Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.languageDelay.delay}
+                                  onChange={() => toggleDiagnosis('languageDelay', 'delay')}
+                                />
+                                Language Delay
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.languageDelay.mixed}
+                                  onChange={() => toggleDiagnosis('languageDelay', 'mixed')}
+                                />
+                                Mixed Receptive/Expressive Language Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.languageDelay.phonological}
+                                  onChange={() => toggleDiagnosis('languageDelay', 'phonological')}
+                                />
+                                Phonological Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.languageDelay.other}
+                                  onChange={() => toggleDiagnosis('languageDelay', 'other')}
+                                />
+                                Other
+                              </label>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Learning Disability */}
+                        <div className="border rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => toggleDiagnosisCategory('learningDisability')}
+                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                          >
+                            <span className="text-sm font-medium">{expandedDiagnoses.learningDisability ? '⊟' : '⊞'}</span>
+                            <span className="font-medium text-sm">Learning Disability</span>
+                          </button>
+                          {expandedDiagnoses.learningDisability && (
+                            <div className="px-4 py-2 pl-10 space-y-1">
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.learningDisability.reading}
+                                  onChange={() => toggleDiagnosis('learningDisability', 'reading')}
+                                />
+                                Learning Disability in Reading/Reading Disorder/Dyslexia
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.learningDisability.mathematics}
+                                  onChange={() => toggleDiagnosis('learningDisability', 'mathematics')}
+                                />
+                                Learning Disability in Mathematics/Mathematics Disorder/Dyscalculia
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.learningDisability.disorder}
+                                  onChange={() => toggleDiagnosis('learningDisability', 'disorder')}
+                                />
+                                Learning Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.learningDisability.writing}
+                                  onChange={() => toggleDiagnosis('learningDisability', 'writing')}
+                                />
+                                Learning Disability in Writing/Disorder of Written Expression/Orthographic Impairment
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.learningDisability.nonverbal}
+                                  onChange={() => toggleDiagnosis('learningDisability', 'nonverbal')}
+                                />
+                                Nonverbal Learning Disability
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.learningDisability.other}
+                                  onChange={() => toggleDiagnosis('learningDisability', 'other')}
+                                />
+                                Other
+                              </label>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Mood Related Disorders */}
+                        <div className="border rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => toggleDiagnosisCategory('moodRelated')}
+                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                          >
+                            <span className="text-sm font-medium">{expandedDiagnoses.moodRelated ? '⊟' : '⊞'}</span>
+                            <span className="font-medium text-sm">Mood Related Disorders</span>
+                          </button>
+                          {expandedDiagnoses.moodRelated && (
+                            <div className="px-4 py-2 pl-10 space-y-1">
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.moodRelated.acuteStress}
+                                  onChange={() => toggleDiagnosis('moodRelated', 'acuteStress')}
+                                />
+                                Acute Stress Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.moodRelated.agoraphobia}
+                                  onChange={() => toggleDiagnosis('moodRelated', 'agoraphobia')}
+                                />
+                                Agoraphobia without a History of Panic Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.moodRelated.anorexia}
+                                  onChange={() => toggleDiagnosis('moodRelated', 'anorexia')}
+                                />
+                                Anorexia Nervosa
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.moodRelated.bipolar}
+                                  onChange={() => toggleDiagnosis('moodRelated', 'bipolar')}
+                                />
+                                Bipolar Disorder (I, II, & NOS)
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.moodRelated.bulimia}
+                                  onChange={() => toggleDiagnosis('moodRelated', 'bulimia')}
+                                />
+                                Bulimia Nervosa
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.moodRelated.conversion}
+                                  onChange={() => toggleDiagnosis('moodRelated', 'conversion')}
+                                />
+                                Conversion Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.moodRelated.cyclothymic}
+                                  onChange={() => toggleDiagnosis('moodRelated', 'cyclothymic')}
+                                />
+                                Cyclothymic Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.moodRelated.depressive}
+                                  onChange={() => toggleDiagnosis('moodRelated', 'depressive')}
+                                />
+                                Depressive/Mood Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.moodRelated.dysthymic}
+                                  onChange={() => toggleDiagnosis('moodRelated', 'dysthymic')}
+                                />
+                                Dysthymic Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.moodRelated.generalizedAnxiety}
+                                  onChange={() => toggleDiagnosis('moodRelated', 'generalizedAnxiety')}
+                                />
+                                Generalized Anxiety Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.moodRelated.majorDepressive}
+                                  onChange={() => toggleDiagnosis('moodRelated', 'majorDepressive')}
+                                />
+                                Major Depressive Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.moodRelated.ocd}
+                                  onChange={() => toggleDiagnosis('moodRelated', 'ocd')}
+                                />
+                                Obsessive Compulsive Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.moodRelated.pain}
+                                  onChange={() => toggleDiagnosis('moodRelated', 'pain')}
+                                />
+                                Pain Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.moodRelated.panic}
+                                  onChange={() => toggleDiagnosis('moodRelated', 'panic')}
+                                />
+                                Panic Disorder Without Agoraphobia
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.moodRelated.ptsd}
+                                  onChange={() => toggleDiagnosis('moodRelated', 'ptsd')}
+                                />
+                                Posttraumatic Stress Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.moodRelated.separationAnxiety}
+                                  onChange={() => toggleDiagnosis('moodRelated', 'separationAnxiety')}
+                                />
+                                Separation Anxiety Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.moodRelated.socialPhobia}
+                                  onChange={() => toggleDiagnosis('moodRelated', 'socialPhobia')}
+                                />
+                                Social Phobia
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.moodRelated.somatization}
+                                  onChange={() => toggleDiagnosis('moodRelated', 'somatization')}
+                                />
+                                Somatization Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.moodRelated.specificPhobia}
+                                  onChange={() => toggleDiagnosis('moodRelated', 'specificPhobia')}
+                                />
+                                Specific Phobia (Animals, Objects, Etc.)
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.moodRelated.other}
+                                  onChange={() => toggleDiagnosis('moodRelated', 'other')}
+                                />
+                                Other
+                              </label>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Motor Delay/Impairment */}
+                        <div className="border rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => toggleDiagnosisCategory('motorDelay')}
+                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                          >
+                            <span className="text-sm font-medium">{expandedDiagnoses.motorDelay ? '⊟' : '⊞'}</span>
+                            <span className="font-medium text-sm">Motor Delay/Impairment</span>
+                          </button>
+                          {expandedDiagnoses.motorDelay && (
+                            <div className="px-4 py-2 pl-10 space-y-1">
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.motorDelay.developmentalCoordination}
+                                  onChange={() => toggleDiagnosis('motorDelay', 'developmentalCoordination')}
+                                />
+                                Developmental Coordination Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.motorDelay.dyspraxia}
+                                  onChange={() => toggleDiagnosis('motorDelay', 'dyspraxia')}
+                                />
+                                Dyspraxia
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.motorDelay.motorDelay}
+                                  onChange={() => toggleDiagnosis('motorDelay', 'motorDelay')}
+                                />
+                                Motor Delay
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.motorDelay.paraplegia}
+                                  onChange={() => toggleDiagnosis('motorDelay', 'paraplegia')}
+                                />
+                                Paraplegia
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.motorDelay.quadriplegia}
+                                  onChange={() => toggleDiagnosis('motorDelay', 'quadriplegia')}
+                                />
+                                Quadriplegia
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.motorDelay.stereotypic}
+                                  onChange={() => toggleDiagnosis('motorDelay', 'stereotypic')}
+                                />
+                                Stereotypic Movement Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.motorDelay.other}
+                                  onChange={() => toggleDiagnosis('motorDelay', 'other')}
+                                />
+                                Other
+                              </label>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Personality Disorders */}
+                        <div className="border rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => toggleDiagnosisCategory('personalityDisorders')}
+                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                          >
+                            <span className="text-sm font-medium">{expandedDiagnoses.personalityDisorders ? '⊟' : '⊞'}</span>
+                            <span className="font-medium text-sm">Personality Disorders</span>
+                          </button>
+                          {expandedDiagnoses.personalityDisorders && (
+                            <div className="px-4 py-2 pl-10 space-y-1">
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.personalityDisorders.antisocial}
+                                  onChange={() => toggleDiagnosis('personalityDisorders', 'antisocial')}
+                                />
+                                Antisocial Personality Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.personalityDisorders.avoidant}
+                                  onChange={() => toggleDiagnosis('personalityDisorders', 'avoidant')}
+                                />
+                                Avoidant Personality Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.personalityDisorders.borderline}
+                                  onChange={() => toggleDiagnosis('personalityDisorders', 'borderline')}
+                                />
+                                Borderline Personality Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.personalityDisorders.dependent}
+                                  onChange={() => toggleDiagnosis('personalityDisorders', 'dependent')}
+                                />
+                                Dependent Personality Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.personalityDisorders.histrionic}
+                                  onChange={() => toggleDiagnosis('personalityDisorders', 'histrionic')}
+                                />
+                                Histrionic Personality Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.personalityDisorders.narcissistic}
+                                  onChange={() => toggleDiagnosis('personalityDisorders', 'narcissistic')}
+                                />
+                                Narcissistic Personality Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.personalityDisorders.ocd}
+                                  onChange={() => toggleDiagnosis('personalityDisorders', 'ocd')}
+                                />
+                                Obsessive Compulsive Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.personalityDisorders.ocpd}
+                                  onChange={() => toggleDiagnosis('personalityDisorders', 'ocpd')}
+                                />
+                                Obsessive Compulsive Personality Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.personalityDisorders.paranoid}
+                                  onChange={() => toggleDiagnosis('personalityDisorders', 'paranoid')}
+                                />
+                                Paranoid Personality Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.personalityDisorders.schizoid}
+                                  onChange={() => toggleDiagnosis('personalityDisorders', 'schizoid')}
+                                />
+                                Schizoid Personality Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.personalityDisorders.schizotypal}
+                                  onChange={() => toggleDiagnosis('personalityDisorders', 'schizotypal')}
+                                />
+                                Schizotypal Personality Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.personalityDisorders.other}
+                                  onChange={() => toggleDiagnosis('personalityDisorders', 'other')}
+                                />
+                                Other
+                              </label>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Schizophrenia */}
+                        <div className="border rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => toggleDiagnosisCategory('schizophrenia')}
+                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                          >
+                            <span className="text-sm font-medium">{expandedDiagnoses.schizophrenia ? '⊟' : '⊞'}</span>
+                            <span className="font-medium text-sm">Schizophrenia</span>
+                          </button>
+                          {expandedDiagnoses.schizophrenia && (
+                            <div className="px-4 py-2 pl-10 space-y-1">
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.schizophrenia.briefPsychotic}
+                                  onChange={() => toggleDiagnosis('schizophrenia', 'briefPsychotic')}
+                                />
+                                Brief Psychotic Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.schizophrenia.delusional}
+                                  onChange={() => toggleDiagnosis('schizophrenia', 'delusional')}
+                                />
+                                Delusional Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.schizophrenia.schizoaffective}
+                                  onChange={() => toggleDiagnosis('schizophrenia', 'schizoaffective')}
+                                />
+                                Schizoaffective Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.schizophrenia.catatonic}
+                                  onChange={() => toggleDiagnosis('schizophrenia', 'catatonic')}
+                                />
+                                Schizophrenia - Catatonic Type
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.schizophrenia.disorganized}
+                                  onChange={() => toggleDiagnosis('schizophrenia', 'disorganized')}
+                                />
+                                Schizophrenia - Disorganized Type
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.schizophrenia.paranoid}
+                                  onChange={() => toggleDiagnosis('schizophrenia', 'paranoid')}
+                                />
+                                Schizophrenia - Paranoid Type
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.schizophrenia.residual}
+                                  onChange={() => toggleDiagnosis('schizophrenia', 'residual')}
+                                />
+                                Schizophrenia - Residual Type
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.schizophrenia.undifferentiated}
+                                  onChange={() => toggleDiagnosis('schizophrenia', 'undifferentiated')}
+                                />
+                                Schizophrenia - Undifferentiated Type
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.schizophrenia.schizophreniform}
+                                  onChange={() => toggleDiagnosis('schizophrenia', 'schizophreniform')}
+                                />
+                                Schizophreniform Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.schizophrenia.other}
+                                  onChange={() => toggleDiagnosis('schizophrenia', 'other')}
+                                />
+                                Other
+                              </label>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Speech */}
+                        <div className="border rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => toggleDiagnosisCategory('speech')}
+                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                          >
+                            <span className="text-sm font-medium">{expandedDiagnoses.speech ? '⊟' : '⊞'}</span>
+                            <span className="font-medium text-sm">Speech</span>
+                          </button>
+                          {expandedDiagnoses.speech && (
+                            <div className="px-4 py-2 pl-10 space-y-1">
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.speech.aphasia}
+                                  onChange={() => toggleDiagnosis('speech', 'aphasia')}
+                                />
+                                Aphasia
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.speech.apraxia}
+                                  onChange={() => toggleDiagnosis('speech', 'apraxia')}
+                                />
+                                Apraxia
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.speech.articulation}
+                                  onChange={() => toggleDiagnosis('speech', 'articulation')}
+                                />
+                                Articulation Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.speech.brocas}
+                                  onChange={() => toggleDiagnosis('speech', 'brocas')}
+                                />
+                                Broca's Aphasia
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.speech.centralAuditory}
+                                  onChange={() => toggleDiagnosis('speech', 'centralAuditory')}
+                                />
+                                Central Auditory Processing Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.speech.dysarthria}
+                                  onChange={() => toggleDiagnosis('speech', 'dysarthria')}
+                                />
+                                Dysarthria
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.speech.fluency}
+                                  onChange={() => toggleDiagnosis('speech', 'fluency')}
+                                />
+                                Fluency Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.speech.receptive}
+                                  onChange={() => toggleDiagnosis('speech', 'receptive')}
+                                />
+                                Receptive Aphasia
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.speech.voice}
+                                  onChange={() => toggleDiagnosis('speech', 'voice')}
+                                />
+                                Voice Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.speech.other}
+                                  onChange={() => toggleDiagnosis('speech', 'other')}
+                                />
+                                Other
+                              </label>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Substance Abuse */}
+                        <div className="border rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => toggleDiagnosisCategory('substanceAbuse')}
+                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                          >
+                            <span className="text-sm font-medium">{expandedDiagnoses.substanceAbuse ? '⊟' : '⊞'}</span>
+                            <span className="font-medium text-sm">Substance Abuse</span>
+                          </button>
+                          {expandedDiagnoses.substanceAbuse && (
+                            <div className="px-4 py-2 pl-10 space-y-1">
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.substanceAbuse.alcoholAbuse}
+                                  onChange={() => toggleDiagnosis('substanceAbuse', 'alcoholAbuse')}
+                                />
+                                Alcohol Abuse Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.substanceAbuse.alcoholDependence}
+                                  onChange={() => toggleDiagnosis('substanceAbuse', 'alcoholDependence')}
+                                />
+                                Alcohol Dependence Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.substanceAbuse.polysubstanceAbuse}
+                                  onChange={() => toggleDiagnosis('substanceAbuse', 'polysubstanceAbuse')}
+                                />
+                                Polysubstance Abuse Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.substanceAbuse.polysubstanceDependence}
+                                  onChange={() => toggleDiagnosis('substanceAbuse', 'polysubstanceDependence')}
+                                />
+                                Polysubstance Dependence Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.substanceAbuse.substanceAbuse}
+                                  onChange={() => toggleDiagnosis('substanceAbuse', 'substanceAbuse')}
+                                />
+                                Substance Abuse Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.substanceAbuse.substanceDependence}
+                                  onChange={() => toggleDiagnosis('substanceAbuse', 'substanceDependence')}
+                                />
+                                Substance Dependence Disorder (Alcohol, drugs, or inhalants)
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.substanceAbuse.other}
+                                  onChange={() => toggleDiagnosis('substanceAbuse', 'other')}
+                                />
+                                Other
+                              </label>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Traumatic Brain Injury */}
+                        <div className="border rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => toggleDiagnosisCategory('traumaticBrainInjury')}
+                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                          >
+                            <span className="text-sm font-medium">{expandedDiagnoses.traumaticBrainInjury ? '⊟' : '⊞'}</span>
+                            <span className="font-medium text-sm">Traumatic Brain Injury</span>
+                          </button>
+                          {expandedDiagnoses.traumaticBrainInjury && (
+                            <div className="px-4 py-2 pl-10 space-y-1">
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.traumaticBrainInjury.tbi}
+                                  onChange={() => toggleDiagnosis('traumaticBrainInjury', 'tbi')}
+                                />
+                                Traumatic Brain Injury
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.traumaticBrainInjury.mild}
+                                  onChange={() => toggleDiagnosis('traumaticBrainInjury', 'mild')}
+                                />
+                                Traumatic Brain Injury - Mild Severity
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.traumaticBrainInjury.moderate}
+                                  onChange={() => toggleDiagnosis('traumaticBrainInjury', 'moderate')}
+                                />
+                                Traumatic Brain Injury - Moderate Severity
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.traumaticBrainInjury.severe}
+                                  onChange={() => toggleDiagnosis('traumaticBrainInjury', 'severe')}
+                                />
+                                Traumatic Brain Injury - Severe Severity
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.traumaticBrainInjury.other}
+                                  onChange={() => toggleDiagnosis('traumaticBrainInjury', 'other')}
+                                />
+                                Other
+                              </label>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Other */}
+                        <div className="border rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => toggleDiagnosisCategory('other')}
+                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                          >
+                            <span className="text-sm font-medium">{expandedDiagnoses.other ? '⊟' : '⊞'}</span>
+                            <span className="font-medium text-sm">Other</span>
+                          </button>
+                          {expandedDiagnoses.other && (
+                            <div className="px-4 py-2 pl-10 space-y-1">
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.other.adjustment}
+                                  onChange={() => toggleDiagnosis('other', 'adjustment')}
+                                />
+                                Adjustment Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.other.cognitive}
+                                  onChange={() => toggleDiagnosis('other', 'cognitive')}
+                                />
+                                Cognitive Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.other.creutzfeldtJakob}
+                                  onChange={() => toggleDiagnosis('other', 'creutzfeldtJakob')}
+                                />
+                                Creutzfeldt-Jakob Disease
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.other.alzheimers}
+                                  onChange={() => toggleDiagnosis('other', 'alzheimers')}
+                                />
+                                Dementia of the Alzheimer's Type
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.other.depersonalization}
+                                  onChange={() => toggleDiagnosis('other', 'depersonalization')}
+                                />
+                                Depersonalization Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.other.dissociative}
+                                  onChange={() => toggleDiagnosis('other', 'dissociative')}
+                                />
+                                Dissociative Identity Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.other.epilepsy}
+                                  onChange={() => toggleDiagnosis('other', 'epilepsy')}
+                                />
+                                Epilepsy, Not Specified
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.other.factitious}
+                                  onChange={() => toggleDiagnosis('other', 'factitious')}
+                                />
+                                Factitious Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.other.genderIdentity}
+                                  onChange={() => toggleDiagnosis('other', 'genderIdentity')}
+                                />
+                                Gender Identity Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.other.huntingtons}
+                                  onChange={() => toggleDiagnosis('other', 'huntingtons')}
+                                />
+                                Huntington's Disease
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.other.leftStroke}
+                                  onChange={() => toggleDiagnosis('other', 'leftStroke')}
+                                />
+                                Left Cerebral Vascular Accident (Stroke)
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.other.leftEpilepsy}
+                                  onChange={() => toggleDiagnosis('other', 'leftEpilepsy')}
+                                />
+                                Left Temporal Lobe Epilepsy
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.other.mildCognitive}
+                                  onChange={() => toggleDiagnosis('other', 'mildCognitive')}
+                                />
+                                Mild Cognitive Impairment
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.other.parkinsons}
+                                  onChange={() => toggleDiagnosis('other', 'parkinsons')}
+                                />
+                                Parkinson's Disease
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.other.picks}
+                                  onChange={() => toggleDiagnosis('other', 'picks')}
+                                />
+                                Pick's Disease
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.other.insomnia}
+                                  onChange={() => toggleDiagnosis('other', 'insomnia')}
+                                />
+                                Primary Insomnia
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.other.rightStroke}
+                                  onChange={() => toggleDiagnosis('other', 'rightStroke')}
+                                />
+                                Right Cerebral Vascular Accident (Stroke)
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.other.rightEpilepsy}
+                                  onChange={() => toggleDiagnosis('other', 'rightEpilepsy')}
+                                />
+                                Right Temporal Lobe Epilepsy
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.other.seizure}
+                                  onChange={() => toggleDiagnosis('other', 'seizure')}
+                                />
+                                Seizure Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.other.stroke}
+                                  onChange={() => toggleDiagnosis('other', 'stroke')}
+                                />
+                                Stroke, Not Specified
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.other.tic}
+                                  onChange={() => toggleDiagnosis('other', 'tic')}
+                                />
+                                Tic Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.other.tourettes}
+                                  onChange={() => toggleDiagnosis('other', 'tourettes')}
+                                />
+                                Tourette's Disorder
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={diagnosisData.other.vascularDementia}
+                                  onChange={() => toggleDiagnosis('other', 'vascularDementia')}
+                                />
+                                Vascular Dementia
+                              </label>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
                   </motion.div>
