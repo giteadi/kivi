@@ -592,14 +592,14 @@ const AssessmentCalendar = () => {
 
   const getAssessmentColor = (type) => {
     const colors = {
-      ot_si: '#3D3D3D',
-      speech: '#6B6B6B',
-      behaviour: '#D4D4D4',
+      ot_si: '#E8D5B7',
+      speech: '#B8E0D2',
+      behaviour: '#D4C4E0',
       counselling: '#B5CC8E',
-      holiday: '#C4A882',
-      halfday: '#7C5C4A'
+      holiday: '#F4B9B2',
+      halfday: '#E8A87C'
     };
-    return colors[type] || '#3D3D3D';
+    return colors[type] || '#E8D5B7';
   };
 
   const renderCalendarGrid = () => {
@@ -935,30 +935,30 @@ const AssessmentCalendar = () => {
       </div>
 
       {/* Legend Bar */}
-      <div className="flex items-center space-x-6 px-4 py-3 border-b border-gray-200 border-gray-200 bg-white bg-white">
+      <div className="flex items-center space-x-6 px-4 py-3 border-b border-gray-200 bg-white">
         <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#3D3D3D' }}></div>
-          <span className="text-sm text-gray-700 text-gray-600">OT/SI</span>
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#E8D5B7' }}></div>
+          <span className="text-sm text-gray-600">OT/SI</span>
         </div>
         <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#6B6B6B' }}></div>
-          <span className="text-sm text-gray-700 text-gray-600">Speech</span>
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#B8E0D2' }}></div>
+          <span className="text-sm text-gray-600">Speech</span>
         </div>
         <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#D4D4D4' }}></div>
-          <span className="text-sm text-gray-700 text-gray-600">Behaviour/Remedial</span>
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#D4C4E0' }}></div>
+          <span className="text-sm text-gray-600">Behaviour/Remedial</span>
         </div>
         <div className="flex items-center space-x-2">
           <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#B5CC8E' }}></div>
-          <span className="text-sm text-gray-700 text-gray-600">Counselling</span>
+          <span className="text-sm text-gray-600">Counselling</span>
         </div>
         <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#C4A882' }}></div>
-          <span className="text-sm text-gray-700 text-gray-600">Holiday/closed</span>
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#F4B9B2' }}></div>
+          <span className="text-sm text-gray-600">Holiday/closed</span>
         </div>
         <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#7C5C4A' }}></div>
-          <span className="text-sm text-gray-700 text-gray-600">Half day</span>
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#E8A87C' }}></div>
+          <span className="text-sm text-gray-600">Half day</span>
         </div>
       </div>
 
