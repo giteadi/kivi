@@ -616,47 +616,48 @@ exports.getStudentAssessments = async (req, res) => {
         const db = getDb();
         const { studentId } = req.params;
         
+        console.log('🔍 [getStudentAssessments] Called for student:', studentId);
+        
         if (!studentId) {
+            console.log('❌ [getStudentAssessments] No studentId provided');
             return res.status(400).json({
                 success: false,
                 message: 'Student ID is required'
             });
         }
 
-        // Fetch all assessments with package and calendar event details
-        db.query(`
+        // Simple query - just get assessments from kivi_assessments table
+        const query = `
             SELECT 
-                ka.id,
-                ka.assessment_name as title,
-                ka.assessment_type as type,
-                ka.scheduled_date as date,
-                ka.scheduled_time as time,
-                ka.duration,
-                ka.price as amount,
-                ka.discount,
-                (ka.price - (ka.price * ka.discount / 100)) as final_price,
-                ka.payment_status,
-                ka.invoice_sent,
-                ka.invoice_sent_date,
-                ka.status,
-                ka.notes,
-                ka.examiner_name as evaluator,
-                ka.room as location,
-                ka.package_id,
-                ka.package_name,
-                ka.tools,
-                ce.id as calendar_event_id,
-                ce.event_date as calendar_date,
-                ce.event_time as calendar_time,
-                ce.event_type as calendar_type,
-                ce.status as event_status
-            FROM kivi_assessments ka
-            LEFT JOIN calendar_events ce ON ka.id = ce.assessment_id
-            WHERE ka.student_id = ?
-            ORDER BY ka.created_at DESC
-        `, [studentId], (error, assessments) => {
+                id,
+                assessment_name as title,
+                assessment_type as type,
+                scheduled_date as date,
+                scheduled_time as time,
+                duration,
+                price as amount,
+                discount,
+                (price - (price * discount / 100)) as final_price,
+                payment_status,
+                invoice_sent,
+                invoice_sent_date,
+                status,
+                notes,
+                examiner_name as evaluator,
+                room as location,
+                package_id,
+                package_name,
+                tools
+            FROM kivi_assessments
+            WHERE student_id = ?
+            ORDER BY created_at DESC
+        `;
+
+        console.log('📊 [getStudentAssessments] Executing query for student:', studentId);
+
+        db.query(query, [studentId], (error, results) => {
             if (error) {
-                console.error('❌ Error fetching student assessments:', error);
+                console.error('❌ [getStudentAssessments] Database error:', error);
                 return res.status(500).json({
                     success: false,
                     message: 'Failed to fetch student assessments',
@@ -664,58 +665,20 @@ exports.getStudentAssessments = async (req, res) => {
                 });
             }
 
-            // Also fetch linked calendar events that don't have assessment_id yet
-            db.query(`
-                SELECT 
-                    ce.id as calendar_event_id,
-                    ce.title,
-                    ce.event_date as date,
-                    ce.event_time as time,
-                    ce.duration_minutes as duration,
-                    ce.event_type as type,
-                    ce.notes,
-                    ce.status,
-                    NULL as amount,
-                    NULL as payment_status,
-                    NULL as package_name,
-                    NULL as tools
-                FROM calendar_events ce
-                JOIN kivi_students s ON ce.client_name LIKE CONCAT('%', s.first_name, '%')
-                    OR ce.client_name LIKE CONCAT('%', s.last_name, '%')
-                WHERE s.id = ? 
-                AND ce.assessment_id IS NULL
-                ORDER BY ce.event_date DESC
-            `, [studentId], (error2, calendarEvents) => {
-                if (error2) {
-                    console.error('❌ Error fetching calendar events:', error2);
-                }
+            console.log(`✅ [getStudentAssessments] Found ${results.length} assessments for student ${studentId}`);
+            
+            if (results.length > 0) {
+                console.log('📝 [getStudentAssessments] Sample assessment:', results[0]);
+            }
 
-                // Merge assessments and calendar events
-                const mergedData = [...assessments];
-                
-                if (calendarEvents && calendarEvents.length > 0) {
-                    calendarEvents.forEach(event => {
-                        // Check if not already in assessments
-                        const exists = mergedData.some(a => 
-                            a.calendar_event_id === event.calendar_event_id
-                        );
-                        if (!exists) {
-                            mergedData.push(event);
-                        }
-                    });
-                }
-
-                console.log('✅ Found', mergedData.length, 'assessments/events for student', studentId);
-                
-                res.json({
-                    success: true,
-                    count: mergedData.length,
-                    data: mergedData
-                });
+            res.json({
+                success: true,
+                count: results.length,
+                data: results
             });
         });
     } catch (error) {
-        console.error('❌ Error in getStudentAssessments:', error);
+        console.error('❌ [getStudentAssessments] Catch error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch student assessments',
