@@ -289,9 +289,13 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   const [languageSampleReportData, setLanguageSampleReportData] = useState({
     primaryLanguage: '',
     exposedToEnglish: 'not_specified',
+    exposedToEnglishOther: '',
     speakingEnglish: 'not_specified',
+    speakingEnglishOther: '',
     fluencyRating: 'not_specified',
+    fluencyRatingOther: '',
     birthComplications: 'with no apparent complications',
+    birthComplicationsOther: '',
     milestoneSitting: 'unknown',
     milestoneCrawling: 'unknown',
     milestoneStanding: 'unknown',
@@ -314,7 +318,9 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
     currentYear: '',
     schoolName: '',
     motherEducation: '',
+    motherEducationOther: '',
     fatherEducation: '',
+    fatherEducationOther: '',
     examineeCompleted: false,
     motherCompleted: false,
     fatherCompleted: false,
@@ -353,10 +359,13 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   const [healthSampleReportSentence, setHealthSampleReportSentence] = useState('');
   const [healthSampleReportData, setHealthSampleReportData] = useState({
     healthHistorySource: '',
+    healthHistorySourceOther: '',
     visionDate: '',
     visionResult: '',
+    visionResultOther: '',
     hearingDate: '',
     hearingResult: '',
+    hearingResultOther: '',
     sensoryDysfunction: 'no_history',
     sensoryHistory: [],
     motorDysfunction: 'no_history',
@@ -387,10 +396,12 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   const [employmentSampleReportSentence, setEmploymentSampleReportSentence] = useState('');
   const [employmentSampleReportData, setEmploymentSampleReportData] = useState({
     employmentStatus: '',
+    employmentStatusOther: '',
     currentJob: '',
     jobDuration: '',
     previousJobs: '',
     employmentHistorySource: '',
+    employmentHistorySourceOther: '',
     additionalInfo: ''
   });
 
@@ -1179,18 +1190,18 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   const generateLanguageSampleReportSentence = () => {
     const firstName = formData.firstName || 'Charlie';
     const primaryLanguage = languageSampleReportData.primaryLanguage || 'English';
-    const exposedToEnglish = languageSampleReportData.exposedToEnglish === 'not_specified' ? 'since birth' : 
+    const exposedToEnglish = languageSampleReportData.exposedToEnglish === 'not_specified' ? 'since birth' :
       languageSampleReportData.exposedToEnglish === 'since_birth' ? 'since birth' :
       languageSampleReportData.exposedToEnglish === 'one_to_three' ? 'for one to three years' :
       languageSampleReportData.exposedToEnglish === 'four_to_five' ? 'for four to five years' :
       languageSampleReportData.exposedToEnglish === 'longer_than_five' ? 'for longer than five years' :
-      languageSampleReportData.exposedToEnglish === 'other' ? 'other' : 'since birth';
+      languageSampleReportData.exposedToEnglish === 'other' ? (languageSampleReportData.exposedToEnglishOther || 'other') : 'since birth';
     const speakingEnglish = languageSampleReportData.speakingEnglish === 'not_specified' ? 'since first talking' :
       languageSampleReportData.speakingEnglish === 'since_first_talking' ? 'since first talking' :
       languageSampleReportData.speakingEnglish === 'one_to_three' ? 'for one to three years' :
       languageSampleReportData.speakingEnglish === 'four_to_five' ? 'for four to five years' :
       languageSampleReportData.speakingEnglish === 'longer_than_five' ? 'for longer than five years' :
-      languageSampleReportData.speakingEnglish === 'other' ? 'other' : 'since first talking';
+      languageSampleReportData.speakingEnglish === 'other' ? (languageSampleReportData.speakingEnglishOther || 'other') : 'since first talking';
     const birthComplications = languageSampleReportData.birthComplications || 'with no apparent complications';
     
     // Build milestone text
@@ -1243,8 +1254,12 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
     const firstName = formData.firstName || 'Charlie';
     const currentYear = educationSampleReportData.currentYear || 'Year 3';
     const schoolName = educationSampleReportData.schoolName || 'Oak Tree Primary School';
-    const motherEducation = educationSampleReportData.motherEducation || 'graduate';
-    const fatherEducation = educationSampleReportData.fatherEducation || 'high school graduate';
+    const motherEducation = educationSampleReportData.motherEducation === 'other' 
+      ? (educationSampleReportData.motherEducationOther || 'other')
+      : (educationSampleReportData.motherEducation || 'graduate');
+    const fatherEducation = educationSampleReportData.fatherEducation === 'other'
+      ? (educationSampleReportData.fatherEducationOther || 'other')
+      : (educationSampleReportData.fatherEducation || 'high school graduate');
     
     const strengths = educationSampleReportData.personalStrengths.length > 0 
       ? educationSampleReportData.personalStrengths.join(', ') 
@@ -1294,9 +1309,15 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   // Generate Health sample report sentence
   const generateHealthSampleReportSentence = () => {
     const firstName = formData.firstName || 'Charlie';
-    const healthHistorySource = healthSampleReportData.healthHistorySource || 'his mother';
-    const visionResult = healthSampleReportData.visionResult || 'that he has normal visual acuity';
-    const hearingResult = healthSampleReportData.hearingResult || 'within normal limits with the assistance of a hearing aid';
+    const healthHistorySource = healthSampleReportData.healthHistorySource === 'other'
+      ? (healthSampleReportData.healthHistorySourceOther || 'other')
+      : (healthSampleReportData.healthHistorySource || 'his mother');
+    const visionResult = healthSampleReportData.visionResult === 'other'
+      ? (healthSampleReportData.visionResultOther || 'other')
+      : (healthSampleReportData.visionResult || 'that he has normal visual acuity');
+    const hearingResult = healthSampleReportData.hearingResult === 'other'
+      ? (healthSampleReportData.hearingResultOther || 'other')
+      : (healthSampleReportData.hearingResult || 'within normal limits with the assistance of a hearing aid');
     const sensoryHistory = healthSampleReportData.sensoryHistory.length > 0 
       ? healthSampleReportData.sensoryHistory.join(', ') 
       : 'visual perceptual dysfunction';
@@ -1325,10 +1346,14 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   // Generate Employment sample report sentence
   const generateEmploymentSampleReportSentence = () => {
     const firstName = formData.firstName || 'Charlie';
-    const employmentStatus = employmentSampleReportData.employmentStatus || 'employed';
+    const employmentStatus = employmentSampleReportData.employmentStatus === 'other'
+      ? (employmentSampleReportData.employmentStatusOther || 'other')
+      : (employmentSampleReportData.employmentStatus || 'employed');
     const currentJob = employmentSampleReportData.currentJob || 'software engineer';
     const jobDuration = employmentSampleReportData.jobDuration || '2 years';
-    const employmentHistorySource = employmentSampleReportData.employmentHistorySource || 'self-report';
+    const employmentHistorySource = employmentSampleReportData.employmentHistorySource === 'other'
+      ? (employmentSampleReportData.employmentHistorySourceOther || 'other')
+      : (employmentSampleReportData.employmentHistorySource || 'self-report');
     
     return `${firstName} is currently ${employmentStatus} as a {${currentJob}} for {${jobDuration}}. Employment history was provided by {${employmentHistorySource}}.`;
   };
@@ -5485,6 +5510,15 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                     <option value="longer_than_five">For Longer Than Five Years</option>
                                     <option value="other">Other</option>
                                   </select>
+                                  {languageSampleReportData.exposedToEnglish === 'other' && (
+                                    <input
+                                      type="text"
+                                      value={languageSampleReportData.exposedToEnglishOther || ''}
+                                      onChange={(e) => handleLanguageSampleReportTextChange('exposedToEnglishOther', e.target.value)}
+                                      placeholder="Please specify..."
+                                      className={`${inputClass('exposedToEnglishOther')} mt-2`}
+                                    />
+                                  )}
                                 </div>
 
                                 <div className="mb-4">
@@ -5501,6 +5535,15 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                     <option value="longer_than_five">For Longer Than Five Years</option>
                                     <option value="other">Other</option>
                                   </select>
+                                  {languageSampleReportData.speakingEnglish === 'other' && (
+                                    <input
+                                      type="text"
+                                      value={languageSampleReportData.speakingEnglishOther || ''}
+                                      onChange={(e) => handleLanguageSampleReportTextChange('speakingEnglishOther', e.target.value)}
+                                      placeholder="Please specify..."
+                                      className={`${inputClass('speakingEnglishOther')} mt-2`}
+                                    />
+                                  )}
                                 </div>
 
                                 <div className="mb-4">
@@ -5514,7 +5557,17 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                     <option value="adequate">Adequate</option>
                                     <option value="somewhat_adequate">Somewhat Adequate</option>
                                     <option value="poor">Poor</option>
+                                    <option value="other">Other</option>
                                   </select>
+                                  {languageSampleReportData.fluencyRating === 'other' && (
+                                    <input
+                                      type="text"
+                                      value={languageSampleReportData.fluencyRatingOther || ''}
+                                      onChange={(e) => handleLanguageSampleReportTextChange('fluencyRatingOther', e.target.value)}
+                                      placeholder="Please specify..."
+                                      className={`${inputClass('fluencyRatingOther')} mt-2`}
+                                    />
+                                  )}
                                 </div>
                               </div>
 
@@ -5689,6 +5742,15 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                       <option value="graduate degree">Graduate Degree</option>
                                       <option value="other">Other</option>
                                     </select>
+                                    {educationSampleReportData.motherEducation === 'other' && (
+                                      <input
+                                        type="text"
+                                        value={educationSampleReportData.motherEducationOther || ''}
+                                        onChange={(e) => handleEducationSampleReportTextChange('motherEducationOther', e.target.value)}
+                                        placeholder="Please specify..."
+                                        className={`${inputClass('motherEducationOther')} mt-2`}
+                                      />
+                                    )}
                                   </div>
                                   <div>
                                     <label className={labelClass}>Father's Education:</label>
@@ -5706,6 +5768,15 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                       <option value="graduate degree">Graduate Degree</option>
                                       <option value="other">Other</option>
                                     </select>
+                                    {educationSampleReportData.fatherEducation === 'other' && (
+                                      <input
+                                        type="text"
+                                        value={educationSampleReportData.fatherEducationOther || ''}
+                                        onChange={(e) => handleEducationSampleReportTextChange('fatherEducationOther', e.target.value)}
+                                        placeholder="Please specify..."
+                                        className={`${inputClass('fatherEducationOther')} mt-2`}
+                                      />
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -5856,22 +5927,69 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                             <label className={labelClass}>Source:</label>
                             <select 
                               value={healthSampleReportData.healthHistorySource}
-                                    onChange={(e) => handleHealthSampleReportTextChange('healthHistorySource', e.target.value)}
-                                    className={`${inputClass('healthHistorySource')} appearance-none`}
-                                  >
-                                    <option value="">Please Select...</option>
-                                    <option value="his mother">Mother</option>
-                                    <option value="his father">Father</option>
-                                    <option value="his guardian">Guardian</option>
-                                    <option value="self">Self</option>
-                                    <option value="records">Medical Records</option>
-                                    <option value="other">Other</option>
-                                  </select>
-                                </div>
-                              </div>
+                              onChange={(e) => handleHealthSampleReportTextChange('healthHistorySource', e.target.value)}
+                              className={`${inputClass('healthHistorySource')} appearance-none`}
+                            >
+                              <option value="">Please Select...</option>
+                              <option value="his mother">Mother</option>
+                              <option value="his father">Father</option>
+                              <option value="his guardian">Guardian</option>
+                              <option value="self">Self</option>
+                              <option value="records">Medical Records</option>
+                              <option value="other">Other</option>
+                            </select>
+                            {healthSampleReportData.healthHistorySource === 'other' && (
+                              <input
+                                type="text"
+                                value={healthSampleReportData.healthHistorySourceOther || ''}
+                                onChange={(e) => handleHealthSampleReportTextChange('healthHistorySourceOther', e.target.value)}
+                                placeholder="Please specify..."
+                                className={`${inputClass('healthHistorySourceOther')} mt-2`}
+                              />
+                            )}
+                          </div>
+                        </div>
 
-                              {/* Vision and Hearing */}
-                              <div className="mb-6">
+                        {/* Vision and Hearing */}
+                        <div className="mb-6">
+                          <h4 className="text-sm font-semibold text-blue-700 mb-3">Vision and Hearing Conditions</h4>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <label className={labelClass}>Date of Vision Screening:</label>
+                              <input
+                                type="text"
+                                value={healthSampleReportData.visionDate}
+                                onChange={(e) => handleHealthSampleReportTextChange('visionDate', e.target.value)}
+                                placeholder="e.g., 01/01/2024"
+                                className={inputClass('visionDate')}
+                              />
+                            </div>
+                            <div>
+                              <label className={labelClass}>Results of Vision Screening:</label>
+                              <select 
+                                value={healthSampleReportData.visionResult}
+                                onChange={(e) => handleHealthSampleReportTextChange('visionResult', e.target.value)}
+                                className={`${inputClass('visionResult')} appearance-none`}
+                              >
+                                <option value="">Please Select...</option>
+                                <option value="that he has normal visual acuity">Normal visual acuity</option>
+                                <option value="normal visual acuity with the aid of corrective lenses">Normal visual acuity with corrective lenses</option>
+                                <option value="a need for follow-up vision screening">Need for follow-up vision screening</option>
+                                <option value="a need for a complete vision examination">Need for complete vision examination</option>
+                                <option value="other">Other</option>
+                              </select>
+                              {healthSampleReportData.visionResult === 'other' && (
+                                <input
+                                  type="text"
+                                  value={healthSampleReportData.visionResultOther || ''}
+                                  onChange={(e) => handleHealthSampleReportTextChange('visionResultOther', e.target.value)}
+                                  placeholder="Please specify..."
+                                  className={`${inputClass('visionResultOther')} mt-2`}
+                                />
+                              )}
+                            </div>
+                          </div>
                                 <h4 className="text-sm font-semibold text-blue-700 mb-3">Vision and Hearing Conditions</h4>
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -5899,6 +6017,15 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                       <option value="a need for a complete vision examination">Need for complete vision examination</option>
                                       <option value="other">Other</option>
                                     </select>
+                                    {healthSampleReportData.visionResult === 'other' && (
+                                      <input
+                                        type="text"
+                                        value={healthSampleReportData.visionResultOther || ''}
+                                        onChange={(e) => handleHealthSampleReportTextChange('visionResultOther', e.target.value)}
+                                        placeholder="Please specify..."
+                                        className={`${inputClass('visionResultOther')} mt-2`}
+                                      />
+                                    )}
                                   </div>
                                 </div>
 
@@ -5928,6 +6055,15 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                       <option value="further assessment needed; refer to audiologist">Further assessment needed</option>
                                       <option value="other">Other</option>
                                     </select>
+                                    {healthSampleReportData.hearingResult === 'other' && (
+                                      <input
+                                        type="text"
+                                        value={healthSampleReportData.hearingResultOther || ''}
+                                        onChange={(e) => handleHealthSampleReportTextChange('hearingResultOther', e.target.value)}
+                                        placeholder="Please specify..."
+                                        className={`${inputClass('hearingResultOther')} mt-2`}
+                                      />
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -6141,6 +6277,15 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                       <option value="student">Student</option>
                                       <option value="other">Other</option>
                                     </select>
+                                    {employmentSampleReportData.employmentStatus === 'other' && (
+                                      <input
+                                        type="text"
+                                        value={employmentSampleReportData.employmentStatusOther || ''}
+                                        onChange={(e) => handleEmploymentSampleReportTextChange('employmentStatusOther', e.target.value)}
+                                        placeholder="Please specify..."
+                                        className={`${inputClass('employmentStatusOther')} mt-2`}
+                                      />
+                                    )}
                                   </div>
                                   <div>
                                     <label className={labelClass}>Current Job/Position:</label>
@@ -6178,6 +6323,15 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                       <option value="records">Employment Records</option>
                                       <option value="other">Other</option>
                                     </select>
+                                    {employmentSampleReportData.employmentHistorySource === 'other' && (
+                                      <input
+                                        type="text"
+                                        value={employmentSampleReportData.employmentHistorySourceOther || ''}
+                                        onChange={(e) => handleEmploymentSampleReportTextChange('employmentHistorySourceOther', e.target.value)}
+                                        placeholder="Please specify..."
+                                        className={`${inputClass('employmentHistorySourceOther')} mt-2`}
+                                      />
+                                    )}
                                   </div>
                                 </div>
 
