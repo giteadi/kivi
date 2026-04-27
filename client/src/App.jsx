@@ -86,6 +86,7 @@ import Queries from './components/Queries';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
 import CenterVisibilitySettings from './components/CenterVisibilitySettings';
+import AssessmentCalendar from './components/AssessmentCalendar';
 
 function App() {
   const dispatch = useDispatch();
@@ -134,6 +135,7 @@ function App() {
       '/templates': 'template-manager',
       '/centres': 'clinics',
       '/centres/revenue': 'clinic-revenue',
+      '/assessment-calendar': 'assessment-calendar',
       '/taxes': 'taxes',
       '/billing': 'billing-records',
       '/admin/queries': 'queries',
@@ -297,6 +299,7 @@ function App() {
       'template-manager': '/templates',
       'clinics': '/centres',
       'clinic-revenue': '/centres/revenue',
+      'assessment-calendar': '/assessment-calendar',
       'taxes': '/taxes',
       'billing-records': '/billing',
       'queries': '/admin/queries',
@@ -1686,6 +1689,7 @@ ${service.target_age_group || 'Not specified'}
             <Route path="/centres/:id/edit" element={renderContent()} />
             <Route path="/centres/create" element={renderContent()} />
             <Route path="/centres/revenue" element={<ClinicRevenue />} />
+            <Route path="/assessment-calendar" element={<AssessmentCalendar />} />
             <Route path="/taxes" element={<TaxList />} />
             <Route path="/billing" element={<BillingRecords />} />
             <Route path="/admin/queries" element={<Queries />} />

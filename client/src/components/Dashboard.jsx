@@ -32,7 +32,6 @@ import {
 import { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDashboardData, setFilters, clearFilters } from '../store/slices/dashboardSlice';
-import AssessmentCalendar from './AssessmentCalendar';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import StatsCard from './StatsCard';
@@ -671,20 +670,6 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
               )
             ))}
           </div>
-        </motion.div>
-
-        {/* Assessment Calendar Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mb-8"
-        >
-          <AssessmentCalendar 
-            onAddAssessment={handleAddAssessment}
-            onEditAssessment={handleEditAssessment}
-            onDeleteAssessment={handleDeleteAssessment}
-          />
         </motion.div>
 
         {/* Upcoming Assessments Section */}

@@ -141,6 +141,42 @@ class InvoiceController {
       await this.transporter.sendMail(mailOptions);
       console.log('✅ Email sent successfully to:', email, attachments.length > 0 ? '(with PDF)' : '(HTML only)');
 
+      // Update student's email count and history
+      try {
+        const Student = require('../models/Student');
+        const studentModel = new Student();
+        
+        const parsedStudentId = parseInt(studentId);
+        if (parsedStudentId && !isNaN(parsedStudentId) && parsedStudentId > 0) {
+          // Get current student data
+          const student = await studentModel.findById(parsedStudentId);
+          if (student) {
+            const currentCount = student.email_count || 0;
+            const emailHistory = student.email_history ? JSON.parse(student.email_history) : [];
+            
+            // Add new email to history
+            emailHistory.push({
+              type: 'assessment_invoice',
+              sent_at: new Date().toISOString(),
+              email: email,
+              assessment_name: assessmentName,
+              amount: price
+            });
+            
+            // Update student record
+            await studentModel.update(parsedStudentId, {
+              email_count: currentCount + 1,
+              last_email_sent_date: new Date(),
+              email_history: JSON.stringify(emailHistory)
+            });
+            console.log(`📧 Updated email count for student ${parsedStudentId}: ${currentCount + 1}`);
+          }
+        }
+      } catch (studentUpdateError) {
+        console.error('⚠️ Error updating student email count:', studentUpdateError.message);
+        // Don't fail the request if student update fails
+      }
+
       // Update assessment record with invoice info
       const Assessment = require('../models/Assessment');
       const assessmentModel = new Assessment();
@@ -193,13 +229,30 @@ class InvoiceController {
         payment_status: 'pending'
       });
 
+      // Get updated student email count for response
+      let emailCount = 0;
+      try {
+        const Student = require('../models/Student');
+        const studentModel = new Student();
+        const parsedStudentId = parseInt(studentId);
+        if (parsedStudentId && !isNaN(parsedStudentId) && parsedStudentId > 0) {
+          const updatedStudent = await studentModel.findById(parsedStudentId);
+          if (updatedStudent) {
+            emailCount = updatedStudent.email_count || 0;
+          }
+        }
+      } catch (e) {
+        // Ignore error, just return 0
+      }
+
       res.json({
         success: true,
         message: 'Invoice sent successfully',
         data: {
           invoiceNumber,
           email,
-          sentAt: new Date()
+          sentAt: new Date(),
+          emailCount
         }
       });
     } catch (error) {

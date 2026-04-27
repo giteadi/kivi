@@ -39,6 +39,7 @@ const routeMapping = {
   'template-manager': '/templates',
   'forms': '/forms',
   'clinics': '/centres',
+  'assessment-calendar': '/assessment-calendar',
   'clinic-revenue': '/centres/revenue',
   'taxes': '/taxes',
   'billing-records': '/billing',
@@ -144,6 +145,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
     { id: 'forms', label: 'Forms', icon: FiUpload, section: 'USERS' },
     // { id: 'receptionists', label: 'Staff', icon: FiUser, section: 'USERS' }, // Temporarily disabled for future use
     { id: 'clinics', label: 'Centers', icon: FiMapPin, section: 'NETWORK' },
+    { id: 'assessment-calendar', label: 'Assessment Calendar', icon: FiCalendar, section: 'NETWORK' },
     // { id: 'doctor-revenue', label: 'Therapist Revenue', icon: FiDollarSign, section: 'FINANCIAL' }, // Temporarily disabled 
     { id: 'billing-records', label: 'Billing Records', icon: FiCreditCard, section: 'FINANCIAL' },
     { id: 'queries', label: 'Queries', icon: FiMessageSquare, section: 'ADMIN' },
