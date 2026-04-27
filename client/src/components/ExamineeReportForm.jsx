@@ -1,12 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import * as XLSX from "xlsx";
-import {
-  Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
-  AlignmentType, HeadingLevel, BorderStyle, WidthType, ShadingType, LevelFormat,
-} from "docx";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import ExportDropdown from './ExportDropdown';
 
 // ── tiny helpers ──────────────────────────────────────────────────────────────
 const Cell = ({ children, bold, italic, colSpan, rowSpan, className = "", style = {} }) => (
@@ -1297,11 +1291,29 @@ export default function ExamineeReportForm({
           padding: "0 10px",
         }}
       >
-        <ExportDropdown
-          onExportDocx={handleExportDocx}
-          onExportXlsx={handleExportXlsx}
-          onExportPdf={handleExportPdf}
-        />
+        <button
+          onClick={handleExportPdf}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "7px 14px",
+            borderRadius: 8,
+            fontSize: 13,
+            fontWeight: 500,
+            border: "1px solid",
+            cursor: "pointer",
+            transition: "all 0.15s",
+            background: "#DC2626",
+            color: "#fff",
+            borderColor: "#DC2626",
+          }}
+        >
+          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+          </svg>
+          Export PDF
+        </button>
         <span style={{ fontSize: 12, color: "#555", alignSelf: "center", fontFamily: "Arial" }}>
           All fields are editable — click to type
         </span>
