@@ -1,10 +1,9 @@
 import { motion } from 'framer-motion';
-import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiUser, FiPhone, FiMail, FiMapPin, FiCalendar, FiUsers, FiFilter, FiUpload, FiRefreshCw } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiUser, FiPhone, FiMail, FiMapPin, FiCalendar, FiUsers, FiFilter, FiRefreshCw } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDoctors } from '../store/slices/doctorSlice';
 import FiltersPanel from './FiltersPanel';
-import ImportModal from './ImportModal';
 
 const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDoctor }) => {
   const dispatch = useDispatch();
@@ -15,7 +14,6 @@ const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDo
   const [filterSpecialty, setFilterSpecialty] = useState('all');
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState({});
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Load therapists on component mount
@@ -157,15 +155,6 @@ const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDo
             >
               <FiRefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setIsImportModalOpen(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-            >
-              <FiUpload className="w-4 h-4" />
-              <span>Import Data</span>
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -479,13 +468,6 @@ const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDo
         onClose={() => setIsFiltersOpen(false)}
         onApplyFilters={(filters) => setAppliedFilters(filters)}
         filterType="therapists"
-      />
-
-      {/* Import Modal */}
-      <ImportModal
-        isOpen={isImportModalOpen}
-        onClose={() => setIsImportModalOpen(false)}
-        importType="therapists"
       />
     </div>
   );
