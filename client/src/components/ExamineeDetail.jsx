@@ -8,6 +8,7 @@ import { useToast } from './Toast';
 import AssignAssessmentModal from './AssignAssessmentModal';
 import GenerateReportModal from './GenerateReportModal';
 import EditAssessmentModal from './EditAssessmentModal';
+import ParentIntakeReport from './ParentIntakeReport';
 import api from '../services/api';
 
 const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
@@ -1449,7 +1450,8 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   const tabs = [
     { id: 'demographics', label: 'Demographics' },
     { id: 'evaluation', label: 'Evaluation' },
-    { id: 'history', label: 'History' }
+    { id: 'history', label: 'History' },
+    { id: 'report', label: 'Report' }
   ];
 
   // Input styling
@@ -6360,6 +6362,30 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                               </div>
                       </div>
                     )}
+                  </motion.div>
+                )}
+                {activeTab === 'report' && (
+                  <motion.div
+                    key="report"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                  >
+                    <ParentIntakeReport
+                      formData={formData}
+                      evaluationData={evaluationData}
+                      diagnosisData={diagnosisData}
+                      historyData={historyData}
+                      languageSampleReportData={languageSampleReportData}
+                      educationSampleReportData={educationSampleReportData}
+                      healthSampleReportData={healthSampleReportData}
+                      employmentSampleReportData={employmentSampleReportData}
+                      isEditable={true}
+                      onUpdateField={(section, field, value) => {
+                        // Handle field updates if needed
+                        console.log('Field update:', section, field, value);
+                      }}
+                    />
                   </motion.div>
                 )}
             </div>
