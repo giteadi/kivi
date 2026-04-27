@@ -207,13 +207,18 @@ class StudentController {
       // Parse individual report form sections if they exist
       const reportSections = ['academic_concerns', 'family_history', 'medical_history', 'educational_history', 'behaviour_data', 'other_info'];
       reportSections.forEach(section => {
-        if (student[section] && typeof student[section] === 'string') {
-          try {
-            student[section] = JSON.parse(student[section]);
-            console.log(`   ✅ ${section}: Parsed successfully`);
-          } catch (e) {
-            console.error(`   ❌ ${section}: Parse error -`, e.message);
-            student[section] = null;
+        if (student[section]) {
+          if (typeof student[section] === 'object') {
+            // Already parsed
+            console.log(`   ℹ️ ${section}: Already parsed`);
+          } else if (typeof student[section] === 'string') {
+            try {
+              student[section] = JSON.parse(student[section]);
+              console.log(`   ✅ ${section}: Parsed successfully`);
+            } catch (e) {
+              console.error(`   ❌ ${section}: Parse error -`, e.message);
+              student[section] = null;
+            }
           }
         }
       });
@@ -690,44 +695,44 @@ class StudentController {
       const sectionVI = data.sectionVI || {};
       const sectionVII = data.sectionVII || {};
       
-      // Build update data
-      const updateData = {
-        // Section I - Basic fields
-        nationality: sectionI.nationality || null,
-        handedness: sectionI.handedness || null,
-        school_category: sectionI.schoolCategory || null,
-        mother_tongue: sectionI.motherTongue || null,
-        language_home: sectionI.languageHome || null,
-        referred_by: sectionI.referredBy || null,
-        previous_reports: sectionI.previousReports || null,
-        
-        // Father details
-        father_name: sectionI.fatherName || null,
-        father_phone: sectionI.fatherPhone || null,
-        father_email: sectionI.fatherEmail || null,
-        father_education: sectionI.fatherEdu || null,
-        father_profession: sectionI.fatherProf || null,
-        
-        // Mother details
-        mother_name: sectionI.motherName || null,
-        mother_phone: sectionI.motherPhone || null,
-        mother_email: sectionI.motherEmail || null,
-        mother_education: sectionI.motherEdu || null,
-        mother_profession: sectionI.motherProf || null,
-        
-        // Form details
-        form_completed_by: sectionI.formBy || null,
-        residence_address: sectionI.address || null,
-        
-        // JSON fields for complex data
-        report_form_data: JSON.stringify(data), // Full data backup
-        academic_concerns: JSON.stringify(sectionII),
-        family_history: JSON.stringify(sectionIII),
-        medical_history: JSON.stringify(sectionIV),
-        educational_history: JSON.stringify(sectionV),
-        behaviour_data: JSON.stringify(sectionVI),
-        other_info: JSON.stringify(sectionVII),
-      };
+      // Build update data - only include fields that have values
+      const updateData = {};
+      
+      // Section I - Basic fields (only update if provided)
+      if (sectionI.nationality !== undefined) updateData.nationality = sectionI.nationality || null;
+      if (sectionI.handedness !== undefined) updateData.handedness = sectionI.handedness || null;
+      if (sectionI.schoolCategory !== undefined) updateData.school_category = sectionI.schoolCategory || null;
+      if (sectionI.motherTongue !== undefined) updateData.mother_tongue = sectionI.motherTongue || null;
+      if (sectionI.languageHome !== undefined) updateData.language_home = sectionI.languageHome || null;
+      if (sectionI.referredBy !== undefined) updateData.referred_by = sectionI.referredBy || null;
+      if (sectionI.previousReports !== undefined) updateData.previous_reports = sectionI.previousReports || null;
+      
+      // Father details
+      if (sectionI.fatherName !== undefined) updateData.father_name = sectionI.fatherName || null;
+      if (sectionI.fatherPhone !== undefined) updateData.father_phone = sectionI.fatherPhone || null;
+      if (sectionI.fatherEmail !== undefined) updateData.father_email = sectionI.fatherEmail || null;
+      if (sectionI.fatherEdu !== undefined) updateData.father_education = sectionI.fatherEdu || null;
+      if (sectionI.fatherProf !== undefined) updateData.father_profession = sectionI.fatherProf || null;
+      
+      // Mother details
+      if (sectionI.motherName !== undefined) updateData.mother_name = sectionI.motherName || null;
+      if (sectionI.motherPhone !== undefined) updateData.mother_phone = sectionI.motherPhone || null;
+      if (sectionI.motherEmail !== undefined) updateData.mother_email = sectionI.motherEmail || null;
+      if (sectionI.motherEdu !== undefined) updateData.mother_education = sectionI.motherEdu || null;
+      if (sectionI.motherProf !== undefined) updateData.mother_profession = sectionI.motherProf || null;
+      
+      // Form details
+      if (sectionI.formBy !== undefined) updateData.form_completed_by = sectionI.formBy || null;
+      if (sectionI.address !== undefined) updateData.residence_address = sectionI.address || null;
+      
+      // JSON fields for complex data (always update these)
+      updateData.report_form_data = JSON.stringify(data); // Full data backup
+      updateData.academic_concerns = JSON.stringify(sectionII);
+      updateData.family_history = JSON.stringify(sectionIII);
+      updateData.medical_history = JSON.stringify(sectionIV);
+      updateData.educational_history = JSON.stringify(sectionV);
+      updateData.behaviour_data = JSON.stringify(sectionVI);
+      updateData.other_info = JSON.stringify(sectionVII);
       
       console.log('📝 [StudentController] Extracted values:');
       console.log('📝   - nationality:', updateData.nationality);
@@ -829,8 +834,10 @@ class StudentController {
       
       // Helper to parse JSON safely
       const safeParse = (json) => {
+        if (!json) return {};
+        if (typeof json === 'object') return json; // Already parsed
         try {
-          return json ? JSON.parse(json) : {};
+          return JSON.parse(json);
         } catch (e) {
           console.warn('Failed to parse JSON:', e.message);
           return {};

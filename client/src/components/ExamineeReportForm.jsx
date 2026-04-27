@@ -490,71 +490,49 @@ export default function ExamineeReportForm({
     }));
   }, [evaluationData, historyData, healthSampleReportData, educationSampleReportData, formData, reportFormData]);
 
-  // ── Load saved report data from API ──
-  useEffect(() => {
-    const loadSavedReport = async () => {
-      const examineeId = formData?.id || formData?.studentId || formData?.examineeId;
-      if (!examineeId) return;
+  // ── Load saved report data from API (DISABLED - now using reportFormData prop) ──
+  // Data is now loaded via reportFormData prop from parent component to avoid double loading
+  // useEffect(() => {
+  //   const loadSavedReport = async () => {
+  //     const examineeId = formData?.id || formData?.studentId || formData?.examineeId;
+  //     if (!examineeId) return;
 
-      try {
-        console.log("🔍 Loading saved report for examinee ID:", examineeId);
-        const response = await examineeApi.getReportForm(examineeId);
-        
-        if (response.success && response.data) {
-          console.log("============================================");
-          console.log("✅ [FRONTEND] Loaded saved report from API");
-          console.log("✅ [FRONTEND] Full response data:", response.data);
-          
-          const data = response.data;
-          
-          console.log("✅ [FRONTEND] Section I received:", data.sectionI);
-          console.log("✅ [FRONTEND] Nationality from API:", data.sectionI?.nationality);
-          console.log("✅ [FRONTEND] Handedness from API:", data.sectionI?.handedness);
-          console.log("============================================");
-          
-          // Update Section I if data exists
-          if (data.sectionI && Object.keys(data.sectionI).length > 0) {
-            console.log("🔄 [FRONTEND] Updating Section I with:", data.sectionI);
-            setS1(prev => ({ ...prev, ...data.sectionI }));
-          }
-          
-          // Update Section II if data exists
-          if (data.sectionII && Object.keys(data.sectionII).length > 0) {
-            setS2(prev => ({ ...prev, ...data.sectionII }));
-          }
-          
-          // Update Section III if data exists
-          if (data.sectionIII && Object.keys(data.sectionIII).length > 0) {
-            setS3(prev => ({ ...prev, ...data.sectionIII }));
-          }
-          
-          // Update Section IV if data exists
-          if (data.sectionIV && Object.keys(data.sectionIV).length > 0) {
-            setS4(prev => ({ ...prev, ...data.sectionIV }));
-          }
-          
-          // Update Section V if data exists
-          if (data.sectionV && Object.keys(data.sectionV).length > 0) {
-            setS5(prev => ({ ...prev, ...data.sectionV }));
-          }
-          
-          // Update Section VI if data exists
-          if (data.sectionVI && Object.keys(data.sectionVI).length > 0) {
-            setS6(prev => ({ ...prev, ...data.sectionVI }));
-          }
-          
-          // Update Section VII if data exists
-          if (data.sectionVII && Object.keys(data.sectionVII).length > 0) {
-            setS7(prev => ({ ...prev, ...data.sectionVII }));
-          }
-        }
-      } catch (error) {
-        console.warn("⚠️ Could not load saved report (may not exist yet):", error.message);
-      }
-    };
+  //     try {
+  //       console.log("🔍 Loading saved report for examinee ID:", examineeId);
+  //       const response = await examineeApi.getReportForm(examineeId);
+  //       
+  //       if (response.success && response.data) {
+  //         const data = response.data;
+  //         
+  //         if (data.sectionI && Object.keys(data.sectionI).length > 0) {
+  //           setS1(prev => ({ ...prev, ...data.sectionI }));
+  //         }
+  //         if (data.sectionII && Object.keys(data.sectionII).length > 0) {
+  //           setS2(prev => ({ ...prev, ...data.sectionII }));
+  //         }
+  //         if (data.sectionIII && Object.keys(data.sectionIII).length > 0) {
+  //           setS3(prev => ({ ...prev, ...data.sectionIII }));
+  //         }
+  //         if (data.sectionIV && Object.keys(data.sectionIV).length > 0) {
+  //           setS4(prev => ({ ...prev, ...data.sectionIV }));
+  //         }
+  //         if (data.sectionV && Object.keys(data.sectionV).length > 0) {
+  //           setS5(prev => ({ ...prev, ...data.sectionV }));
+  //         }
+  //         if (data.sectionVI && Object.keys(data.sectionVI).length > 0) {
+  //           setS6(prev => ({ ...prev, ...data.sectionVI }));
+  //         }
+  //         if (data.sectionVII && Object.keys(data.sectionVII).length > 0) {
+  //           setS7(prev => ({ ...prev, ...data.sectionVII }));
+  //         }
+  //       }
+  //     } catch (error) {
+  //       console.warn("⚠️ Could not load saved report (may not exist yet):", error.message);
+  //     }
+  //   };
 
-    loadSavedReport();
-  }, [formData?.id, formData?.studentId]);
+  //   loadSavedReport();
+  // }, [formData?.id, formData?.studentId]);
 
   // ── Export handlers (improved for better content preservation)
   const handleExportPdf = async () => {
@@ -1125,20 +1103,36 @@ export default function ExamineeReportForm({
 
       console.log("📝 [FRONTEND] Examinee ID:", examineeId);
       
-      // Update parent component with report form data
-      if (onReportDataChange) {
-        onReportDataChange(formDataToSave);
-      }
-      
       // Call API directly
       const result = await examineeApi.saveReportForm(examineeId, formDataToSave);
       console.log("✅ [FRONTEND] Save result:", result);
       
       alert("Form saved successfully!");
       
+      // Update parent component with report form data after successful save
+      if (onReportDataChange) {
+        onReportDataChange({
+          sectionI: s1,
+          sectionII: s2,
+          sectionIII: s3,
+          sectionIV: s4,
+          sectionV: s5,
+          sectionVI: s6,
+          sectionVII: s7,
+        });
+      }
+      
       // Also call onSave prop if provided (for parent component updates)
       if (onSave) {
-        await onSave(formDataToSave);
+        await onSave({
+          sectionI: s1,
+          sectionII: s2,
+          sectionIII: s3,
+          sectionIV: s4,
+          sectionV: s5,
+          sectionVI: s6,
+          sectionVII: s7,
+        });
       }
     } catch (error) {
       console.error("❌ Save failed:", error);
