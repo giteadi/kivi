@@ -9,6 +9,7 @@ import AssignAssessmentModal from './AssignAssessmentModal';
 import GenerateReportModal from './GenerateReportModal';
 import EditAssessmentModal from './EditAssessmentModal';
 import ParentIntakeReport from './ParentIntakeReport';
+import ExamineeReportTab from './ExamineeReportTab';
 import api from '../services/api';
 
 const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
@@ -6365,28 +6366,17 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                   </motion.div>
                 )}
                 {activeTab === 'report' && (
-                  <motion.div
-                    key="report"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                  >
-                    <ParentIntakeReport
-                      formData={formData}
-                      evaluationData={evaluationData}
-                      diagnosisData={diagnosisData}
-                      historyData={historyData}
-                      languageSampleReportData={languageSampleReportData}
-                      educationSampleReportData={educationSampleReportData}
-                      healthSampleReportData={healthSampleReportData}
-                      employmentSampleReportData={employmentSampleReportData}
-                      isEditable={true}
-                      onUpdateField={(section, field, value) => {
-                        // Handle field updates if needed
-                        console.log('Field update:', section, field, value);
-                      }}
-                    />
-                  </motion.div>
+                  <ExamineeReportTab
+                    formData={formData}
+                    evaluationData={evaluationData}
+                    diagnosisData={diagnosisData}
+                    historyData={historyData}
+                    languageSampleReportData={languageSampleReportData}
+                    educationSampleReportData={educationSampleReportData}
+                    healthSampleReportData={healthSampleReportData}
+                    employmentSampleReportData={employmentSampleReportData}
+                    isEditable={true}
+                  />
                 )}
             </div>
           </motion.div>
