@@ -600,6 +600,7 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
     schoolName: '',
     grade: '',
     languageOfTesting: '',
+    customLanguage: '',
     email: '',
     comment: '',
     account: 'CENTRIX CENTRE',
@@ -667,6 +668,7 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
               schoolName: patient.school_name || '',
               grade: patient.grade || '',
               languageOfTesting: patient.language_of_testing || '',
+              customLanguage: patient.custom_language || '',
               email: patient.email || '',
               comment: patient.comment || '',
               account: patient.centre_name || 'CENTRIX CENTRE',
@@ -919,6 +921,7 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
         schoolName: formData.schoolName,
         grade: formData.grade,
         languageOfTesting: formData.languageOfTesting,
+        customLanguage: formData.customLanguage,
         email: formData.email,
         comment: formData.comment,
         centreName: formData.account,
@@ -1253,6 +1256,15 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                           </select>
                           <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                         </div>
+                        {formData.languageOfTesting === 'Other' && (
+                          <input
+                            type="text"
+                            value={formData.customLanguage || ''}
+                            onChange={(e) => handleChange('customLanguage', e.target.value)}
+                            className={`${inputClass('customLanguage')} mt-2`}
+                            placeholder="Please specify language..."
+                          />
+                        )}
                       </div>
 
                       <div>

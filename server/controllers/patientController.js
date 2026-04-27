@@ -108,6 +108,7 @@ class PatientController {
         dateOfBirth: 'date_of_birth',
         schoolName: 'school_name',
         languageOfTesting: 'language_of_testing',
+        customLanguage: 'custom_language',
         zipCode: 'zip_code',
         emergencyContactName: 'emergency_contact_name',
         emergencyContactPhone: 'emergency_contact_phone',
@@ -205,6 +206,7 @@ class PatientController {
       console.log('\n📤 ALL FIELDS FROM FRONTEND:');
       console.log(`   Total Fields Received: ${Object.keys(req.body).length}`);
       console.log(`   Fields List: ${Object.keys(req.body).join(', ')}`);
+      console.log('   Full req.body:', JSON.stringify(req.body, null, 2));
       
       // FIELD BY FIELD DETAILS
       console.log('\n📝 FIELD-BY-FIELD BREAKDOWN:');
@@ -247,6 +249,7 @@ class PatientController {
         dateOfBirth: 'date_of_birth',
         schoolName: 'school_name',
         languageOfTesting: 'language_of_testing',
+        customLanguage: 'custom_language',
         zipCode: 'zip_code',
         emergencyContactName: 'emergency_contact_name',
         emergencyContactPhone: 'emergency_contact_phone',
@@ -287,6 +290,10 @@ class PatientController {
       console.log('  grade (mapped):', updateData.grade);
       console.log('  middleName (frontend):', req.body.middleName);
       console.log('  middle_name (mapped):', updateData.middle_name);
+      console.log('  languageOfTesting (frontend):', req.body.languageOfTesting);
+      console.log('  language_of_testing (mapped):', updateData.language_of_testing);
+      console.log('  customLanguage (frontend):', req.body.customLanguage);
+      console.log('  custom_language (mapped):', updateData.custom_language);
       console.log('  evaluationData type:', typeof req.body.evaluationData);
       console.log('  diagnosisData type:', typeof req.body.diagnosisData);
       console.log('  historyData type:', typeof req.body.historyData);

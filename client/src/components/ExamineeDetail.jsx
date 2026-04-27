@@ -32,6 +32,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
     schoolName: '',
     grade: '',
     languageOfTesting: '',
+    customLanguage: '',
     email: '',
     phone: '',
     address: '',
@@ -389,12 +390,13 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
     additionalInfo: ''
   });
 
-  // State for Personal Sample Report Data
-  const [personalSampleReportData, setPersonalSampleReportData] = useState({
-    livingArrangement: '',
-    livesWithDetails: '',
-    additionalInfo: ''
-  });
+  // State for Personal Sample Report Sentence
+  const [showPersonalSampleReport, setShowPersonalSampleReport] = useState(false);
+  const [personalSampleReportSentence, setPersonalSampleReportSentence] = useState('');
+
+  // State for Personal Notes
+  const [showPersonalNotes, setShowPersonalNotes] = useState(false);
+  const [personalNotes, setPersonalNotes] = useState('');
   
   const [age, setAge] = useState({ years: 0, months: 0 });
   const [errors, setErrors] = useState({});
@@ -402,10 +404,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   // Modal states
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [isDocumentManageOpen, setIsDocumentManageOpen] = useState(false);
-  const [documentToEdit, setDocumentToEdit] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [viewingDocument, setViewingDocument] = useState(null);
   const [selectedAssessmentToEdit, setSelectedAssessmentToEdit] = useState(null);
   const [isEditAssessmentModalOpen, setIsEditAssessmentModalOpen] = useState(false);
 
@@ -471,6 +470,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
         schoolName: currentPatient.school_name || '',
         grade: currentPatient.grade || '',
         languageOfTesting: currentPatient.language_of_testing || '',
+        customLanguage: currentPatient.custom_language || '',
         email: currentPatient.email || '',
         phone: currentPatient.phone || '',
         address: currentPatient.address || '',
@@ -939,10 +939,16 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
         console.log('  History data keys:', Object.keys(safeHistData));
       }
       
-      // Restore personal sample report data if it exists in history
-      if (histData?.personalSampleReportData) {
-        console.log('  ✅ Restoring personalSampleReportData');
-        setPersonalSampleReportData(histData.personalSampleReportData);
+      // Restore personal sample report sentence if it exists in history
+      if (histData?.personalSampleReportSentence) {
+        console.log('  ✅ Restoring personalSampleReportSentence');
+        setPersonalSampleReportSentence(histData.personalSampleReportSentence);
+      }
+
+      // Restore personal notes if it exists in history
+      if (histData?.personalNotes) {
+        console.log('  ✅ Restoring personalNotes');
+        setPersonalNotes(histData.personalNotes);
       }
       
       // Restore language/development sample report data if it exists in history
@@ -1296,14 +1302,6 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
     }));
   };
 
-  // Handler for Personal Sample Report Data
-  const handlePersonalSampleReportTextChange = (field, value) => {
-    setPersonalSampleReportData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
   // Generate Employment sample report sentence
   const generateEmploymentSampleReportSentence = () => {
     const firstName = formData.firstName || 'Charlie';
@@ -1335,6 +1333,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
         schoolName: formData.schoolName,
         grade: formData.grade,
         languageOfTesting: formData.languageOfTesting,
+        customLanguage: formData.customLanguage,
         email: formData.email,
         phone: formData.phone,
         address: formData.address,
@@ -1358,7 +1357,8 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
         diagnosisData: diagnosisData,
         historyData: {
           ...historyData,
-          personalSampleReportData: personalSampleReportData,
+          personalSampleReportSentence: personalSampleReportSentence,
+          personalNotes: personalNotes,
           languageSampleReportData: languageSampleReportData,
           educationSampleReportData: educationSampleReportData,
           healthSampleReportData: healthSampleReportData,
@@ -1490,7 +1490,6 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       emergencyContactRelation: patient.emergency_contact_relation || '',
       learningNeeds: patient.learning_needs || '',
       supportRequirements: patient.support_requirements || '',
-      documents: patient.documents ? (Array.isArray(patient.documents) ? patient.documents : []) : [],
       evaluationData: evaluationData,
       diagnosisData: diagnosisData,
       historyData: historyData,
@@ -1561,120 +1560,6 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
     } else {
       dispatch(selectAllAssessments());
     }
-  };
-
-  // Format file size
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  // Get file icon based on type
-  const getFileIcon = (type) => {
-    if (type.startsWith('image/')) return <FiImage className="w-4 h-4 text-green-600" />;
-    return <FiFile className="w-4 h-4 text-blue-600" />;
-  };
-
-  // Download document
-  const downloadDocument = (doc) => {
-    try {
-      // Create a link element and trigger download
-      const link = window.document.createElement('a');
-      link.href = doc.data;
-      link.download = doc.name;
-      window.document.body.appendChild(link);
-      link.click();
-      window.document.body.removeChild(link);
-      toast.success(`Downloading ${doc.name}`);
-    } catch (error) {
-      toast.error('Failed to download document');
-    }
-  };
-
-  // View document
-  const viewDocument = (doc) => {
-    setViewingDocument(doc);
-  };
-
-  // Delete document
-  const handleDeleteDocument = (index) => {
-    if (!window.confirm(`Delete "${examineeData.documents[index].name}"?`)) {
-      return;
-    }
-
-    setIsSaving(true);
-    const updatedDocuments = examineeData.documents.filter((_, i) => i !== index);
-    
-    // Call API directly to save
-    api.updatePatient(currentPatient.id, {
-      ...currentPatient,
-      documents: updatedDocuments
-    }).then((response) => {
-      toast.success('Document deleted successfully');
-      // Refresh the patient data
-      dispatch(fetchPatient(examineeId));
-      setIsSaving(false);
-    }).catch((error) => {
-      toast.error('Failed to delete document: ' + error.message);
-      setIsSaving(false);
-    });
-  };
-
-  // Replace document
-  const handleReplaceDocument = (index) => {
-    // Open file picker
-    const fileInput = window.document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = '.pdf,.docx,.xlsx,.png,.jpg,.jpeg,.gif';
-    
-    fileInput.onchange = async (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      // Check file size (10MB limit)
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error('File size must be less than 10MB');
-        return;
-      }
-
-      setIsSaving(true);
-      try {
-        const base64 = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
-
-        const updatedDocuments = [...examineeData.documents];
-        updatedDocuments[index] = {
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          data: base64,
-          uploadDate: new Date().toISOString()
-        };
-
-        // Call API directly to save
-        await api.updatePatient(currentPatient.id, {
-          ...currentPatient,
-          documents: updatedDocuments
-        });
-
-        toast.success('Document replaced successfully');
-        // Refresh the patient data
-        dispatch(fetchPatient(examineeId));
-        setIsSaving(false);
-      } catch (error) {
-        toast.error('Failed to replace document: ' + error.message);
-        setIsSaving(false);
-      }
-    };
-
-    fileInput.click();
   };
 
   // Helper function to render evaluation data
@@ -2106,12 +1991,20 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                             <option value="">Please Select...</option>
                             <option value="English">English</option>
                             <option value="Hindi">Hindi</option>
-                            <option value="Demographics">Demographics</option>
                             <option value="Bilingual">Bilingual</option>
                             <option value="Other">Other</option>
                           </select>
                           <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                         </div>
+                        {formData.languageOfTesting === 'Other' && (
+                          <input
+                            type="text"
+                            value={formData.customLanguage || ''}
+                            onChange={(e) => handleChange('customLanguage', e.target.value)}
+                            className={`${inputClass('customLanguage')} mt-2`}
+                            placeholder="Please specify language..."
+                          />
+                        )}
                       </div>
 
                       <div>
@@ -5454,8 +5347,55 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
 
                     {historySubTab === 'personal' && (
                       <div className="space-y-6">
-                        <h4 className="text-sm font-semibold text-blue-700">Personal Information</h4>
-                        <p className="text-sm text-gray-500">Personal history details can be added here.</p>
+                        {/* Sample Report Sentence */}
+                        <div className="border rounded-lg overflow-hidden mb-4">
+                          <button 
+                            onClick={() => setShowPersonalSampleReport(!showPersonalSampleReport)}
+                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                          >
+                            <span className="text-sm font-medium">{showPersonalSampleReport ? '⊟' : '⊞'}</span>
+                            <span className="font-medium text-sm">Sample Report Sentence</span>
+                          </button>
+                          
+                          {showPersonalSampleReport && (
+                            <div className="p-4 bg-white border-t">
+                              <textarea
+                                value={personalSampleReportSentence}
+                                onChange={(e) => setPersonalSampleReportSentence(e.target.value)}
+                                placeholder="Enter sample report sentence..."
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[80px]"
+                              />
+                              <p className="text-xs text-gray-500 mt-2">
+                                This sentence can be edited and will appear in reports.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Personal Notes */}
+                        <div className="border rounded-lg overflow-hidden">
+                          <button 
+                            onClick={() => setShowPersonalNotes(!showPersonalNotes)}
+                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                          >
+                            <span className="text-sm font-medium">{showPersonalNotes ? '⊟' : '⊞'}</span>
+                            <span className="font-medium text-sm">Personal Notes</span>
+                          </button>
+                          
+                          {showPersonalNotes && (
+                            <div className="p-4 bg-white border-t">
+                              <textarea
+                                value={personalNotes}
+                                onChange={(e) => setPersonalNotes(e.target.value)}
+                                placeholder="Add personal notes, observations, or additional information..."
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[120px]"
+                              />
+                              <p className="text-xs text-gray-500 mt-2">
+                                Add any additional notes or observations here.
+                              </p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
 
@@ -6153,185 +6093,6 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
           </motion.div>
         </div>
 
-        {/* Documents Section */}
-        {(examineeData.documents && examineeData.documents.length > 0 || true) && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            className="bg-white rounded-xl shadow-sm border mb-6"
-          >
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-800">Documents</h2>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-500">
-                    {examineeData.documents?.length || 0} file(s)
-                  </span>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      // Open file picker to add new document
-                      const fileInput = window.document.createElement('input');
-                      fileInput.type = 'file';
-                      fileInput.accept = '.pdf,.docx,.xlsx,.png,.jpg,.jpeg,.gif';
-                      
-                      fileInput.onchange = async (event) => {
-                        const file = event.target.files[0];
-                        if (!file) return;
-
-                        if (file.size > 10 * 1024 * 1024) {
-                          toast.error('File size must be less than 10MB');
-                          return;
-                        }
-
-                        setIsSaving(true);
-                        try {
-                          const base64 = await new Promise((resolve, reject) => {
-                            const reader = new FileReader();
-                            reader.onload = () => resolve(reader.result);
-                            reader.onerror = reject;
-                            reader.readAsDataURL(file);
-                          });
-
-                          const newDoc = {
-                            name: file.name,
-                            type: file.type,
-                            size: file.size,
-                            data: base64,
-                            uploadDate: new Date().toISOString()
-                          };
-
-                          const updatedDocuments = [...(examineeData.documents || []), newDoc];
-
-                          // Call API directly to save
-                          await api.updatePatient(currentPatient.id, {
-                            ...currentPatient,
-                            documents: updatedDocuments
-                          });
-
-                          toast.success('Document added successfully');
-                          // Refresh the patient data
-                          dispatch(fetchPatient(examineeId));
-                          setIsSaving(false);
-                        } catch (error) {
-                          toast.error('Failed to add document: ' + (error.message || error));
-                          setIsSaving(false);
-                        }
-                      };
-
-                      fileInput.click();
-                    }}
-                    disabled={isSaving}
-                    className="flex items-center space-x-1 px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors disabled:opacity-50"
-                    title="Add new document"
-                  >
-                    <FiPlus className="w-4 h-4" />
-                    <span>Add</span>
-                  </motion.button>
-                </div>
-              </div>
-            </div>
-            
-            {examineeData.documents && examineeData.documents.length > 0 ? (
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {examineeData.documents.map((doc, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                    >
-                      <div 
-                        className="flex items-start space-x-3 cursor-pointer mb-3"
-                        onClick={() => downloadDocument(doc)}
-                      >
-                        <div className="flex-shrink-0 mt-1">
-                          {getFileIcon(doc.type)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate" title={doc.name}>
-                            {doc.name}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {formatFileSize(doc.size)}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            {doc.type || 'Unknown type'}
-                          </p>
-                          {doc.uploadDate && (
-                            <p className="text-xs text-gray-400 mt-1">
-                              {new Date(doc.uploadDate).toLocaleDateString('en-GB')}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex-shrink-0">
-                          <FiDownload className="w-4 h-4 text-gray-400 hover:text-blue-600 transition-colors" />
-                        </div>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex gap-2 pt-3 border-t border-gray-100">
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            viewDocument(doc);
-                          }}
-                          className="flex-1 flex items-center justify-center space-x-1 px-2 py-1.5 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 rounded transition-colors"
-                          title="View document"
-                        >
-                          <FiEye className="w-3.5 h-3.5" />
-                          <span>View</span>
-                        </motion.button>
-
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleReplaceDocument(index);
-                          }}
-                          disabled={isSaving}
-                          className="flex-1 flex items-center justify-center space-x-1 px-2 py-1.5 text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 rounded transition-colors disabled:opacity-50"
-                          title="Replace document"
-                        >
-                          <FiEdit3 className="w-3.5 h-3.5" />
-                          <span>Replace</span>
-                        </motion.button>
-                        
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteDocument(index);
-                          }}
-                          disabled={isSaving}
-                          className="flex-1 flex items-center justify-center space-x-1 px-2 py-1.5 text-xs bg-red-50 hover:bg-red-100 text-red-700 rounded transition-colors disabled:opacity-50"
-                          title="Delete document"
-                        >
-                          <FiTrash2 className="w-3.5 h-3.5" />
-                          <span>Delete</span>
-                        </motion.button>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="p-12 text-center">
-                <FiFile className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 text-sm">No documents uploaded yet</p>
-              </div>
-            )}
-          </motion.div>
-        )}
-
 
       </div>
       
@@ -6351,140 +6112,6 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
         assessments={assessments}
         examineeData={examineeData}
       />
-
-      {/* Document Viewer Modal */}
-      {viewingDocument && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <div className="flex-1">
-                <h2 className="text-xl font-semibold text-gray-800">{viewingDocument.name}</h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  {formatFileSize(viewingDocument.size)} • {viewingDocument.type || 'Unknown type'}
-                </p>
-              </div>
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setViewingDocument(null)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <FiX className="w-6 h-6 text-gray-600" />
-              </motion.button>
-            </div>
-
-            {/* Content - Based on File Type */}
-            <div className="flex-1 overflow-auto bg-gray-50 flex items-center justify-center">
-              {/* Images */}
-              {viewingDocument.type.startsWith('image/') ? (
-                <img
-                  src={viewingDocument.data}
-                  alt={viewingDocument.name}
-                  className="max-w-full max-h-full object-contain"
-                />
-              ) : /* PDFs */ viewingDocument.type === 'application/pdf' ? (
-                <div className="w-full h-full flex flex-col items-center justify-center p-8">
-                  <FiFileText className="w-16 h-16 text-red-400 mb-4" />
-                  <p className="text-gray-600 font-medium mb-4">PDF Preview</p>
-                  <p className="text-sm text-gray-500 text-center mb-6 max-w-sm">
-                    PDF preview is not available. Click the download button to view the file in your PDF reader.
-                  </p>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      downloadDocument(viewingDocument);
-                      setViewingDocument(null);
-                    }}
-                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2"
-                  >
-                    <FiDownload className="w-4 h-4" />
-                    <span>Download PDF</span>
-                  </motion.button>
-                </div>
-              ) : /* Excel/Word */ viewingDocument.type.includes('spreadsheet') ||
-                viewingDocument.type.includes('document') ||
-                viewingDocument.type.includes('word') ||
-                viewingDocument.type.includes('excel') ? (
-                <div className="w-full h-full flex flex-col items-center justify-center p-8">
-                  <FiFile className="w-16 h-16 text-blue-400 mb-4" />
-                  <p className="text-gray-600 font-medium mb-4">Document Preview</p>
-                  <p className="text-sm text-gray-500 text-center mb-6 max-w-sm">
-                    {viewingDocument.type.includes('spreadsheet')
-                      ? 'Excel files cannot be previewed here.'
-                      : 'Office documents cannot be previewed here.'}
-                    <br />
-                    Download the file to view in the appropriate application.
-                  </p>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      downloadDocument(viewingDocument);
-                      setViewingDocument(null);
-                    }}
-                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2"
-                  >
-                    <FiDownload className="w-4 h-4" />
-                    <span>Download</span>
-                  </motion.button>
-                </div>
-              ) : (
-                /* Unknown file type */
-                <div className="w-full h-full flex flex-col items-center justify-center p-8">
-                  <FiFile className="w-16 h-16 text-gray-400 mb-4" />
-                  <p className="text-gray-600 font-medium mb-4">Cannot Preview File</p>
-                  <p className="text-sm text-gray-500 text-center mb-6 max-w-sm">
-                    This file type is not supported for preview. Download the file to open it with your system's default application.
-                  </p>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      downloadDocument(viewingDocument);
-                      setViewingDocument(null);
-                    }}
-                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2"
-                  >
-                    <FiDownload className="w-4 h-4" />
-                    <span>Download</span>
-                  </motion.button>
-                </div>
-              )}
-            </div>
-
-            {/* Footer Actions */}
-            <div className="flex gap-3 p-6 border-t border-gray-200 bg-gray-50">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  downloadDocument(viewingDocument);
-                  setViewingDocument(null);
-                }}
-                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center justify-center space-x-2"
-              >
-                <FiDownload className="w-4 h-4" />
-                <span>Download</span>
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setViewingDocument(null)}
-                className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors"
-              >
-                Close
-              </motion.button>
-            </div>
-          </motion.div>
-        </div>
-      )}
 
       {/* Edit Assessment Modal */}
       <EditAssessmentModal
