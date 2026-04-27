@@ -1,4 +1,8 @@
 import { useState, useRef, useEffect } from "react";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import ExportDropdown from './ExportDropdown';
 
 // ── tiny helpers ──────────────────────────────────────────────────────────────
 const Cell = ({ children, bold, italic, colSpan, rowSpan, className = "", style = {} }) => (
@@ -448,22 +452,11 @@ export default function ExamineeReportForm({
     }));
   }, [evaluationData, historyData, healthSampleReportData, educationSampleReportData, formData]);
 
-  // ── Export to HTML (printable)
+  // ── Export handlers
   const handlePrint = () => window.print();
 
-  // ── Export JSON
-  const handleExportJSON = () => {
-    const data = { s1, s2, s3, s4, s5, s6, s7 };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "examinee_report_form.json";
-    a.click();
-  };
-
-  // ── Export CSV (flat)
-  const handleExportCSV = () => {
+  const handleExportXlsx = async () => {
+    // Export to Excel using XLSX library
     const rows = [
       ["Field", "Value"],
       ["Examinee Name", s1.childName], ["Birth Date", s1.birthDate], ["Age", s1.age],
@@ -481,13 +474,41 @@ export default function ExamineeReportForm({
         rows.push([`[${cat}] ${row.label}`, row.yn + (row.comment ? " | " + row.comment : "")]);
       });
     });
-    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "examinee_report_form.csv";
-    a.click();
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), "Examinee Report Form");
+    XLSX.writeFile(wb, "examinee_report_form.xlsx");
+  };
+
+  const handleExportPdf = async () => {
+    // Export to PDF using html2canvas + jsPDF
+    const element = printRef.current;
+    if (!element) return;
+
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const imgWidth = 210;
+    const pageHeight = 297;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+
+    pdf.save('examinee_report_form.pdf');
   };
 
   // ── Table styles
@@ -499,9 +520,10 @@ export default function ExamineeReportForm({
   };
 
   const sectionBox = {
-    border: "1px solid #888",
-    marginBottom: 18,
+    border: "1px solid #e5e7eb",
+    marginBottom: 24,
     fontFamily: "'Times New Roman', Times, serif",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
   };
 
   return (
@@ -514,33 +536,31 @@ export default function ExamineeReportForm({
           margin: "0 auto 16px",
           display: "flex",
           gap: 10,
+          alignItems: "center",
           flexWrap: "wrap",
           padding: "0 10px",
         }}
       >
-        {[
-          { label: "🖨 Print / PDF", fn: handlePrint, bg: "#c0392b" },
-          { label: "⬇ Export JSON", fn: handleExportJSON, bg: "#2980b9" },
-          { label: "⬇ Export CSV", fn: handleExportCSV, bg: "#27ae60" },
-        ].map(({ label, fn, bg }) => (
-          <button
-            key={label}
-            onClick={fn}
-            style={{
-              background: bg,
-              color: "#fff",
-              border: "none",
-              borderRadius: 5,
-              padding: "8px 18px",
-              fontSize: 13,
-              fontWeight: "bold",
-              cursor: "pointer",
-              fontFamily: "Arial, sans-serif",
-            }}
-          >
-            {label}
-          </button>
-        ))}
+        <ExportDropdown
+          onExportXlsx={handleExportXlsx}
+          onExportPdf={handleExportPdf}
+        />
+        <button
+          onClick={handlePrint}
+          style={{
+            background: "#c0392b",
+            color: "#fff",
+            border: "none",
+            borderRadius: 5,
+            padding: "8px 18px",
+            fontSize: 13,
+            fontWeight: "bold",
+            cursor: "pointer",
+            fontFamily: "Arial, sans-serif",
+          }}
+        >
+           Print / PDF
+        </button>
         <span style={{ fontSize: 12, color: "#555", alignSelf: "center", fontFamily: "Arial" }}>
           All fields are editable — click to type
         </span>
@@ -551,55 +571,40 @@ export default function ExamineeReportForm({
         ref={printRef}
         id="form-to-print"
         style={{
-          maxWidth: 820,
+          maxWidth: 800,
           margin: "0 auto",
           background: "#fff",
-          padding: "20px 24px",
-          fontFamily: "'Times New Roman', Times, serif",
+          boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
         }}
       >
         {/* ── HEADER / LOGO ── */}
         <div
           style={{
-            border: "1.5px solid #bbb",
-            borderRadius: 8,
-            padding: "14px 18px",
-            marginBottom: 18,
             display: "flex",
+            justifyContent: "center",
             alignItems: "center",
-            gap: 18,
+            padding: "40px",
+            borderBottom: "3px solid #29b6f6",
           }}
         >
-          {/* Circles logo approximation */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, width: 64, flexShrink: 0 }}>
-            {[
-              "#b5cc8e", "#f0c27f",
-              "#e88080", "#b39ddb",
-            ].map((c, i) => (
-              <div key={i} style={{ width: 28, height: 28, borderRadius: "50%", background: c, opacity: 0.85 }} />
-            ))}
-          </div>
-          <div>
-            <div style={{ fontSize: 24, fontWeight: "bold", color: "#222", fontFamily: "Georgia, serif", letterSpacing: 0.5 }}>
-              MindSaid Learning Centre
-            </div>
-            <div style={{ fontSize: 13, color: "#555", marginTop: 2 }}>Learning This Ability</div>
-            <div style={{ fontSize: 12, color: "#555" }}>Psycho-educational Assessment &amp; Intervention Centre</div>
-            <div style={{ fontSize: 12, color: "#555" }}>Tel: +918928186952</div>
-            <div style={{ fontSize: 12, color: "#1a6bbf" }}>contact@mindsaidlearning.com &nbsp;|&nbsp; www.mindsaidlearning.com</div>
-          </div>
+          <img
+            src="https://res.cloudinary.com/bazeercloud/image/upload/v1777305181/MSL-LOGO-MAIN_lbhbid.png"
+            alt="MindSaid Learning Logo"
+            style={{ width: 450, height: "auto", objectFit: "contain" }}
+          />
         </div>
 
         {/* ══ SECTION I ══════════════════════════════════════════════════════ */}
-        <div style={sectionBox}>
-          <table style={tbl}>
-            <tbody>
-              <tr>
-                <td colSpan={6} style={{ border: "1px solid #555", padding: "6px 8px", fontWeight: "bold", fontSize: 14 }}>
-                  EXAMINEE REPORT FORM
-                </td>
-              </tr>
-              <SectionHeader>Section I: IDENTIFYING INFORMATION</SectionHeader>
+        <div style={{ padding: "40px" }}>
+          <div style={sectionBox}>
+            <table style={tbl}>
+              <tbody>
+                <tr>
+                  <td colSpan={6} style={{ border: "1px solid #555", padding: "6px 8px", fontWeight: "bold", fontSize: 14 }}>
+                    EXAMINEE REPORT FORM
+                  </td>
+                </tr>
+                <SectionHeader>Section I: IDENTIFYING INFORMATION</SectionHeader>
               <tr>
                 <Cell bold colSpan={2}>Examinee's Name:</Cell>
                 <Cell colSpan={2}><F value={s1.childName} onChange={(v) => setS1({ ...s1, childName: v })} wide /></Cell>
@@ -1104,6 +1109,7 @@ export default function ExamineeReportForm({
             </tbody>
           </table>
         </div>
+      </div>
       </div>
 
       {/* Print CSS */}
