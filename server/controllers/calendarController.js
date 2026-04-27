@@ -13,10 +13,17 @@ exports.getEvents = async (req, res) => {
             SELECT ce.*, 
                    u.first_name as creator_first_name, 
                    u.last_name as creator_last_name,
-                   c.name as centre_name
+                   c.name as centre_name,
+                   ka.assessment_name,
+                   ka.price as assessment_price,
+                   ka.payment_status,
+                   ka.invoice_sent,
+                   ka.package_name,
+                   ka.tools
             FROM calendar_events ce
             LEFT JOIN kivi_users u ON ce.created_by = u.id
             LEFT JOIN kivi_centres c ON ce.centre_id = c.id
+            LEFT JOIN kivi_assessments ka ON ce.assessment_id = ka.id
             WHERE 1=1
         `;
         const params = [];
@@ -83,10 +90,17 @@ exports.getEventsByDate = async (req, res) => {
             SELECT ce.*, 
                    u.first_name as creator_first_name, 
                    u.last_name as creator_last_name,
-                   c.name as centre_name
+                   c.name as centre_name,
+                   ka.assessment_name,
+                   ka.price as assessment_price,
+                   ka.payment_status,
+                   ka.invoice_sent,
+                   ka.package_name,
+                   ka.tools
             FROM calendar_events ce
             LEFT JOIN kivi_users u ON ce.created_by = u.id
             LEFT JOIN kivi_centres c ON ce.centre_id = c.id
+            LEFT JOIN kivi_assessments ka ON ce.assessment_id = ka.id
             WHERE ce.event_date = ?
         `;
         const params = [date];
@@ -135,10 +149,17 @@ exports.getEventById = async (req, res) => {
             SELECT ce.*, 
                    u.first_name as creator_first_name, 
                    u.last_name as creator_last_name,
-                   c.name as centre_name
+                   c.name as centre_name,
+                   ka.assessment_name,
+                   ka.price as assessment_price,
+                   ka.payment_status,
+                   ka.invoice_sent,
+                   ka.package_name,
+                   ka.tools
             FROM calendar_events ce
             LEFT JOIN kivi_users u ON ce.created_by = u.id
             LEFT JOIN kivi_centres c ON ce.centre_id = c.id
+            LEFT JOIN kivi_assessments ka ON ce.assessment_id = ka.id
             WHERE ce.id = ?
         `, [id], (error, events) => {
             if (error) {
@@ -172,6 +193,62 @@ exports.getEventById = async (req, res) => {
     }
 };
 
+// Helper function to find student by name and link to assessment
+const findAndLinkAssessment = async (db, clientName, eventId) => {
+    if (!clientName || !eventId) return null;
+    
+    return new Promise((resolve, reject) => {
+        // Find student by first_name or last_name matching client_name
+        db.query(`
+            SELECT s.id, s.first_name, s.last_name
+            FROM kivi_students s
+            WHERE s.first_name LIKE ? OR s.last_name LIKE ?
+            LIMIT 1
+        `, [`%${clientName}%`, `%${clientName}%`], (err, students) => {
+            if (err) {
+                console.error('Error finding student:', err);
+                return resolve(null);
+            }
+            
+            if (students.length === 0) {
+                console.log('No student found for client:', clientName);
+                return resolve(null);
+            }
+            
+            const studentId = students[0].id;
+            
+            // Find latest assessment for this student
+            db.query(`
+                SELECT id FROM kivi_assessments
+                WHERE student_id = ?
+                ORDER BY created_at DESC
+                LIMIT 1
+            `, [studentId], (err2, assessments) => {
+                if (err2 || assessments.length === 0) {
+                    console.log('No assessment found for student:', studentId);
+                    return resolve(null);
+                }
+                
+                const assessmentId = assessments[0].id;
+                
+                // Link assessment to calendar event
+                db.query(`
+                    UPDATE calendar_events 
+                    SET assessment_id = ?
+                    WHERE id = ?
+                `, [assessmentId, eventId], (err3) => {
+                    if (err3) {
+                        console.error('Error linking assessment:', err3);
+                    } else {
+                        console.log('✅ Linked assessment', assessmentId, 'to event', eventId);
+                    }
+                    resolve(assessmentId);
+                });
+            });
+        });
+    });
+};
+
 // Create new calendar event
 exports.createEvent = async (req, res) => {
     try {
@@ -184,7 +261,8 @@ exports.createEvent = async (req, res) => {
             duration,
             eventType,
             notes,
-            centreId
+            centreId,
+            assessmentId // Allow manual assessment linking
         } = req.body;
 
         // Validation
@@ -203,8 +281,8 @@ exports.createEvent = async (req, res) => {
 
         db.query(`
             INSERT INTO calendar_events 
-            (title, client_name, event_date, event_time, duration_minutes, event_type, notes, created_by, centre_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (title, client_name, event_date, event_time, duration_minutes, event_type, notes, created_by, centre_id, assessment_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `, [
             title,
             finalClientName,
@@ -214,8 +292,9 @@ exports.createEvent = async (req, res) => {
             eventType || 'assessment',
             notes || null,
             req.user ? req.user.id : null,
-            centreId || (req.user ? req.user.centre_id : null)
-        ], (error, result) => {
+            centreId || (req.user ? req.user.centre_id : null),
+            assessmentId || null
+        ], async (error, result) => {
             if (error) {
                 console.error('Error creating calendar event:', error);
                 return res.status(500).json({
@@ -225,17 +304,31 @@ exports.createEvent = async (req, res) => {
                 });
             }
 
-            // Fetch the created event
+            const eventId = result.insertId;
+            
+            // Auto-link assessment if client name provided but no assessment_id
+            if (finalClientName && !assessmentId) {
+                await findAndLinkAssessment(db, finalClientName, eventId);
+            }
+
+            // Fetch the created event with assessment details
             db.query(`
                 SELECT ce.*, 
                        u.first_name as creator_first_name, 
                        u.last_name as creator_last_name,
-                       c.name as centre_name
+                       c.name as centre_name,
+                       ka.assessment_name,
+                       ka.price as assessment_price,
+                       ka.payment_status,
+                       ka.invoice_sent,
+                       ka.package_name,
+                       ka.tools
                 FROM calendar_events ce
                 LEFT JOIN kivi_users u ON ce.created_by = u.id
                 LEFT JOIN kivi_centres c ON ce.centre_id = c.id
+                LEFT JOIN kivi_assessments ka ON ce.assessment_id = ka.id
                 WHERE ce.id = ?
-            `, [result.insertId], (fetchError, events) => {
+            `, [eventId], (fetchError, events) => {
                 if (fetchError) {
                     console.error('Error fetching created event:', fetchError);
                     return res.status(500).json({
@@ -314,6 +407,10 @@ exports.updateEvent = async (req, res) => {
                 const finalEventTime = isHolidayEvent ? null : eventTime;
                 const finalDuration = isHolidayEvent ? null : duration;
 
+                // Check if client_name changed and we need to auto-link assessment
+                const oldClientName = existingEvents[0].client_name;
+                const clientNameChanged = finalClientName && finalClientName !== oldClientName && !existingEvents[0].assessment_id;
+
                 db.query(`
                     UPDATE calendar_events 
                     SET title = COALESCE(?, title),
@@ -337,7 +434,7 @@ exports.updateEvent = async (req, res) => {
                     status,
                     centreId,
                     id
-                ], (updateError, result) => {
+                ], async (updateError, result) => {
                     if (updateError) {
                         console.error('Error updating calendar event:', updateError);
                         return res.status(500).json({
@@ -354,15 +451,27 @@ exports.updateEvent = async (req, res) => {
                         });
                     }
 
-                    // Fetch updated event
+                    // Auto-link assessment if client name changed
+                    if (clientNameChanged) {
+                        await findAndLinkAssessment(db, finalClientName, id);
+                    }
+
+                    // Fetch updated event with assessment details
                     db.query(`
                         SELECT ce.*, 
                                u.first_name as creator_first_name, 
                                u.last_name as creator_last_name,
-                               c.name as centre_name
+                               c.name as centre_name,
+                               ka.assessment_name,
+                               ka.price as assessment_price,
+                               ka.payment_status,
+                               ka.invoice_sent,
+                               ka.package_name,
+                               ka.tools
                         FROM calendar_events ce
                         LEFT JOIN kivi_users u ON ce.created_by = u.id
                         LEFT JOIN kivi_centres c ON ce.centre_id = c.id
+                        LEFT JOIN kivi_assessments ka ON ce.assessment_id = ka.id
                         WHERE ce.id = ?
                     `, [id], (fetchError, events) => {
                         if (fetchError) {
@@ -496,6 +605,120 @@ exports.getEventStats = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to fetch event statistics',
+            error: error.message
+        });
+    }
+};
+
+// Get all assessments for a student with full details
+exports.getStudentAssessments = async (req, res) => {
+    try {
+        const db = getDb();
+        const { studentId } = req.params;
+        
+        if (!studentId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Student ID is required'
+            });
+        }
+
+        // Fetch all assessments with package and calendar event details
+        db.query(`
+            SELECT 
+                ka.id,
+                ka.assessment_name as title,
+                ka.assessment_type as type,
+                ka.scheduled_date as date,
+                ka.scheduled_time as time,
+                ka.duration,
+                ka.price as amount,
+                ka.discount,
+                (ka.price - (ka.price * ka.discount / 100)) as final_price,
+                ka.payment_status,
+                ka.invoice_sent,
+                ka.invoice_sent_date,
+                ka.status,
+                ka.notes,
+                ka.examiner_name as evaluator,
+                ka.room as location,
+                ka.package_id,
+                ka.package_name,
+                ka.tools,
+                ce.id as calendar_event_id,
+                ce.event_date as calendar_date,
+                ce.event_time as calendar_time,
+                ce.event_type as calendar_type,
+                ce.status as event_status
+            FROM kivi_assessments ka
+            LEFT JOIN calendar_events ce ON ka.id = ce.assessment_id
+            WHERE ka.student_id = ?
+            ORDER BY ka.created_at DESC
+        `, [studentId], (error, assessments) => {
+            if (error) {
+                console.error('❌ Error fetching student assessments:', error);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to fetch student assessments',
+                    error: error.message
+                });
+            }
+
+            // Also fetch linked calendar events that don't have assessment_id yet
+            db.query(`
+                SELECT 
+                    ce.id as calendar_event_id,
+                    ce.title,
+                    ce.event_date as date,
+                    ce.event_time as time,
+                    ce.duration_minutes as duration,
+                    ce.event_type as type,
+                    ce.notes,
+                    ce.status,
+                    NULL as amount,
+                    NULL as payment_status,
+                    NULL as package_name,
+                    NULL as tools
+                FROM calendar_events ce
+                JOIN kivi_students s ON ce.client_name LIKE CONCAT('%', s.first_name, '%')
+                    OR ce.client_name LIKE CONCAT('%', s.last_name, '%')
+                WHERE s.id = ? 
+                AND ce.assessment_id IS NULL
+                ORDER BY ce.event_date DESC
+            `, [studentId], (error2, calendarEvents) => {
+                if (error2) {
+                    console.error('❌ Error fetching calendar events:', error2);
+                }
+
+                // Merge assessments and calendar events
+                const mergedData = [...assessments];
+                
+                if (calendarEvents && calendarEvents.length > 0) {
+                    calendarEvents.forEach(event => {
+                        // Check if not already in assessments
+                        const exists = mergedData.some(a => 
+                            a.calendar_event_id === event.calendar_event_id
+                        );
+                        if (!exists) {
+                            mergedData.push(event);
+                        }
+                    });
+                }
+
+                console.log('✅ Found', mergedData.length, 'assessments/events for student', studentId);
+                
+                res.json({
+                    success: true,
+                    count: mergedData.length,
+                    data: mergedData
+                });
+            });
+        });
+    } catch (error) {
+        console.error('❌ Error in getStudentAssessments:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch student assessments',
             error: error.message
         });
     }

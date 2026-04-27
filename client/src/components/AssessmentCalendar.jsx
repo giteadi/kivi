@@ -15,7 +15,10 @@ import {
   FiLoader,
   FiEye,
   FiSearch,
-  FiArrowLeft
+  FiArrowLeft,
+  FiPackage,
+  FiTool,
+  FiMail
 } from 'react-icons/fi';
 import api from '../services/api';
 import toast from 'react-hot-toast';
@@ -60,6 +63,7 @@ const AssessmentCalendar = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [displayLimit, setDisplayLimit] = useState(10);
   const [showUserCards, setShowUserCards] = useState(false);
+  const [userDetailLoading, setUserDetailLoading] = useState(false);
 
   // User and center info
   const [user, setUser] = useState(null);
@@ -112,12 +116,36 @@ const AssessmentCalendar = () => {
 
   // Fetch assessments from API
   useEffect(() => {
-    fetchAssessments();
+    let isMounted = true;
+    
+    const loadAssessments = async () => {
+      if (isMounted) {
+        await fetchAssessments();
+      }
+    };
+    
+    loadAssessments();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [currentDate, selectedCenter]);
 
   // Fetch examinee data on mount
   useEffect(() => {
-    fetchExamineeData();
+    let isMounted = true;
+    
+    const loadExamineeData = async () => {
+      if (isMounted) {
+        await fetchExamineeData();
+      }
+    };
+    
+    loadExamineeData();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const toISODate = (date) => date.toLocaleDateString('en-CA');
@@ -321,9 +349,73 @@ const AssessmentCalendar = () => {
     });
   };
 
+  // Fetch detailed assessment data for a user
+  const fetchUserAssessmentDetails = async (studentId) => {
+    try {
+      console.log('🔍 Fetching assessment details for student:', studentId);
+      // Fetch from new calendar endpoint that joins assessments with calendar events
+      const response = await api.request(`/calendar/student-assessments/${studentId}`);
+      console.log('📦 Assessment details response:', response);
+      
+      if (response.success && response.data) {
+        const mapped = response.data.map(assessment => ({
+          id: assessment.id || assessment.calendar_event_id,
+          title: assessment.title || 'Assessment',
+          date: assessment.date,
+          time: assessment.time || '',
+          duration: assessment.duration || 60,
+          type: assessment.type || 'assessment',
+          notes: assessment.notes || '',
+          status: assessment.status || 'pending',
+          packageName: assessment.package_name,
+          packageId: assessment.package_id,
+          tools: assessment.tools || [],
+          amount: assessment.amount,
+          discount: assessment.discount || 0,
+          finalPrice: assessment.final_price,
+          invoiceSent: assessment.invoice_sent,
+          paymentStatus: assessment.payment_status || 'pending',
+          evaluator: assessment.evaluator,
+          calendarEventId: assessment.calendar_event_id,
+          calendarDate: assessment.calendar_date,
+          calendarTime: assessment.calendar_time
+        }));
+        console.log('✅ Mapped assessment details:', mapped.length, 'items');
+        return mapped;
+      }
+      console.log('⚠️ No assessment data in response');
+      return [];
+    } catch (error) {
+      console.error('❌ Error fetching assessment details:', error);
+      console.error('Error details:', error.message, error.response);
+      return [];
+    }
+  };
+
   // Handle viewing user details - now shows cards view instead of modal
-  const handleViewUserDetail = (userData) => {
-    setSelectedUser(userData);
+  const handleViewUserDetail = async (userData) => {
+    setUserDetailLoading(true);
+    
+    // Find the user from current userStats to get merged data (with calendar events)
+    const mergedUser = userStats.find(u => u.id === userData.id) || userData;
+    
+    // Fetch detailed assessment data from backend
+    const detailedAssessments = await fetchUserAssessmentDetails(userData.id);
+    
+    // Merge calendar events with detailed assessments
+    const calendarEvents = mergedUser.assessments || [];
+    const allAssessments = [...detailedAssessments, ...calendarEvents];
+    
+    // Remove duplicates by ID
+    const uniqueAssessments = allAssessments.filter((item, index, self) =>
+      index === self.findIndex((a) => a.id === item.id)
+    );
+    
+    setSelectedUser({
+      ...mergedUser,
+      assessments: uniqueAssessments
+    });
+    setUserDetailLoading(false);
     setShowUserCards(true);
     setShowUserList(false); // Hide user list when showing cards
   };
@@ -1108,6 +1200,21 @@ const AssessmentCalendar = () => {
             </div>
           </motion.div>
 
+          {/* Loading State */}
+          {userDetailLoading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center justify-center py-12"
+            >
+              <FiLoader className="w-8 h-8 text-blue-600 animate-spin mb-4" />
+              <p className="text-sm text-gray-500">Loading assessment details...</p>
+            </motion.div>
+          )}
+
+          {/* Content - Only show when not loading */}
+          {!userDetailLoading && (
+          <>
           {/* Stats Cards - Apple Style with staggered animation */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <motion.div
@@ -1121,7 +1228,7 @@ const AssessmentCalendar = () => {
                 <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
                   <FiCalendar className="w-5 h-5 text-blue-600" />
                 </div>
-                <span className="text-3xl font-bold text-gray-900">{selectedUser.totalCount}</span>
+                <span className="text-3xl font-bold text-gray-900">{selectedUser.assessments?.length || selectedUser.totalCount || 0}</span>
               </div>
               <p className="text-sm text-gray-500 font-medium">Total Visits</p>
             </motion.div>
@@ -1137,7 +1244,9 @@ const AssessmentCalendar = () => {
                 <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
                   <FiFileText className="w-5 h-5 text-green-600" />
                 </div>
-                <span className="text-3xl font-bold text-gray-900">{selectedUser.assessmentCount}</span>
+                <span className="text-3xl font-bold text-gray-900">
+                  {selectedUser.assessments?.filter(a => a.type === 'ot_si' || a.type === 'assessment')?.length || selectedUser.assessmentCount || 0}
+                </span>
               </div>
               <p className="text-sm text-gray-500 font-medium">Assessments</p>
             </motion.div>
@@ -1153,7 +1262,9 @@ const AssessmentCalendar = () => {
                 <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
                   <FiUser className="w-5 h-5 text-purple-600" />
                 </div>
-                <span className="text-3xl font-bold text-gray-900">{selectedUser.therapyCount}</span>
+                <span className="text-3xl font-bold text-gray-900">
+                  {selectedUser.assessments?.filter(a => a.type !== 'ot_si' && a.type !== 'assessment')?.length || selectedUser.therapyCount || 0}
+                </span>
               </div>
               <p className="text-sm text-gray-500 font-medium">Therapies</p>
             </motion.div>
@@ -1186,9 +1297,23 @@ const AssessmentCalendar = () => {
             transition={{ delay: 0.5 }}
             className="text-lg font-semibold text-gray-900 mb-4"
           >
-            All Appointments
+            All Appointments ({selectedUser.assessments?.length || 0})
           </motion.h4>
           
+          {(!selectedUser.assessments || selectedUser.assessments.length === 0) ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="bg-gray-50 p-8 rounded-2xl text-center"
+            >
+              <FiCalendar className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+              <p className="text-gray-500">No appointments found for this user</p>
+              <p className="text-sm text-gray-400 mt-1">
+                Calendar events will appear here when scheduled
+              </p>
+            </motion.div>
+          ) : (
           <div className="space-y-4">
             {selectedUser.assessments
               .sort((a, b) => new Date(b.date) - new Date(a.date))
@@ -1252,18 +1377,76 @@ const AssessmentCalendar = () => {
                             {assessment.type}
                           </span>
                         )}
+                        
+                        {/* Assessment Details Grid */}
+                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                          {assessment.packageName && (
+                            <div className="flex items-center space-x-1 text-gray-600">
+                              <FiPackage className="w-3 h-3" />
+                              <span className="font-medium">Package:</span>
+                              <span>{assessment.packageName}</span>
+                            </div>
+                          )}
+                          {assessment.tools && assessment.tools.length > 0 && (
+                            <div className="flex items-center space-x-1 text-gray-600">
+                              <FiTool className="w-3 h-3" />
+                              <span className="font-medium">Tools:</span>
+                              <span>{assessment.tools.join(', ')}</span>
+                            </div>
+                          )}
+                          {assessment.status && (
+                            <div className="flex items-center space-x-1">
+                              <span className="font-medium text-gray-600">Status:</span>
+                              <span className={`px-1.5 py-0.5 rounded text-xs ${
+                                assessment.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                assessment.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                assessment.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                                'bg-gray-100 text-gray-700'
+                              }`}>
+                                {assessment.status}
+                              </span>
+                            </div>
+                          )}
+                          {assessment.invoiceSent && (
+                            <div className="flex items-center space-x-1 text-green-600">
+                              <FiMail className="w-3 h-3" />
+                              <span>Invoice Sent</span>
+                            </div>
+                          )}
+                          {assessment.paymentStatus && (
+                            <div className="flex items-center space-x-1">
+                              <span className="font-medium text-gray-600">Payment:</span>
+                              <span className={`${assessment.paymentStatus === 'paid' ? 'text-green-600' : 'text-red-600'}`}>
+                                {assessment.paymentStatus}
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                     
-                    {assessment.notes && (
-                      <div className="max-w-[200px]">
-                        <p className="text-xs text-gray-400 line-clamp-2">{assessment.notes}</p>
-                      </div>
-                    )}
+                    <div className="flex flex-col items-end space-y-2 min-w-[120px]">
+                      {assessment.notes && (
+                        <div className="bg-gray-50 p-2 rounded-lg max-w-[180px]">
+                          <p className="text-xs text-gray-500 line-clamp-3">{assessment.notes}</p>
+                        </div>
+                      )}
+                      {assessment.amount && (
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-gray-900">₹{assessment.amount}</p>
+                          {assessment.discount > 0 && (
+                            <p className="text-xs text-green-600">-{assessment.discount}% off</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               ))}
           </div>
+          )}
+          </>
+          )}
         </motion.div>
       )}
 
