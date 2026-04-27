@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 // ── tiny helpers ──────────────────────────────────────────────────────────────
 const Cell = ({ children, bold, italic, colSpan, rowSpan, className = "", style = {} }) => (
@@ -153,18 +153,96 @@ const MilestoneRow = ({ label, data, setData }) => (
 );
 
 // ─── Main Component ──────────────────────────────────────────────────────────
-export default function ExamineeReportForm() {
+export default function ExamineeReportForm({
+  formData = {},
+  evaluationData = {},
+  diagnosisData = {},
+  historyData = {},
+  languageSampleReportData = {},
+  educationSampleReportData = {},
+  healthSampleReportData = {},
+  employmentSampleReportData = {},
+}) {
   const printRef = useRef();
 
-  // ── Section I
+  // Calculate age from birthDate
+  const calculateAge = (birthDate) => {
+    if (!birthDate) return "";
+    const birth = new Date(birthDate);
+    const today = new Date();
+    let years = today.getFullYear() - birth.getFullYear();
+    let months = today.getMonth() - birth.getMonth();
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+    return `${years} years ${months} months`;
+  };
+
+  // Determine if emergency contact is father or mother based on relation
+  const emergencyRelation = (formData.emergencyContactRelation || "").toLowerCase();
+  const isEmergencyContactFather = emergencyRelation.includes("father") || emergencyRelation.includes("dad") || emergencyRelation.includes("papa") || emergencyRelation.includes("husband");
+  const isEmergencyContactMother = emergencyRelation.includes("mother") || emergencyRelation.includes("mom") || emergencyRelation.includes("mum") || emergencyRelation.includes("wife");
+
+  // ── Section I - initialized with formData
   const [s1, setS1] = useState({
-    childName: "", birthDate: "", age: "", nationality: "", gender: "",
-    schoolName: "", schoolCategory: "", handedness: "", grade: "",
-    motherTongue: "", languageHome: "", previousReports: "",
-    fatherName: "", fatherPhone: "", fatherEmail: "", fatherEdu: "", fatherProf: "",
-    motherName: "", motherPhone: "", motherEmail: "", motherEdu: "", motherProf: "",
-    address: "", formBy: "", referredBy: "",
+    childName: formData.firstName && formData.lastName ? `${formData.firstName} ${formData.lastName}` : formData.firstName || "",
+    birthDate: formData.birthDate || "",
+    age: calculateAge(formData.birthDate),
+    nationality: "",
+    gender: formData.gender || "",
+    schoolName: formData.schoolName || "",
+    schoolCategory: "",
+    handedness: "",
+    grade: formData.grade || "",
+    motherTongue: formData.languageOfTesting || "",
+    languageHome: "",
+    previousReports: "",
+    // Father - if emergency contact is father, use emergency contact details
+    fatherName: isEmergencyContactFather ? formData.emergencyContactName || "" : "",
+    fatherPhone: isEmergencyContactFather ? formData.emergencyContactPhone || "" : formData.phone || "",
+    fatherEmail: isEmergencyContactFather ? "" : formData.email || "",
+    fatherEdu: educationSampleReportData.fatherEducation || "",
+    fatherProf: "",
+    // Mother - if emergency contact is mother, use emergency contact details
+    motherName: isEmergencyContactMother ? formData.emergencyContactName || "" : "",
+    motherPhone: isEmergencyContactMother ? formData.emergencyContactPhone || "" : "",
+    motherEmail: "",
+    motherEdu: educationSampleReportData.motherEducation || "",
+    motherProf: "",
+    address: formData.address ? `${formData.address}${formData.city ? ', ' + formData.city : ''}${formData.state ? ', ' + formData.state : ''}` : "",
+    formBy: "",
+    referredBy: historyData.referralSourceName || "",
   });
+
+  // Update s1 when formData changes
+  useEffect(() => {
+    const relation = (formData.emergencyContactRelation || "").toLowerCase();
+    const isFather = relation.includes("father") || relation.includes("dad") || relation.includes("papa") || relation.includes("husband");
+    const isMother = relation.includes("mother") || relation.includes("mom") || relation.includes("mum") || relation.includes("wife");
+
+    setS1(prev => ({
+      ...prev,
+      childName: formData.firstName && formData.lastName ? `${formData.firstName} ${formData.lastName}` : formData.firstName || prev.childName,
+      birthDate: formData.birthDate || prev.birthDate,
+      age: calculateAge(formData.birthDate) || prev.age,
+      gender: formData.gender || prev.gender,
+      schoolName: formData.schoolName || prev.schoolName,
+      grade: formData.grade || prev.grade,
+      motherTongue: formData.languageOfTesting || prev.motherTongue,
+      // Update father info if emergency contact is father
+      fatherName: isFather ? formData.emergencyContactName || prev.fatherName : prev.fatherName,
+      fatherPhone: isFather ? formData.emergencyContactPhone || prev.fatherPhone : formData.phone || prev.fatherPhone,
+      fatherEmail: isFather ? prev.fatherEmail : formData.email || prev.fatherEmail,
+      fatherEdu: educationSampleReportData.fatherEducation || prev.fatherEdu,
+      // Update mother info if emergency contact is mother
+      motherName: isMother ? formData.emergencyContactName || prev.motherName : prev.motherName,
+      motherPhone: isMother ? formData.emergencyContactPhone || prev.motherPhone : prev.motherPhone,
+      motherEdu: educationSampleReportData.motherEducation || prev.motherEdu,
+      address: formData.address ? `${formData.address}${formData.city ? ', ' + formData.city : ''}${formData.state ? ', ' + formData.state : ''}` : prev.address,
+      referredBy: historyData.referralSourceName || prev.referredBy,
+    }));
+  }, [formData, historyData, educationSampleReportData]);
 
   // ── Section II – Academic Concerns (per row: {yn, comment})
   const acInit = (label) => ({ label, yn: "", comment: "" });
@@ -288,8 +366,87 @@ export default function ExamineeReportForm() {
     togetherActivities: "", acknowledgeBehaviour: "", primaryDisciplinarian: "",
     disciplineStrategies: "", pediatrician: "", otherInfo: "",
     howFoundOut: "", schoolRecords: "",
-    parentName: "", signature: "", date: "",
+    parentName: formData.emergencyContactName || "", signature: "", date: new Date().toLocaleDateString("en-IN"),
   });
+
+  // ── Pre-fill all sections from available state data ──
+  useEffect(() => {
+    // Section II - Academic Concerns from evaluationData
+    const evalConcerns = evaluationData || {};
+    if (evalConcerns.academicConcerns?.maths || evalConcerns.academicConcerns?.reading || 
+        evalConcerns.academicConcerns?.writing || evalConcerns.academicConcerns?.general) {
+      setS2(prev => ({
+        ...prev,
+        generalComments: [
+          evalConcerns.academicConcerns?.maths && "Mathematics concerns present",
+          evalConcerns.academicConcerns?.reading && "Reading concerns present",
+          evalConcerns.academicConcerns?.writing && "Writing concerns present",
+          evalConcerns.academicConcerns?.general && "General academic concerns present",
+        ].filter(Boolean).join(". ") || prev.generalComments,
+      }));
+    }
+
+    // Section III - Family History from historyData
+    if (historyData) {
+      setS3(prev => ({
+        ...prev,
+        historyLearning: {
+          ...prev.historyLearning,
+          learningDiff: historyData.schoolRelatedConcerns || prev.historyLearning.learningDiff,
+          attentionProb: historyData.cognitiveConcerns || prev.historyLearning.attentionProb,
+          emotional: historyData.socialEmotionalConcerns || prev.historyLearning.emotional,
+        },
+      }));
+    }
+
+    // Section IV - Medical from healthSampleReportData
+    if (healthSampleReportData) {
+      setS4(prev => ({
+        ...prev,
+        langDiff: healthSampleReportData.additionalInfo || prev.langDiff,
+        majorIllnesses: [
+          ...(healthSampleReportData.pastDiagnosed || []),
+          ...(healthSampleReportData.currentDiagnosed || []),
+        ].join(", ") || prev.majorIllnesses,
+        medications: healthSampleReportData.currentMedications || prev.medications,
+      }));
+    }
+
+    // Section V - Educational from educationSampleReportData
+    if (educationSampleReportData) {
+      setS5(prev => ({
+        ...prev,
+        prevSchools: educationSampleReportData.schoolName ? 
+          [{ name: educationSampleReportData.schoolName, grade: educationSampleReportData.currentYear || "" }, ...prev.prevSchools.slice(1)] : 
+          prev.prevSchools,
+        currentSchoolSatisfied: educationSampleReportData.currentPerformance ? "YES" : prev.currentSchoolSatisfied,
+        satisfactionComments: educationSampleReportData.currentPerformance || prev.satisfactionComments,
+        difficultSubjects: [
+          ...(educationSampleReportData.personalWeaknesses || []),
+          ...(educationSampleReportData.learningDisabilities || []),
+        ].join(", ") || prev.difficultSubjects,
+      }));
+    }
+
+    // Section VI - Behaviour from evaluationData
+    if (evalConcerns.behaviourConcerns || evalConcerns.mentalHealth) {
+      setS6(prev => ({
+        ...prev,
+        behaviourConcerns: [
+          evalConcerns.behaviourConcerns?.aggression && "Aggression",
+          evalConcerns.behaviourConcerns?.attentionHyperactivity && "Attention/Hyperactivity",
+          evalConcerns.mentalHealth?.anxiety && "Anxiety",
+          evalConcerns.mentalHealth?.depression && "Depression",
+        ].filter(Boolean).join(". ") || prev.behaviourConcerns,
+      }));
+    }
+
+    // Section VII - Other
+    setS7(prev => ({
+      ...prev,
+      parentName: formData.emergencyContactName || prev.parentName,
+    }));
+  }, [evaluationData, historyData, healthSampleReportData, educationSampleReportData, formData]);
 
   // ── Export to HTML (printable)
   const handlePrint = () => window.print();
