@@ -789,6 +789,155 @@ export default function ExamineeReportForm({
             <td style="border: 1px solid #555; padding: 4px;">${radioSymbol(s4.prenatal?.falls, true)} Falls / Fainting spells</td>
             <td style="border: 1px solid #555; padding: 4px;">${radioSymbol(s4.prenatal?.thyroid, true)} Thyroid</td>
           </tr>
+          <!-- Post-natal -->
+          <tr>
+            <td rowspan="2" style="border: 1px solid #555; padding: 5px; font-weight: bold;">b) Post-natal</td>
+            <td colspan="2" style="border: 1px solid #555; padding: 5px; font-weight: bold;">Describe Mother's health during delivery (any complications):</td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #555; padding: 4px;">${radioSymbol(s4.postnatal?.fullTerm, true)} Delivery - Full term</td>
+            <td style="border: 1px solid #555; padding: 4px;">${radioSymbol(s4.postnatal?.cSection, true)} C-section</td>
+          </tr>
+          <!-- Birth details -->
+          <tr>
+            <td rowspan="2" style="border: 1px solid #555; padding: 5px; font-weight: bold;">c) Birth details</td>
+            <td style="border: 1px solid #555; padding: 4px; font-weight: bold;">Weight of examinee:</td>
+            <td style="border: 1px solid #555; padding: 4px;">
+              ${radioSymbol(s4.birth?.weight, "Average")} Average  
+              ${radioSymbol(s4.birth?.weight, "Low")} Low
+            </td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #555; padding: 4px; font-weight: bold;">Cry of examinee:</td>
+            <td style="border: 1px solid #555; padding: 4px;">
+              ${radioSymbol(s4.birth?.cry, "Immediate")} Immediate  
+              ${radioSymbol(s4.birth?.cry, "Delayed")} Delayed
+            </td>
+          </tr>
+        </table>
+
+        <!-- Developmental Milestones -->
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; table-layout: fixed; border: 1px solid #555;">
+          <tr>
+            <td colspan="7" style="border: 1px solid #555; padding: 5px; font-weight: bold; background: #f5f5f5;">Developmental Milestones</td>
+          </tr>
+          <tr style="background: #f0f0f0;">
+            <td style="border: 1px solid #555; padding: 4px; font-weight: bold; width: 30%;">Milestone</td>
+            <td style="border: 1px solid #555; padding: 4px; font-weight: bold; width: 10%;">Early</td>
+            <td style="border: 1px solid #555; padding: 4px; font-weight: bold; width: 10%;">Normal</td>
+            <td style="border: 1px solid #555; padding: 4px; font-weight: bold; width: 10%;">Average</td>
+            <td style="border: 1px solid #555; padding: 4px; font-weight: bold; width: 10%;">Delayed</td>
+            <td style="border: 1px solid #555; padding: 4px; font-weight: bold; width: 15%;">Age Achieved</td>
+            <td style="border: 1px solid #555; padding: 4px; font-weight: bold; width: 15%;">Comments</td>
+          </tr>
+          ${Array.isArray(s4.milestones) ? s4.milestones.map((m, i) => `
+            <tr>
+              <td style="border: 1px solid #555; padding: 4px;">${i + 1}. ${m.label || m.name || 'Milestone'}</td>
+              <td style="border: 1px solid #555; padding: 4px; text-align: center;">${radioSymbol(m.timing, "early")}</td>
+              <td style="border: 1px solid #555; padding: 4px; text-align: center;">${radioSymbol(m.timing, "normal")}</td>
+              <td style="border: 1px solid #555; padding: 4px; text-align: center;">${radioSymbol(m.timing, "average")}</td>
+              <td style="border: 1px solid #555; padding: 4px; text-align: center;">${radioSymbol(m.timing, "delayed")}</td>
+              <td style="border: 1px solid #555; padding: 4px;">${m.age || m.ageAchieved || ''}</td>
+              <td style="border: 1px solid #555; padding: 4px;">${m.comments || ''}</td>
+            </tr>
+          `).join('') : Object.entries(s4.milestones || {}).map(([key, m], i) => `
+            <tr>
+              <td style="border: 1px solid #555; padding: 4px;">${i + 1}. ${key}</td>
+              <td style="border: 1px solid #555; padding: 4px; text-align: center;">${radioSymbol(m?.timing, "early")}</td>
+              <td style="border: 1px solid #555; padding: 4px; text-align: center;">${radioSymbol(m?.timing, "normal")}</td>
+              <td style="border: 1px solid #555; padding: 4px; text-align: center;">${radioSymbol(m?.timing, "average")}</td>
+              <td style="border: 1px solid #555; padding: 4px; text-align: center;">${radioSymbol(m?.timing, "delayed")}</td>
+              <td style="border: 1px solid #555; padding: 4px;">${m?.age || m?.ageAchieved || ''}</td>
+              <td style="border: 1px solid #555; padding: 4px;">${m?.comments || ''}</td>
+            </tr>
+          `).join('')}
+        </table>
+
+        <!-- Section V: Educational History -->
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; table-layout: fixed; border: 1px solid #555;">
+          <tr>
+            <td colspan="2" style="border: 1px solid #555; padding: 5px; font-weight: bold; background: #f5f5f5;">Section V: EDUCATIONAL HISTORY</td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #555; padding: 5px; width: 40%; font-weight: bold;">Name of School/Institution:</td>
+            <td style="border: 1px solid #555; padding: 5px;">${s5.schoolName || ''}</td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #555; padding: 5px; font-weight: bold;">Type of School:</td>
+            <td style="border: 1px solid #555; padding: 5px;">
+              ${radioSymbol(s5.schoolType, "Mainstream")} Mainstream  
+              ${radioSymbol(s5.schoolType, "Special")} Special  
+              ${radioSymbol(s5.schoolType, "Home-schooled")} Home-schooled
+            </td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #555; padding: 5px; font-weight: bold;">Academic Performance:</td>
+            <td style="border: 1px solid #555; padding: 5px;">
+              ${radioSymbol(s5.performance, "Excellent")} Excellent  
+              ${radioSymbol(s5.performance, "Average")} Average  
+              ${radioSymbol(s5.performance, "Below Average")} Below Average
+            </td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #555; padding: 5px; font-weight: bold;">Any academic concerns:</td>
+            <td style="border: 1px solid #555; padding: 5px;">${s5.concerns || ''}</td>
+          </tr>
+        </table>
+
+        <!-- Section VI: Behaviour -->
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; table-layout: fixed; border: 1px solid #555;">
+          <tr>
+            <td colspan="2" style="border: 1px solid #555; padding: 5px; font-weight: bold; background: #f5f5f5;">Section VI: BEHAVIOUR AND PSYCHOLOGICAL CONCERNS</td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #555; padding: 5px; width: 50%;">
+              <div style="font-weight: bold; margin-bottom: 5px;">Tick relevant problem:</div>
+              <div>${radioSymbol(s6.buttoning, true)} Buttoning</div>
+              <div>${radioSymbol(s6.cycling, true)} Cycling</div>
+              <div>${radioSymbol(s6.tying, true)} Tying laces</div>
+              <div>${radioSymbol(s6.hyperactive, true)} Hyperactive</div>
+              <div>${radioSymbol(s6.aggressive, true)} Aggressive</div>
+              <div>${radioSymbol(s6.anxious, true)} Anxious</div>
+              <div>${radioSymbol(s6.speechDelay, true)} Speech delay</div>
+              <div>${radioSymbol(s6.socialWithdrawal, true)} Social withdrawal</div>
+            </td>
+            <td style="border: 1px solid #555; padding: 5px; width: 50%;">
+              <div style="font-weight: bold; margin-bottom: 5px;">Eye/Hand Coordination:</div>
+              <div>${radioSymbol(s6.coordination, "Organised")} Organised  ${radioSymbol(s6.coordination, "Disorganised")} Disorganised</div>
+              <br/>
+              <div style="font-weight: bold;">Emotional State:</div>
+              <div>${radioSymbol(s6.emotionalState, "Stable")} Stable  ${radioSymbol(s6.emotionalState, "Anxious")} Anxious</div>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="2" style="border: 1px solid #555; padding: 5px;">
+              <b>Other problems/concerns:</b><br/>
+              ${s6.other || ''}
+            </td>
+          </tr>
+        </table>
+
+        <!-- Section VII: Other Information -->
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; table-layout: fixed; border: 1px solid #555;">
+          <tr>
+            <td colspan="2" style="border: 1px solid #555; padding: 5px; font-weight: bold; background: #f5f5f5;">Section VII: OTHER INFORMATION</td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #555; padding: 5px; font-weight: bold; width: 40%;">Parent's name:</td>
+            <td style="border: 1px solid #555; padding: 5px;">${s7.parentName || ''}</td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #555; padding: 5px; font-weight: bold;">Contact number:</td>
+            <td style="border: 1px solid #555; padding: 5px;">${s7.parentContact || ''}</td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #555; padding: 5px; font-weight: bold;">Email:</td>
+            <td style="border: 1px solid #555; padding: 5px; word-break: break-all;">${s7.parentEmail || ''}</td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #555; padding: 5px; font-weight: bold;">Any other relevant information:</td>
+            <td style="border: 1px solid #555; padding: 5px;">${s7.otherInfo || ''}</td>
+          </tr>
         </table>
 
         <div style="font-size: 9px; text-align: center; margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px;">
