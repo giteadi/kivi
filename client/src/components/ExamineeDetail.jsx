@@ -73,7 +73,8 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       childhoodDisintegrative: false,
       pervasiveDevelopmental: false,
       retts: false,
-      other: false
+      other: false,
+      otherText: ''
     },
     behaviourEmotional: {
       adhd: false,
@@ -86,10 +87,13 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       pathologicalGambling: false,
       pyromania: false,
       trichotillomania: false,
-      other: false
+      other: false,
+      otherText: ''
     },
     giftedTalented: {
-      gifted: false
+      gifted: false,
+      other: false,
+      otherText: ''
     },
     intellectualDisability: {
       borderline: false,
@@ -98,14 +102,16 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       moderate: false,
       profound: false,
       severe: false,
-      other: false
+      other: false,
+      otherText: ''
     },
     languageDelay: {
       expressive: false,
       delay: false,
       mixed: false,
       phonological: false,
-      other: false
+      other: false,
+      otherText: ''
     },
     learningDisability: {
       reading: false,
@@ -113,7 +119,8 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       disorder: false,
       writing: false,
       nonverbal: false,
-      other: false
+      other: false,
+      otherText: ''
     },
     moodRelated: {
       acuteStress: false,
@@ -135,7 +142,8 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       socialPhobia: false,
       somatization: false,
       specificPhobia: false,
-      other: false
+      other: false,
+      otherText: ''
     },
     motorDelay: {
       developmentalCoordination: false,
@@ -144,7 +152,8 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       paraplegia: false,
       quadriplegia: false,
       stereotypic: false,
-      other: false
+      other: false,
+      otherText: ''
     },
     personalityDisorders: {
       antisocial: false,
@@ -158,7 +167,8 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       paranoid: false,
       schizoid: false,
       schizotypal: false,
-      other: false
+      other: false,
+      otherText: ''
     },
     schizophrenia: {
       briefPsychotic: false,
@@ -170,7 +180,8 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       residual: false,
       undifferentiated: false,
       schizophreniform: false,
-      other: false
+      other: false,
+      otherText: ''
     },
     speech: {
       aphasia: false,
@@ -182,7 +193,8 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       fluency: false,
       receptive: false,
       voice: false,
-      other: false
+      other: false,
+      otherText: ''
     },
     substanceAbuse: {
       alcoholAbuse: false,
@@ -191,14 +203,16 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       polysubstanceDependence: false,
       substanceAbuse: false,
       substanceDependence: false,
-      other: false
+      other: false,
+      otherText: ''
     },
     traumaticBrainInjury: {
       tbi: false,
       mild: false,
       moderate: false,
       severe: false,
-      other: false
+      other: false,
+      otherText: ''
     },
     other: {
       adjustment: false,
@@ -223,7 +237,9 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       stroke: false,
       tic: false,
       tourettes: false,
-      vascularDementia: false
+      vascularDementia: false,
+      other: false,
+      otherText: ''
     }
   });
   const [expandedDiagnoses, setExpandedDiagnoses] = useState({
@@ -530,6 +546,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             pervasiveDevelopmental: false,
             retts: false,
             other: false,
+            otherText: '',
             // If old format had this as true, mark all sub-options as true for backward compatibility
             ...(safeDiagData.autismSpectrum ? { aspergers: true, autistic: true, childhoodDisintegrative: true, pervasiveDevelopmental: true, retts: true, other: true } : {})
           },
@@ -545,10 +562,13 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             pyromania: false,
             trichotillomania: false,
             other: false,
+            otherText: '',
             ...(safeDiagData.behaviourEmotional ? { adhd: true, conduct: true, disruptive: true, emotional: true, intermittentExplosive: true, kleptomania: true, oppositionalDefiant: true, pathologicalGambling: true, pyromania: true, trichotillomania: true, other: true } : {})
           },
           giftedTalented: {
             gifted: false,
+            other: false,
+            otherText: '',
             ...(safeDiagData.giftedTalented ? { gifted: true } : {})
           },
           intellectualDisability: {
@@ -559,6 +579,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             profound: false,
             severe: false,
             other: false,
+            otherText: '',
             ...(safeDiagData.intellectualDisability ? { borderline: true, cognitiveDelay: true, mild: true, moderate: true, profound: true, severe: true, other: true } : {})
           },
           languageDelay: {
@@ -567,6 +588,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             mixed: false,
             phonological: false,
             other: false,
+            otherText: '',
             ...(safeDiagData.languageDelay ? { expressive: true, delay: true, mixed: true, phonological: true, other: true } : {})
           },
           learningDisability: {
@@ -576,6 +598,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             writing: false,
             nonverbal: false,
             other: false,
+            otherText: '',
             ...(safeDiagData.learningDisability ? { reading: true, mathematics: true, disorder: true, writing: true, nonverbal: true, other: true } : {})
           },
           moodRelated: {
@@ -599,6 +622,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             somatization: false,
             specificPhobia: false,
             other: false,
+            otherText: '',
             ...(safeDiagData.moodRelated ? { acuteStress: true, agoraphobia: true, anorexia: true, bipolar: true, bulimia: true, conversion: true, cyclothymic: true, depressive: true, dysthymic: true, generalizedAnxiety: true, majorDepressive: true, ocd: true, pain: true, panic: true, ptsd: true, separationAnxiety: true, socialPhobia: true, somatization: true, specificPhobia: true, other: true } : {})
           },
           motorDelay: {
@@ -609,6 +633,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             quadriplegia: false,
             stereotypic: false,
             other: false,
+            otherText: '',
             ...(safeDiagData.motorDelay ? { developmentalCoordination: true, dyspraxia: true, motorDelay: true, paraplegia: true, quadriplegia: true, stereotypic: true, other: true } : {})
           },
           personalityDisorders: {
@@ -624,6 +649,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             schizoid: false,
             schizotypal: false,
             other: false,
+            otherText: '',
             ...(safeDiagData.personalityDisorders ? { antisocial: true, avoidant: true, borderline: true, dependent: true, histrionic: true, narcissistic: true, ocd: true, ocpd: true, paranoid: true, schizoid: true, schizotypal: true, other: true } : {})
           },
           schizophrenia: {
@@ -637,6 +663,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             undifferentiated: false,
             schizophreniform: false,
             other: false,
+            otherText: '',
             ...(safeDiagData.schizophrenia ? { briefPsychotic: true, delusional: true, schizoaffective: true, catatonic: true, disorganized: true, paranoid: true, residual: true, undifferentiated: true, schizophreniform: true, other: true } : {})
           },
           speech: {
@@ -650,6 +677,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             receptive: false,
             voice: false,
             other: false,
+            otherText: '',
             ...(safeDiagData.speech ? { aphasia: true, apraxia: true, articulation: true, brocas: true, centralAuditory: true, dysarthria: true, fluency: true, receptive: true, voice: true, other: true } : {})
           },
           substanceAbuse: {
@@ -660,6 +688,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             substanceAbuse: false,
             substanceDependence: false,
             other: false,
+            otherText: '',
             ...(safeDiagData.substanceAbuse ? { alcoholAbuse: true, alcoholDependence: true, polysubstanceAbuse: true, polysubstanceDependence: true, substanceAbuse: true, substanceDependence: true, other: true } : {})
           },
           traumaticBrainInjury: {
@@ -668,6 +697,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             moderate: false,
             severe: false,
             other: false,
+            otherText: '',
             ...(safeDiagData.traumaticBrainInjury ? { tbi: true, mild: true, moderate: true, severe: true, other: true } : {})
           },
           other: {
@@ -694,6 +724,8 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             tic: false,
             tourettes: false,
             vascularDementia: false,
+            other: false,
+            otherText: '',
             ...(safeDiagData.other ? { adjustment: true, cognitive: true, creutzfeldtJakob: true, alzheimers: true, depersonalization: true, dissociative: true, epilepsy: true, factitious: true, genderIdentity: true, huntingtons: true, leftStroke: true, leftEpilepsy: true, mildCognitive: true, parkinsons: true, picks: true, insomnia: true, rightStroke: true, rightEpilepsy: true, seizure: true, stroke: true, tic: true, tourettes: true, vascularDementia: true } : {})
           }
         };
@@ -708,6 +740,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             pervasiveDevelopmental: false,
             retts: false,
             other: false,
+            otherText: '',
             ...(safeDiagData.autismSpectrum || {})
           },
           behaviourEmotional: {
@@ -722,10 +755,13 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             pyromania: false,
             trichotillomania: false,
             other: false,
+            otherText: '',
             ...(safeDiagData.behaviourEmotional || {})
           },
           giftedTalented: {
             gifted: false,
+            other: false,
+            otherText: '',
             ...(safeDiagData.giftedTalented || {})
           },
           intellectualDisability: {
@@ -736,6 +772,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             profound: false,
             severe: false,
             other: false,
+            otherText: '',
             ...(safeDiagData.intellectualDisability || {})
           },
           languageDelay: {
@@ -744,6 +781,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             mixed: false,
             phonological: false,
             other: false,
+            otherText: '',
             ...(safeDiagData.languageDelay || {})
           },
           learningDisability: {
@@ -753,6 +791,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             writing: false,
             nonverbal: false,
             other: false,
+            otherText: '',
             ...(safeDiagData.learningDisability || {})
           },
           moodRelated: {
@@ -776,6 +815,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             somatization: false,
             specificPhobia: false,
             other: false,
+            otherText: '',
             ...(safeDiagData.moodRelated || {})
           },
           motorDelay: {
@@ -786,6 +826,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             quadriplegia: false,
             stereotypic: false,
             other: false,
+            otherText: '',
             ...(safeDiagData.motorDelay || {})
           },
           personalityDisorders: {
@@ -801,6 +842,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             schizoid: false,
             schizotypal: false,
             other: false,
+            otherText: '',
             ...(safeDiagData.personalityDisorders || {})
           },
           schizophrenia: {
@@ -814,6 +856,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             undifferentiated: false,
             schizophreniform: false,
             other: false,
+            otherText: '',
             ...(safeDiagData.schizophrenia || {})
           },
           speech: {
@@ -827,6 +870,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             receptive: false,
             voice: false,
             other: false,
+            otherText: '',
             ...(safeDiagData.speech || {})
           },
           substanceAbuse: {
@@ -837,6 +881,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             substanceAbuse: false,
             substanceDependence: false,
             other: false,
+            otherText: '',
             ...(safeDiagData.substanceAbuse || {})
           },
           traumaticBrainInjury: {
@@ -845,6 +890,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             moderate: false,
             severe: false,
             other: false,
+            otherText: '',
             ...(safeDiagData.traumaticBrainInjury || {})
           },
           other: {
@@ -871,6 +917,8 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
             tic: false,
             tourettes: false,
             vascularDementia: false,
+            other: false,
+            otherText: '',
             ...(safeDiagData.other || {})
           }
         };
@@ -988,6 +1036,39 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
         [subOption]: !prev[category][subOption]
       }
     }));
+  };
+
+  const handleDiagnosisTextChange = (category, text) => {
+    setDiagnosisData(prev => ({
+      ...prev,
+      [category]: { ...prev[category], otherText: text }
+    }));
+  };
+
+  const addDiagnosisOption = (category) => {
+    if (diagnosisData[category].otherText && diagnosisData[category].otherText.trim()) {
+      const newOption = diagnosisData[category].otherText.trim();
+      setDiagnosisData(prev => ({
+        ...prev,
+        [category]: {
+          ...prev[category],
+          [newOption]: true,
+          other: false,
+          otherText: ''
+        }
+      }));
+    }
+  };
+
+  const removeDiagnosisOption = (category, option) => {
+    setDiagnosisData(prev => {
+      const newCategory = { ...prev[category] };
+      delete newCategory[option];
+      return {
+        ...prev,
+        [category]: newCategory
+      };
+    });
   };
 
   const toggleDiagnosisCategory = (category) => {
@@ -3164,7 +3245,55 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                   onChange={() => toggleDiagnosis('autismSpectrum', 'other')}
                                 />
                                 Other
+                                <button
+                                  type="button"
+                                  onClick={() => removeDiagnosisOption('autismSpectrum', 'other')}
+                                  className="text-red-500 hover:text-red-700 text-xs"
+                                >
+                                  ✕
+                                </button>
                               </label>
+                              {diagnosisData.autismSpectrum.other && (
+                                <div className="ml-6 w-full space-y-2">
+                                  <input
+                                    type="text"
+                                    value={diagnosisData.autismSpectrum.otherText}
+                                    onChange={(e) => handleDiagnosisTextChange('autismSpectrum', e.target.value)}
+                                    placeholder="Please specify..."
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => addDiagnosisOption('autismSpectrum')}
+                                    className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  >
+                                    + Add as new checkbox option
+                                  </button>
+                                </div>
+                              )}
+                              {/* Dynamic checkboxes */}
+                              {Object.keys(diagnosisData.autismSpectrum)
+                                .filter(key => !['aspergers', 'autistic', 'childhoodDisintegrative', 'pervasiveDevelopmental', 'retts', 'other', 'otherText'].includes(key))
+                                .map(key => (
+                                  <div key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input 
+                                        type="checkbox" 
+                                        className="rounded border-gray-300"
+                                        checked={diagnosisData.autismSpectrum[key]}
+                                        onChange={() => toggleDiagnosis('autismSpectrum', key)}
+                                      />
+                                      {key}
+                                    </label>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeDiagnosisOption('autismSpectrum', key)}
+                                      className="text-red-500 hover:text-red-700 text-xs"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ))}
                             </div>
                           )}
                         </div>
@@ -3278,7 +3407,55 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                   onChange={() => toggleDiagnosis('behaviourEmotional', 'other')}
                                 />
                                 Other
+                                <button
+                                  type="button"
+                                  onClick={() => removeDiagnosisOption('behaviourEmotional', 'other')}
+                                  className="text-red-500 hover:text-red-700 text-xs"
+                                >
+                                  ✕
+                                </button>
                               </label>
+                              {diagnosisData.behaviourEmotional.other && (
+                                <div className="ml-6 w-full space-y-2">
+                                  <input
+                                    type="text"
+                                    value={diagnosisData.behaviourEmotional.otherText}
+                                    onChange={(e) => handleDiagnosisTextChange('behaviourEmotional', e.target.value)}
+                                    placeholder="Please specify..."
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => addDiagnosisOption('behaviourEmotional')}
+                                    className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  >
+                                    + Add as new checkbox option
+                                  </button>
+                                </div>
+                              )}
+                              {/* Dynamic checkboxes */}
+                              {Object.keys(diagnosisData.behaviourEmotional)
+                                .filter(key => !['adhd', 'conduct', 'disruptive', 'emotional', 'intermittentExplosive', 'kleptomania', 'oppositionalDefiant', 'pathologicalGambling', 'pyromania', 'trichotillomania', 'other', 'otherText'].includes(key))
+                                .map(key => (
+                                  <div key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input 
+                                        type="checkbox" 
+                                        className="rounded border-gray-300"
+                                        checked={diagnosisData.behaviourEmotional[key]}
+                                        onChange={() => toggleDiagnosis('behaviourEmotional', key)}
+                                      />
+                                      {key}
+                                    </label>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeDiagnosisOption('behaviourEmotional', key)}
+                                      className="text-red-500 hover:text-red-700 text-xs"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ))}
                             </div>
                           )}
                         </div>
@@ -3356,7 +3533,55 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                   onChange={() => toggleDiagnosis('intellectualDisability', 'other')}
                                 />
                                 Other
+                                <button
+                                  type="button"
+                                  onClick={() => removeDiagnosisOption('intellectualDisability', 'other')}
+                                  className="text-red-500 hover:text-red-700 text-xs"
+                                >
+                                  ✕
+                                </button>
                               </label>
+                              {diagnosisData.intellectualDisability.other && (
+                                <div className="ml-6 w-full space-y-2">
+                                  <input
+                                    type="text"
+                                    value={diagnosisData.intellectualDisability.otherText}
+                                    onChange={(e) => handleDiagnosisTextChange('intellectualDisability', e.target.value)}
+                                    placeholder="Please specify..."
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => addDiagnosisOption('intellectualDisability')}
+                                    className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  >
+                                    + Add as new checkbox option
+                                  </button>
+                                </div>
+                              )}
+                              {/* Dynamic checkboxes */}
+                              {Object.keys(diagnosisData.intellectualDisability)
+                                .filter(key => !['borderline', 'cognitiveDelay', 'mild', 'moderate', 'profound', 'severe', 'other', 'otherText'].includes(key))
+                                .map(key => (
+                                  <div key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input 
+                                        type="checkbox" 
+                                        className="rounded border-gray-300"
+                                        checked={diagnosisData.intellectualDisability[key]}
+                                        onChange={() => toggleDiagnosis('intellectualDisability', key)}
+                                      />
+                                      {key}
+                                    </label>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeDiagnosisOption('intellectualDisability', key)}
+                                      className="text-red-500 hover:text-red-700 text-xs"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ))}
                             </div>
                           )}
                         </div>
@@ -3376,11 +3601,59 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                 <input 
                                   type="checkbox" 
                                   className="rounded border-gray-300"
-                                  checked={diagnosisData.giftedTalented.gifted}
-                                  onChange={() => toggleDiagnosis('giftedTalented', 'gifted')}
+                                  checked={diagnosisData.giftedTalented.other}
+                                  onChange={() => toggleDiagnosis('giftedTalented', 'other')}
                                 />
-                                Gifted and Talented
+                                Other
+                                <button
+                                  type="button"
+                                  onClick={() => removeDiagnosisOption('giftedTalented', 'other')}
+                                  className="text-red-500 hover:text-red-700 text-xs"
+                                >
+                                  ✕
+                                </button>
                               </label>
+                              {diagnosisData.giftedTalented.other && (
+                                <div className="ml-6 w-full space-y-2">
+                                  <input
+                                    type="text"
+                                    value={diagnosisData.giftedTalented.otherText}
+                                    onChange={(e) => handleDiagnosisTextChange('giftedTalented', e.target.value)}
+                                    placeholder="Please specify..."
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => addDiagnosisOption('giftedTalented')}
+                                    className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  >
+                                    + Add as new checkbox option
+                                  </button>
+                                </div>
+                              )}
+                              {/* Dynamic checkboxes */}
+                              {Object.keys(diagnosisData.giftedTalented)
+                                .filter(key => !['gifted', 'other', 'otherText'].includes(key))
+                                .map(key => (
+                                  <div key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input 
+                                        type="checkbox" 
+                                        className="rounded border-gray-300"
+                                        checked={diagnosisData.giftedTalented[key]}
+                                        onChange={() => toggleDiagnosis('giftedTalented', key)}
+                                      />
+                                      {key}
+                                    </label>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeDiagnosisOption('giftedTalented', key)}
+                                      className="text-red-500 hover:text-red-700 text-xs"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ))}
                             </div>
                           )}
                         </div>
@@ -3440,7 +3713,55 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                   onChange={() => toggleDiagnosis('languageDelay', 'other')}
                                 />
                                 Other
+                                <button
+                                  type="button"
+                                  onClick={() => removeDiagnosisOption('languageDelay', 'other')}
+                                  className="text-red-500 hover:text-red-700 text-xs"
+                                >
+                                  ✕
+                                </button>
                               </label>
+                              {diagnosisData.languageDelay.other && (
+                                <div className="ml-6 w-full space-y-2">
+                                  <input
+                                    type="text"
+                                    value={diagnosisData.languageDelay.otherText}
+                                    onChange={(e) => handleDiagnosisTextChange('languageDelay', e.target.value)}
+                                    placeholder="Please specify..."
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => addDiagnosisOption('languageDelay')}
+                                    className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  >
+                                    + Add as new checkbox option
+                                  </button>
+                                </div>
+                              )}
+                              {/* Dynamic checkboxes */}
+                              {Object.keys(diagnosisData.languageDelay)
+                                .filter(key => !['expressive', 'delay', 'mixed', 'phonological', 'other', 'otherText'].includes(key))
+                                .map(key => (
+                                  <div key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input 
+                                        type="checkbox" 
+                                        className="rounded border-gray-300"
+                                        checked={diagnosisData.languageDelay[key]}
+                                        onChange={() => toggleDiagnosis('languageDelay', key)}
+                                      />
+                                      {key}
+                                    </label>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeDiagnosisOption('languageDelay', key)}
+                                      className="text-red-500 hover:text-red-700 text-xs"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ))}
                             </div>
                           )}
                         </div>
@@ -3509,7 +3830,55 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                   onChange={() => toggleDiagnosis('learningDisability', 'other')}
                                 />
                                 Other
+                                <button
+                                  type="button"
+                                  onClick={() => removeDiagnosisOption('learningDisability', 'other')}
+                                  className="text-red-500 hover:text-red-700 text-xs"
+                                >
+                                  ✕
+                                </button>
                               </label>
+                              {diagnosisData.learningDisability.other && (
+                                <div className="ml-6 w-full space-y-2">
+                                  <input
+                                    type="text"
+                                    value={diagnosisData.learningDisability.otherText}
+                                    onChange={(e) => handleDiagnosisTextChange('learningDisability', e.target.value)}
+                                    placeholder="Please specify..."
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => addDiagnosisOption('learningDisability')}
+                                    className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  >
+                                    + Add as new checkbox option
+                                  </button>
+                                </div>
+                              )}
+                              {/* Dynamic checkboxes */}
+                              {Object.keys(diagnosisData.learningDisability)
+                                .filter(key => !['reading', 'mathematics', 'disorder', 'writing', 'nonverbal', 'other', 'otherText'].includes(key))
+                                .map(key => (
+                                  <div key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input 
+                                        type="checkbox" 
+                                        className="rounded border-gray-300"
+                                        checked={diagnosisData.learningDisability[key]}
+                                        onChange={() => toggleDiagnosis('learningDisability', key)}
+                                      />
+                                      {key}
+                                    </label>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeDiagnosisOption('learningDisability', key)}
+                                      className="text-red-500 hover:text-red-700 text-xs"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ))}
                             </div>
                           )}
                         </div>
@@ -3704,7 +4073,55 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                   onChange={() => toggleDiagnosis('moodRelated', 'other')}
                                 />
                                 Other
+                                <button
+                                  type="button"
+                                  onClick={() => removeDiagnosisOption('moodRelated', 'other')}
+                                  className="text-red-500 hover:text-red-700 text-xs"
+                                >
+                                  ✕
+                                </button>
                               </label>
+                              {diagnosisData.moodRelated.other && (
+                                <div className="ml-6 w-full space-y-2">
+                                  <input
+                                    type="text"
+                                    value={diagnosisData.moodRelated.otherText}
+                                    onChange={(e) => handleDiagnosisTextChange('moodRelated', e.target.value)}
+                                    placeholder="Please specify..."
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => addDiagnosisOption('moodRelated')}
+                                    className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  >
+                                    + Add as new checkbox option
+                                  </button>
+                                </div>
+                              )}
+                              {/* Dynamic checkboxes */}
+                              {Object.keys(diagnosisData.moodRelated)
+                                .filter(key => !['acuteStress', 'agoraphobia', 'anorexia', 'bipolar', 'bulimia', 'conversion', 'cyclothymic', 'depressive', 'dysthymic', 'generalizedAnxiety', 'majorDepressive', 'ocd', 'pain', 'panic', 'ptsd', 'separationAnxiety', 'socialPhobia', 'somatization', 'specificPhobia', 'other', 'otherText'].includes(key))
+                                .map(key => (
+                                  <div key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input 
+                                        type="checkbox" 
+                                        className="rounded border-gray-300"
+                                        checked={diagnosisData.moodRelated[key]}
+                                        onChange={() => toggleDiagnosis('moodRelated', key)}
+                                      />
+                                      {key}
+                                    </label>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeDiagnosisOption('moodRelated', key)}
+                                      className="text-red-500 hover:text-red-700 text-xs"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ))}
                             </div>
                           )}
                         </div>
@@ -3782,7 +4199,55 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                   onChange={() => toggleDiagnosis('motorDelay', 'other')}
                                 />
                                 Other
+                                <button
+                                  type="button"
+                                  onClick={() => removeDiagnosisOption('motorDelay', 'other')}
+                                  className="text-red-500 hover:text-red-700 text-xs"
+                                >
+                                  ✕
+                                </button>
                               </label>
+                              {diagnosisData.motorDelay.other && (
+                                <div className="ml-6 w-full space-y-2">
+                                  <input
+                                    type="text"
+                                    value={diagnosisData.motorDelay.otherText}
+                                    onChange={(e) => handleDiagnosisTextChange('motorDelay', e.target.value)}
+                                    placeholder="Please specify..."
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => addDiagnosisOption('motorDelay')}
+                                    className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  >
+                                    + Add as new checkbox option
+                                  </button>
+                                </div>
+                              )}
+                              {/* Dynamic checkboxes */}
+                              {Object.keys(diagnosisData.motorDelay)
+                                .filter(key => !['developmentalCoordination', 'dyspraxia', 'motorDelay', 'paraplegia', 'quadriplegia', 'stereotypic', 'other', 'otherText'].includes(key))
+                                .map(key => (
+                                  <div key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input 
+                                        type="checkbox" 
+                                        className="rounded border-gray-300"
+                                        checked={diagnosisData.motorDelay[key]}
+                                        onChange={() => toggleDiagnosis('motorDelay', key)}
+                                      />
+                                      {key}
+                                    </label>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeDiagnosisOption('motorDelay', key)}
+                                      className="text-red-500 hover:text-red-700 text-xs"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ))}
                             </div>
                           )}
                         </div>
@@ -3905,7 +4370,55 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                   onChange={() => toggleDiagnosis('personalityDisorders', 'other')}
                                 />
                                 Other
+                                <button
+                                  type="button"
+                                  onClick={() => removeDiagnosisOption('personalityDisorders', 'other')}
+                                  className="text-red-500 hover:text-red-700 text-xs"
+                                >
+                                  ✕
+                                </button>
                               </label>
+                              {diagnosisData.personalityDisorders.other && (
+                                <div className="ml-6 w-full space-y-2">
+                                  <input
+                                    type="text"
+                                    value={diagnosisData.personalityDisorders.otherText}
+                                    onChange={(e) => handleDiagnosisTextChange('personalityDisorders', e.target.value)}
+                                    placeholder="Please specify..."
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => addDiagnosisOption('personalityDisorders')}
+                                    className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  >
+                                    + Add as new checkbox option
+                                  </button>
+                                </div>
+                              )}
+                              {/* Dynamic checkboxes */}
+                              {Object.keys(diagnosisData.personalityDisorders)
+                                .filter(key => !['antisocial', 'avoidant', 'borderline', 'dependent', 'histrionic', 'narcissistic', 'ocd', 'ocpd', 'paranoid', 'schizoid', 'schizotypal', 'other', 'otherText'].includes(key))
+                                .map(key => (
+                                  <div key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input 
+                                        type="checkbox" 
+                                        className="rounded border-gray-300"
+                                        checked={diagnosisData.personalityDisorders[key]}
+                                        onChange={() => toggleDiagnosis('personalityDisorders', key)}
+                                      />
+                                      {key}
+                                    </label>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeDiagnosisOption('personalityDisorders', key)}
+                                      className="text-red-500 hover:text-red-700 text-xs"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ))}
                             </div>
                           )}
                         </div>
@@ -4010,7 +4523,55 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                   onChange={() => toggleDiagnosis('schizophrenia', 'other')}
                                 />
                                 Other
+                                <button
+                                  type="button"
+                                  onClick={() => removeDiagnosisOption('schizophrenia', 'other')}
+                                  className="text-red-500 hover:text-red-700 text-xs"
+                                >
+                                  ✕
+                                </button>
                               </label>
+                              {diagnosisData.schizophrenia.other && (
+                                <div className="ml-6 w-full space-y-2">
+                                  <input
+                                    type="text"
+                                    value={diagnosisData.schizophrenia.otherText}
+                                    onChange={(e) => handleDiagnosisTextChange('schizophrenia', e.target.value)}
+                                    placeholder="Please specify..."
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => addDiagnosisOption('schizophrenia')}
+                                    className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  >
+                                    + Add as new checkbox option
+                                  </button>
+                                </div>
+                              )}
+                              {/* Dynamic checkboxes */}
+                              {Object.keys(diagnosisData.schizophrenia)
+                                .filter(key => !['briefPsychotic', 'delusional', 'schizoaffective', 'catatonic', 'disorganized', 'paranoid', 'residual', 'undifferentiated', 'schizophreniform', 'other', 'otherText'].includes(key))
+                                .map(key => (
+                                  <div key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input 
+                                        type="checkbox" 
+                                        className="rounded border-gray-300"
+                                        checked={diagnosisData.schizophrenia[key]}
+                                        onChange={() => toggleDiagnosis('schizophrenia', key)}
+                                      />
+                                      {key}
+                                    </label>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeDiagnosisOption('schizophrenia', key)}
+                                      className="text-red-500 hover:text-red-700 text-xs"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ))}
                             </div>
                           )}
                         </div>
@@ -4115,7 +4676,55 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                   onChange={() => toggleDiagnosis('speech', 'other')}
                                 />
                                 Other
+                                <button
+                                  type="button"
+                                  onClick={() => removeDiagnosisOption('speech', 'other')}
+                                  className="text-red-500 hover:text-red-700 text-xs"
+                                >
+                                  ✕
+                                </button>
                               </label>
+                              {diagnosisData.speech.other && (
+                                <div className="ml-6 w-full space-y-2">
+                                  <input
+                                    type="text"
+                                    value={diagnosisData.speech.otherText}
+                                    onChange={(e) => handleDiagnosisTextChange('speech', e.target.value)}
+                                    placeholder="Please specify..."
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => addDiagnosisOption('speech')}
+                                    className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  >
+                                    + Add as new checkbox option
+                                  </button>
+                                </div>
+                              )}
+                              {/* Dynamic checkboxes */}
+                              {Object.keys(diagnosisData.speech)
+                                .filter(key => !['aphasia', 'apraxia', 'articulation', 'brocas', 'centralAuditory', 'dysarthria', 'fluency', 'receptive', 'voice', 'other', 'otherText'].includes(key))
+                                .map(key => (
+                                  <div key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input 
+                                        type="checkbox" 
+                                        className="rounded border-gray-300"
+                                        checked={diagnosisData.speech[key]}
+                                        onChange={() => toggleDiagnosis('speech', key)}
+                                      />
+                                      {key}
+                                    </label>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeDiagnosisOption('speech', key)}
+                                      className="text-red-500 hover:text-red-700 text-xs"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ))}
                             </div>
                           )}
                         </div>
@@ -4193,7 +4802,55 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                   onChange={() => toggleDiagnosis('substanceAbuse', 'other')}
                                 />
                                 Other
+                                <button
+                                  type="button"
+                                  onClick={() => removeDiagnosisOption('substanceAbuse', 'other')}
+                                  className="text-red-500 hover:text-red-700 text-xs"
+                                >
+                                  ✕
+                                </button>
                               </label>
+                              {diagnosisData.substanceAbuse.other && (
+                                <div className="ml-6 w-full space-y-2">
+                                  <input
+                                    type="text"
+                                    value={diagnosisData.substanceAbuse.otherText}
+                                    onChange={(e) => handleDiagnosisTextChange('substanceAbuse', e.target.value)}
+                                    placeholder="Please specify..."
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => addDiagnosisOption('substanceAbuse')}
+                                    className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  >
+                                    + Add as new checkbox option
+                                  </button>
+                                </div>
+                              )}
+                              {/* Dynamic checkboxes */}
+                              {Object.keys(diagnosisData.substanceAbuse)
+                                .filter(key => !['alcoholAbuse', 'alcoholDependence', 'polysubstanceAbuse', 'polysubstanceDependence', 'substanceAbuse', 'substanceDependence', 'other', 'otherText'].includes(key))
+                                .map(key => (
+                                  <div key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input 
+                                        type="checkbox" 
+                                        className="rounded border-gray-300"
+                                        checked={diagnosisData.substanceAbuse[key]}
+                                        onChange={() => toggleDiagnosis('substanceAbuse', key)}
+                                      />
+                                      {key}
+                                    </label>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeDiagnosisOption('substanceAbuse', key)}
+                                      className="text-red-500 hover:text-red-700 text-xs"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ))}
                             </div>
                           )}
                         </div>
@@ -4253,7 +4910,55 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                   onChange={() => toggleDiagnosis('traumaticBrainInjury', 'other')}
                                 />
                                 Other
+                                <button
+                                  type="button"
+                                  onClick={() => removeDiagnosisOption('traumaticBrainInjury', 'other')}
+                                  className="text-red-500 hover:text-red-700 text-xs"
+                                >
+                                  ✕
+                                </button>
                               </label>
+                              {diagnosisData.traumaticBrainInjury.other && (
+                                <div className="ml-6 w-full space-y-2">
+                                  <input
+                                    type="text"
+                                    value={diagnosisData.traumaticBrainInjury.otherText}
+                                    onChange={(e) => handleDiagnosisTextChange('traumaticBrainInjury', e.target.value)}
+                                    placeholder="Please specify..."
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => addDiagnosisOption('traumaticBrainInjury')}
+                                    className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  >
+                                    + Add as new checkbox option
+                                  </button>
+                                </div>
+                              )}
+                              {/* Dynamic checkboxes */}
+                              {Object.keys(diagnosisData.traumaticBrainInjury)
+                                .filter(key => !['tbi', 'mild', 'moderate', 'severe', 'other', 'otherText'].includes(key))
+                                .map(key => (
+                                  <div key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input 
+                                        type="checkbox" 
+                                        className="rounded border-gray-300"
+                                        checked={diagnosisData.traumaticBrainInjury[key]}
+                                        onChange={() => toggleDiagnosis('traumaticBrainInjury', key)}
+                                      />
+                                      {key}
+                                    </label>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeDiagnosisOption('traumaticBrainInjury', key)}
+                                      className="text-red-500 hover:text-red-700 text-xs"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ))}
                             </div>
                           )}
                         </div>
@@ -4471,11 +5176,59 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                 <input 
                                   type="checkbox" 
                                   className="rounded border-gray-300"
-                                  checked={diagnosisData.other.vascularDementia}
-                                  onChange={() => toggleDiagnosis('other', 'vascularDementia')}
+                                  checked={diagnosisData.other.other}
+                                  onChange={() => toggleDiagnosis('other', 'other')}
                                 />
-                                Vascular Dementia
+                                Other
+                                <button
+                                  type="button"
+                                  onClick={() => removeDiagnosisOption('other', 'other')}
+                                  className="text-red-500 hover:text-red-700 text-xs"
+                                >
+                                  ✕
+                                </button>
                               </label>
+                              {diagnosisData.other.other && (
+                                <div className="ml-6 w-full space-y-2">
+                                  <input
+                                    type="text"
+                                    value={diagnosisData.other.otherText}
+                                    onChange={(e) => handleDiagnosisTextChange('other', e.target.value)}
+                                    placeholder="Please specify..."
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => addDiagnosisOption('other')}
+                                    className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  >
+                                    + Add as new checkbox option
+                                  </button>
+                                </div>
+                              )}
+                              {/* Dynamic checkboxes */}
+                              {Object.keys(diagnosisData.other)
+                                .filter(key => !['adjustment', 'cognitive', 'creutzfeldtJakob', 'alzheimers', 'depersonalization', 'dissociative', 'epilepsy', 'factitious', 'genderIdentity', 'huntingtons', 'leftStroke', 'leftEpilepsy', 'mildCognitive', 'parkinsons', 'picks', 'insomnia', 'rightStroke', 'rightEpilepsy', 'seizure', 'stroke', 'tic', 'tourettes', 'vascularDementia', 'other', 'otherText'].includes(key))
+                                .map(key => (
+                                  <div key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input 
+                                        type="checkbox" 
+                                        className="rounded border-gray-300"
+                                        checked={diagnosisData.other[key]}
+                                        onChange={() => toggleDiagnosis('other', key)}
+                                      />
+                                      {key}
+                                    </label>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeDiagnosisOption('other', key)}
+                                      className="text-red-500 hover:text-red-700 text-xs"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ))}
                             </div>
                           )}
                         </div>
