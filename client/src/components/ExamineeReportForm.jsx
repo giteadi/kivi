@@ -1,5 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import * as XLSX from "xlsx";
+import {
+  Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+  AlignmentType, HeadingLevel, BorderStyle, WidthType, ShadingType, LevelFormat,
+} from "docx";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import ExportDropdown from './ExportDropdown';
 
 // ── tiny helpers ──────────────────────────────────────────────────────────────
@@ -450,33 +456,536 @@ export default function ExamineeReportForm({
     }));
   }, [evaluationData, historyData, healthSampleReportData, educationSampleReportData, formData]);
 
-  // ── Export handlers
+  // ── Export handlers (improved for better content preservation)
   const handleExportPdf = async () => {
-    const element = document.getElementById("print-area");
-    if (!element) return;
+    try {
+      const element = document.getElementById("print-area");
+      if (!element) {
+        alert("Print area not found");
+        return;
+      }
 
-    // Dynamic import to avoid module resolution issues
-    const html2pdf = (await import("html2pdf.js")).default;
+      // Create temporary container for PDF export with proper sizing
+      const container = document.createElement("div");
+      container.style.position = "absolute";
+      container.style.left = "-9999px";
+      container.style.top = "0";
+      container.style.width = "210mm"; // A4 width
+      container.style.minHeight = "297mm"; // A4 height
+      container.style.padding = "10mm";
+      container.style.background = "#fff";
+      container.style.fontFamily = "'Times New Roman', Georgia, serif";
+      container.style.fontSize = "11px"; // Slightly smaller for better fit
+      container.style.lineHeight = "1.4";
+      container.style.color = "#111";
+      container.style.boxSizing = "border-box";
+      
+      // Clone the content
+      container.innerHTML = element.innerHTML;
+      
+      // Remove no-print elements
+      const noPrintElements = container.querySelectorAll(".no-print");
+      noPrintElements.forEach(el => el.remove());
+      
+      // Add comprehensive table styles to prevent content cutting
+      const tables = container.querySelectorAll("table");
+      tables.forEach(table => {
+        table.style.width = "100%";
+        table.style.borderCollapse = "collapse";
+        table.style.marginBottom = "12px";
+        table.style.pageBreakInside = "auto";
+        table.style.fontSize = "10px"; // Smaller font for tables
+      });
+      
+      const rows = container.querySelectorAll("tr");
+      rows.forEach(row => {
+        row.style.pageBreakInside = "avoid";
+        row.style.pageBreakAfter = "auto";
+      });
+      
+      const cells = container.querySelectorAll("td, th");
+      cells.forEach(cell => {
+        cell.style.border = "1px solid #555";
+        cell.style.padding = "4px 6px"; // Reduced padding
+        cell.style.textAlign = "left";
+        cell.style.verticalAlign = "top";
+        cell.style.wordWrap = "break-word";
+        cell.style.wordBreak = "break-word";
+        cell.style.fontSize = "10px";
+        cell.style.lineHeight = "1.3";
+      });
+      
+      const headers = container.querySelectorAll("th");
+      headers.forEach(th => {
+        th.style.background = "#f0f0f0";
+        th.style.fontWeight = "bold";
+        th.style.fontSize = "10px";
+      });
 
-    const opt = {
-      margin: 0,
-      filename: "examinee_report_form.pdf",
-      image: { type: "jpeg", quality: 1 },
-      html2canvas: {
-        scale: 2,
+      // Style inputs to show their values
+      const inputs = container.querySelectorAll("input[type='text'], textarea");
+      inputs.forEach(input => {
+        const value = input.value || input.placeholder || "";
+        const span = document.createElement("span");
+        span.textContent = value;
+        span.style.fontSize = "10px";
+        span.style.wordWrap = "break-word";
+        input.parentNode.replaceChild(span, input);
+      });
+
+      // Handle radio buttons - show selected value
+      const radios = container.querySelectorAll("input[type='radio']");
+      const radioGroups = {};
+      radios.forEach(radio => {
+        if (radio.checked) {
+          if (!radioGroups[radio.name]) {
+            radioGroups[radio.name] = radio.value;
+          }
+        }
+      });
+      
+      // Replace radio groups with text
+      Object.keys(radioGroups).forEach(groupName => {
+        const groupRadios = container.querySelectorAll(`input[name="${groupName}"]`);
+        if (groupRadios.length > 0) {
+          const parent = groupRadios[0].closest("span") || groupRadios[0].parentElement;
+          if (parent) {
+            const span = document.createElement("span");
+            span.textContent = radioGroups[groupName];
+            span.style.fontWeight = "bold";
+            span.style.fontSize = "10px";
+            parent.innerHTML = "";
+            parent.appendChild(span);
+          }
+        }
+      });
+
+      // Handle checkboxes - show checked state
+      const checkboxes = container.querySelectorAll("input[type='checkbox']");
+      checkboxes.forEach(checkbox => {
+        const span = document.createElement("span");
+        span.textContent = checkbox.checked ? "☑" : "☐";
+        span.style.fontSize = "12px";
+        checkbox.parentNode.replaceChild(span, checkbox);
+      });
+
+      // Add section boxes styling
+      const sectionBoxes = container.querySelectorAll("div[style*='border']");
+      sectionBoxes.forEach(box => {
+        box.style.pageBreakInside = "avoid";
+        box.style.marginBottom = "8px";
+      });
+
+      document.body.appendChild(container);
+
+      // Wait for images to load
+      const images = container.querySelectorAll("img");
+      await Promise.all(
+        Array.from(images).map(img => {
+          if (img.complete) return Promise.resolve();
+          return new Promise((resolve) => {
+            img.onload = resolve;
+            img.onerror = resolve;
+          });
+        })
+      );
+
+      // Convert to canvas with higher quality
+      const canvas = await html2canvas(container, {
+        scale: 2.5, // Higher scale for better quality
         useCORS: true,
-      },
-      jsPDF: {
+        logging: false,
+        backgroundColor: "#ffffff",
+        windowWidth: container.scrollWidth,
+        windowHeight: container.scrollHeight,
+        onclone: (clonedDoc) => {
+          const clonedContainer = clonedDoc.getElementById("print-area");
+          if (clonedContainer) {
+            clonedContainer.style.width = "210mm";
+            clonedContainer.style.padding = "10mm";
+          }
+        }
+      });
+
+      document.body.removeChild(container);
+
+      // Create PDF with proper page handling
+      const imgData = canvas.toDataURL("image/png", 1.0);
+      const pdf = new jsPDF({
+        orientation: "portrait",
         unit: "mm",
         format: "a4",
-        orientation: "portrait",
-      },
-      pagebreak: {
-        mode: ["avoid-all", "css", "legacy"],
-      },
-    };
+        compress: true,
+      });
 
-    html2pdf().set(opt).from(element).save();
+      const pdfWidth = 210; // A4 width in mm
+      const pdfHeight = 297; // A4 height in mm
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // Add first page
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight, undefined, "FAST");
+      heightLeft -= pdfHeight;
+
+      // Add additional pages if content is longer
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight, undefined, "FAST");
+        heightLeft -= pdfHeight;
+      }
+
+      // Save PDF
+      pdf.save(`${s1.childName || "Examinee"}_Report_Form.pdf`);
+      
+      console.log("[PDF Export] Successfully exported PDF");
+    } catch (err) {
+      console.error("[PDF Export Error]", err);
+      alert("PDF export failed: " + err.message);
+    }
+  };
+
+  // ── DOCX Export (improved for better content preservation)
+  const handleExportDocx = async () => {
+    try {
+      console.log("[DOCX Export] Starting export for Examinee Report Form");
+      
+      const element = document.getElementById("print-area");
+      if (!element) {
+        alert("Print area not found");
+        return;
+      }
+
+      // Helper functions for DOCX conversion
+      const CELL_BORDER = { style: BorderStyle.SINGLE, size: 4, color: "555555" };
+      const CELL_BORDERS = { top: CELL_BORDER, bottom: CELL_BORDER, left: CELL_BORDER, right: CELL_BORDER };
+      const PAGE_CONTENT_WIDTH = 9000; // Slightly wider for better content fit
+
+      const nodeToRuns = (node, inherited = {}) => {
+        const runs = [];
+        if (node.nodeType === Node.TEXT_NODE) {
+          const text = node.textContent;
+          if (text && text.trim()) runs.push(new TextRun({ text, ...inherited, size: 20 })); // 10pt font
+          return runs;
+        }
+        const tag = node.tagName?.toLowerCase();
+        const style = {
+          ...inherited,
+          bold: inherited.bold || ["b", "strong", "th"].includes(tag),
+          italics: inherited.italics || ["i", "em"].includes(tag),
+          strike: inherited.strike || ["s", "del", "strike"].includes(tag),
+          ...(tag === "u" ? { underline: {} } : {}),
+        };
+
+        if (tag === "br") {
+          runs.push(new TextRun({ text: "", break: 1 }));
+          return runs;
+        }
+
+        for (const child of node.childNodes) runs.push(...nodeToRuns(child, style));
+        return runs;
+      };
+
+      const estimateColWidths = (trList, totalWidth) => {
+        let colCount = 0;
+        trList.forEach(tr => {
+          let c = 0;
+          tr.querySelectorAll("td,th").forEach(cell => {
+            c += parseInt(cell.getAttribute("colspan") || "1");
+          });
+          colCount = Math.max(colCount, c);
+        });
+        if (colCount <= 1) return [totalWidth];
+
+        const colLengths = Array(colCount).fill(0);
+        trList.slice(0, 10).forEach(tr => {
+          [...tr.querySelectorAll("td,th")].forEach((cell, i) => {
+            if (i < colCount) {
+              const text = (cell.textContent || "").trim();
+              colLengths[i] = Math.max(colLengths[i], text.length);
+            }
+          });
+        });
+
+        const MIN_FRAC = 0.1;
+        const remaining = Math.max(0, 1 - MIN_FRAC * colCount);
+        const totalLen = colLengths.reduce((a, b) => a + b, 0) || 1;
+        const fracs = colLengths.map(len => MIN_FRAC + (len / totalLen) * remaining);
+        const fracSum = fracs.reduce((a, b) => a + b, 0);
+        return fracs.map(f => Math.max(500, Math.floor((f / fracSum) * totalWidth)));
+      };
+
+      const cellToParagraphs = (tdNode) => {
+        const paragraphs = [];
+        const isTh = tdNode.tagName?.toLowerCase() === "th";
+
+        const processNode = (node, inherited = {}) => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            const t = node.textContent;
+            if (t && t.trim()) {
+              paragraphs.push(new Paragraph({
+                children: [new TextRun({ text: t, ...inherited, size: 20 })],
+                spacing: { after: 0, before: 0 },
+              }));
+            }
+            return;
+          }
+          const tag = node.tagName?.toLowerCase();
+          if (!tag) return;
+          
+          // Handle input fields - extract their values
+          if (tag === "input") {
+            const value = node.value || node.placeholder || "";
+            if (value) {
+              paragraphs.push(new Paragraph({
+                children: [new TextRun({ text: value, ...inherited, size: 20 })],
+                spacing: { after: 0, before: 0 },
+              }));
+            }
+            return;
+          }
+          
+          // Handle textarea
+          if (tag === "textarea") {
+            const value = node.value || "";
+            if (value) {
+              paragraphs.push(new Paragraph({
+                children: [new TextRun({ text: value, ...inherited, size: 20 })],
+                spacing: { after: 0, before: 0 },
+              }));
+            }
+            return;
+          }
+          
+          if (tag === "br") {
+            paragraphs.push(new Paragraph({ children: [], spacing: { after: 0, before: 0 } }));
+            return;
+          }
+          if (["p", "div", "span", "label"].includes(tag)) {
+            const runs = nodeToRuns(node, inherited);
+            if (runs.length) {
+              paragraphs.push(new Paragraph({ children: runs, spacing: { after: 40, before: 0 } }));
+            } else {
+              for (const child of node.childNodes) processNode(child, inherited);
+            }
+            return;
+          }
+          if (/^h[1-6]$/.test(tag)) {
+            const hmap = { h1: HeadingLevel.HEADING_1, h2: HeadingLevel.HEADING_2, h3: HeadingLevel.HEADING_3, h4: HeadingLevel.HEADING_4 };
+            paragraphs.push(new Paragraph({
+              heading: hmap[tag] || HeadingLevel.HEADING_3,
+              children: nodeToRuns(node),
+              spacing: { after: 60, before: 40 },
+            }));
+            return;
+          }
+          const newInherited = {
+            ...inherited,
+            bold: inherited.bold || ["b", "strong", "th"].includes(tag),
+            italics: inherited.italics || ["i", "em"].includes(tag),
+          };
+          for (const child of node.childNodes) processNode(child, newInherited);
+        };
+
+        for (const child of tdNode.childNodes) processNode(child, { bold: isTh });
+        if (!paragraphs.length) paragraphs.push(new Paragraph({ children: [new TextRun({ text: " ", size: 20 })], spacing: { after: 0, before: 0 } }));
+        return paragraphs;
+      };
+
+      const nodeToDocxElements = async (node) => {
+        const els = [];
+        if (node.nodeType === Node.TEXT_NODE) {
+          const t = node.textContent.trim();
+          if (t) els.push(new Paragraph({ children: [new TextRun({ text: t, size: 20 })] }));
+          return els;
+        }
+        const tag = node.tagName?.toLowerCase();
+        if (!tag) return els;
+
+        const headingMap = { h1: HeadingLevel.HEADING_1, h2: HeadingLevel.HEADING_2, h3: HeadingLevel.HEADING_3, h4: HeadingLevel.HEADING_4 };
+        if (headingMap[tag]) {
+          els.push(new Paragraph({ heading: headingMap[tag], children: nodeToRuns(node) }));
+          return els;
+        }
+
+        if (["p", "div", "section"].includes(tag)) {
+          const runs = nodeToRuns(node);
+          if (runs.length) {
+            els.push(new Paragraph({ children: runs }));
+            return els;
+          }
+          for (const c of node.childNodes) els.push(...await nodeToDocxElements(c));
+          return els;
+        }
+
+        if (tag === "br") {
+          els.push(new Paragraph({ children: [] }));
+          return els;
+        }
+
+        if (tag === "hr") {
+          els.push(new Paragraph({
+            border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: "AAAAAA", space: 1 } },
+            children: [],
+          }));
+          return els;
+        }
+
+        if (tag === "img") {
+          // Handle images - skip for now or add image handling
+          return els;
+        }
+
+        if (tag === "table") {
+          const trList = Array.from(node.querySelectorAll("tr"));
+          if (!trList.length) return els;
+
+          let colCount = 0;
+          trList.forEach(tr => {
+            let count = 0;
+            tr.querySelectorAll("td,th").forEach(cell => {
+              count += parseInt(cell.getAttribute("colspan") || "1");
+            });
+            colCount = Math.max(colCount, count);
+          });
+          if (colCount === 0) return els;
+
+          const colWidths = estimateColWidths(trList, PAGE_CONTENT_WIDTH);
+          const finalColCount = colWidths.length;
+
+          const rows = trList.map((tr, rowIdx) => {
+            const tdList = Array.from(tr.querySelectorAll("td,th"));
+            const cells = tdList.map((td, colIdx) => {
+              const isHeader = td.tagName.toLowerCase() === "th" || rowIdx === 0;
+              const colspan = parseInt(td.getAttribute("colspan") || "1");
+              const rowspan = parseInt(td.getAttribute("rowspan") || "1");
+              const cellWidth = colspan > 1
+                ? colWidths.slice(colIdx, colIdx + colspan).reduce((a, b) => a + b, 0)
+                : (colWidths[colIdx] || Math.floor(PAGE_CONTENT_WIDTH / finalColCount));
+
+              return new TableCell({
+                borders: CELL_BORDERS,
+                columnSpan: colspan > 1 ? colspan : undefined,
+                rowSpan: rowspan > 1 ? rowspan : undefined,
+                width: { size: cellWidth, type: WidthType.DXA },
+                shading: isHeader ? { fill: "E8E8E8", type: ShadingType.CLEAR } : undefined,
+                margins: { top: 60, bottom: 60, left: 100, right: 100 },
+                children: cellToParagraphs(td),
+                verticalAlign: "top",
+              });
+            });
+
+            return new TableRow({ 
+              children: cells, 
+              tableHeader: rowIdx === 0,
+              cantSplit: true, // Prevent row splitting across pages
+            });
+          });
+
+          els.push(new Table({
+            width: { size: PAGE_CONTENT_WIDTH, type: WidthType.DXA },
+            columnWidths: colWidths,
+            rows,
+            layout: "fixed",
+          }));
+          els.push(new Paragraph({ children: [], spacing: { after: 100 } }));
+          return els;
+        }
+
+        for (const c of node.childNodes) els.push(...await nodeToDocxElements(c));
+        return els;
+      };
+
+      const htmlToDocxElements = async (html) => {
+        const div = document.createElement("div");
+        div.innerHTML = html || "";
+        
+        // Remove no-print elements
+        const noPrintElements = div.querySelectorAll(".no-print");
+        noPrintElements.forEach(el => el.remove());
+        
+        const els = [];
+        for (const c of div.childNodes) els.push(...await nodeToDocxElements(c));
+        if (!els.length) els.push(new Paragraph({ children: [] }));
+        return els;
+      };
+
+      // Convert HTML to DOCX elements
+      console.log("[DOCX Export] Converting HTML to DOCX elements...");
+      const children = await htmlToDocxElements(element.innerHTML);
+      console.log("[DOCX Export] Generated", children.length, "DOCX elements");
+
+      // Create document with proper page settings
+      console.log("[DOCX Export] Creating document...");
+      const doc = new Document({
+        numbering: {
+          config: [
+            { reference: "bullets", levels: [{ level: 0, format: LevelFormat.BULLET, text: "•", alignment: AlignmentType.LEFT, style: { paragraph: { indent: { left: 720, hanging: 360 } } } }] },
+            { reference: "numbers", levels: [{ level: 0, format: LevelFormat.DECIMAL, text: "%1.", alignment: AlignmentType.LEFT, style: { paragraph: { indent: { left: 720, hanging: 360 } } } }] },
+          ],
+        },
+        styles: {
+          default: { 
+            document: { 
+              run: { font: "Times New Roman", size: 20 }, // 10pt
+              paragraph: { spacing: { line: 276, before: 0, after: 0 } }
+            } 
+          },
+          paragraphStyles: [
+            { 
+              id: "Heading1", 
+              name: "Heading 1", 
+              basedOn: "Normal", 
+              next: "Normal", 
+              quickFormat: true, 
+              run: { size: 28, bold: true, font: "Times New Roman", color: "000000" }, 
+              paragraph: { spacing: { before: 240, after: 120 }, outlineLevel: 0 } 
+            },
+            { 
+              id: "Heading2", 
+              name: "Heading 2", 
+              basedOn: "Normal", 
+              next: "Normal", 
+              quickFormat: true, 
+              run: { size: 24, bold: true, font: "Times New Roman" }, 
+              paragraph: { spacing: { before: 180, after: 90 }, outlineLevel: 1 } 
+            },
+          ],
+        },
+        sections: [{
+          properties: {
+            page: {
+              size: { width: 11906, height: 16838 }, // A4
+              margin: { top: 567, right: 567, bottom: 567, left: 567 }, // 0.5 inch margins
+            },
+          },
+          children,
+        }],
+      });
+
+      console.log("[DOCX Export] Packing to blob...");
+      const blob = await Packer.toBlob(doc);
+      console.log("[DOCX Export] Blob created, size:", blob.size, "bytes");
+
+      // Download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${s1.childName || "Examinee"}_Report_Form.docx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      
+      console.log("[DOCX Export] Download triggered successfully!");
+    } catch (err) {
+      console.error("[DOCX Export] FAILED:", err);
+      console.error("[DOCX Export] Error stack:", err.stack);
+      alert("DOCX export failed: " + err.message);
+    }
   };
 
   const handleExportXlsx = () => {
@@ -789,6 +1298,7 @@ export default function ExamineeReportForm({
         }}
       >
         <ExportDropdown
+          onExportDocx={handleExportDocx}
           onExportXlsx={handleExportXlsx}
           onExportPdf={handleExportPdf}
         />
