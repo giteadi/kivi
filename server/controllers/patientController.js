@@ -99,11 +99,77 @@ class PatientController {
       
       console.log('═'.repeat(80) + '\n');
       
+      // Field name mapping: camelCase (frontend) → snake_case (database)
+      const fieldMapping = {
+        firstName: 'first_name',
+        middleName: 'middle_name',
+        lastName: 'last_name',
+        studentId: 'student_id',
+        dateOfBirth: 'date_of_birth',
+        schoolName: 'school_name',
+        languageOfTesting: 'language_of_testing',
+        zipCode: 'zip_code',
+        emergencyContactName: 'emergency_contact_name',
+        emergencyContactPhone: 'emergency_contact_phone',
+        emergencyContactRelation: 'emergency_contact_relation',
+        customField1: 'custom_field_1',
+        customField2: 'custom_field_2',
+        customField3: 'custom_field_3',
+        customField4: 'custom_field_4',
+        // Handle both camelCase and snake_case from frontend
+        custom_field_1: 'custom_field_1',
+        custom_field_2: 'custom_field_2',
+        custom_field_3: 'custom_field_3',
+        custom_field_4: 'custom_field_4',
+        registrationDate: 'registration_date',
+        centreName: 'centre_name',
+        requiresAssessment: 'requires_assessment',
+        requiresTherapy: 'requires_therapy',
+        evaluationData: 'evaluation_data',
+        diagnosisData: 'diagnosis_data',
+        historyData: 'history_data'
+      };
+      
+      // Convert camelCase to snake_case
       const patientData = {
-        ...req.body,
         created_at: new Date(),
         updated_at: new Date()
       };
+      
+      Object.keys(req.body).forEach(key => {
+        const dbField = fieldMapping[key] || key;
+        patientData[dbField] = req.body[key];
+      });
+
+      // Log specific fields we care about
+      console.log('\n🔍 SPECIFIC FIELDS DEBUG:');
+      console.log('  schoolName (frontend):', req.body.schoolName);
+      console.log('  school_name (mapped):', patientData.school_name);
+      console.log('  grade (frontend):', req.body.grade);
+      console.log('  grade (mapped):', patientData.grade);
+      console.log('  middleName (frontend):', req.body.middleName);
+      console.log('  middle_name (mapped):', patientData.middle_name);
+      console.log('  evaluationData type:', typeof req.body.evaluationData);
+      console.log('  diagnosisData type:', typeof req.body.diagnosisData);
+      console.log('  historyData type:', typeof req.body.historyData);
+      console.log('');
+
+      // Force stringify JSON fields to ensure consistency
+      if (patientData.evaluation_data) {
+        patientData.evaluation_data = typeof patientData.evaluation_data === 'string'
+          ? patientData.evaluation_data
+          : JSON.stringify(patientData.evaluation_data);
+      }
+      if (patientData.diagnosis_data) {
+        patientData.diagnosis_data = typeof patientData.diagnosis_data === 'string'
+          ? patientData.diagnosis_data
+          : JSON.stringify(patientData.diagnosis_data);
+      }
+      if (patientData.history_data) {
+        patientData.history_data = typeof patientData.history_data === 'string'
+          ? patientData.history_data
+          : JSON.stringify(patientData.history_data);
+      }
 
       const patientId = await this.patientModel.create(patientData);
 
@@ -172,14 +238,80 @@ class PatientController {
       }
       console.log('═'.repeat(80) + '\n');
       
+      // Field name mapping: camelCase (frontend) → snake_case (database)
+      const fieldMapping = {
+        firstName: 'first_name',
+        middleName: 'middle_name',
+        lastName: 'last_name',
+        studentId: 'student_id',
+        dateOfBirth: 'date_of_birth',
+        schoolName: 'school_name',
+        languageOfTesting: 'language_of_testing',
+        zipCode: 'zip_code',
+        emergencyContactName: 'emergency_contact_name',
+        emergencyContactPhone: 'emergency_contact_phone',
+        emergencyContactRelation: 'emergency_contact_relation',
+        customField1: 'custom_field_1',
+        customField2: 'custom_field_2',
+        customField3: 'custom_field_3',
+        customField4: 'custom_field_4',
+        // Handle both camelCase and snake_case from frontend
+        custom_field_1: 'custom_field_1',
+        custom_field_2: 'custom_field_2',
+        custom_field_3: 'custom_field_3',
+        custom_field_4: 'custom_field_4',
+        registrationDate: 'registration_date',
+        centreName: 'centre_name',
+        requiresAssessment: 'requires_assessment',
+        requiresTherapy: 'requires_therapy',
+        evaluationData: 'evaluation_data',
+        diagnosisData: 'diagnosis_data',
+        historyData: 'history_data'
+      };
+      
+      // Convert camelCase to snake_case
       const updateData = {
-        ...req.body,
         updated_at: new Date()
       };
+      
+      Object.keys(req.body).forEach(key => {
+        const dbField = fieldMapping[key] || key;
+        updateData[dbField] = req.body[key];
+      });
+
+      // Log specific fields we care about
+      console.log('\n🔍 SPECIFIC FIELDS DEBUG (UPDATE):');
+      console.log('  schoolName (frontend):', req.body.schoolName);
+      console.log('  school_name (mapped):', updateData.school_name);
+      console.log('  grade (frontend):', req.body.grade);
+      console.log('  grade (mapped):', updateData.grade);
+      console.log('  middleName (frontend):', req.body.middleName);
+      console.log('  middle_name (mapped):', updateData.middle_name);
+      console.log('  evaluationData type:', typeof req.body.evaluationData);
+      console.log('  diagnosisData type:', typeof req.body.diagnosisData);
+      console.log('  historyData type:', typeof req.body.historyData);
+      console.log('');
 
       // Handle documents if provided
       if (updateData.documents && Array.isArray(updateData.documents)) {
         updateData.documents = JSON.stringify(updateData.documents);
+      }
+
+      // Force stringify JSON fields to ensure consistency
+      if (updateData.evaluation_data) {
+        updateData.evaluation_data = typeof updateData.evaluation_data === 'string' 
+          ? updateData.evaluation_data 
+          : JSON.stringify(updateData.evaluation_data);
+      }
+      if (updateData.diagnosis_data) {
+        updateData.diagnosis_data = typeof updateData.diagnosis_data === 'string'
+          ? updateData.diagnosis_data
+          : JSON.stringify(updateData.diagnosis_data);
+      }
+      if (updateData.history_data) {
+        updateData.history_data = typeof updateData.history_data === 'string'
+          ? updateData.history_data
+          : JSON.stringify(updateData.history_data);
       }
 
       const updated = await this.patientModel.update(id, updateData);
