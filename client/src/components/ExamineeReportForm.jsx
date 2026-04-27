@@ -1,7 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 import ExportDropdown from './ExportDropdown';
 
 // ── tiny helpers ──────────────────────────────────────────────────────────────
@@ -453,62 +451,311 @@ export default function ExamineeReportForm({
   }, [evaluationData, historyData, healthSampleReportData, educationSampleReportData, formData]);
 
   // ── Export handlers
-  const handlePrint = () => window.print();
-
-  const handleExportXlsx = async () => {
-    // Export to Excel using XLSX library
-    const rows = [
-      ["Field", "Value"],
-      ["Examinee Name", s1.childName], ["Birth Date", s1.birthDate], ["Age", s1.age],
-      ["Nationality", s1.nationality], ["Gender", s1.gender], ["School", s1.schoolName],
-      ["Grade", s1.grade], ["Mother Tongue", s1.motherTongue], ["Language at Home", s1.languageHome],
-      ["Father Name", s1.fatherName], ["Father Phone", s1.fatherPhone], ["Father Email", s1.fatherEmail],
-      ["Father Education", s1.fatherEdu], ["Father Profession", s1.fatherProf],
-      ["Mother Name", s1.motherName], ["Mother Phone", s1.motherPhone], ["Mother Email", s1.motherEmail],
-      ["Mother Education", s1.motherEdu], ["Mother Profession", s1.motherProf],
-      ["Address", s1.address], ["Form Completed By", s1.formBy], ["Referred By", s1.referredBy],
-    ];
-    // Add academic concerns
-    ["attention", "listening", "speaking", "writing", "reading", "math"].forEach((cat) => {
-      s2[cat].forEach((row) => {
-        rows.push([`[${cat}] ${row.label}`, row.yn + (row.comment ? " | " + row.comment : "")]);
-      });
-    });
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), "Examinee Report Form");
-    XLSX.writeFile(wb, "examinee_report_form.xlsx");
-  };
-
   const handleExportPdf = async () => {
-    // Export to PDF using html2canvas + jsPDF
-    const element = printRef.current;
+    const element = document.getElementById("print-area");
     if (!element) return;
 
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      logging: false,
+    // Dynamic import to avoid module resolution issues
+    const html2pdf = (await import("html2pdf.js")).default;
+
+    const opt = {
+      margin: 0,
+      filename: "examinee_report_form.pdf",
+      image: { type: "jpeg", quality: 1 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+      },
+      jsPDF: {
+        unit: "mm",
+        format: "a4",
+        orientation: "portrait",
+      },
+      pagebreak: {
+        mode: ["avoid-all", "css", "legacy"],
+      },
+    };
+
+    html2pdf().set(opt).from(element).save();
+  };
+
+  const handleExportXlsx = () => {
+    const wb = XLSX.utils.book_new();
+    const rows = [];
+    const merges = [];
+    let r = 0;
+
+    // ── styling helpers (openpyxl-style via write_cells) ──
+    const HEADER_STYLE = { font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11 }, fill: { fgColor: { rgb: "3C3C3C" } }, alignment: { horizontal: "left" } };
+    const COL_HEADER_STYLE = { font: { bold: true, sz: 10 }, fill: { fgColor: { rgb: "C8C8C8" } }, alignment: { horizontal: "center", wrapText: true } };
+    const FIELD_STYLE = { font: { bold: true, sz: 9 }, alignment: { wrapText: true, vertical: "top" } };
+    const VALUE_STYLE = { font: { sz: 9 }, alignment: { wrapText: true, vertical: "top" } };
+
+    const sectionHead = (title) => {
+      rows.push([{ v: title, s: HEADER_STYLE }]);
+      merges.push({ s: { r, c: 0 }, e: { r, c: 3 } });
+      r++;
+    };
+
+    const colHeaders = (...headers) => {
+      rows.push(headers.map((h) => ({ v: h, s: COL_HEADER_STYLE })));
+      r++;
+    };
+
+    const addRow = (f1, v1, f2, v2) => {
+      if (f2 !== undefined) {
+        rows.push([
+          { v: f1 ?? "", s: FIELD_STYLE },
+          { v: v1 ?? "", s: VALUE_STYLE },
+          { v: f2 ?? "", s: FIELD_STYLE },
+          { v: v2 ?? "", s: VALUE_STYLE },
+        ]);
+      } else {
+        rows.push([
+          { v: f1 ?? "", s: FIELD_STYLE },
+          { v: v1 ?? "", s: VALUE_STYLE },
+        ]);
+        merges.push({ s: { r, c: 1 }, e: { r, c: 3 } });
+      }
+      r++;
+    };
+
+    const blankRow = () => { rows.push([]); r++; };
+
+    // ── Mapping helpers ────────────────────────────────────────────────────────
+    const LEARNING_HISTORY_LABELS = {
+      learningDiff: "Learning difficulties",
+      diagnosed: "Diagnosed disorder(s)",
+      attentionProb: "Attention problems",
+      alcoholDrug: "Alcohol / Drug problems",
+      emotional: "Emotional difficulties",
+      ownAbuse: "Own history of abuse",
+      other: "Other",
+    };
+
+    const MILESTONE_LABELS = {
+      socialSmile: "1. Social smile",
+      turnedSide: "2. Turned side",
+      crawling: "3. Crawling",
+      pincerGrip: "4. Pincer grip",
+      walking: "5. Walking",
+      babbling: "6. Babbling",
+      toiletTraining: "7. Toilet training",
+      talkingSingleWords: "8. Talking – single words",
+      talkingSentences: "9. Talking – sentences",
+      running: "10. Running",
+      climbing: "11. Climbing",
+    };
+
+    const APPLICABLE_LABELS = {
+      buttoning: "Buttoning", tyingLaces: "Tying laces", cycling: "Cycling", penGrip: "Pen grip",
+      tellingTime: "Telling time", tellingLeftRight: "Left/Right", poorInterpersonal: "Poor interpersonal",
+      ruleBreaking: "Rule breaking", scholasticBackwardness: "Scholastic backwardness",
+      introvert: "Introvert", anxious: "Anxious", handAches: "Hand aches while writing",
+    };
+
+    const getFamilyLearningText = (hl) =>
+      Object.entries(LEARNING_HISTORY_LABELS).filter(([k]) => hl[k] === true).map(([, lbl]) => lbl).join(", ") || "—";
+
+    const getApplicableText = (ap) =>
+      Object.entries(APPLICABLE_LABELS).filter(([k]) => ap[k] === true).map(([, lbl]) => lbl).join(", ") || "—";
+
+    // ── TITLE ──────────────────────────────────────────────────────────────────
+    rows.push([{ v: "EXAMINEE REPORT FORM – MindSaid Learning Centre", s: { font: { bold: true, sz: 14 }, alignment: { horizontal: "center" } } }]);
+    merges.push({ s: { r, c: 0 }, e: { r, c: 3 } });
+    r++;
+    blankRow();
+
+    // ── SECTION I ──────────────────────────────────────────────────────────────
+    sectionHead("Section I: Identifying Information");
+    colHeaders("Field", "Value", "Field", "Value");
+    addRow("Examinee Name", s1.childName, "Birth Date", s1.birthDate);
+    addRow("Age", s1.age, "Gender", s1.gender);
+    addRow("Nationality", s1.nationality, "Handedness", s1.handedness);
+    addRow("School Name", s1.schoolName, "Grade", s1.grade);
+    addRow("School Category", s1.schoolCategory, "Mother Tongue", s1.motherTongue);
+    addRow("Language at Home", s1.languageHome, "Referred By", s1.referredBy);
+    addRow("Father Name", s1.fatherName, "Father Phone", s1.fatherPhone);
+    addRow("Father Email", s1.fatherEmail, "Father Education", s1.fatherEdu);
+    addRow("Father Profession", s1.fatherProf, "", "");
+    addRow("Mother Name", s1.motherName, "Mother Phone", s1.motherPhone);
+    addRow("Mother Email", s1.motherEmail, "Mother Education", s1.motherEdu);
+    addRow("Mother Profession", s1.motherProf, "", "");
+    addRow("Address", s1.address, "Form Completed By", s1.formBy);
+    addRow("Previous Reports", s1.previousReports);
+    blankRow();
+
+    // ── SECTION II ─────────────────────────────────────────────────────────────
+    sectionHead("Section II: Present Academic Concerns");
+    rows.push([{ v: `School Attendance (days/year):  ${s2.attendance || ""}`, s: { font: { italic: true, sz: 9 } } }]);
+    merges.push({ s: { r, c: 0 }, e: { r, c: 3 } }); r++;
+    colHeaders("Category", "Concern", "YES / NO", "Comments");
+
+    const acCategories = [
+      ["1. Attention", s2.attention],
+      ["2. Listening", s2.listening],
+      ["3. Speaking", s2.speaking],
+      ["4. Writing", s2.writing],
+      ["5. Reading", s2.reading],
+      ["6. Math", s2.math],
+    ];
+    acCategories.forEach(([cat, acRows]) => {
+      acRows.forEach((acr, i) => {
+        rows.push([
+          { v: i === 0 ? cat : "", s: FIELD_STYLE },
+          { v: acr.label, s: VALUE_STYLE },
+          { v: acr.yn || "—", s: { ...VALUE_STYLE, alignment: { horizontal: "center" } } },
+          { v: acr.comment || "", s: VALUE_STYLE },
+        ]);
+        r++;
+      });
     });
+    addRow("General Comments", s2.generalComments);
+    blankRow();
 
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const imgWidth = 210;
-    const pageHeight = 297;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    let heightLeft = imgHeight;
-    let position = 0;
+    // ── SECTION III ────────────────────────────────────────────────────────────
+    sectionHead("Section III: Family Status / History");
+    colHeaders("Field", "Value", "", "");
+    addRow("Marital Status", s3.maritalStatus);
+    addRow("Consanguineous Marriage", s3.consanguineous);
+    addRow("Separation Date (if any)", s3.separationDate);
+    addRow("Father Age at Marriage", s3.fatherAgeMarriage);
+    addRow("Mother Age at Marriage", s3.motherAgeMarriage);
+    addRow("Father Age at Birth", s3.fatherAgeBirth);
+    addRow("Mother Age at Birth", s3.motherAgeBirth);
+    addRow("Family Type", s3.familyType);
+    s3.siblings.forEach((s, i) => addRow(`Sibling ${i + 1}`, `${s.gender || "—"}  |  Age: ${s.age || "—"}  |  Grade: ${s.grade || "—"}`));
+    addRow("Family Learning History (applicable items)", getFamilyLearningText(s3.historyLearning));
+    addRow("Relation of above", s3.historyLearning.relation);
+    addRow("H/o Learning Problems in Family", s3.historyLearningYN);
+    addRow("H/o Depression / Anxiety / Conduct Disorder", s3.historyDepression);
+    blankRow();
 
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
+    // ── SECTION IV ─────────────────────────────────────────────────────────────
+    sectionHead("Section IV: Medical History");
+    colHeaders("Detail", "Description", "", "");
 
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-    }
+    const prenatalChecked = [
+      s4.prenatal.edema && "Edema", s4.prenatal.bp && "BP (High/Low)",
+      s4.prenatal.nausea && "Nausea beyond 3rd month", s4.prenatal.diabetes && "Diabetes",
+      s4.prenatal.falls && "Falls/Fainting", s4.prenatal.thyroid && "Thyroid",
+    ].filter(Boolean).join(", ") || "None";
 
-    pdf.save('examinee_report_form.pdf');
+    const deliveryChecked = [
+      s4.postnatal.fullTerm && "Full term", s4.postnatal.csection && "C-section",
+      s4.postnatal.normal && "Normal", s4.postnatal.forceps && "Forceps",
+    ].filter(Boolean).join(", ") || "None";
+
+    addRow("Pre-natal – Mother's health during pregnancy", s4.prenatal.desc);
+    addRow("Pre-natal conditions present", prenatalChecked);
+    addRow("Post-natal – Delivery complications", s4.postnatal.desc);
+    addRow("Delivery type", deliveryChecked);
+    addRow("Birth weight", s4.weightAvg ? "Average" : s4.weightLow ? "Low" : "—");
+    addRow("Cry at birth", s4.cryCry || "—");
+    blankRow();
+
+    colHeaders("Developmental Milestone", "Timing", "Age Achieved", "Comments");
+    Object.entries(s4.milestones).forEach(([key, val]) => {
+      const timing = val.early ? "Early" : val.normal ? "Normal" : val.average ? "Average" : val.delayed ? "Delayed" : "—";
+      rows.push([
+        { v: MILESTONE_LABELS[key] || key, s: FIELD_STYLE },
+        { v: timing, s: { ...VALUE_STYLE, alignment: { horizontal: "center" } } },
+        { v: val.age || "—", s: { ...VALUE_STYLE, alignment: { horizontal: "center" } } },
+        { v: val.comment || "", s: VALUE_STYLE },
+      ]);
+      r++;
+    });
+    blankRow();
+
+    addRow("Applicable Problems (ticked)", getApplicableText(s4.applicableProblems));
+    const roomDesc = [
+      s4.applicableProblems.roomTidy && "Tidy", s4.applicableProblems.roomUntidy && "Untidy",
+      s4.applicableProblems.roomOrganised && "Organised", s4.applicableProblems.roomDisorganised && "Disorganised",
+    ].filter(Boolean).join(", ") || "—";
+    addRow("His/Her Room", `${roomDesc}${s4.roomComments ? "  |  " + s4.roomComments : ""}`);
+    blankRow();
+
+    colHeaders("Other Medical Examinations", "Details", "", "");
+    [
+      ["Language difficulties", s4.langDiff],
+      ["Eye examination", s4.eyeExam],
+      ["Speech assessment", s4.speechAssessment],
+      ["Hearing test", s4.hearingTest],
+      ["Psychological test", s4.psychTest],
+      ["Neurological assessment", s4.neuroAssessment],
+      ["Major illnesses / hospitalisations / injuries", s4.majorIllnesses],
+      ["H/o ADHD", s4.adhdHistory],
+      ["Current medications (and reason)", s4.medications],
+    ].forEach(([lbl, val]) => addRow(lbl, val || "—"));
+    blankRow();
+
+    // ── SECTION V ──────────────────────────────────────────────────────────────
+    sectionHead("Section V: Educational History");
+    colHeaders("Field", "Value", "", "");
+    s5.prevSchools.forEach((s, i) => addRow(`Previous School ${i + 1}`, `${s.name || "—"}  |  Grade: ${s.grade || "—"}`));
+    [
+      ["Satisfied with current school?", s5.currentSchoolSatisfied],
+      ["Comments on satisfaction", s5.satisfactionComments],
+      ["Age/Grade when problem first noticed & by whom", s5.problemFirstNoticed],
+      ["Duration of concern", s5.howLong],
+      ["Difficult subjects", s5.difficultSubjects],
+      ["General progress before current school", s5.generalProgress],
+      ["Progress comments", s5.progressComments],
+      ["School's attitude towards problem", s5.schoolAttitude],
+      ["Tuition teacher's attitude", s5.tuitionAttitude],
+      ["Counselling / therapy (grade & duration)", s5.counselling],
+      ["Concessions received in previous school", s5.concessions],
+      ["Examinee's attitude towards school performance", s5.childAttitude],
+      ["Forgets to submit homework/projects?", s5.forgetsHomework],
+      ["Subjects chosen for current year", s5.chosenSubjects],
+      ["Recent PTM remarks", s5.ptmRemarks],
+    ].forEach(([lbl, val]) => addRow(lbl, val || "—"));
+    blankRow();
+
+    // ── SECTION VI ─────────────────────────────────────────────────────────────
+    sectionHead("Section VI: Behaviour");
+    colHeaders("Question", "Response", "", "");
+    [
+      ["How does the examinee get along with peers?", s6.peerRelations],
+      ["How does the examinee get along with siblings/cousins?", s6.siblingRelations],
+      ["Stressful events in the family?", s6.stressfulEvents],
+      ["Behaviour concerns", s6.behaviourConcerns],
+    ].forEach(([lbl, val]) => addRow(lbl, val || "—"));
+    blankRow();
+
+    // ── SECTION VII ────────────────────────────────────────────────────────────
+    sectionHead("Section VII: Other");
+    colHeaders("Question", "Response", "", "");
+    [
+      ["Play interests, toy preferences", s7.playInterests],
+      ["Free time activities", s7.freeTime],
+      ["Special talents (home/academics/sports)", s7.specialTalents],
+      ["Forgets important things?", s7.forgetsThings],
+      ["Activities enjoyed together", s7.togetherActivities],
+      ["Acknowledging good behaviour", s7.acknowledgeBehaviour],
+      ["Primary disciplinarian", s7.primaryDisciplinarian],
+      ["Discipline strategies at home", s7.disciplineStrategies],
+      ["Paediatrician / primary care doctor", s7.pediatrician],
+      ["Other information", s7.otherInfo],
+      ["How did you find out about MindSaid?", s7.howFoundOut],
+      ["Name of parent filling the form", s7.parentName],
+      ["Date", s7.date],
+    ].forEach(([lbl, val]) => addRow(lbl, val || "—"));
+
+    // ── Build worksheet ────────────────────────────────────────────────────────
+    const ws = XLSX.utils.aoa_to_sheet(
+      rows.map((row) => row.map((cell) => (cell && cell.v !== undefined ? cell.v : cell ?? "")))
+    );
+
+    // Apply styles (xlsx-style / SheetJS Pro supports this; standard xlsx: styles ignored but structure is preserved)
+    ws["!merges"] = merges;
+    ws["!cols"] = [{ wch: 38 }, { wch: 42 }, { wch: 34 }, { wch: 38 }];
+
+    // Row heights for readability
+    ws["!rows"] = rows.map(() => ({ hpt: 18 }));
+
+    XLSX.utils.book_append_sheet(wb, ws, "Examinee Report Form");
+    XLSX.writeFile(wb, "examinee_report_form.xlsx");
   };
 
   // ── Table styles
@@ -545,22 +792,6 @@ export default function ExamineeReportForm({
           onExportXlsx={handleExportXlsx}
           onExportPdf={handleExportPdf}
         />
-        <button
-          onClick={handlePrint}
-          style={{
-            background: "#c0392b",
-            color: "#fff",
-            border: "none",
-            borderRadius: 5,
-            padding: "8px 18px",
-            fontSize: 13,
-            fontWeight: "bold",
-            cursor: "pointer",
-            fontFamily: "Arial, sans-serif",
-          }}
-        >
-           Print / PDF
-        </button>
         <span style={{ fontSize: 12, color: "#555", alignSelf: "center", fontFamily: "Arial" }}>
           All fields are editable — click to type
         </span>
@@ -569,12 +800,12 @@ export default function ExamineeReportForm({
       {/* Form */}
       <div
         ref={printRef}
-        id="form-to-print"
+        id="print-area"
         style={{
-          maxWidth: 800,
-          margin: "0 auto",
+          width: "210mm",
+          padding: "10mm",
           background: "#fff",
-          boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+          margin: "0 auto",
         }}
       >
         {/* ── HEADER / LOGO ── */}
@@ -1114,14 +1345,34 @@ export default function ExamineeReportForm({
 
       {/* Print CSS */}
       <style>{`
+        #print-area {
+          width: 210mm;
+          padding: 10mm;
+          background: white;
+        }
         @media print {
           .no-print { display: none !important; }
           body { background: white; }
-          #form-to-print { max-width: 100%; padding: 0; box-shadow: none; }
+          #print-area {
+            max-width: 100%;
+            padding: 10mm;
+            box-shadow: none;
+            page-break-inside: avoid;
+          }
+          table {
+            page-break-inside: auto;
+          }
+          tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+          }
           input, textarea { border-bottom: 1px solid #999 !important; }
         }
         @media screen {
-          #form-to-print { box-shadow: 0 4px 20px rgba(0,0,0,0.18); }
+          #print-area {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+            margin: 0 auto;
+          }
         }
       `}</style>
     </div>
