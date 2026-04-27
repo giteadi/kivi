@@ -617,26 +617,68 @@ class StudentController {
         });
       }
 
-      // Transform data for export
-      const exportData = students.map(student => ({
-        'System ID': `SYS${student.id.toString().padStart(6, '0')}`,
-        'First Name': student.first_name || '',
-        'Last Name': student.last_name || '',
-        'Examinee ID': student.student_id || `STU${student.id}`,
-        'Birth Date': student.date_of_birth ? new Date(student.date_of_birth).toLocaleDateString('en-GB') : '',
-        'Gender': student.gender ? student.gender.charAt(0).toUpperCase() + student.gender.slice(1) : '',
-        'Email': student.email || '',
-        'Phone': student.phone || '',
-        'Center': student.centre_name || 'MindSaid Learning Centre',
-        'Status': student.status === 'active' ? 'Active' : 'Inactive',
-        'Registration Date': student.registration_date || '',
-        'Address': student.address || '',
-        'City': student.city || '',
-        'State': student.state || '',
-        'Zip Code': student.zip_code || ''
-      }));
+      // Helper to safely parse JSON
+      const safeParse = (data) => {
+        if (!data) return {};
+        if (typeof data === 'object') return data;
+        try {
+          return JSON.parse(data);
+        } catch (e) {
+          console.warn('Failed to parse JSON in export:', e.message);
+          return {};
+        }
+      };
 
-      console.log(`📤 EXPORT: Transformed data for ${format} format`);
+      // Transform data for export with full report form data
+      const exportData = students.map(student => {
+        const reportData = safeParse(student.report_form_data);
+        const evaluationData = safeParse(student.evaluation_data);
+        const historyData = safeParse(student.history_data);
+        const diagnosisData = safeParse(student.diagnosis_data);
+
+        return {
+          // Basic Info
+          'System ID': `SYS${student.id.toString().padStart(6, '0')}`,
+          'First Name': student.first_name || '',
+          'Last Name': student.last_name || '',
+          'Examinee ID': student.student_id || `STU${student.id}`,
+          'Birth Date': student.date_of_birth ? new Date(student.date_of_birth).toLocaleDateString('en-GB') : '',
+          'Gender': student.gender ? student.gender.charAt(0).toUpperCase() + student.gender.slice(1) : '',
+          'Email': student.email || '',
+          'Phone': student.phone || '',
+          'Center': student.centre_name || 'MindSaid Learning Centre',
+          'Status': student.status === 'active' ? 'Active' : 'Inactive',
+          'Registration Date': student.registration_date || '',
+          'Address': student.address || '',
+          'City': student.city || '',
+          'State': student.state || '',
+          'Zip Code': student.zip_code || '',
+          
+          // Report Form Data (full structure)
+          'Report Form Data': reportData,
+          'Section I': reportData?.sectionI || {},
+          'Section II': reportData?.sectionII || {},
+          'Section III': reportData?.sectionIII || {},
+          'Section IV': reportData?.sectionIV || {},
+          'Section V': reportData?.sectionV || {},
+          'Section VI': reportData?.sectionVI || {},
+          'Section VII': reportData?.sectionVII || {},
+          
+          // Additional JSON fields
+          'Evaluation Data': evaluationData,
+          'History Data': historyData,
+          'Diagnosis Data': diagnosisData,
+          
+          // Direct report form fields (for easier access)
+          'Nationality': student.nationality || '',
+          'Handedness': student.handedness || '',
+          'Father Name': student.father_name || '',
+          'Mother Name': student.mother_name || '',
+          'School Category': student.school_category || '',
+        };
+      });
+
+      console.log(`📤 EXPORT: Transformed data for ${format} format with full report data`);
 
       res.json({
         success: true,

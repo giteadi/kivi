@@ -85,9 +85,25 @@ const TA = ({ value, onChange, rows = 2 }) => (
 
 // Radio group
 const Radio = ({ name, options, value, onChange }) => (
-  <span style={{ display: "inline-flex", gap: 14, flexWrap: "wrap" }}>
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "center",
+      gap: 10,
+      whiteSpace: "nowrap",
+    }}
+  >
     {options.map((opt) => (
-      <label key={opt} style={{ fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 3 }}>
+      <label
+        key={opt}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 3,
+          fontSize: 13,
+          cursor: "pointer",
+        }}
+      >
         <input
           type="radio"
           name={name}
@@ -99,7 +115,7 @@ const Radio = ({ name, options, value, onChange }) => (
         {opt}
       </label>
     ))}
-  </span>
+  </div>
 );
 
 // Checkbox
@@ -118,9 +134,15 @@ const CB = ({ label, checked, onChange }) => (
 // YES/NO row for academic concerns table
 const AcRow = ({ category, label, data, setData }) => (
   <tr>
-    <Cell style={{ width: 160 }}>{category}</Cell>
-    <Cell style={{ minWidth: 280 }}>{label}</Cell>
-    <Cell style={{ width: 80, textAlign: "center" }}>
+    <Cell style={{ width: 180 }}>{category}</Cell>
+    <Cell style={{ width: 350 }}>{label}</Cell>
+    <Cell
+      style={{
+        width: 120,
+        textAlign: "center",
+        whiteSpace: "nowrap",
+      }}
+    >
       <Radio
         name={`ac_${label.slice(0, 20)}`}
         options={["YES", "NO"]}
@@ -128,7 +150,7 @@ const AcRow = ({ category, label, data, setData }) => (
         onChange={(v) => setData({ ...data, yn: v })}
       />
     </Cell>
-    <Cell style={{ minWidth: 120 }}>
+    <Cell style={{ width: 200 }}>
       <F value={data.comment} onChange={(v) => setData({ ...data, comment: v })} wide />
     </Cell>
   </tr>
@@ -534,194 +556,289 @@ export default function ExamineeReportForm({
   //   loadSavedReport();
   // }, [formData?.id, formData?.studentId]);
 
-  // ── Export handlers (improved for better content preservation)
+  // ── PDF Export with Print-Optimized Layout ──
   const handleExportPdf = async () => {
     try {
-      const element = document.getElementById("print-area");
-      if (!element) {
-        alert("Print area not found");
-        return;
-      }
+      console.log("📄 Creating print-optimized PDF...");
 
-      // Create temporary container for PDF export with proper sizing
-      const container = document.createElement("div");
-      container.style.position = "absolute";
-      container.style.left = "-9999px";
-      container.style.top = "0";
-      container.style.width = "210mm"; // A4 width
-      container.style.minHeight = "297mm"; // A4 height
-      container.style.padding = "10mm";
-      container.style.background = "#fff";
-      container.style.fontFamily = "'Times New Roman', Georgia, serif";
-      container.style.fontSize = "11px"; // Slightly smaller for better fit
-      container.style.lineHeight = "1.4";
-      container.style.color = "#111";
-      container.style.boxSizing = "border-box";
-      
-      // Clone the content
-      container.innerHTML = element.innerHTML;
-      
-      // Remove no-print elements
-      const noPrintElements = container.querySelectorAll(".no-print");
-      noPrintElements.forEach(el => el.remove());
-      
-      // Add comprehensive table styles to prevent content cutting
-      const tables = container.querySelectorAll("table");
-      tables.forEach(table => {
-        table.style.width = "100%";
-        table.style.borderCollapse = "collapse";
-        table.style.marginBottom = "12px";
-        table.style.pageBreakInside = "auto";
-        table.style.fontSize = "10px"; // Smaller font for tables
-      });
-      
-      const rows = container.querySelectorAll("tr");
-      rows.forEach(row => {
-        row.style.pageBreakInside = "avoid";
-        row.style.pageBreakAfter = "auto";
-      });
-      
-      const cells = container.querySelectorAll("td, th");
-      cells.forEach(cell => {
-        cell.style.border = "1px solid #555";
-        cell.style.padding = "4px 6px"; // Reduced padding
-        cell.style.textAlign = "left";
-        cell.style.verticalAlign = "top";
-        cell.style.wordWrap = "break-word";
-        cell.style.wordBreak = "break-word";
-        cell.style.fontSize = "10px";
-        cell.style.lineHeight = "1.3";
-      });
-      
-      const headers = container.querySelectorAll("th");
-      headers.forEach(th => {
-        th.style.background = "#f0f0f0";
-        th.style.fontWeight = "bold";
-        th.style.fontSize = "10px";
-      });
+      // Create a clean print container
+      const printContainer = document.createElement("div");
+      printContainer.style.cssText = `
+        width: 794px;
+        margin: 0 auto;
+        background: #fff;
+        font-family: 'Times New Roman', Georgia, serif;
+        font-size: 11px;
+        line-height: 1.3;
+        color: #000;
+        padding: 20px;
+        box-sizing: border-box;
+      `;
 
-      // Style inputs to show their values
-      const inputs = container.querySelectorAll("input[type='text'], textarea");
-      inputs.forEach(input => {
-        const value = input.value || input.placeholder || "";
-        const span = document.createElement("span");
-        span.textContent = value;
-        span.style.fontSize = "10px";
-        span.style.wordWrap = "break-word";
-        input.parentNode.replaceChild(span, input);
-      });
+      // Helper for radio symbols
+      const radioSymbol = (value, option) => value === option ? "●" : "○";
 
-      // Handle radio buttons - show selected value
-      const radios = container.querySelectorAll("input[type='radio']");
-      const radioGroups = {};
-      radios.forEach(radio => {
-        if (radio.checked) {
-          if (!radioGroups[radio.name]) {
-            radioGroups[radio.name] = radio.value;
-          }
-        }
-      });
-      
-      // Replace radio groups with text
-      Object.keys(radioGroups).forEach(groupName => {
-        const groupRadios = container.querySelectorAll(`input[name="${groupName}"]`);
-        if (groupRadios.length > 0) {
-          const parent = groupRadios[0].closest("span") || groupRadios[0].parentElement;
-          if (parent) {
-            const span = document.createElement("span");
-            span.textContent = radioGroups[groupName];
-            span.style.fontWeight = "bold";
-            span.style.fontSize = "10px";
-            parent.innerHTML = "";
-            parent.appendChild(span);
-          }
-        }
-      });
+      // Build the print HTML with proper table structure
+      printContainer.innerHTML = `
+        <style>
+          .print-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #555; margin-bottom: 15px; }
+          .print-table td { border: 1px solid #555; padding: 5px; vertical-align: top; word-break: break-word; overflow-wrap: break-word; }
+          .print-table .header { font-weight: bold; background: #f0f0f0; }
+          .print-table .section { font-weight: bold; background: #f5f5f5; }
+          .radio-group { display: flex; gap: 15px; flex-wrap: wrap; }
+          .radio-item { white-space: nowrap; }
+        </style>
 
-      // Handle checkboxes - show checked state
-      const checkboxes = container.querySelectorAll("input[type='checkbox']");
-      checkboxes.forEach(checkbox => {
-        const span = document.createElement("span");
-        span.textContent = checkbox.checked ? "☑" : "☐";
-        span.style.fontSize = "12px";
-        checkbox.parentNode.replaceChild(span, checkbox);
-      });
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="font-size: 16px; font-weight: bold;">MindSaid Learning Centre</div>
+          <div style="font-size: 11px; font-style: italic;">Learning This Ability</div>
+          <div style="font-size: 9px;">Psycho-educational Assessment & Intervention Centre</div>
+          <div style="width: 100%; height: 2px; background: #00a0e3; margin: 10px 0;"></div>
+        </div>
 
-      // Add section boxes styling
-      const sectionBoxes = container.querySelectorAll("div[style*='border']");
-      sectionBoxes.forEach(box => {
-        box.style.pageBreakInside = "avoid";
-        box.style.marginBottom = "8px";
-      });
+        <table class="print-table">
+          <tr>
+            <td colspan="4" class="header" style="padding: 6px; font-size: 12px;">EXAMINEE REPORT FORM</td>
+          </tr>
+          <tr>
+            <td colspan="4" class="section">Section I: IDENTIFYING INFORMATION</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold; width: 20%;">Examinee's Name:</td>
+            <td style="width: 30%;">${s1.childName || ''}</td>
+            <td style="font-weight: bold; width: 20%;">Birth date:</td>
+            <td style="width: 30%;">${s1.birthDate || ''}</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">Age:</td>
+            <td>${s1.age || ''}</td>
+            <td style="font-weight: bold;">Gender:</td>
+            <td>
+              <div class="radio-group">
+                <span class="radio-item">${radioSymbol(s1.gender, "Male")} Male</span>
+                <span class="radio-item">${radioSymbol(s1.gender, "Female")} Female</span>
+                <span class="radio-item">${radioSymbol(s1.gender, "Prefer not to say")} Prefer not to say</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">Nationality:</td>
+            <td>${s1.nationality || ''}</td>
+            <td style="font-weight: bold;">School Category:</td>
+            <td>${s1.schoolCategory || ''}</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">Name of School:</td>
+            <td>${s1.schoolName || ''}</td>
+            <td style="font-weight: bold;">Grade:</td>
+            <td>${s1.grade || ''}</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">Handedness:</td>
+            <td>
+              <div class="radio-group">
+                <span class="radio-item">${radioSymbol(s1.handedness, "Right")} Right</span>
+                <span class="radio-item">${radioSymbol(s1.handedness, "Left")} Left</span>
+                <span class="radio-item">${radioSymbol(s1.handedness, "Ambidexterity")} Ambidexterity</span>
+              </div>
+            </td>
+            <td style="font-weight: bold;">Mother Tongue:</td>
+            <td>${s1.motherTongue || ''}</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">Language at home:</td>
+            <td colspan="3">${s1.languageHome || ''}</td>
+          </tr>
+          <tr>
+            <td colspan="4" style="font-style: italic; font-size: 9px;">
+              Reports of previous psycho-educational assessments: please share reports via email, if applicable
+            </td>
+          </tr>
+          <!-- Father's Details - Fixed column structure -->
+          <tr>
+            <td rowspan="3" style="font-weight: bold; vertical-align: top;">Father's Details</td>
+            <td style="font-weight: bold;">Name:</td>
+            <td colspan="2">${s1.fatherName || ''}</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">Phone:</td>
+            <td>${s1.fatherPhone || ''}</td>
+            <td>
+              <span style="font-weight: bold;">Email:</span> <span style="word-break: break-all;">${s1.fatherEmail || ''}</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">Education:</td>
+            <td>${s1.fatherEdu || ''}</td>
+            <td>
+              <span style="font-weight: bold;">Profession:</span> ${s1.fatherProf || ''}
+            </td>
+          </tr>
+          <!-- Mother's Details - Fixed column structure -->
+          <tr>
+            <td rowspan="3" style="font-weight: bold; vertical-align: top;">Mother's Details</td>
+            <td style="font-weight: bold;">Name:</td>
+            <td colspan="2">${s1.motherName || ''}</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">Phone:</td>
+            <td>${s1.motherPhone || ''}</td>
+            <td>
+              <span style="font-weight: bold;">Email:</span> <span style="word-break: break-all;">${s1.motherEmail || ''}</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">Education:</td>
+            <td>${s1.motherEdu || ''}</td>
+            <td>
+              <span style="font-weight: bold;">Profession:</span> ${s1.motherProf || ''}
+            </td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">Residence Address:</td>
+            <td colspan="3">${s1.address || ''}</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">Form completed by:</td>
+            <td>${s1.formBy || ''}</td>
+            <td style="font-weight: bold;">Referred by:</td>
+            <td>${s1.referredBy || ''}</td>
+          </tr>
+        </table>
 
-      document.body.appendChild(container);
+        <!-- Section II: Academic Concerns -->
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; table-layout: fixed; border: 1px solid #555;">
+          <tr>
+            <td colspan="4" style="border: 1px solid #555; padding: 5px; font-weight: bold; background: #f5f5f5;">Section II: PRESENT ACADEMIC CONCERNS</td>
+          </tr>
+          <tr>
+            <td colspan="4" style="border: 1px solid #555; padding: 4px; font-size: 10px;">
+              <b>School attendance:</b> No. of days attended in school in one academic year: ${s2?.attendance || ''}
+            </td>
+          </tr>
+          <tr style="background: #f0f0f0;">
+            <td style="border: 1px solid #555; padding: 5px; font-weight: bold; width: 15%;">Academic Concerns</td>
+            <td style="border: 1px solid #555; padding: 5px; width: 55%;">Write YES if the examinee CAN do this or NO if the examinee CANNOT</td>
+            <td style="border: 1px solid #555; padding: 5px; font-weight: bold; width: 15%; text-align: center;">YES/NO</td>
+            <td style="border: 1px solid #555; padding: 5px; font-weight: bold; width: 15%;">Comments</td>
+          </tr>
+          ${Object.entries(s2?.categories || {}).map(([category, data]) => {
+            const questions = data.questions || [];
+            return questions.map((q, idx) => `
+              <tr>
+                ${idx === 0 ? `<td rowspan="${questions.length}" style="border: 1px solid #555; padding: 5px; font-weight: bold; vertical-align: top;">${category}</td>` : ''}
+                <td style="border: 1px solid #555; padding: 5px;">${q.label}</td>
+                <td style="border: 1px solid #555; padding: 5px; text-align: center;">
+                  ${radioSymbol(q.yn, "YES")} YES  
+                  ${radioSymbol(q.yn, "NO")} NO
+                </td>
+                <td style="border: 1px solid #555; padding: 5px;">${q.comment || ''}</td>
+              </tr>
+            `).join('');
+          }).join('')}
+        </table>
 
-      // Wait for images to load
-      const images = container.querySelectorAll("img");
-      await Promise.all(
-        Array.from(images).map(img => {
-          if (img.complete) return Promise.resolve();
-          return new Promise((resolve) => {
-            img.onload = resolve;
-            img.onerror = resolve;
-          });
-        })
-      );
+        <!-- Section III: Family History -->
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; table-layout: fixed; border: 1px solid #555;">
+          <tr>
+            <td colspan="2" style="border: 1px solid #555; padding: 5px; font-weight: bold; background: #f5f5f5;">Section III: FAMILY HISTORY</td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #555; padding: 5px; width: 50%;">
+              <div style="font-weight: bold; margin-bottom: 5px;">Is there a history of (the) learning problems in the family?</div>
+              <div>${radioSymbol(s3.learningProblemFamily, "Yes")} Yes  ${radioSymbol(s3.learningProblemFamily, "No")} No</div>
+            </td>
+            <td style="border: 1px solid #555; padding: 5px;">
+              <div>${s3.learningProblemFamily === "Yes" ? `
+                ${radioSymbol(s3.learningDifficulties, true)} Learning difficulties<br/>
+                ${radioSymbol(s3.diagnosedDisorder, true)} Diagnosed disorder(s)<br/>
+                ${radioSymbol(s3.attentionProblems, true)} Attention Problems<br/>
+                ${radioSymbol(s3.emotionalDifficulties, true)} Emotional difficulties<br/>
+                ${radioSymbol(s3.other, true)} Other
+              ` : ''}</div>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="2" style="border: 1px solid #555; padding: 5px;">
+              <b>Any history of learning problems in the family (specific subjects, handwriting, etc.):</b><br/>
+              ${s3.specificProblems || ''}
+            </td>
+          </tr>
+        </table>
 
-      // Convert to canvas with higher quality
-      const canvas = await html2canvas(container, {
-        scale: 2.5, // Higher scale for better quality
+        <!-- Section IV: Medical History -->
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; table-layout: fixed; border: 1px solid #555;">
+          <tr>
+            <td colspan="3" style="border: 1px solid #555; padding: 5px; font-weight: bold; background: #f5f5f5;">Section IV: MEDICAL HISTORY - Pregnancy, Delivery and Examinee's developmental history</td>
+          </tr>
+          <tr>
+            <td rowspan="4" style="border: 1px solid #555; padding: 5px; font-weight: bold; width: 15%;">a) Pre-natal</td>
+            <td colspan="2" style="border: 1px solid #555; padding: 5px;">
+              <b>Describe Mother's health during pregnancy:</b>
+            </td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #555; padding: 4px; width: 40%;">${radioSymbol(s4.prenatal?.edema, true)} Edema</td>
+            <td style="border: 1px solid #555; padding: 4px;">${radioSymbol(s4.prenatal?.bloodPressure, true)} Blood pressure: High/Low</td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #555; padding: 4px;">${radioSymbol(s4.prenatal?.nausea, true)} Nausea & vomiting beyond 3rd month</td>
+            <td style="border: 1px solid #555; padding: 4px;">${radioSymbol(s4.prenatal?.diabetes, true)} Diabetes</td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #555; padding: 4px;">${radioSymbol(s4.prenatal?.falls, true)} Falls / Fainting spells</td>
+            <td style="border: 1px solid #555; padding: 4px;">${radioSymbol(s4.prenatal?.thyroid, true)} Thyroid</td>
+          </tr>
+        </table>
+
+        <div style="font-size: 9px; text-align: center; margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px;">
+          MindSaid Learning Centre - Psycho-educational Assessment & Intervention Centre
+        </div>
+      `;
+
+      // Add to body temporarily
+      document.body.appendChild(printContainer);
+
+      // Capture with html2canvas
+      const canvas = await html2canvas(printContainer, {
+        scale: 3,
         useCORS: true,
         logging: false,
         backgroundColor: "#ffffff",
-        windowWidth: container.scrollWidth,
-        windowHeight: container.scrollHeight,
-        onclone: (clonedDoc) => {
-          const clonedContainer = clonedDoc.getElementById("print-area");
-          if (clonedContainer) {
-            clonedContainer.style.width = "210mm";
-            clonedContainer.style.padding = "10mm";
-          }
-        }
+        width: 794,
+        height: printContainer.scrollHeight,
       });
 
-      document.body.removeChild(container);
+      // Remove from body
+      document.body.removeChild(printContainer);
 
-      // Create PDF with proper page handling
-      const imgData = canvas.toDataURL("image/png", 1.0);
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-        compress: true,
-      });
-
-      const pdfWidth = 210; // A4 width in mm
-      const pdfHeight = 297; // A4 height in mm
+      // Create PDF
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = 210;
+      const pdfHeight = 297;
       const imgWidth = pdfWidth;
-      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+      const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
       
       let heightLeft = imgHeight;
       let position = 0;
 
-      // Add first page
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight, undefined, "FAST");
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
       heightLeft -= pdfHeight;
 
-      // Add additional pages if content is longer
       while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight, undefined, "FAST");
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
         heightLeft -= pdfHeight;
       }
 
-      // Save PDF
       pdf.save(`${s1.childName || "Examinee"}_Report_Form.pdf`);
-      
-      console.log("[PDF Export] Successfully exported PDF");
+      console.log("✅ PDF Export successful");
     } catch (err) {
-      console.error("[PDF Export Error]", err);
+      console.error("❌ PDF Export Error:", err);
       alert("PDF export failed: " + err.message);
     }
   };
@@ -1507,8 +1624,9 @@ export default function ExamineeReportForm({
         ref={printRef}
         id="print-area"
         style={{
-          width: "210mm",
-          padding: "10mm",
+          width: "100%",
+          maxWidth: "1400px",
+          padding: "20px",
           background: "#fff",
           margin: "0 auto",
         }}
@@ -2051,8 +2169,9 @@ export default function ExamineeReportForm({
       {/* Print CSS */}
       <style>{`
         #print-area {
-          width: 210mm;
-          padding: 10mm;
+          width: 100%;
+          max-width: 1400px;
+          padding: 20px;
           background: white;
         }
         @media print {
@@ -2060,17 +2179,12 @@ export default function ExamineeReportForm({
           body { background: white; }
           #print-area {
             max-width: 100%;
-            padding: 10mm;
+            padding: 15px;
             box-shadow: none;
             page-break-inside: avoid;
           }
-          table {
-            page-break-inside: auto;
-          }
-          tr {
-            page-break-inside: avoid;
-            page-break-after: auto;
-          }
+          table { page-break-inside: auto; }
+          tr { page-break-inside: avoid; page-break-after: auto; }
           input, textarea { border-bottom: 1px solid #999 !important; }
         }
         @media screen {
