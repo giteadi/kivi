@@ -189,6 +189,35 @@ class StudentController {
         console.log(`   ℹ️ history_data: ${student.history_data ? 'Already parsed' : 'NULL'}`);
       }
 
+      // Parse report form data if it exists
+      if (student.report_form_data && typeof student.report_form_data === 'string') {
+        try {
+          const parsed = JSON.parse(student.report_form_data);
+          console.log(`   ✅ report_form_data: ${student.report_form_data.length} chars → Parsed successfully`);
+          console.log(`      Keys:`, Object.keys(parsed));
+          student.report_form_data = parsed;
+        } catch (e) {
+          console.error(`   ❌ report_form_data: Parse error -`, e.message);
+          student.report_form_data = null;
+        }
+      } else {
+        console.log(`   ℹ️ report_form_data: ${student.report_form_data ? 'Already parsed' : 'NULL'}`);
+      }
+
+      // Parse individual report form sections if they exist
+      const reportSections = ['academic_concerns', 'family_history', 'medical_history', 'educational_history', 'behaviour_data', 'other_info'];
+      reportSections.forEach(section => {
+        if (student[section] && typeof student[section] === 'string') {
+          try {
+            student[section] = JSON.parse(student[section]);
+            console.log(`   ✅ ${section}: Parsed successfully`);
+          } catch (e) {
+            console.error(`   ❌ ${section}: Parse error -`, e.message);
+            student[section] = null;
+          }
+        }
+      });
+
       // Cache the result (5 minutes TTL) - DISABLED FOR TESTING
       // cache.set(cacheKey, student, 5 * 60 * 1000);
       // console.log(`🗄️ CACHE STORE: Student ${id} cached for 5 minutes`);
@@ -438,6 +467,52 @@ class StudentController {
         history_data: req.body.historyData ? JSON.stringify(req.body.historyData) : null
       };
 
+      // Add report form data if provided (sectionI-VII)
+      if (req.body.sectionI) {
+        const s1 = req.body.sectionI;
+        updateData.nationality = s1.nationality || null;
+        updateData.handedness = s1.handedness || null;
+        updateData.school_category = s1.schoolCategory || null;
+        updateData.mother_tongue = s1.motherTongue || null;
+        updateData.language_home = s1.languageHome || null;
+        updateData.referred_by = s1.referredBy || null;
+        updateData.previous_reports = s1.previousReports || null;
+        updateData.father_name = s1.fatherName || null;
+        updateData.father_phone = s1.fatherPhone || null;
+        updateData.father_email = s1.fatherEmail || null;
+        updateData.father_education = s1.fatherEdu || null;
+        updateData.father_profession = s1.fatherProf || null;
+        updateData.mother_name = s1.motherName || null;
+        updateData.mother_phone = s1.motherPhone || null;
+        updateData.mother_email = s1.motherEmail || null;
+        updateData.mother_education = s1.motherEdu || null;
+        updateData.mother_profession = s1.motherProf || null;
+        updateData.form_completed_by = s1.formBy || null;
+        updateData.residence_address = s1.address || null;
+      }
+
+      // Add report form JSON sections if provided
+      if (req.body.sectionII) updateData.academic_concerns = JSON.stringify(req.body.sectionII);
+      if (req.body.sectionIII) updateData.family_history = JSON.stringify(req.body.sectionIII);
+      if (req.body.sectionIV) updateData.medical_history = JSON.stringify(req.body.sectionIV);
+      if (req.body.sectionV) updateData.educational_history = JSON.stringify(req.body.sectionV);
+      if (req.body.sectionVI) updateData.behaviour_data = JSON.stringify(req.body.sectionVI);
+      if (req.body.sectionVII) updateData.other_info = JSON.stringify(req.body.sectionVII);
+
+      // Store full report form data as backup
+      if (req.body.sectionI || req.body.sectionII || req.body.sectionIII || 
+          req.body.sectionIV || req.body.sectionV || req.body.sectionVI || req.body.sectionVII) {
+        updateData.report_form_data = JSON.stringify({
+          sectionI: req.body.sectionI,
+          sectionII: req.body.sectionII,
+          sectionIII: req.body.sectionIII,
+          sectionIV: req.body.sectionIV,
+          sectionV: req.body.sectionV,
+          sectionVI: req.body.sectionVI,
+          sectionVII: req.body.sectionVII
+        });
+      }
+
       // Handle documents if provided
       if (req.body.documents && Array.isArray(req.body.documents)) {
         console.log(`📎 DOCUMENTS: Processing ${req.body.documents.length} documents`);
@@ -581,8 +656,28 @@ class StudentController {
       const { id } = req.params;
       const data = req.body;
       
+      console.log('📝 [StudentController] ============================================');
       console.log('📝 [StudentController] Saving report for student ID:', id);
-      console.log('📝 Report data received:', Object.keys(data));
+      console.log('📝 [StudentController] Full req.body:', JSON.stringify(data, null, 2));
+      console.log('📝 [StudentController] ============================================');
+      
+      // Get numeric ID from student_id (id might be AS2017 or 24)
+      let numericId = id;
+      if (isNaN(id)) {
+        // id is a student_id like AS2017, need to get numeric id
+        const student = await this.studentModel.query(
+          'SELECT id FROM kivi_students WHERE student_id = ?',
+          [id]
+        );
+        if (student.length === 0) {
+          return res.status(404).json({
+            success: false,
+            message: 'Student not found'
+          });
+        }
+        numericId = student[0].id;
+        console.log('📝 [StudentController] Converted student_id to numeric id:', numericId);
+      }
       
       // Section I: Identifying Information
       const sectionI = data.sectionI || {};
@@ -634,16 +729,22 @@ class StudentController {
         other_info: JSON.stringify(sectionVII),
       };
       
-      console.log('📝 Update data prepared:', Object.keys(updateData));
+      console.log('📝 [StudentController] Extracted values:');
+      console.log('📝   - nationality:', updateData.nationality);
+      console.log('📝   - handedness:', updateData.handedness);
+      console.log('📝   - mother_tongue:', updateData.mother_tongue);
+      console.log('📝   - father_name:', updateData.father_name);
+      console.log('📝   - mother_name:', updateData.mother_name);
+      console.log('📝 [StudentController] Update data keys:', Object.keys(updateData));
       
-      // Update student
-      await this.studentModel.update(id, updateData);
+      // Update student using numeric ID
+      await this.studentModel.update(numericId, updateData);
       
       // Clear cache
-      cache.del(`student_${id}`);
-      cache.del('students_list');
+      cache.delete(`student_${numericId}`);
+      cache.delete('students_list');
       
-      console.log('✅ Report saved successfully for student ID:', id);
+      console.log('✅ Report saved successfully for student ID:', numericId);
       
       res.json({
         success: true,
@@ -676,7 +777,25 @@ class StudentController {
         return res.json({ success: true, data: cached });
       }
       
-      // Get student data
+      // Get numeric ID from student_id (id might be AS2017 or 24)
+      let numericId = id;
+      if (isNaN(id)) {
+        // id is a student_id like AS2017, need to get numeric id
+        const student = await this.studentModel.query(
+          'SELECT id FROM kivi_students WHERE student_id = ?',
+          [id]
+        );
+        if (student.length === 0) {
+          return res.status(404).json({
+            success: false,
+            message: 'Student not found'
+          });
+        }
+        numericId = student[0].id;
+        console.log('🔍 [StudentController] Converted student_id to numeric id:', numericId);
+      }
+      
+      // Get student data using numeric ID
       const students = await this.studentModel.query(
         `SELECT 
           nationality, handedness, school_category, mother_tongue, language_home,
@@ -687,7 +806,7 @@ class StudentController {
           report_form_data, academic_concerns, family_history, medical_history, 
           educational_history, behaviour_data, other_info
          FROM kivi_students WHERE id = ?`,
-        [id]
+        [numericId]
       );
       
       if (students.length === 0) {
@@ -698,6 +817,15 @@ class StudentController {
       }
       
       const row = students[0];
+      
+      console.log('🔍 [StudentController] Raw DB row:', {
+        nationality: row.nationality,
+        handedness: row.handedness,
+        mother_tongue: row.mother_tongue,
+        father_name: row.father_name,
+        mother_name: row.mother_name,
+        report_form_data: row.report_form_data ? 'Present (length: ' + row.report_form_data.length + ')' : 'NULL'
+      });
       
       // Helper to parse JSON safely
       const safeParse = (json) => {

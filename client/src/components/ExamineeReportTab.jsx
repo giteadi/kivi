@@ -10,6 +10,8 @@ const ExamineeReportTab = ({
   healthSampleReportData,
   employmentSampleReportData,
   onSave,
+  onReportDataChange,
+  reportFormData,
 }) => {
   return (
     <ExamineeReportForm
@@ -22,6 +24,8 @@ const ExamineeReportTab = ({
       healthSampleReportData={healthSampleReportData}
       employmentSampleReportData={employmentSampleReportData}
       onSave={onSave}
+      onReportDataChange={onReportDataChange}
+      reportFormData={reportFormData}
     />
   );
 };

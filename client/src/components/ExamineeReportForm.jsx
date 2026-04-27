@@ -168,6 +168,8 @@ export default function ExamineeReportForm({
   healthSampleReportData = {},
   employmentSampleReportData = {},
   onSave,
+  onReportDataChange,
+  reportFormData = {},
 }) {
   const printRef = useRef();
 
@@ -377,6 +379,40 @@ export default function ExamineeReportForm({
 
   // ── Pre-fill all sections from available state data ──
   useEffect(() => {
+    // First, load saved report form data if available
+    if (reportFormData && Object.keys(reportFormData).length > 0) {
+      console.log("🔄 Loading saved report form data:", reportFormData);
+      
+      if (reportFormData.sectionI) {
+        console.log("🔄 Loading Section I from saved data");
+        setS1(prev => ({ ...prev, ...reportFormData.sectionI }));
+      }
+      if (reportFormData.sectionII) {
+        console.log("🔄 Loading Section II from saved data");
+        setS2(prev => ({ ...prev, ...reportFormData.sectionII }));
+      }
+      if (reportFormData.sectionIII) {
+        console.log("🔄 Loading Section III from saved data");
+        setS3(prev => ({ ...prev, ...reportFormData.sectionIII }));
+      }
+      if (reportFormData.sectionIV) {
+        console.log("🔄 Loading Section IV from saved data");
+        setS4(prev => ({ ...prev, ...reportFormData.sectionIV }));
+      }
+      if (reportFormData.sectionV) {
+        console.log("🔄 Loading Section V from saved data");
+        setS5(prev => ({ ...prev, ...reportFormData.sectionV }));
+      }
+      if (reportFormData.sectionVI) {
+        console.log("🔄 Loading Section VI from saved data");
+        setS6(prev => ({ ...prev, ...reportFormData.sectionVI }));
+      }
+      if (reportFormData.sectionVII) {
+        console.log("🔄 Loading Section VII from saved data");
+        setS7(prev => ({ ...prev, ...reportFormData.sectionVII }));
+      }
+    }
+
     // Section II - Academic Concerns from evaluationData
     const evalConcerns = evaluationData || {};
     if (evalConcerns.academicConcerns?.maths || evalConcerns.academicConcerns?.reading || 
@@ -452,12 +488,12 @@ export default function ExamineeReportForm({
       ...prev,
       parentName: formData.emergencyContactName || prev.parentName,
     }));
-  }, [evaluationData, historyData, healthSampleReportData, educationSampleReportData, formData]);
+  }, [evaluationData, historyData, healthSampleReportData, educationSampleReportData, formData, reportFormData]);
 
   // ── Load saved report data from API ──
   useEffect(() => {
     const loadSavedReport = async () => {
-      const examineeId = formData?.id || formData?.studentId;
+      const examineeId = formData?.id || formData?.studentId || formData?.examineeId;
       if (!examineeId) return;
 
       try {
@@ -465,12 +501,20 @@ export default function ExamineeReportForm({
         const response = await examineeApi.getReportForm(examineeId);
         
         if (response.success && response.data) {
-          console.log("✅ Loaded saved report:", response.data);
+          console.log("============================================");
+          console.log("✅ [FRONTEND] Loaded saved report from API");
+          console.log("✅ [FRONTEND] Full response data:", response.data);
           
           const data = response.data;
           
+          console.log("✅ [FRONTEND] Section I received:", data.sectionI);
+          console.log("✅ [FRONTEND] Nationality from API:", data.sectionI?.nationality);
+          console.log("✅ [FRONTEND] Handedness from API:", data.sectionI?.handedness);
+          console.log("============================================");
+          
           // Update Section I if data exists
           if (data.sectionI && Object.keys(data.sectionI).length > 0) {
+            console.log("🔄 [FRONTEND] Updating Section I with:", data.sectionI);
             setS1(prev => ({ ...prev, ...data.sectionI }));
           }
           
@@ -1058,9 +1102,20 @@ export default function ExamineeReportForm({
       updatedAt: new Date().toISOString(),
     };
 
+    // DEBUG: Log what we're sending
+    console.log("============================================");
+    console.log("📝 [FRONTEND] Saving report...");
+    console.log("📝 [FRONTEND] Section I (s1):", s1);
+    console.log("📝 [FRONTEND] Nationality value:", s1.nationality);
+    console.log("📝 [FRONTEND] Handedness value:", s1.handedness);
+    console.log("📝 [FRONTEND] Father name:", s1.fatherName);
+    console.log("📝 [FRONTEND] Mother name:", s1.motherName);
+    console.log("📝 [FRONTEND] Full formDataToSave:", formDataToSave);
+    console.log("============================================");
+
     try {
       // Get examineeId from formData
-      const examineeId = formData?.id || formData?.studentId;
+      const examineeId = formData?.id || formData?.studentId || formData?.examineeId;
       
       if (!examineeId) {
         alert("Examinee ID not found! Cannot save.");
@@ -1068,11 +1123,16 @@ export default function ExamineeReportForm({
         return;
       }
 
-      console.log("📝 Saving report for examinee ID:", examineeId);
+      console.log("📝 [FRONTEND] Examinee ID:", examineeId);
+      
+      // Update parent component with report form data
+      if (onReportDataChange) {
+        onReportDataChange(formDataToSave);
+      }
       
       // Call API directly
       const result = await examineeApi.saveReportForm(examineeId, formDataToSave);
-      console.log("✅ Save result:", result);
+      console.log("✅ [FRONTEND] Save result:", result);
       
       alert("Form saved successfully!");
       

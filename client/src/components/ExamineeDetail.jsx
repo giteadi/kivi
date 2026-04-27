@@ -415,6 +415,17 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   const [showPersonalNotes, setShowPersonalNotes] = useState(false);
   const [personalNotes, setPersonalNotes] = useState('');
   
+  // Report form data state (s1-s7)
+  const [reportFormData, setReportFormData] = useState({
+    sectionI: null,
+    sectionII: null,
+    sectionIII: null,
+    sectionIV: null,
+    sectionV: null,
+    sectionVI: null,
+    sectionVII: null
+  });
+  
   const [age, setAge] = useState({ years: 0, months: 0 });
   const [errors, setErrors] = useState({});
   
@@ -424,6 +435,15 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [selectedAssessmentToEdit, setSelectedAssessmentToEdit] = useState(null);
   const [isEditAssessmentModalOpen, setIsEditAssessmentModalOpen] = useState(false);
+
+  // Handle report form data changes from ExamineeReportForm
+  const handleReportDataChange = (sectionData) => {
+    console.log('📝 Report form data changed:', sectionData);
+    setReportFormData(prev => ({
+      ...prev,
+      ...sectionData
+    }));
+  };
 
   useEffect(() => {
     if (examineeId) {
@@ -475,7 +495,37 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
           histData = {}; 
         }
       }
-      
+
+      // Load report form data if it exists
+      let reportFormData = {};
+      if (currentPatient.report_form_data) {
+        console.log('📋 Loading report_form_data from API');
+        if (typeof currentPatient.report_form_data === 'string') {
+          try {
+            reportFormData = JSON.parse(currentPatient.report_form_data);
+            console.log('✅ Parsed report_form_data:', reportFormData);
+          } catch (e) {
+            console.error('❌ Error parsing report_form_data:', e);
+            reportFormData = {};
+          }
+        } else {
+          reportFormData = currentPatient.report_form_data;
+        }
+      } else {
+        console.log('ℹ️ No report_form_data found in API response');
+      }
+
+      // Set report form data state
+      setReportFormData({
+        sectionI: reportFormData.sectionI || null,
+        sectionII: reportFormData.sectionII || null,
+        sectionIII: reportFormData.sectionIII || null,
+        sectionIV: reportFormData.sectionIV || null,
+        sectionV: reportFormData.sectionV || null,
+        sectionVI: reportFormData.sectionVI || null,
+        sectionVII: reportFormData.sectionVII || null
+      });
+
       console.log('📝 Setting Form Data:');
       const newFormData = {
         firstName: currentPatient.first_name || '',
@@ -1367,6 +1417,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
     console.log('📤 Current Evaluation Data:', evaluationData);
     console.log('📤 Current Diagnosis Data:', diagnosisData);
     console.log('📤 Current History Data:', historyData);
+    console.log('📤 Current Report Form Data:', reportFormData);
     
     setIsSaving(true);
     try {
@@ -1414,7 +1465,15 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
           healthSampleReportSentence: healthSampleReportSentence,
           employmentSampleReportData: employmentSampleReportData,
           employmentSampleReportSentence: employmentSampleReportSentence
-        }
+        },
+        // Add report form data (sectionI-VII)
+        sectionI: reportFormData.sectionI,
+        sectionII: reportFormData.sectionII,
+        sectionIII: reportFormData.sectionIII,
+        sectionIV: reportFormData.sectionIV,
+        sectionV: reportFormData.sectionV,
+        sectionVI: reportFormData.sectionVI,
+        sectionVII: reportFormData.sectionVII
       };
 
       console.log('📦 API Data to Send:', JSON.stringify(apiData, null, 2));
@@ -6376,6 +6435,8 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                     healthSampleReportData={healthSampleReportData}
                     employmentSampleReportData={employmentSampleReportData}
                     isEditable={true}
+                    onReportDataChange={handleReportDataChange}
+                    reportFormData={reportFormData}
                   />
                 )}
             </div>
