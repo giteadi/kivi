@@ -152,6 +152,7 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
   // State for Language/Development Sample Report Sentence
   const [showLanguageSampleReport, setShowLanguageSampleReport] = useState(false);
   const [showDevelopmentSampleReport, setShowDevelopmentSampleReport] = useState(false);
+  const [languageSampleReportSentence, setLanguageSampleReportSentence] = useState('');
   const [languageSampleReportData, setLanguageSampleReportData] = useState({
     primaryLanguage: '',
     exposedToEnglish: 'not_specified',
@@ -175,6 +176,7 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
 
   // State for Education Sample Report Sentence
   const [showEducationSampleReport, setShowEducationSampleReport] = useState(false);
+  const [educationSampleReportSentence, setEducationSampleReportSentence] = useState('');
   const [educationSampleReportData, setEducationSampleReportData] = useState({
     currentYear: '',
     schoolName: '',
@@ -215,6 +217,7 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
 
   // State for Health Sample Report Sentence
   const [showHealthSampleReport, setShowHealthSampleReport] = useState(false);
+  const [healthSampleReportSentence, setHealthSampleReportSentence] = useState('');
   const [healthSampleReportData, setHealthSampleReportData] = useState({
     healthHistorySource: '',
     visionDate: '',
@@ -248,6 +251,7 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
 
   // State for Employment Sample Report Sentence
   const [showEmploymentSampleReport, setShowEmploymentSampleReport] = useState(false);
+  const [employmentSampleReportSentence, setEmploymentSampleReportSentence] = useState('');
   const [employmentSampleReportData, setEmploymentSampleReportData] = useState({
     employmentStatus: '',
     currentJob: '',
@@ -935,9 +939,13 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
           ...referralData,
           referralReasonText: referralReasonText,
           languageSampleReportData: languageSampleReportData,
+          languageSampleReportSentence: languageSampleReportSentence,
           educationSampleReportData: educationSampleReportData,
+          educationSampleReportSentence: educationSampleReportSentence,
           healthSampleReportData: healthSampleReportData,
-          employmentSampleReportData: employmentSampleReportData
+          healthSampleReportSentence: healthSampleReportSentence,
+          employmentSampleReportData: employmentSampleReportData,
+          employmentSampleReportSentence: employmentSampleReportSentence
         }
       };
 
@@ -2643,21 +2651,30 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                     <>
                       {/* Sample Report Sentence for Language/Development */}
                       <div className="border rounded-lg overflow-hidden mb-4">
-                        <button 
+                        <button
                           onClick={() => setShowLanguageSampleReport(!showLanguageSampleReport)}
                           className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
                         >
                           <span className="text-xs font-medium">{showLanguageSampleReport ? '⊟' : '⊞'}</span>
                           <span className="font-medium text-xs">Sample Report Sentence</span>
                         </button>
-                        
+
                         {showLanguageSampleReport && (
                           <div className="p-4 bg-white border-t">
-                            <p className="text-xs text-gray-600 mb-3 italic bg-gray-50 p-3 rounded border">
-                              {generateLanguageSampleReportSentence()}
+                            <textarea
+                              value={languageSampleReportSentence || generateLanguageSampleReportSentence()}
+                              onChange={(e) => setLanguageSampleReportSentence(e.target.value)}
+                              placeholder="Sample report sentence will be generated here..."
+                              className="w-full px-3 py-2 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[80px] italic bg-gray-50"
+                            />
+                            <p className="text-xs text-gray-500 mt-2">
+                              This sentence is automatically generated from the Language and Development fields below. You can edit it as needed.
                             </p>
-                            
-                            {/* Language Section */}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Language Section */}
                             <div className="mb-6">
                               <h4 className="text-xs font-semibold text-blue-700 mb-3">Language</h4>
                               
@@ -2812,9 +2829,7 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                                 />
                               </div>
                             </div>
-                          </div>
-                        )}
-                      </div>
+                          )}
 
                       {/* Language Content */}
                       <div className="space-y-6">
@@ -3060,6 +3075,31 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
 
                   {historySubTab === 'education' && (
                     <>
+                      {/* Sample Report Sentence */}
+                      <div className="border rounded-lg overflow-hidden mb-4">
+                        <button
+                          onClick={() => setShowEducationSampleReport(!showEducationSampleReport)}
+                          className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                        >
+                          <span className="text-xs font-medium">{showEducationSampleReport ? '⊟' : '⊞'}</span>
+                          <span className="font-medium text-xs">Sample Report Sentence</span>
+                        </button>
+
+                        {showEducationSampleReport && (
+                          <div className="p-4 bg-white border-t">
+                            <textarea
+                              value={educationSampleReportSentence || generateEducationSampleReportSentence()}
+                              onChange={(e) => setEducationSampleReportSentence(e.target.value)}
+                              placeholder="Sample report sentence will be generated here..."
+                              className="w-full px-3 py-2 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[80px] italic bg-gray-50"
+                            />
+                            <p className="text-xs text-gray-500 mt-2">
+                              This sentence is automatically generated from the Education fields below. You can edit it as needed.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
                       {/* Education Content */}
                       <div className="space-y-6">
                         <div>
@@ -3498,6 +3538,31 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
 
                   {historySubTab === 'health' && (
                     <>
+                      {/* Sample Report Sentence */}
+                      <div className="border rounded-lg overflow-hidden mb-4">
+                        <button
+                          onClick={() => setShowHealthSampleReport(!showHealthSampleReport)}
+                          className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                        >
+                          <span className="text-xs font-medium">{showHealthSampleReport ? '⊟' : '⊞'}</span>
+                          <span className="font-medium text-xs">Sample Report Sentence</span>
+                        </button>
+
+                        {showHealthSampleReport && (
+                          <div className="p-4 bg-white border-t">
+                            <textarea
+                              value={healthSampleReportSentence || generateHealthSampleReportSentence()}
+                              onChange={(e) => setHealthSampleReportSentence(e.target.value)}
+                              placeholder="Sample report sentence will be generated here..."
+                              className="w-full px-3 py-2 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[80px] italic bg-gray-50"
+                            />
+                            <p className="text-xs text-gray-500 mt-2">
+                              This sentence is automatically generated from the Health fields below. You can edit it as needed.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
                       {/* Health Content */}
                       <div className="space-y-6">
                         <div>
@@ -3930,6 +3995,31 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
 
                   {historySubTab === 'employment' && (
                     <>
+                      {/* Sample Report Sentence */}
+                      <div className="border rounded-lg overflow-hidden mb-4">
+                        <button
+                          onClick={() => setShowEmploymentSampleReport(!showEmploymentSampleReport)}
+                          className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                        >
+                          <span className="text-xs font-medium">{showEmploymentSampleReport ? '⊟' : '⊞'}</span>
+                          <span className="font-medium text-xs">Sample Report Sentence</span>
+                        </button>
+
+                        {showEmploymentSampleReport && (
+                          <div className="p-4 bg-white border-t">
+                            <textarea
+                              value={employmentSampleReportSentence || generateEmploymentSampleReportSentence()}
+                              onChange={(e) => setEmploymentSampleReportSentence(e.target.value)}
+                              placeholder="Sample report sentence will be generated here..."
+                              className="w-full px-3 py-2 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[80px] italic bg-gray-50"
+                            />
+                            <p className="text-xs text-gray-500 mt-2">
+                              This sentence is automatically generated from the Employment fields below. You can edit it as needed.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
                       {/* Employment Content */}
                       <div className="space-y-6">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -4045,7 +4135,7 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
         </motion.div>
       </div>
     </div>
-    </div>
+  </div>
   );
 };
 

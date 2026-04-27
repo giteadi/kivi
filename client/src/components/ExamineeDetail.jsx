@@ -285,6 +285,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
 
   // State for Language/Development Sample Report Sentence
   const [showLanguageSampleReport, setShowLanguageSampleReport] = useState(false);
+  const [languageSampleReportSentence, setLanguageSampleReportSentence] = useState('');
   const [languageSampleReportData, setLanguageSampleReportData] = useState({
     primaryLanguage: '',
     exposedToEnglish: 'not_specified',
@@ -308,6 +309,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
 
   // State for Education Sample Report Sentence
   const [showEducationSampleReport, setShowEducationSampleReport] = useState(false);
+  const [educationSampleReportSentence, setEducationSampleReportSentence] = useState('');
   const [educationSampleReportData, setEducationSampleReportData] = useState({
     currentYear: '',
     schoolName: '',
@@ -348,6 +350,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
 
   // State for Health Sample Report Sentence
   const [showHealthSampleReport, setShowHealthSampleReport] = useState(false);
+  const [healthSampleReportSentence, setHealthSampleReportSentence] = useState('');
   const [healthSampleReportData, setHealthSampleReportData] = useState({
     healthHistorySource: '',
     visionDate: '',
@@ -381,6 +384,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
 
   // State for Employment Sample Report Sentence
   const [showEmploymentSampleReport, setShowEmploymentSampleReport] = useState(false);
+  const [employmentSampleReportSentence, setEmploymentSampleReportSentence] = useState('');
   const [employmentSampleReportData, setEmploymentSampleReportData] = useState({
     employmentStatus: '',
     currentJob: '',
@@ -957,12 +961,20 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
         console.log('     Keys:', Object.keys(histData.languageSampleReportData));
         setLanguageSampleReportData(histData.languageSampleReportData);
       }
+      if (histData?.languageSampleReportSentence) {
+        console.log('  ✅ Restoring languageSampleReportSentence');
+        setLanguageSampleReportSentence(histData.languageSampleReportSentence);
+      }
       
       // Restore education sample report data if it exists in history
       if (histData?.educationSampleReportData) {
         console.log('  ✅ Restoring educationSampleReportData');
         console.log('     Keys:', Object.keys(histData.educationSampleReportData));
         setEducationSampleReportData(histData.educationSampleReportData);
+      }
+      if (histData?.educationSampleReportSentence) {
+        console.log('  ✅ Restoring educationSampleReportSentence');
+        setEducationSampleReportSentence(histData.educationSampleReportSentence);
       }
       
       // Restore health sample report data if it exists in history
@@ -971,12 +983,20 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
         console.log('     Keys:', Object.keys(histData.healthSampleReportData));
         setHealthSampleReportData(histData.healthSampleReportData);
       }
+      if (histData?.healthSampleReportSentence) {
+        console.log('  ✅ Restoring healthSampleReportSentence');
+        setHealthSampleReportSentence(histData.healthSampleReportSentence);
+      }
       
       // Restore employment sample report data if it exists in history
       if (histData?.employmentSampleReportData) {
         console.log('  ✅ Restoring employmentSampleReportData');
         console.log('     Keys:', Object.keys(histData.employmentSampleReportData));
         setEmploymentSampleReportData(histData.employmentSampleReportData);
+      }
+      if (histData?.employmentSampleReportSentence) {
+        console.log('  ✅ Restoring employmentSampleReportSentence');
+        setEmploymentSampleReportSentence(histData.employmentSampleReportSentence);
       }
       
       console.log('✅ All data loaded successfully');
@@ -1360,9 +1380,13 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
           personalSampleReportSentence: personalSampleReportSentence,
           personalNotes: personalNotes,
           languageSampleReportData: languageSampleReportData,
+          languageSampleReportSentence: languageSampleReportSentence,
           educationSampleReportData: educationSampleReportData,
+          educationSampleReportSentence: educationSampleReportSentence,
           healthSampleReportData: healthSampleReportData,
-          employmentSampleReportData: employmentSampleReportData
+          healthSampleReportSentence: healthSampleReportSentence,
+          employmentSampleReportData: employmentSampleReportData,
+          employmentSampleReportSentence: employmentSampleReportSentence
         }
       };
 
@@ -5401,6 +5425,31 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
 
                     {historySubTab === 'languageDevelopment' && (
                       <div className="space-y-6">
+                        {/* Sample Report Sentence */}
+                        <div className="border rounded-lg overflow-hidden mb-4">
+                          <button 
+                            onClick={() => setShowLanguageSampleReport(!showLanguageSampleReport)}
+                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                          >
+                            <span className="text-sm font-medium">{showLanguageSampleReport ? '⊟' : '⊞'}</span>
+                            <span className="font-medium text-sm">Sample Report Sentence</span>
+                          </button>
+                          
+                          {showLanguageSampleReport && (
+                            <div className="p-4 bg-white border-t">
+                              <textarea
+                                value={languageSampleReportSentence || generateLanguageSampleReportSentence()}
+                                onChange={(e) => setLanguageSampleReportSentence(e.target.value)}
+                                placeholder="Sample report sentence will be generated here..."
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[80px] italic bg-gray-50"
+                              />
+                              <p className="text-xs text-gray-500 mt-2">
+                                This sentence is automatically generated from the Language and Development fields below. You can edit it as needed.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
                         {/* Language and Development Content */}
                         <h3 className="text-sm font-semibold text-blue-800">Language and Development</h3>
                         <p className="text-xs text-gray-600 mb-4">Language and developmental history can be added here.</p>
@@ -5568,13 +5617,33 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
 
                     {historySubTab === 'education' && (
                       <div className="space-y-6">
+                        {/* Sample Report Sentence */}
+                        <div className="border rounded-lg overflow-hidden mb-4">
+                          <button 
+                            onClick={() => setShowEducationSampleReport(!showEducationSampleReport)}
+                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                          >
+                            <span className="text-sm font-medium">{showEducationSampleReport ? '⊟' : '⊞'}</span>
+                            <span className="font-medium text-sm">Sample Report Sentence</span>
+                          </button>
+                          
+                          {showEducationSampleReport && (
+                            <div className="p-4 bg-white border-t">
+                              <textarea
+                                value={educationSampleReportSentence || generateEducationSampleReportSentence()}
+                                onChange={(e) => setEducationSampleReportSentence(e.target.value)}
+                                placeholder="Sample report sentence will be generated here..."
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[80px] italic bg-gray-50"
+                              />
+                              <p className="text-xs text-gray-500 mt-2">
+                                This sentence is automatically generated from the Education fields below. You can edit it as needed.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
                         {/* Education Content */}
                         <h3 className="text-sm font-semibold text-blue-800">Education</h3>
-                        
-                        {/* Education fields will go here */}
-                        <p className="text-sm text-gray-600 mb-3 italic bg-gray-50 p-3 rounded border">
-                          {generateEducationSampleReportSentence()}
-                        </p>
                         
                         {/* Education Level Section */}
                         <div className="mb-6">
@@ -5752,6 +5821,31 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
 
                     {historySubTab === 'health' && (
                       <div className="space-y-6">
+                        {/* Sample Report Sentence */}
+                        <div className="border rounded-lg overflow-hidden mb-4">
+                          <button 
+                            onClick={() => setShowHealthSampleReport(!showHealthSampleReport)}
+                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                          >
+                            <span className="text-sm font-medium">{showHealthSampleReport ? '⊟' : '⊞'}</span>
+                            <span className="font-medium text-sm">Sample Report Sentence</span>
+                          </button>
+                          
+                          {showHealthSampleReport && (
+                            <div className="p-4 bg-white border-t">
+                              <textarea
+                                value={healthSampleReportSentence || generateHealthSampleReportSentence()}
+                                onChange={(e) => setHealthSampleReportSentence(e.target.value)}
+                                placeholder="Sample report sentence will be generated here..."
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[80px] italic bg-gray-50"
+                              />
+                              <p className="text-xs text-gray-500 mt-2">
+                                This sentence is automatically generated from the Health fields below. You can edit it as needed.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
                         {/* Health Content */}
                         <h3 className="text-sm font-semibold text-blue-800">Health</h3>
                         
@@ -5998,6 +6092,31 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
 
                     {historySubTab === 'employment' && (
                       <div className="space-y-6">
+                        {/* Sample Report Sentence */}
+                        <div className="border rounded-lg overflow-hidden mb-4">
+                          <button 
+                            onClick={() => setShowEmploymentSampleReport(!showEmploymentSampleReport)}
+                            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+                          >
+                            <span className="text-sm font-medium">{showEmploymentSampleReport ? '⊟' : '⊞'}</span>
+                            <span className="font-medium text-sm">Sample Report Sentence</span>
+                          </button>
+                          
+                          {showEmploymentSampleReport && (
+                            <div className="p-4 bg-white border-t">
+                              <textarea
+                                value={employmentSampleReportSentence || generateEmploymentSampleReportSentence()}
+                                onChange={(e) => setEmploymentSampleReportSentence(e.target.value)}
+                                placeholder="Sample report sentence will be generated here..."
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[80px] italic bg-gray-50"
+                              />
+                              <p className="text-xs text-gray-500 mt-2">
+                                This sentence is automatically generated from the Employment fields below. You can edit it as needed.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
                         {/* Employment Content */}
                         <h3 className="text-sm font-semibold text-blue-800">Employment</h3>
                         <p className="text-sm text-gray-500 mb-4">Employment history can be added here.</p>
