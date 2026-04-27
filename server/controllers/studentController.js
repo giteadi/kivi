@@ -574,6 +574,192 @@ class StudentController {
       });
     }
   }
+
+  // Save Report Form Data
+  async saveReport(req, res) {
+    try {
+      const { id } = req.params;
+      const data = req.body;
+      
+      console.log('📝 [StudentController] Saving report for student ID:', id);
+      console.log('📝 Report data received:', Object.keys(data));
+      
+      // Section I: Identifying Information
+      const sectionI = data.sectionI || {};
+      
+      // Section II-VII: Complex data (JSON)
+      const sectionII = data.sectionII || {};
+      const sectionIII = data.sectionIII || {};
+      const sectionIV = data.sectionIV || {};
+      const sectionV = data.sectionV || {};
+      const sectionVI = data.sectionVI || {};
+      const sectionVII = data.sectionVII || {};
+      
+      // Build update data
+      const updateData = {
+        // Section I - Basic fields
+        nationality: sectionI.nationality || null,
+        handedness: sectionI.handedness || null,
+        school_category: sectionI.schoolCategory || null,
+        mother_tongue: sectionI.motherTongue || null,
+        language_home: sectionI.languageHome || null,
+        referred_by: sectionI.referredBy || null,
+        previous_reports: sectionI.previousReports || null,
+        
+        // Father details
+        father_name: sectionI.fatherName || null,
+        father_phone: sectionI.fatherPhone || null,
+        father_email: sectionI.fatherEmail || null,
+        father_education: sectionI.fatherEdu || null,
+        father_profession: sectionI.fatherProf || null,
+        
+        // Mother details
+        mother_name: sectionI.motherName || null,
+        mother_phone: sectionI.motherPhone || null,
+        mother_email: sectionI.motherEmail || null,
+        mother_education: sectionI.motherEdu || null,
+        mother_profession: sectionI.motherProf || null,
+        
+        // Form details
+        form_completed_by: sectionI.formBy || null,
+        residence_address: sectionI.address || null,
+        
+        // JSON fields for complex data
+        report_form_data: JSON.stringify(data), // Full data backup
+        academic_concerns: JSON.stringify(sectionII),
+        family_history: JSON.stringify(sectionIII),
+        medical_history: JSON.stringify(sectionIV),
+        educational_history: JSON.stringify(sectionV),
+        behaviour_data: JSON.stringify(sectionVI),
+        other_info: JSON.stringify(sectionVII),
+      };
+      
+      console.log('📝 Update data prepared:', Object.keys(updateData));
+      
+      // Update student
+      await this.studentModel.update(id, updateData);
+      
+      // Clear cache
+      cache.del(`student_${id}`);
+      cache.del('students_list');
+      
+      console.log('✅ Report saved successfully for student ID:', id);
+      
+      res.json({
+        success: true,
+        message: 'Report form saved successfully!',
+        data: { studentId: id, savedAt: new Date().toISOString() }
+      });
+    } catch (error) {
+      console.error('❌ Save report error:', error);
+      console.error('❌ Error stack:', error.stack);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to save report',
+        error: error.message
+      });
+    }
+  }
+  
+  // Get Report Form Data
+  async getReport(req, res) {
+    try {
+      const { id } = req.params;
+      
+      console.log('🔍 [StudentController] Getting report for student ID:', id);
+      
+      // Check cache first
+      const cacheKey = `student_report_${id}`;
+      const cached = cache.get(cacheKey);
+      if (cached) {
+        console.log('📦 Returning cached report for student ID:', id);
+        return res.json({ success: true, data: cached });
+      }
+      
+      // Get student data
+      const students = await this.studentModel.query(
+        `SELECT 
+          nationality, handedness, school_category, mother_tongue, language_home,
+          referred_by, previous_reports,
+          father_name, father_phone, father_email, father_education, father_profession,
+          mother_name, mother_phone, mother_email, mother_education, mother_profession,
+          form_completed_by, residence_address,
+          report_form_data, academic_concerns, family_history, medical_history, 
+          educational_history, behaviour_data, other_info
+         FROM kivi_students WHERE id = ?`,
+        [id]
+      );
+      
+      if (students.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Student not found'
+        });
+      }
+      
+      const row = students[0];
+      
+      // Helper to parse JSON safely
+      const safeParse = (json) => {
+        try {
+          return json ? JSON.parse(json) : {};
+        } catch (e) {
+          console.warn('Failed to parse JSON:', e.message);
+          return {};
+        }
+      };
+      
+      // Build response
+      const response = {
+        sectionI: {
+          nationality: row.nationality,
+          handedness: row.handedness,
+          schoolCategory: row.school_category,
+          motherTongue: row.mother_tongue,
+          languageHome: row.language_home,
+          referredBy: row.referred_by,
+          previousReports: row.previous_reports,
+          fatherName: row.father_name,
+          fatherPhone: row.father_phone,
+          fatherEmail: row.father_email,
+          fatherEdu: row.father_education,
+          fatherProf: row.father_profession,
+          motherName: row.mother_name,
+          motherPhone: row.mother_phone,
+          motherEmail: row.mother_email,
+          motherEdu: row.mother_education,
+          motherProf: row.mother_profession,
+          formBy: row.form_completed_by,
+          address: row.residence_address,
+        },
+        sectionII: safeParse(row.academic_concerns),
+        sectionIII: safeParse(row.family_history),
+        sectionIV: safeParse(row.medical_history),
+        sectionV: safeParse(row.educational_history),
+        sectionVI: safeParse(row.behaviour_data),
+        sectionVII: safeParse(row.other_info),
+        fullData: safeParse(row.report_form_data), // Full backup
+      };
+      
+      // Cache for 5 minutes
+      cache.set(cacheKey, response, 300);
+      
+      console.log('✅ Report retrieved successfully for student ID:', id);
+      
+      res.json({
+        success: true,
+        data: response
+      });
+    } catch (error) {
+      console.error('❌ Get report error:', error);
+      console.error('❌ Error stack:', error.stack);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get report',
+        error: error.message
+      });
+    }
+  }
 }
 
 module.exports = StudentController;

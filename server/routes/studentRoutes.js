@@ -32,4 +32,8 @@ router.post('/assessments', assessmentController.createAssessment.bind(assessmen
 router.delete('/assessments/:id', assessmentController.deleteAssessment.bind(assessmentController));
 router.post('/assessments/generate-report', assessmentController.generateReport.bind(assessmentController));
 
+// Report Form Routes (for ExamineeReportForm)
+router.put('/:id/report', studentController.saveReport.bind(studentController));
+router.get('/:id/report', studentController.getReport.bind(studentController));
+
 module.exports = router;

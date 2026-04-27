@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import * as XLSX from "xlsx";
+import api from "../services/api";
+import { examineeApi } from "../services/examineeApi";
 
 // ── tiny helpers ──────────────────────────────────────────────────────────────
 const Cell = ({ children, bold, italic, colSpan, rowSpan, className = "", style = {} }) => (
@@ -164,6 +167,7 @@ export default function ExamineeReportForm({
   educationSampleReportData = {},
   healthSampleReportData = {},
   employmentSampleReportData = {},
+  onSave,
 }) {
   const printRef = useRef();
 
@@ -449,6 +453,64 @@ export default function ExamineeReportForm({
       parentName: formData.emergencyContactName || prev.parentName,
     }));
   }, [evaluationData, historyData, healthSampleReportData, educationSampleReportData, formData]);
+
+  // ── Load saved report data from API ──
+  useEffect(() => {
+    const loadSavedReport = async () => {
+      const examineeId = formData?.id || formData?.studentId;
+      if (!examineeId) return;
+
+      try {
+        console.log("🔍 Loading saved report for examinee ID:", examineeId);
+        const response = await examineeApi.getReportForm(examineeId);
+        
+        if (response.success && response.data) {
+          console.log("✅ Loaded saved report:", response.data);
+          
+          const data = response.data;
+          
+          // Update Section I if data exists
+          if (data.sectionI && Object.keys(data.sectionI).length > 0) {
+            setS1(prev => ({ ...prev, ...data.sectionI }));
+          }
+          
+          // Update Section II if data exists
+          if (data.sectionII && Object.keys(data.sectionII).length > 0) {
+            setS2(prev => ({ ...prev, ...data.sectionII }));
+          }
+          
+          // Update Section III if data exists
+          if (data.sectionIII && Object.keys(data.sectionIII).length > 0) {
+            setS3(prev => ({ ...prev, ...data.sectionIII }));
+          }
+          
+          // Update Section IV if data exists
+          if (data.sectionIV && Object.keys(data.sectionIV).length > 0) {
+            setS4(prev => ({ ...prev, ...data.sectionIV }));
+          }
+          
+          // Update Section V if data exists
+          if (data.sectionV && Object.keys(data.sectionV).length > 0) {
+            setS5(prev => ({ ...prev, ...data.sectionV }));
+          }
+          
+          // Update Section VI if data exists
+          if (data.sectionVI && Object.keys(data.sectionVI).length > 0) {
+            setS6(prev => ({ ...prev, ...data.sectionVI }));
+          }
+          
+          // Update Section VII if data exists
+          if (data.sectionVII && Object.keys(data.sectionVII).length > 0) {
+            setS7(prev => ({ ...prev, ...data.sectionVII }));
+          }
+        }
+      } catch (error) {
+        console.warn("⚠️ Could not load saved report (may not exist yet):", error.message);
+      }
+    };
+
+    loadSavedReport();
+  }, [formData?.id, formData?.studentId]);
 
   // ── Export handlers (improved for better content preservation)
   const handleExportPdf = async () => {
@@ -982,6 +1044,48 @@ export default function ExamineeReportForm({
     }
   };
 
+  // ── Save handler
+  const handleSave = async () => {
+    const formDataToSave = {
+      sectionI: s1,
+      sectionII: s2,
+      sectionIII: s3,
+      sectionIV: s4,
+      sectionV: s5,
+      sectionVI: s6,
+      sectionVII: s7,
+      examineeName: s1.childName,
+      updatedAt: new Date().toISOString(),
+    };
+
+    try {
+      // Get examineeId from formData
+      const examineeId = formData?.id || formData?.studentId;
+      
+      if (!examineeId) {
+        alert("Examinee ID not found! Cannot save.");
+        console.error("No examineeId found in formData:", formData);
+        return;
+      }
+
+      console.log("📝 Saving report for examinee ID:", examineeId);
+      
+      // Call API directly
+      const result = await examineeApi.saveReportForm(examineeId, formDataToSave);
+      console.log("✅ Save result:", result);
+      
+      alert("Form saved successfully!");
+      
+      // Also call onSave prop if provided (for parent component updates)
+      if (onSave) {
+        await onSave(formDataToSave);
+      }
+    } catch (error) {
+      console.error("❌ Save failed:", error);
+      alert("Failed to save form: " + error.message);
+    }
+  };
+
   const handleExportXlsx = () => {
     const wb = XLSX.utils.book_new();
     const rows = [];
@@ -1291,6 +1395,31 @@ export default function ExamineeReportForm({
           padding: "0 10px",
         }}
       >
+        <button
+          onClick={handleSave}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "7px 14px",
+            borderRadius: 8,
+            fontSize: 13,
+            fontWeight: 500,
+            border: "1px solid",
+            cursor: "pointer",
+            transition: "all 0.15s",
+            background: "#10B981",
+            color: "#fff",
+            borderColor: "#10B981",
+          }}
+        >
+          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+            <polyline points="17 21 17 13 7 13 7 21" />
+            <polyline points="7 3 7 8 15 8" />
+          </svg>
+          Save
+        </button>
         <button
           onClick={handleExportPdf}
           style={{
