@@ -18,7 +18,8 @@ import {
   FiArrowLeft,
   FiPackage,
   FiTool,
-  FiMail
+  FiMail,
+  FiCheck
 } from 'react-icons/fi';
 import api from '../services/api';
 import toast from 'react-hot-toast';
@@ -961,6 +962,177 @@ const AssessmentCalendar = () => {
           <span className="text-sm text-gray-600">Half day</span>
         </div>
       </div>
+
+      {/* Filter Controls */}
+      {(() => {
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const currentYear = new Date().getFullYear();
+        const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
+
+        return (
+          <div className="px-4 py-3 bg-white border-b border-gray-200 flex flex-wrap items-center gap-3">
+            <div className="flex items-center space-x-2">
+              <FiCalendar className="w-4 h-4 text-gray-500" />
+              <span className="text-sm font-medium text-gray-700">Filter:</span>
+            </div>
+
+            {/* Month Filter */}
+            <select
+              value={currentDate.getMonth()}
+              onChange={(e) => {
+                const newDate = new Date(currentDate);
+                newDate.setMonth(parseInt(e.target.value));
+                setCurrentDate(newDate);
+              }}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              {months.map((month, index) => (
+                <option key={index} value={index}>{month}</option>
+              ))}
+            </select>
+
+            {/* Year Filter */}
+            <select
+              value={currentDate.getFullYear()}
+              onChange={(e) => {
+                const newDate = new Date(currentDate);
+                newDate.setFullYear(parseInt(e.target.value));
+                setCurrentDate(newDate);
+              }}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              {years.map((year) => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+
+            {/* Quick Filters */}
+            <div className="flex items-center space-x-2 ml-2">
+              <button
+                onClick={() => setCurrentDate(new Date())}
+                className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
+                  currentDate.getMonth() === new Date().getMonth() && currentDate.getFullYear() === new Date().getFullYear()
+                    ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                    : 'bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200'
+                }`}
+              >
+                This Month
+              </button>
+              <button
+                onClick={() => {
+                  const now = new Date();
+                  const startOfWeek = new Date(now);
+                  startOfWeek.setDate(now.getDate() - now.getDay());
+                  setCurrentDate(startOfWeek);
+                  setViewMode('week');
+                }}
+                className="px-3 py-1.5 text-sm rounded-lg font-medium bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 transition-colors"
+              >
+                This Week
+              </button>
+              <button
+                onClick={() => {
+                  const nextMonth = new Date(currentDate);
+                  nextMonth.setMonth(nextMonth.getMonth() + 1);
+                  setCurrentDate(nextMonth);
+                }}
+                className="px-3 py-1.5 text-sm rounded-lg font-medium bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 transition-colors"
+              >
+                Next Month →
+              </button>
+              <button
+                onClick={() => {
+                  const prevMonth = new Date(currentDate);
+                  prevMonth.setMonth(prevMonth.getMonth() - 1);
+                  setCurrentDate(prevMonth);
+                }}
+                className="px-3 py-1.5 text-sm rounded-lg font-medium bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 transition-colors"
+              >
+                ← Prev Month
+              </button>
+            </div>
+
+            {/* Reset Filter */}
+            <button
+              onClick={() => {
+                setCurrentDate(new Date());
+                setViewMode('month');
+              }}
+              className="px-3 py-1.5 text-sm rounded-lg font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors ml-auto"
+            >
+              Reset
+            </button>
+          </div>
+        );
+      })()}
+
+      {/* Stats Cards */}
+      {(() => {
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+        const monthAssessments = assessments.filter(a => {
+          const aDate = new Date(a.date);
+          return aDate.getMonth() === currentMonth && aDate.getFullYear() === currentYear;
+        }).length;
+
+        const todayAssessments = assessments.filter(a => a.date === todayStr).length;
+
+        const weekAssessments = assessments.filter(a => {
+          const aDate = new Date(a.date);
+          return aDate >= startOfWeek && aDate <= endOfWeek;
+        }).length;
+
+        const upcomingAssessments = assessments.filter(a => {
+          const aDate = new Date(a.date);
+          return aDate > today;
+        }).length;
+
+        const completedAssessments = assessments.filter(a => {
+          const aDate = new Date(a.date);
+          return aDate < today;
+        }).length;
+
+        const yearAssessments = assessments.filter(a => {
+          const aDate = new Date(a.date);
+          return aDate.getFullYear() === currentYear;
+        }).length;
+
+        const stats = [
+          { label: 'Today', value: todayAssessments, icon: 'FiCalendar', color: 'bg-blue-50 text-blue-600' },
+          { label: 'This Week', value: weekAssessments, icon: 'FiCalendar', color: 'bg-green-50 text-green-600' },
+          { label: 'This Month', value: monthAssessments, icon: 'FiCalendar', color: 'bg-purple-50 text-purple-600' },
+          { label: 'This Year', value: yearAssessments, icon: 'FiCalendar', color: 'bg-orange-50 text-orange-600' },
+          { label: 'Upcoming', value: upcomingAssessments, icon: 'FiClock', color: 'bg-indigo-50 text-indigo-600' },
+          { label: 'Completed', value: completedAssessments, icon: 'FiCheck', color: 'bg-teal-50 text-teal-600' },
+        ];
+
+        return (
+          <div className="px-4 py-4 bg-gray-50 border-b border-gray-200">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              {stats.map((stat, index) => (
+                <div key={index} className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-gray-500">{stat.label}</p>
+                      <p className="text-xl font-bold text-gray-900">{stat.value}</p>
+                    </div>
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${stat.color}`}>
+                      <FiCalendar className="w-5 h-5" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* View Mode Content - Hidden when showing user cards */}
       {!showUserCards && !showUserList && viewMode === 'month' && (
