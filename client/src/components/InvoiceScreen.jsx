@@ -68,7 +68,8 @@ const InvoiceScreen = ({
     try {
       await onSendInvoice({
         ...invoiceData,
-        ...calculateTotals()
+        ...calculateTotals(),
+        items: assessmentData?.items || []
       });
       onClose();
     } catch (error) {
@@ -673,10 +674,22 @@ const InvoiceScreen = ({
                     </tr>
                   </thead>
                   <tbody className="border-b">
-                    <tr>
-                      <td className="p-3 text-sm">{assessmentData?.name || 'Assessment Fee'}</td>
-                      <td className="p-3 text-sm text-right">₹{price.toLocaleString()}</td>
-                    </tr>
+                    {assessmentData?.items && assessmentData.items.length > 0 ? (
+                      assessmentData.items.map((item, idx) => (
+                        <tr key={idx}>
+                          <td className="p-3 text-sm">
+                            <div className="font-medium">{item.name}</div>
+                            {item.description && <div className="text-xs text-gray-500">{item.description}</div>}
+                          </td>
+                          <td className="p-3 text-sm text-right">₹{(item.price || 0).toLocaleString()}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td className="p-3 text-sm">{assessmentData?.name || 'Assessment Fee'}</td>
+                        <td className="p-3 text-sm text-right">₹{price.toLocaleString()}</td>
+                      </tr>
+                    )}
                     {gst > 0 && (
                       <tr>
                         <td className="p-3 text-sm">GST (18%)</td>

@@ -2326,7 +2326,30 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                       price: currentPackage?.totalPrice || totalPrice || ASSESSMENT_PRICE,
                       id: currentAssessment?.id,
                       count: currentPackage?.assessments?.length || selectedAssessments.length || 1,
-                      assessments: currentPackage?.assessments || []
+                      assessments: currentPackage?.assessments || [],
+                      items: (() => {
+                        const selectedPkg = assessmentPackages.find(p => selectedAssessments.includes(p.id));
+                        if (selectedPkg) {
+                          const toolCount = selectedPkg.includes?.length || 1;
+                          return (selectedPkg.includes || []).map((toolName, idx) => ({
+                            name: toolName,
+                            description: selectedPkg.category || selectedPkg.name,
+                            price: idx === 0 ? selectedPkg.price : 0,  // full price on first item, 0 on rest (package deal)
+                            quantity: 1
+                          }));
+                        } else if (selectedAssessments.length > 0) {
+                          return selectedAssessments.map(id => {
+                            const pkg = assessmentPackages.find(p => p.id === id);
+                            return {
+                              name: pkg?.name || 'Assessment Tool',
+                              description: pkg?.category || '',
+                              price: pkg?.price || ASSESSMENT_PRICE,
+                              quantity: 1
+                            };
+                          });
+                        }
+                        return [];
+                      })()
                     }}
                     examineeData={{
                       name: 'Aditya Sharma',
@@ -2354,14 +2377,12 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                           selectedItems.includes(p.id)
                         ) || transformedPatients[0] || {};
                         
-                        // 4-level fallback for assessmentId
                         const safeAssessmentId = 
                           currentAssessment?.id || 
                           selectedPkg?.id || 
                           selectedAssessments[0] || 
                           'custom-package';
                         
-                        // Find name from all possible sources
                         const assessmentName = 
                           selectedPkg?.name || 
                           currentPackage?.name || 
@@ -2370,12 +2391,6 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                             ? `Package (${selectedAssessments.length} assessments)` 
                             : 'Educational Assessment');
                         
-                        // Build includes list for package description
-                        const includesList = selectedPkg?.includes 
-                          ? selectedPkg.includes.join(', ') 
-                          : '';
-                        
-                        // Get student name properly
                         const studentName = selectedStudent?.name || 
                           (selectedStudent?.firstName && selectedStudent?.lastName 
                             ? `${selectedStudent.firstName} ${selectedStudent.lastName}` 
@@ -2386,30 +2401,10 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                         const firstName = nameParts[0] || '';
                         const lastName = nameParts.slice(1).join(' ') || '';
                         
-                        // Build items array for detailed invoice
-                        let items = [];
-                        if (selectedPkg) {
-                          // Package selected - include all package items
-                          items = (selectedPkg.includes || []).map(toolName => ({
-                            name: toolName,
-                            description: selectedPkg.category || selectedPkg.name,
-                            price: selectedPkg.price / (selectedPkg.includes?.length || 1),
-                            quantity: 1
-                          }));
-                        } else if (selectedAssessments.length > 0) {
-                          // Individual assessments selected
-                          items = selectedAssessments.map(id => {
-                            const pkg = assessmentPackages.find(p => p.id === id);
-                            return {
-                              name: pkg?.name || 'Assessment Tool',
-                              description: pkg?.category || '',
-                              price: pkg?.price || ASSESSMENT_PRICE,
-                              quantity: 1
-                            };
-                          });
-                        }
+                        // Use items passed back from InvoiceScreen (already built correctly)
+                        const items = invoiceData.items || [];
+                        const totalPrice = invoiceData.price || selectedPkg?.price || currentPackage?.totalPrice || ASSESSMENT_PRICE;
                         
-                        // DEBUG: Log the data being sent
                         const payload = {
                           assessmentId: safeAssessmentId,
                           studentId: selectedItems[0],
@@ -2418,10 +2413,9 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                           lastName: lastName,
                           assessmentName: assessmentName,
                           assessmentType: selectedPkg ? 'MindSaid Package' : 'Standard',
-                          price: invoiceData.price || selectedPkg?.price || currentPackage?.totalPrice || totalPrice || ASSESSMENT_PRICE,
-                          individualPrice: selectedPkg?.price || ASSESSMENT_PRICE,
-                          itemsCount: selectedPkg ? 1 : (selectedAssessments.length || 1),
-                          includes: includesList,
+                          price: totalPrice,
+                          individualPrice: totalPrice,
+                          itemsCount: items.length || 1,
                           items: items,
                           adminDate: new Date().toISOString().split('T')[0],
                           examiner: 'JAGGI, KRUTIKA',
@@ -2429,11 +2423,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                           customMessage: invoiceData.customMessage
                         };
                         
-                        console.log('Sending invoice payload:', payload);
-                        console.log('currentPackage:', currentPackage);
-                        console.log('currentAssessment:', currentAssessment);
-                        console.log('selectedItems:', selectedItems);
-                        console.log('selectedStudent:', selectedStudent);
+                        console.log('📧 Sending invoice payload:', payload);
                         
                         const response = await fetch(`${apiUrl}/invoices/send-assessment`, {
                           method: 'POST',

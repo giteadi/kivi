@@ -46,12 +46,14 @@ class InvoiceController {
         message
       } = req.body;
 
-      console.log('Sending assessment invoice:', {
+      console.log('📧 Sending assessment invoice:', {
         assessmentId,
         studentId,
         email,
         assessmentName,
-        price
+        price,
+        itemsCount: items?.length || 0,
+        itemsData: items
       });
 
       if (!email || !assessmentId) {
