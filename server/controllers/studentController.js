@@ -223,6 +223,24 @@ class StudentController {
         }
       });
 
+      // Parse identity_proof if it exists
+      if (student.identity_proof && typeof student.identity_proof === 'string') {
+        try {
+          const parsed = JSON.parse(student.identity_proof);
+          console.log(`   ✅ identity_proof: ${student.identity_proof.length} chars → Parsed successfully`);
+          console.log(`      Documents count: ${Array.isArray(parsed) ? parsed.length : 0}`);
+          student.identity_proof = parsed;
+        } catch (e) {
+          console.error(`   ❌ identity_proof: Parse error -`, e.message);
+          student.identity_proof = [];
+        }
+      } else if (student.identity_proof && Array.isArray(student.identity_proof)) {
+        console.log(`   ℹ️ identity_proof: Already parsed (${student.identity_proof.length} documents)`);
+      } else {
+        console.log(`   ℹ️ identity_proof: NULL`);
+        student.identity_proof = [];
+      }
+
       // Cache the result (5 minutes TTL) - DISABLED FOR TESTING
       // cache.set(cacheKey, student, 5 * 60 * 1000);
       // console.log(`🗄️ CACHE STORE: Student ${id} cached for 5 minutes`);
@@ -337,6 +355,15 @@ class StudentController {
         console.log(`📄 DOCUMENTS JSON SIZE: ${studentData.documents.length} characters`);
       } else {
         console.log(`📎 DOCUMENTS: No documents provided for new student`);
+      }
+
+      // Handle identity proof if provided (Aadhar, Birth Certificate, Passport)
+      if (req.body.identityProof && Array.isArray(req.body.identityProof)) {
+        console.log(`🆔 IDENTITY PROOF: Processing ${req.body.identityProof.length} identity documents`);
+        studentData.identity_proof = JSON.stringify(req.body.identityProof);
+        console.log(`🆔 IDENTITY PROOF JSON SIZE: ${studentData.identity_proof.length} characters`);
+      } else {
+        console.log(`🆔 IDENTITY PROOF: No identity documents provided`);
       }
 
       console.log('🆕 STUDENT DATA:', {
@@ -527,6 +554,15 @@ class StudentController {
         console.log(`📄 DOCUMENTS JSON SIZE: ${updateData.documents.length} characters`);
       } else {
         console.log(`📎 DOCUMENTS: No documents provided`);
+      }
+
+      // Handle identity proof if provided (Aadhar, Birth Certificate, Passport)
+      if (req.body.identityProof && Array.isArray(req.body.identityProof)) {
+        console.log(`🆔 IDENTITY PROOF: Processing ${req.body.identityProof.length} identity documents`);
+        updateData.identity_proof = JSON.stringify(req.body.identityProof);
+        console.log(`🆔 IDENTITY PROOF JSON SIZE: ${updateData.identity_proof.length} characters`);
+      } else {
+        console.log(`🆔 IDENTITY PROOF: No identity documents provided`);
       }
 
       // Remove undefined values

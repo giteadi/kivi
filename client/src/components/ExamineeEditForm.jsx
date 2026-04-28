@@ -196,6 +196,9 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   
+  // State for Identity Proof documents
+  const [identityProofs, setIdentityProofs] = useState([]);
+  
   // ✅ ADD TAB STATES - Same as ExamineeDetail
   const [activeTab, setActiveTab] = useState('demographics');
   const [evaluationSubTab, setEvaluationSubTab] = useState('reasonsForTesting');
@@ -540,6 +543,7 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
         requiresAssessment: formData.requiresAssessment,
         requiresTherapy: formData.requiresTherapy,
         documents: formData.documents,
+        identityProof: identityProofs, // Add identity proof documents
         // ✅ Include ALL nested data
         evaluationData: evaluationData,
         diagnosisData: diagnosisData,
@@ -654,7 +658,8 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
                 {[
                   { id: 'demographics', label: 'Demographics' },
                   { id: 'evaluation', label: 'Evaluation' },
-                  { id: 'history', label: 'History' }
+                  { id: 'history', label: 'History' },
+                  { id: 'documents', label: 'Documents' }
                 ].map(tab => (
                   <button
                     key={tab.id}
@@ -1511,6 +1516,142 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
                       />
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Documents Tab */}
+            {activeTab === 'documents' && (
+              <div className="space-y-6">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-blue-800 mb-2">Identity Proof for Age of Examinee</h3>
+                  <p className="text-xs text-blue-600">Upload identity documents (Aadhar Card, Birth Certificate, or Passport)</p>
+                </div>
+
+                {/* Aadhar Card */}
+                <div className="bg-white border rounded-lg p-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Aadhar Card
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          const newProof = {
+                            type: 'aadhar_card',
+                            image: event.target.result,
+                            uploadDate: new Date().toISOString(),
+                            fileName: file.name,
+                            fileSize: file.size
+                          };
+                          const filtered = identityProofs.filter(p => p.type !== 'aadhar_card');
+                          setIdentityProofs([...filtered, newProof]);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                  {identityProofs.find(p => p.type === 'aadhar_card') && (
+                    <div className="mt-2 flex items-center justify-between bg-green-50 border border-green-200 rounded p-2">
+                      <span className="text-xs text-green-700">✓ Uploaded: {identityProofs.find(p => p.type === 'aadhar_card').fileName}</span>
+                      <button
+                        type="button"
+                        onClick={() => setIdentityProofs(identityProofs.filter(p => p.type !== 'aadhar_card'))}
+                        className="text-red-600 hover:text-red-800 text-xs"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Birth Certificate */}
+                <div className="bg-white border rounded-lg p-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Birth Certificate
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          const newProof = {
+                            type: 'birth_certificate',
+                            image: event.target.result,
+                            uploadDate: new Date().toISOString(),
+                            fileName: file.name,
+                            fileSize: file.size
+                          };
+                          const filtered = identityProofs.filter(p => p.type !== 'birth_certificate');
+                          setIdentityProofs([...filtered, newProof]);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                  {identityProofs.find(p => p.type === 'birth_certificate') && (
+                    <div className="mt-2 flex items-center justify-between bg-green-50 border border-green-200 rounded p-2">
+                      <span className="text-xs text-green-700">✓ Uploaded: {identityProofs.find(p => p.type === 'birth_certificate').fileName}</span>
+                      <button
+                        type="button"
+                        onClick={() => setIdentityProofs(identityProofs.filter(p => p.type !== 'birth_certificate'))}
+                        className="text-red-600 hover:text-red-800 text-xs"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Passport */}
+                <div className="bg-white border rounded-lg p-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Passport
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          const newProof = {
+                            type: 'passport',
+                            image: event.target.result,
+                            uploadDate: new Date().toISOString(),
+                            fileName: file.name,
+                            fileSize: file.size
+                          };
+                          const filtered = identityProofs.filter(p => p.type !== 'passport');
+                          setIdentityProofs([...filtered, newProof]);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                  {identityProofs.find(p => p.type === 'passport') && (
+                    <div className="mt-2 flex items-center justify-between bg-green-50 border border-green-200 rounded p-2">
+                      <span className="text-xs text-green-700">✓ Uploaded: {identityProofs.find(p => p.type === 'passport').fileName}</span>
+                      <button
+                        type="button"
+                        onClick={() => setIdentityProofs(identityProofs.filter(p => p.type !== 'passport'))}
+                        className="text-red-600 hover:text-red-800 text-xs"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
