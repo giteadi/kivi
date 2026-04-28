@@ -296,7 +296,9 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
     socialEmotionalConcerns: false,
     cognitiveConcerns: false,
     physicalConcerns: false,
-    vocationalRehabilitationLegal: false
+    vocationalRehabilitationLegal: false,
+    otherReason: false,
+    otherReasonText: ''
   });
 
   // State for Referral Reason text
@@ -4246,26 +4248,15 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                               <option value="physician">Physician</option>
                               <option value="psychologist">Psychologist</option>
                               <option value="therapist">Therapist</option>
+                              <option value="other">Other</option>
                             </select>
-                          </div>
-
-                          {/* Other checkbox for Referral Source */}
-                          <div className="pt-2">
-                            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                className="rounded border-gray-300"
-                                checked={historyOtherData.referralSourceOther}
-                                onChange={(e) => handleHistoryOtherChange('referralSourceOther', e.target.checked)}
-                              />
-                              Other
-                            </label>
-                            {historyOtherData.referralSourceOther && (
+                            {/* Show input field when "Other" is selected */}
+                            {referralData.referralSourceRole === 'other' && (
                               <input
                                 type="text"
                                 value={historyOtherData.referralSourceOtherText}
                                 onChange={(e) => handleHistoryOtherTextChange('referralSourceOtherText', e.target.value)}
-                                placeholder="Please specify referral source name..."
+                                placeholder="Please specify role..."
                                 className="w-full mt-2 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                               />
                             )}
@@ -4340,6 +4331,25 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                               />
                               Vocational/Rehabilitation/Legal Issues
                             </label>
+                            <label className="flex items-center gap-2 text-xs text-gray-700">
+                              <input
+                                type="checkbox"
+                                className="rounded border-gray-300"
+                                checked={referralData.otherReason}
+                                onChange={(e) => handleReferralChange('otherReason', e.target.checked)}
+                              />
+                              Other
+                            </label>
+                            {/* Show input field when "Other" is checked */}
+                            {referralData.otherReason && (
+                              <input
+                                type="text"
+                                value={referralData.otherReasonText || ''}
+                                onChange={(e) => handleReferralTextChange('otherReasonText', e.target.value)}
+                                placeholder="Please specify other reason..."
+                                className="w-full mt-2 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                            )}
                           </div>
 
                           {/* Text field for other referral reasons */}

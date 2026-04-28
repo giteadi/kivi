@@ -265,6 +265,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   const [historyData, setHistoryData] = useState({
     referralSourceName: '',
     referralSourceRole: '',
+    referralSourceRoleOther: '',
     schoolRelatedConcerns: false,
     speechConcerns: false,
     languageConcerns: false,
@@ -272,6 +273,8 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
     cognitiveConcerns: false,
     physicalConcerns: false,
     vocationalRehabilitationLegal: false,
+    otherReason: false,
+    otherReasonText: '',
     birthInformationOther: false,
     birthInformationOtherText: '',
     developmentalMilestonesOther: false,
@@ -5379,6 +5382,16 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                 </select>
                                 <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                               </div>
+                              {/* Show input field when "Other" is selected */}
+                              {historyData.referralSourceRole === 'Other' && (
+                                <input
+                                  type="text"
+                                  value={historyData.referralSourceRoleOther || ''}
+                                  onChange={(e) => handleHistoryTextChange('referralSourceRoleOther', e.target.value)}
+                                  placeholder="Please specify role..."
+                                  className={`${inputClass('referralRoleOther')} mt-2`}
+                                />
+                              )}
                             </div>
                           </div>
 
@@ -5450,6 +5463,25 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                 />
                                 Vocational/Rehabilitation/Legal Issues
                               </label>
+                              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-gray-300"
+                                  checked={historyData.otherReason}
+                                  onChange={(e) => handleHistoryChange('otherReason', e.target.checked)}
+                                />
+                                Other
+                              </label>
+                              {/* Show input field when "Other" is checked */}
+                              {historyData.otherReason && (
+                                <input
+                                  type="text"
+                                  value={historyData.otherReasonText || ''}
+                                  onChange={(e) => handleHistoryTextChange('otherReasonText', e.target.value)}
+                                  placeholder="Please specify other reason..."
+                                  className={`${inputClass('otherReasonText')} mt-2`}
+                                />
+                              )}
                             </div>
                           </div>
                         </div>

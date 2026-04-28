@@ -71,6 +71,7 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
   const [historyData, setHistoryData] = useState({
     referralSourceName: '',
     referralSourceRole: '',
+    referralSourceRoleOther: '',
     schoolRelatedConcerns: false,
     speechConcerns: false,
     languageConcerns: false,
@@ -78,6 +79,8 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
     cognitiveConcerns: false,
     physicalConcerns: false,
     vocationalRehabilitationLegal: false,
+    otherReason: false,
+    otherReasonText: '',
     birthInformationOther: false,
     birthInformationOtherText: '',
     developmentalMilestonesOther: false,
@@ -1277,13 +1280,29 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Referral Source Role
                       </label>
-                      <input
-                        type="text"
+                      <select
                         value={historyData.referralSourceRole || ''}
                         onChange={(e) => setHistoryData(prev => ({ ...prev, referralSourceRole: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                        placeholder="Enter referral source role"
-                      />
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+                      >
+                        <option value="">Please Select...</option>
+                        <option value="teacher">Teacher</option>
+                        <option value="parent">Parent</option>
+                        <option value="physician">Physician</option>
+                        <option value="psychologist">Psychologist</option>
+                        <option value="therapist">Therapist</option>
+                        <option value="other">Other</option>
+                      </select>
+                      {/* Show input field when "Other" is selected */}
+                      {historyData.referralSourceRole === 'other' && (
+                        <input
+                          type="text"
+                          value={historyData.referralSourceRoleOther || ''}
+                          onChange={(e) => setHistoryData(prev => ({ ...prev, referralSourceRoleOther: e.target.value }))}
+                          placeholder="Please specify role..."
+                          className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1316,7 +1335,34 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
                         <span className="text-sm text-gray-700">{label}</span>
                       </label>
                     ))}
+                    {/* Other checkbox */}
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={historyData.otherReason === true}
+                        onChange={(e) => {
+                          setHistoryData(prev => ({
+                            ...prev,
+                            otherReason: e.target.checked
+                          }));
+                        }}
+                        className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
+                      />
+                      <span className="text-sm text-gray-700">Other</span>
+                    </label>
                   </div>
+                  {/* Show input field when "Other" is checked */}
+                  {historyData.otherReason && (
+                    <div className="mt-3">
+                      <input
+                        type="text"
+                        value={historyData.otherReasonText || ''}
+                        onChange={(e) => setHistoryData(prev => ({ ...prev, otherReasonText: e.target.value }))}
+                        placeholder="Please specify other reason..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Language/Development Information */}
