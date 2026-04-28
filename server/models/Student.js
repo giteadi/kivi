@@ -209,6 +209,36 @@ class Student extends BaseModel {
     console.log('🔍 Student.getStudentByExamineeId called with ID:', examineeId);
     return await this.getStudentWithSessions(examineeId);
   }
+
+  // Delete student with cascade delete to handle foreign key constraints
+  async delete(id) {
+    console.log('🗑️ Student.delete called with ID:', id);
+    
+    try {
+      // Step 1: Delete calendar_events that reference assessments for this student
+      const deleteCalendarEventsSql = `
+        DELETE FROM calendar_events 
+        WHERE assessment_id IN (SELECT id FROM kivi_assessments WHERE student_id = ?)
+      `;
+      await this.query(deleteCalendarEventsSql, [id]);
+      console.log('✅ Deleted calendar_events for student:', id);
+
+      // Step 2: Delete assessments for this student
+      const deleteAssessmentsSql = `DELETE FROM kivi_assessments WHERE student_id = ?`;
+      await this.query(deleteAssessmentsSql, [id]);
+      console.log('✅ Deleted assessments for student:', id);
+
+      // Step 3: Delete the student
+      const deleteStudentSql = `DELETE FROM kivi_students WHERE id = ?`;
+      const result = await this.query(deleteStudentSql, [id]);
+      console.log('✅ Deleted student:', id, 'affected rows:', result.affectedRows);
+
+      return result.affectedRows > 0;
+    } catch (error) {
+      console.error('❌ Error in cascade delete student:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = Student;
