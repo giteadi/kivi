@@ -661,22 +661,25 @@ export default function ExamineeReportForm({
         });
       };
 
-      // ══ LOGO + TITLE
+      // ══ HEADER (Logo contains all text, so simple title) ══
       pdf.setFont("times", "bold");
-      pdf.setFontSize(15);
-      pdf.text("MindSaid Learning Centre", pageW / 2, 14, { align: "center" });
-      pdf.setFont("times", "normal");
+      pdf.setFontSize(14);
+      pdf.text("MindSaid Learning Centre", margin, 14);
+      pdf.setFont("times", "italic");
       pdf.setFontSize(10);
-      pdf.text("Psycho-educational Assessment & Intervention Centre", pageW / 2, 20, { align: "center" });
+      pdf.text("Learning This Ability", margin, 20);
+      pdf.setFont("times", "normal");
+      pdf.setFontSize(8);
+      pdf.text("Psycho-educational Assessment & Intervention Centre", margin, 25);
+      pdf.setLineWidth(0.5);
       pdf.setDrawColor(41, 182, 246);
-      pdf.setLineWidth(0.8);
-      pdf.line(margin, 23, pageW - margin, 23);
-      pdf.setLineWidth(0.3);
+      pdf.line(margin, 28, pageW - margin, 28);
       pdf.setDrawColor(85, 85, 85);
+      pdf.setLineWidth(0.3);
 
       // Title row
       autoTable(pdf, {
-        startY: 26,
+        startY: 32,
         margin: { left: margin, right: margin },
         body: [["EXAMINEE REPORT FORM"]],
         theme: "plain",
@@ -1783,14 +1786,14 @@ export default function ExamineeReportForm({
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            padding: "40px",
-            borderBottom: "3px solid #29b6f6",
+            padding: "20px",
+            marginBottom: "20px",
           }}
         >
           <img
             src="https://res.cloudinary.com/bazeercloud/image/upload/v1777305181/MSL-LOGO-MAIN_lbhbid.png"
-            alt="MindSaid Learning Logo"
-            style={{ width: 450, height: "auto", objectFit: "contain" }}
+            alt="MindSaid Learning Centre"
+            style={{ width: "100%", maxWidth: 700, height: "auto", objectFit: "contain" }}
           />
         </div>
 
