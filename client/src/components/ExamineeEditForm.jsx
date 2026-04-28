@@ -199,6 +199,9 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
   // State for Identity Proof documents
   const [identityProofs, setIdentityProofs] = useState([]);
   
+  // State for image preview modal
+  const [previewImage, setPreviewImage] = useState(null);
+  
   // ✅ ADD TAB STATES - Same as ExamineeDetail
   const [activeTab, setActiveTab] = useState('demographics');
   const [evaluationSubTab, setEvaluationSubTab] = useState('reasonsForTesting');
@@ -1558,7 +1561,13 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
                   />
                   {identityProofs.find(p => p.type === 'aadhar_card') && (
                     <div className="mt-2 flex items-center justify-between bg-green-50 border border-green-200 rounded p-2">
-                      <span className="text-xs text-green-700">✓ Uploaded: {identityProofs.find(p => p.type === 'aadhar_card').fileName}</span>
+                      <button
+                        type="button"
+                        onClick={() => setPreviewImage(identityProofs.find(p => p.type === 'aadhar_card').image)}
+                        className="text-xs text-blue-600 hover:text-blue-800 underline"
+                      >
+                        ✓ {identityProofs.find(p => p.type === 'aadhar_card').fileName} (Click to view)
+                      </button>
                       <button
                         type="button"
                         onClick={() => setIdentityProofs(identityProofs.filter(p => p.type !== 'aadhar_card'))}
@@ -1600,7 +1609,13 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
                   />
                   {identityProofs.find(p => p.type === 'birth_certificate') && (
                     <div className="mt-2 flex items-center justify-between bg-green-50 border border-green-200 rounded p-2">
-                      <span className="text-xs text-green-700">✓ Uploaded: {identityProofs.find(p => p.type === 'birth_certificate').fileName}</span>
+                      <button
+                        type="button"
+                        onClick={() => setPreviewImage(identityProofs.find(p => p.type === 'birth_certificate').image)}
+                        className="text-xs text-blue-600 hover:text-blue-800 underline"
+                      >
+                        ✓ {identityProofs.find(p => p.type === 'birth_certificate').fileName} (Click to view)
+                      </button>
                       <button
                         type="button"
                         onClick={() => setIdentityProofs(identityProofs.filter(p => p.type !== 'birth_certificate'))}
@@ -1642,7 +1657,13 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
                   />
                   {identityProofs.find(p => p.type === 'passport') && (
                     <div className="mt-2 flex items-center justify-between bg-green-50 border border-green-200 rounded p-2">
-                      <span className="text-xs text-green-700">✓ Uploaded: {identityProofs.find(p => p.type === 'passport').fileName}</span>
+                      <button
+                        type="button"
+                        onClick={() => setPreviewImage(identityProofs.find(p => p.type === 'passport').image)}
+                        className="text-xs text-blue-600 hover:text-blue-800 underline"
+                      >
+                        ✓ {identityProofs.find(p => p.type === 'passport').fileName} (Click to view)
+                      </button>
                       <button
                         type="button"
                         onClick={() => setIdentityProofs(identityProofs.filter(p => p.type !== 'passport'))}
@@ -1652,6 +1673,26 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
                       </button>
                     </div>
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* Image Preview Modal */}
+            {previewImage && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-auto">
+                  <div className="flex justify-between items-center p-4 border-b">
+                    <h3 className="text-lg font-semibold">Document Preview</h3>
+                    <button
+                      onClick={() => setPreviewImage(null)}
+                      className="text-gray-500 hover:text-gray-700 text-2xl"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <div className="p-4 flex justify-center">
+                    <img src={previewImage} alt="Document Preview" className="max-w-full max-h-[70vh] object-contain" />
+                  </div>
                 </div>
               </div>
             )}
