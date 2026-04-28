@@ -2443,7 +2443,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                             : 'text-gray-600 hover:text-gray-800'
                         }`}
                       >
-                        Diagnoses
+                        Diagnosis
                       </button>
                     </div>
 

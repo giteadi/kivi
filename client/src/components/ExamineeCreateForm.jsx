@@ -1856,7 +1856,7 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                           : 'text-gray-600 hover:text-gray-800'
                       }`}
                     >
-                      Diagnoses
+                      Diagnosis
                     </button>
                   </div>
 

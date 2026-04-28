@@ -38,6 +38,7 @@ const routeMapping = {
   'doctors': '/therapists',
   'template-manager': '/templates',
   'forms': '/forms',
+  'conners': '/conners',
   'clinics': '/centres',
   'assessment-calendar': '/assessment-calendar',
   'clinic-revenue': '/centres/revenue',
@@ -143,6 +144,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
       { id: 'doctors', label: 'Therapists', icon: FiUserCheck, section: 'USERS' },
     { id: 'template-manager', label: 'Assessment Templates', icon: FiFileText, section: 'USERS' },
     { id: 'forms', label: 'Forms', icon: FiUpload, section: 'USERS' },
+    { id: 'conners', label: 'Conners', icon: FiActivity, section: 'USERS' },
     // { id: 'receptionists', label: 'Staff', icon: FiUser, section: 'USERS' }, // Temporarily disabled for future use
     { id: 'clinics', label: 'Centers', icon: FiMapPin, section: 'NETWORK' },
     { id: 'assessment-calendar', label: 'Assessment Calendar', icon: FiCalendar, section: 'NETWORK' },
