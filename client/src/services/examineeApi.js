@@ -28,7 +28,8 @@ export const examineeApi = {
 
   // Save Report Form Data
   saveReportForm: async (examineeId, reportData) => {
-    const response = await api.request(`/students/${examineeId}/report`, {
+    const encodedId = encodeURIComponent(examineeId);
+    const response = await api.request(`/students/${encodedId}/report`, {
       method: 'PUT',
       body: JSON.stringify(reportData),
     });
@@ -37,7 +38,8 @@ export const examineeApi = {
 
   // Get Report Form Data
   getReportForm: async (examineeId) => {
-    const response = await api.request(`/students/${examineeId}/report`);
+    const encodedId = encodeURIComponent(examineeId);
+    const response = await api.request(`/students/${encodedId}/report`);
     return response.data;
   },
 };
