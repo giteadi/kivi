@@ -670,6 +670,41 @@ class InvoiceController {
       <p><strong>${companyName}</strong></p>
       <p>${companyAddress} | Phone: ${companyPhone}</p>
       <p>Email: ${companyEmail}</p>
+      
+      <!-- Payment Details Section -->
+      <div style="margin-top: 25px; padding: 20px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; text-align: left;">
+        <h3 style="font-size: 14px; color: #333; margin: 0 0 12px 0; font-weight: 600;">💳 Payment Information</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 12px;">
+          <div>
+            <p style="margin: 0 0 8px 0;"><strong>Bank Transfer:</strong></p>
+            <p style="margin: 0; line-height: 1.6; color: #555;">
+              <strong>MindSaid Learning</strong><br>
+              Saraswat Bank<br>
+              Branch: Samata Sahakari Bank<br>
+              Current Account: <strong>004300100002892</strong><br>
+              IFSC Code: <strong>SRCB0SAM001</strong> (All zero)
+            </p>
+          </div>
+          <div>
+            <p style="margin: 0 0 8px 0;"><strong>UPI / Google Pay:</strong></p>
+            <p style="margin: 0; line-height: 1.6; color: #555;">
+              Phone: <strong>8928186952</strong><br>
+              <span style="font-size: 11px; color: #666;">Scan QR or use phone number</span>
+            </p>
+            <p style="margin: 12px 0 0 0;"><strong>Registered Address:</strong></p>
+            <p style="margin: 0; line-height: 1.6; color: #555; font-size: 11px;">
+              A/401, Royal Sand<br>
+              Next to Bhaktivedanta Mission School<br>
+              Behind Infiniti Mall, Andheri (West)<br>
+              Mumbai – 400053
+            </p>
+          </div>
+        </div>
+        <p style="margin: 15px 0 0 0; font-size: 11px; color: #666; text-align: center;">
+          Please share payment confirmation to <strong>contact@mindsaidlearning.com</strong>
+        </p>
+      </div>
+      
       <p style="margin-top: 15px; font-size: 11px; color: #bbb;">
         This is an electronically generated invoice and does not require a physical signature.
       </p>
@@ -1175,6 +1210,38 @@ ${pdfItemsRows}
 
   <!-- FOOTER -->
   <div class="footer">
+    <!-- Payment Information Box -->
+    <div style="margin-bottom: 30px; padding: 20px; background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 6px; text-align: left;">
+      <h3 style="font-size: 13px; color: #111; margin: 0 0 12px 0; font-weight: 700; letter-spacing: 0.5px;">💳 PAYMENT INFORMATION</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; font-size: 11.5px;">
+        <div>
+          <p style="margin: 0 0 6px 0; font-weight: 700; color: #111;">Bank Transfer:</p>
+          <p style="margin: 0; line-height: 1.7; color: #444;">
+            <strong>MindSaid Learning</strong><br>
+            Saraswat Bank<br>
+            Branch: Samata Sahakari Bank<br>
+            Current Account: <strong>004300100002892</strong><br>
+            IFSC Code: <strong>SRCB0SAM001</strong> (All zero)
+          </p>
+        </div>
+        <div>
+          <p style="margin: 0 0 6px 0; font-weight: 700; color: #111;">UPI / Google Pay:</p>
+          <p style="margin: 0; line-height: 1.7; color: #444;">
+            Phone: <strong>8928186952</strong><br>
+            <span style="font-size: 10.5px; color: #666;">Scan QR or use phone number</span>
+          </p>
+          <p style="margin: 10px 0 0 0; font-weight: 700; color: #111;">Registered Address:</p>
+          <p style="margin: 0; line-height: 1.7; color: #444; font-size: 10.5px;">
+            A/401, Royal Sand, Next to Bhaktivedanta Mission School<br>
+            Behind Infiniti Mall, Andheri (West), Mumbai – 400053
+          </p>
+        </div>
+      </div>
+      <p style="margin: 12px 0 0 0; font-size: 10.5px; color: #666; text-align: center;">
+        Please share payment confirmation to <strong>contact@mindsaidlearning.com</strong>
+      </p>
+    </div>
+    
     <div class="powered-text">Powered by</div>
     <div class="wave-logo">
       <span style="font-size: 16px; font-weight: 700; color: #1a6fc4; letter-spacing: 0.5px;">Centrix by MindSaid Learning</span>
