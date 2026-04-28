@@ -629,7 +629,7 @@ function RenameModal({ template, onClose, onRename }) {
 // REPORT EDIT PANEL
 // ══════════════════════════════════════════════════════════════════════════════
 function ReportEditPanel({ reportPanel, onBack, onSave }) {
-  const { templateName, allSheets, allData, patientName: initPatient } = reportPanel;
+  const { templateName, allSheets, allData, patientName: initPatient, rowHeights } = reportPanel;
 
   const [activeSheet, setActiveSheet]     = useState(allSheets[0]);
   const [reportData, setReportData]       = useState(allData);
@@ -729,41 +729,22 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
           ref={viewerRef}
           key={activeSheet}
           data={reportData[activeSheet] || [["__html__", "<p><br></p>"]]}
+          rowHeights={rowHeights?.[activeSheet] || {}}
           readOnly={false}
           reportMode={true}
           onDataChange={newData => setReportData(prev => ({ ...prev, [activeSheet]: newData }))}
         />
       ) : (
-        // ✅ Excel grid render karo
-        <div style={{ flex: 1, overflow: "auto", padding: 16, background: "#F9FAFB" }}>
-          <table style={{ borderCollapse: "collapse", width: "100%", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
-            <tbody>
-              {(reportData[activeSheet] || []).map((row, rIdx) => (
-                <tr key={rIdx}>
-                  {(row || []).map((cell, cIdx) => (
-                    <td key={cIdx} style={{ border: "1px solid #E5E7EB", padding: 0 }}>
-                      <input
-                        value={cell ?? ""}
-                        onChange={e => {
-                          const newData = reportData[activeSheet].map((r, ri) =>
-                            ri === rIdx ? r.map((c, ci) => ci === cIdx ? e.target.value : c) : r
-                          );
-                          setReportData(prev => ({ ...prev, [activeSheet]: newData }));
-                        }}
-                        style={{
-                          width: "100%", padding: "6px 10px",
-                          border: "none", outline: "none", fontSize: 13,
-                          background: rIdx === 0 ? "#F0F9FF" : "transparent",
-                          fontWeight: rIdx === 0 ? 600 : 400,
-                        }}
-                      />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        // ✅ Excel grid render karo with rowHeights
+        <ReportSheetViewer
+          ref={viewerRef}
+          key={activeSheet}
+          data={reportData[activeSheet] || []}
+          rowHeights={rowHeights?.[activeSheet] || {}}
+          readOnly={false}
+          reportMode={true}
+          onDataChange={newData => setReportData(prev => ({ ...prev, [activeSheet]: newData }))}
+        />
       )}
 
       {showNewSheetModal && (
@@ -869,6 +850,7 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
         ref={viewerRef}
         key={currentSheet}
         data={localSheets[currentSheet] || [["__html__", "<p><br></p>"]]}
+        rowHeights={template.rowHeights?.[currentSheet] || {}}
         readOnly={false}
         onDataChange={(newData) => setLocalSheets(prev => ({ ...prev, [currentSheet]: newData }))}
         onCreateReport={() => onCreateReport(template)}
@@ -1027,6 +1009,7 @@ export default function TemplateManager() {
       allData: reportSheets,
       patientName: "",
       isExcel, // ✅ Format track karo
+      rowHeights: tpl.rowHeights || {}, // ✅ Row heights pass karo
     });
     setPanel("report");
   };

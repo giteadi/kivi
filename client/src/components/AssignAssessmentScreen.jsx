@@ -247,8 +247,16 @@ Kivi Educational Therapy`);
     try {
       // Generate item list for email
       const total = calculateTotal();
-      const items = [...selectedPackages, ...selectedAssessments];
-      const itemList = items.map(item => `- ${item.name}: ${formatPrice(item.price || 0)}`).join('\n');
+      const allItems = [...selectedPackages, ...selectedAssessments];
+      const itemList = allItems.map(item => `- ${item.name}: ${formatPrice(item.price || 0)}`).join('\n');
+
+      // Build items array for detailed invoice
+      const items = allItems.map(item => ({
+        name: item.name,
+        description: item.category || item.description || '',
+        price: item.price || 0,
+        quantity: 1
+      }));
 
       const response = await api.request('/invoices/send-assessment', {
         method: 'POST',
@@ -265,6 +273,7 @@ Kivi Educational Therapy`);
           itemsCount: selectedPackages.length + selectedAssessments.length,
           adminDate: adminDate,
           examiner: examiner,
+          items: items,
           subject: `Assessment Invoice - ${examineeName}`,
           message: `Dear ${examineeName},\n\nPlease find below the assessment details and invoice:\n\nExaminee: ${examineeName}\nExaminee ID: ${examineeId || 'N/A'}\n\nAssessment Items:\n${itemList}\n\nTotal Amount: ${formatPrice(total)}\n\nPlease complete the payment to proceed with the assessment.\n\nBest regards,\nKivi Educational Therapy`
         })

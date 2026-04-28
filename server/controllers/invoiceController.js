@@ -41,7 +41,9 @@ class InvoiceController {
         individualPrice,
         itemsCount,
         adminDate,
-        examiner 
+        examiner,
+        items,
+        message
       } = req.body;
 
       console.log('Sending assessment invoice:', {
@@ -79,6 +81,8 @@ class InvoiceController {
         subtotal,
         gstAmount,
         totalAmount,
+        items,
+        message,
         companyName: 'MindSaid Learning Centre',
         companyAddress: 'D-207, Crystal Plaza, Opp. Infinity Mall, Link Road, Andheri (W), Mumbai, Maharashtra 400053',
         companyPhone: '+91 8928186952',
@@ -107,7 +111,8 @@ class InvoiceController {
             gstAmount,
             totalAmount,
             itemsCount: qty,
-            individualPrice: unitPrice
+            individualPrice: unitPrice,
+            items
           });
 
           const pdfBuffer = await htmlPdf.generatePdf(
@@ -278,11 +283,47 @@ class InvoiceController {
       subtotal,
       gstAmount,
       totalAmount,
+      items,
+      message,
       companyName,
       companyAddress,
       companyPhone,
       companyEmail
     } = data;
+
+    // Generate items table rows
+    let itemsTableRows = '';
+    if (items && Array.isArray(items) && items.length > 0) {
+      itemsTableRows = items.map((item, index) => {
+        const itemPrice = parseFloat(item.price) || 0;
+        const itemQty = item.quantity || 1;
+        const itemTotal = itemPrice * itemQty;
+        return `
+          <tr>
+            <td>
+              <div class="item-name">${item.name || item.assessmentName || 'Assessment Item'}</div>
+              <div class="item-description">${item.description || item.category || ''}</div>
+            </td>
+            <td>${itemQty}</td>
+            <td>₹${itemPrice.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            <td>₹${itemTotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+          </tr>
+        `;
+      }).join('');
+    } else {
+      // Fallback to single item if no items array
+      itemsTableRows = `
+        <tr>
+          <td>
+            <div class="item-name">${assessmentName || 'Psycho-Educational Assessment (WJ-IV)'}</div>
+            <div class="item-description">${assessmentType || 'Woodcock-Johnson-IV(Cognitive)<br>Woodcock-Johnson-IV(Achievement)<br>Brown\'s EF/A Scales'}</div>
+          </td>
+          <td>1</td>
+          <td>₹${subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+          <td>₹${subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+        </tr>
+      `;
+    }
 
     const formattedDate = new Date().toLocaleDateString('en-IN', {
       day: '2-digit',
@@ -605,15 +646,7 @@ class InvoiceController {
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>
-              <div class="item-name">${assessmentName || 'Psycho-Educational Assessment (WJ-IV)'}</div>
-              <div class="item-description">${assessmentType || 'Woodcock-Johnson-IV(Cognitive)<br>Woodcock-Johnson-IV(Achievement)<br>Brown\'s EF/A Scales'}</div>
-            </td>
-            <td>1</td>
-            <td>₹${subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-            <td>₹${subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-          </tr>
+          ${itemsTableRows}
         </tbody>
       </table>
 
@@ -663,7 +696,8 @@ class InvoiceController {
       totalAmount,
       itemsCount,
       individualPrice,
-      email
+      email,
+      items
     } = data;
 
     const formattedDate = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -676,6 +710,39 @@ class InvoiceController {
     const unitPrice = individualPrice || (subtotal / qty);
     const gst = 0; // No GST
     const clientName = `${firstName || ''} ${lastName || ''}`.trim() || 'Client';
+
+    // Generate items table rows for PDF
+    let pdfItemsRows = '';
+    if (items && Array.isArray(items) && items.length > 0) {
+      pdfItemsRows = items.map((item, index) => {
+        const itemPrice = parseFloat(item.price) || 0;
+        const itemQty = item.quantity || 1;
+        const itemTotal = itemPrice * itemQty;
+        return `
+      <tr>
+        <td>
+          <div class="item-name">${item.name || 'Assessment Item'}</div>
+          <div class="item-desc">${item.description || item.category || ''}</div>
+        </td>
+        <td>${itemQty}</td>
+        <td>₹${itemPrice.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+        <td>₹${itemTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+      </tr>`;
+      }).join('');
+    } else {
+      // Fallback to single item
+      pdfItemsRows = `
+      <tr>
+        <td>
+          <div class="item-name">${assessmentName || 'Psycho-Educational Assessment'}</div>
+          <div class="item-desc">${assessmentType || 'Woodcock-Johnson-IV(Cognitive), Woodcock-Johnson-IV(Achievement)'}</div>
+          <div class="item-breakdown">(${qty} assessment${qty > 1 ? 's' : ''} × ₹${unitPrice.toLocaleString('en-IN')})</div>
+        </td>
+        <td>${qty}</td>
+        <td>₹${unitPrice.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+        <td>₹${subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+      </tr>`;
+    }
 
     return `
 <!DOCTYPE html>
@@ -1092,16 +1159,7 @@ class InvoiceController {
       </tr>
     </thead>
     <tbody>
-      <tr>
-        <td>
-          <div class="item-name">${assessmentName || 'Psycho-Educational Assessment'}</div>
-          <div class="item-desc">${assessmentType || 'Woodcock-Johnson-IV(Cognitive), Woodcock-Johnson-IV(Achievement)'}</div>
-          <div class="item-breakdown">(${qty} assessment${qty > 1 ? 's' : ''} × ₹${unitPrice.toLocaleString('en-IN')})</div>
-        </td>
-        <td>${qty}</td>
-        <td>₹${unitPrice.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-        <td>₹${subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-      </tr>
+${pdfItemsRows}
     </tbody>
   </table>
 

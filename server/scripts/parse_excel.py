@@ -148,6 +148,247 @@ def parse_docx_bytes(docx_bytes):
         log(f"DOCX error: {e}\n{traceback.format_exc()}")
         return [['']]
 
+# ─── EMBEDDED DOCX → HTML CONVERTER ──────────────────────────────────────────
+def parse_docx_bytes_to_html(docx_bytes):
+    """Convert embedded .docx bytes to HTML string.
+    Preserves bold, italic, tables, headings.
+    Returns HTML string or None on failure."""
+    import base64
+    try:
+        with zipfile.ZipFile(BytesIO(docx_bytes)) as dz:
+            all_files = set(dz.namelist())
+            if 'word/document.xml' not in all_files:
+                return None
+            
+            doc_xml = dz.read('word/document.xml')
+            root = safe_xml_parse(doc_xml)
+            if root is None:
+                return None
+            
+            W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
+            R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
+            REL = 'http://schemas.openxmlformats.org/package/2006/relationships'
+            
+            # Load rels
+            rels = {}
+            doc_rels_file = 'word/_rels/document.xml.rels'
+            if doc_rels_file in all_files:
+                try:
+                    rels_root = safe_xml_parse(dz.read(doc_rels_file))
+                    if rels_root:
+                        for rel in rels_root.findall(f'{{{REL}}}Relationship'):
+                            rid = rel.attrib.get('Id', '')
+                            target = rel.attrib.get('Target', '')
+                            if rid and target:
+                                rels[rid] = target
+                except Exception as e:
+                    log(f"  Embedded rels error: {e}")
+            
+            # Load media as base64
+            media_cache = {}
+            MIME_MAP = {
+                '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+                '.gif': 'image/gif', '.bmp': 'image/bmp', '.webp': 'image/webp',
+            }
+            for fname in all_files:
+                if not fname.startswith('word/media/'):
+                    continue
+                ext = os.path.splitext(fname)[1].lower()
+                if ext not in MIME_MAP:
+                    continue
+                try:
+                    data = dz.read(fname)
+                    if len(data) > 5 * 1024 * 1024:  # Skip large images
+                        continue
+                    b64 = base64.b64encode(data).decode('ascii')
+                    data_url = f'data:{MIME_MAP[ext]};base64,{b64}'
+                    media_cache[fname] = data_url
+                    media_cache[os.path.basename(fname)] = data_url
+                except Exception:
+                    pass
+            
+            def esc(s):
+                return str(s).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            
+            def img_tag_for_rid(rid):
+                target = rels.get(rid, '')
+                if not target:
+                    return ''
+                candidates = [
+                    target,
+                    'word/' + target.lstrip('./'),
+                    os.path.basename(target),
+                    os.path.normpath('word/' + target).replace('\\', '/'),
+                ]
+                for p in candidates:
+                    p = re.sub(r'word/\.\./(.+)', r'\1', p)
+                    if p in media_cache:
+                        return f'<img src="{media_cache[p]}" style="max-width:100%;height:auto;" />'
+                return ''
+            
+            def find_image_in_el(el):
+                for node in el.iter():
+                    tag = node.tag.split('}')[-1] if '}' in node.tag else node.tag
+                    if tag == 'blip':
+                        embed = node.attrib.get(f'{{{R}}}embed', '')
+                        if not embed:
+                            for k, v in node.attrib.items():
+                                if 'embed' in k.lower():
+                                    embed = v
+                                    break
+                        if embed:
+                            img = img_tag_for_rid(embed)
+                            if img:
+                                return img
+                    if tag == 'imagedata':
+                        rid = node.attrib.get(f'{{{R}}}id', '')
+                        if rid:
+                            img = img_tag_for_rid(rid)
+                            if img:
+                                return img
+                return ''
+            
+            def run_to_html(run_el):
+                parts = []
+                # Check for drawing/image
+                for drawing in run_el.findall(f'{{{W}}}drawing'):
+                    img = find_image_in_el(drawing)
+                    if img:
+                        parts.append(img)
+                for pict in run_el.findall(f'{{{W}}}pict'):
+                    img = find_image_in_el(pict)
+                    if img:
+                        parts.append(img)
+                
+                rpr = run_el.find(f'{{{W}}}rPr')
+                bold = rpr is not None and rpr.find(f'{{{W}}}b') is not None
+                italic = rpr is not None and rpr.find(f'{{{W}}}i') is not None
+                underline = rpr is not None and rpr.find(f'{{{W}}}u') is not None
+                strike = rpr is not None and rpr.find(f'{{{W}}}strike') is not None
+                
+                texts = [t.text for t in run_el.findall(f'.//{{{W}}}t') if t.text]
+                text = ''.join(texts)
+                if text:
+                    text = esc(text)
+                    if bold: text = f'<strong>{text}</strong>'
+                    if italic: text = f'<em>{text}</em>'
+                    if underline: text = f'<u>{text}</u>'
+                    if strike: text = f'<s>{text}</s>'
+                    parts.append(text)
+                return ''.join(parts)
+            
+            def para_to_html(para_el):
+                runs_html = []
+                for run in para_el.findall(f'{{{W}}}r'):
+                    h = run_to_html(run)
+                    if h:
+                        runs_html.append(h)
+                content = ''.join(runs_html)
+                if not content.strip():
+                    return '<p><br></p>'
+                
+                # Detect heading
+                ppr = para_el.find(f'{{{W}}}pPr')
+                if ppr is not None:
+                    style_el = ppr.find(f'{{{W}}}pStyle')
+                    if style_el is not None:
+                        val = style_el.attrib.get(f'{{{W}}}val', '')
+                        m = re.match(r'[Hh]eading\s*(\d)', val)
+                        if m:
+                            lvl = m.group(1)
+                            return f'<h{lvl}>{content}</h{lvl}>'
+                
+                return f'<p>{content}</p>'
+            
+            def table_to_html(tbl_el):
+                html = ['<table style="border-collapse:collapse;width:100%;margin:8px 0;">']
+                for tr in tbl_el.findall(f'.//{{{W}}}tr'):
+                    html.append('<tr>')
+                    for tc in tr.findall(f'{{{W}}}tc'):
+                        cell_parts = []
+                        for para in tc.findall(f'.//{{{W}}}p'):
+                            ph = para_to_html(para)
+                            inner = re.sub(r'^<p>(.*?)</p>$', r'\1', ph, flags=re.DOTALL)
+                            if inner.strip() and inner.strip() != '<br>':
+                                cell_parts.append(inner)
+                        
+                        tcpr = tc.find(f'{{{W}}}tcPr')
+                        colspan_attr = ''
+                        if tcpr is not None:
+                            gs = tcpr.find(f'{{{W}}}gridSpan')
+                            if gs is not None:
+                                cs_val = gs.attrib.get(f'{{{W}}}val', '')
+                                if cs_val and cs_val != '1':
+                                    colspan_attr = f' colspan="{cs_val}"'
+                        
+                        cell_content = '<br>'.join(cell_parts) if cell_parts else '&nbsp;'
+                        html.append(f'<td style="border:1px solid #555;padding:6px 10px;vertical-align:top;"{colspan_attr}>{cell_content}</td>')
+                    html.append('</tr>')
+                html.append('</table>')
+                return '\n'.join(html)
+            
+            # Process body
+            body = root.find(f'{{{W}}}body')
+            if body is None:
+                body = root
+            
+            html_parts = []
+            for child in body:
+                tag = child.tag.split('}')[-1] if '}' in child.tag else child.tag
+                if tag == 'tbl':
+                    html_parts.append(table_to_html(child))
+                elif tag == 'p':
+                    ph = para_to_html(child)
+                    html_parts.append(ph)
+                elif tag == 'sdt':
+                    for para in child.findall(f'.//{{{W}}}p'):
+                        html_parts.append(para_to_html(para))
+            
+            html = '\n'.join(html_parts)
+            return html if html.strip() else None
+    
+    except Exception as e:
+        import traceback
+        log(f"Embedded DOCX→HTML error: {e}\n{traceback.format_exc()}")
+        return None
+
+
+def rows_to_html(rows):
+    """Plain rows list ko basic HTML mein convert karo (fallback)"""
+    parts = []
+    i = 0
+    while i < len(rows):
+        row = rows[i]
+        if len(row) >= 2 and any(c.strip() for c in row):
+            # Multi-column: table
+            block = []
+            while i < len(rows) and len(rows[i]) >= 2 and any(c.strip() for c in rows[i]):
+                block.append(rows[i])
+                i += 1
+            parts.append('<table style="border-collapse:collapse;width:100%;margin:8px 0;">')
+            for ri, r in enumerate(block):
+                parts.append('<tr>')
+                for cell in r:
+                    tag = 'th' if ri == 0 else 'td'
+                    style = 'border:1px solid #555;padding:6px 10px;'
+                    if ri == 0:
+                        style += 'background:#f0f0f0;font-weight:bold;'
+                    parts.append(f'<{tag} style="{style}">{cell or "&nbsp;"}</{tag}>')
+                parts.append('</tr>')
+            parts.append('</table>')
+        else:
+            text = row[0].strip() if row else ''
+            if text:
+                # Detect heading
+                if text == text.upper() and len(text) > 3 and re.search(r'[A-Z]{4,}', text):
+                    parts.append(f'<h2>{text}</h2>')
+                else:
+                    parts.append(f'<p>{text}</p>')
+            else:
+                parts.append('<p><br></p>')
+            i += 1
+    return '\n'.join(parts) or '<p><br></p>'
+
 # ─── SHARED STRINGS ──────────────────────────────────────────────────────────
 def load_shared_strings(zf):
     try:
@@ -375,13 +616,44 @@ def parse_xlsx(file_path):
 
                 non_empty = sum(1 for v in cell_grid.values() if str(v).strip())
 
-                # Embedded docs
+                # ── KEY FIX: Check for embedded DOCX first ──────────────────
+                embed_paths = sheet_embed_map.get(ws_path, [])
+                has_embeddings = len(embed_paths) > 0
+
+                if has_embeddings:
+                    # ── DOCX embedded hai → HTML mode mein render karo ──────
+                    log(f"  Sheet '{name}' has {len(embed_paths)} embedded DOCX(s) → HTML mode")
+                    all_html_parts = []
+                    for embed_path in embed_paths:
+                        try:
+                            docx_bytes = zf.read(embed_path)
+                            html = parse_docx_bytes_to_html(docx_bytes)
+                            if html:
+                                all_html_parts.append(html)
+                                log(f"  DOCX→HTML {embed_path}: {len(html)} chars")
+                            else:
+                                # Fallback: plain text extraction
+                                plain_rows = parse_docx_bytes(docx_bytes)
+                                fallback_html = rows_to_html(plain_rows)
+                                all_html_parts.append(fallback_html)
+                                log(f"  DOCX→HTML fallback {embed_path}: {len(fallback_html)} chars")
+                        except Exception as e:
+                            log(f"  DOCX embed error {embed_path}: {e}")
+                    
+                    if all_html_parts:
+                        combined_html = '\n'.join(all_html_parts)
+                        sheets[name] = [['__html__', combined_html]]
+                        sheet_row_heights[name] = {}  # HTML mode mein row heights nahi chahiye
+                        log(f"  → HTML mode: {len(combined_html)} chars total")
+                        continue  # Next sheet pe jao, cell grid ignore karo
+
+                # ── No embeddings OR embed failed → Normal Excel grid mode ──
                 embed_rows = []
-                for embed_path in sheet_embed_map.get(ws_path, []):
+                for embed_path in embed_paths:
                     try:
                         doc_rows = parse_docx_bytes(zf.read(embed_path))
                         embed_rows.extend(doc_rows)
-                        log(f"  DOCX {embed_path}: {len(doc_rows)} rows")
+                        log(f"  DOCX fallback {embed_path}: {len(doc_rows)} rows")
                     except Exception as e:
                         log(f"  DOCX error: {e}")
 
@@ -413,9 +685,9 @@ def parse_xlsx(file_path):
                     rows = [['']]
 
                 sheets[name] = rows
-                sheet_row_heights[name] = row_heights  # ← NEW: save row heights
+                sheet_row_heights[name] = row_heights
                 total = sum(1 for row in rows for v in row if str(v).strip())
-                log(f"  → {len(rows)} rows, {total} cells")
+                log(f"  → Grid mode: {len(rows)} rows, {total} cells")
 
     except Exception as e:
         import traceback

@@ -281,9 +281,9 @@ function buildDoc(bodyHtml) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// EXCEL GRID COMPONENT (with formulas)
+// EXCEL GRID COMPONENT (with formulas + row heights)
 // ══════════════════════════════════════════════════════════════════════════════
-function ExcelGrid({ data, formulaCache: externalFormulaCache, readOnly, onDataChange }) {
+function ExcelGrid({ data, formulaCache: externalFormulaCache, rowHeights, readOnly, onDataChange }) {
   const [sheetData, setSheetData] = useState(data || []);
   const formulaCacheRef = useRef({});
 
@@ -291,6 +291,7 @@ function ExcelGrid({ data, formulaCache: externalFormulaCache, readOnly, onDataC
   useEffect(() => {
     formulaCacheRef.current = externalFormulaCache || buildFormulaCache(data || []);
     console.log('[DEBUG] ExcelGrid mount - formulaCache:', formulaCacheRef.current);
+    console.log('[DEBUG] ExcelGrid mount - rowHeights:', rowHeights);
     // Initial formula evaluation
     const evaluated = reEvaluateFormulas(data || [], formulaCacheRef.current);
     setSheetData(evaluated);
@@ -342,11 +343,20 @@ function ExcelGrid({ data, formulaCache: externalFormulaCache, readOnly, onDataC
   const headerRow = sheetData[0] || [];
   const dataRows = sheetData.slice(1);
 
+  // ✅ Helper: Get row height in pixels (Excel stores in points, 1 point ≈ 1.33px)
+  const getRowHeight = (rowIdx) => {
+    if (!rowHeights || typeof rowHeights !== 'object') return null;
+    const heightInPoints = rowHeights[rowIdx];
+    if (!heightInPoints || isNaN(heightInPoints)) return null;
+    // Convert points to pixels (1 point = 1.33 pixels approximately)
+    return Math.round(heightInPoints * 1.33);
+  };
+
   return (
     <div style={{ flex: 1, overflow: "auto", background: "#F9FAFB", padding: 16 }}>
       <table style={{ borderCollapse: "collapse", width: "100%", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
         <thead>
-          <tr>
+          <tr style={{ height: getRowHeight(0) || 'auto' }}>
             <th style={{ border: "1px solid #E5E7EB", padding: "8px", background: "#F3F4F6", width: 40 }}>#</th>
             {headerRow.map((cell, cIdx) => (
               <th key={cIdx} style={{ 
@@ -380,64 +390,85 @@ function ExcelGrid({ data, formulaCache: externalFormulaCache, readOnly, onDataC
           </tr>
         </thead>
         <tbody>
-          {dataRows.map((row, rIdx) => (
-            <tr key={rIdx} style={{ background: rIdx % 2 === 0 ? "#fff" : "#F9FAFB" }}>
-              <td style={{ 
-                border: "1px solid #E5E7EB", 
-                padding: "6px 8px", 
-                textAlign: "center",
-                fontSize: 12,
-                color: "#9CA3AF",
-                background: "#F3F4F6"
-              }}>{rIdx + 1}</td>
-              {Array.from({ length: headerRow.length }).map((_, cIdx) => {
-                const key = `${rIdx + 1}_${cIdx}`;
-                const isFormula = !!formulaCacheRef.current[key];
-                const rawValue = row?.[cIdx];
-                // Handle NaN, Infinity, null, undefined - convert to safe string
-                const safeValue = (rawValue === null || rawValue === undefined || Number.isNaN(rawValue) || rawValue === Infinity || rawValue === -Infinity) ? "" : String(rawValue);
-                
-                return (
-                  <td key={cIdx} style={{ 
-                    border: "1px solid #E5E7EB", 
-                    padding: 0,
-                    background: isFormula ? "#FFF9C4" : "transparent"
-                  }}>
-                    {readOnly || isFormula ? (
-                      <div style={{ 
-                        padding: "7px 10px", 
-                        fontSize: 13,
-                        color: isFormula ? "#856404" : "#374151",
-                        fontWeight: isFormula ? 600 : 400,
-                        minHeight: 20
-                      }} title={isFormula ? `Formula: ${formulaCacheRef.current[key]}` : ""}>
-                        {safeValue}
-                      </div>
-                    ) : (
-                      <input
-                        value={safeValue}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          // Safe numeric input handling
-                          const parsed = val === "" ? "" : isNaN(val) ? val : Number(val);
-                          handleCellChange(rIdx + 1, cIdx, parsed);
-                        }}
-                        style={{ 
-                          width: "100%", 
+          {dataRows.map((row, rIdx) => {
+            const actualRowIdx = rIdx + 1; // Excel row index (0-based in data, but header is row 0)
+            const rowHeight = getRowHeight(actualRowIdx);
+            
+            return (
+              <tr 
+                key={rIdx} 
+                style={{ 
+                  background: rIdx % 2 === 0 ? "#fff" : "#F9FAFB",
+                  height: rowHeight || 'auto'
+                }}
+              >
+                <td style={{ 
+                  border: "1px solid #E5E7EB", 
+                  padding: "6px 8px", 
+                  textAlign: "center",
+                  fontSize: 12,
+                  color: "#9CA3AF",
+                  background: "#F3F4F6"
+                }}>{actualRowIdx}</td>
+                {Array.from({ length: headerRow.length }).map((_, cIdx) => {
+                  const key = `${actualRowIdx}_${cIdx}`;
+                  const isFormula = !!formulaCacheRef.current[key];
+                  const rawValue = row?.[cIdx];
+                  // Handle NaN, Infinity, null, undefined - convert to safe string
+                  const safeValue = (rawValue === null || rawValue === undefined || Number.isNaN(rawValue) || rawValue === Infinity || rawValue === -Infinity) ? "" : String(rawValue);
+                  
+                  return (
+                    <td key={cIdx} style={{ 
+                      border: "1px solid #E5E7EB", 
+                      padding: 0,
+                      background: isFormula ? "#FFF9C4" : "transparent",
+                      verticalAlign: "top"
+                    }}>
+                      {readOnly || isFormula ? (
+                        <div style={{ 
                           padding: "7px 10px", 
-                          border: "none", 
-                          outline: "none",
                           fontSize: 13,
-                          background: "transparent",
-                          color: "#374151",
-                        }}
-                      />
-                    )}
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
+                          color: isFormula ? "#856404" : "#374151",
+                          fontWeight: isFormula ? 600 : 400,
+                          minHeight: 20,
+                          height: "100%",
+                          display: "flex",
+                          alignItems: "flex-start"
+                        }} title={isFormula ? `Formula: ${formulaCacheRef.current[key]}` : ""}>
+                          {safeValue}
+                        </div>
+                      ) : (
+                        <textarea
+                          value={safeValue}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            // Safe numeric input handling
+                            const parsed = val === "" ? "" : isNaN(val) ? val : Number(val);
+                            handleCellChange(actualRowIdx, cIdx, parsed);
+                          }}
+                          style={{ 
+                            width: "100%", 
+                            padding: "7px 10px", 
+                            border: "none", 
+                            outline: "none",
+                            fontSize: 13,
+                            background: "transparent",
+                            color: "#374151",
+                            resize: "none",
+                            height: rowHeight ? `${rowHeight}px` : "auto",
+                            minHeight: 20,
+                            fontFamily: "inherit",
+                            lineHeight: "1.5"
+                          }}
+                          rows={1}
+                        />
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -448,6 +479,7 @@ function ExcelGrid({ data, formulaCache: externalFormulaCache, readOnly, onDataC
 const ReportSheetViewer = forwardRef(function ReportSheetViewer({
   data,
   formulaCache,
+  rowHeights,
   readOnly = false,
   onDataChange,
   onCreateReport,
@@ -690,12 +722,13 @@ const ReportSheetViewer = forwardRef(function ReportSheetViewer({
       </div>
 
       {/* ════════════════════════════════════════════════════════════════════════
-          EXCEL MODE: Render grid with formulas
+          EXCEL MODE: Render grid with formulas + row heights
           ═══════════════════════════════════════════════════════════════════════ */}
       {isExcel ? (
         <ExcelGrid 
           data={data} 
           formulaCache={formulaCache}
+          rowHeights={rowHeights}
           readOnly={readOnly} 
           onDataChange={onDataChange}
         />
