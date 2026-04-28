@@ -18,6 +18,7 @@ import {
   FiClock
 } from 'react-icons/fi';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 
 const AssignAssessmentScreen = ({ examineeId: propExamineeId, examineeName: propExamineeName, examineeEmail: propExamineeEmail, onBack, onSave }) => {
   // Use localStorage fallback if props are empty (e.g., after page refresh)
@@ -213,8 +214,11 @@ const AssignAssessmentScreen = ({ examineeId: propExamineeId, examineeName: prop
   const handleSendInvoice = () => {
     // Pre-fill email subject and body
     const total = calculateTotal();
-    const items = [...selectedPackages, ...selectedAssessments];
-    const itemList = items.map(item => `- ${item.name}: ${formatPrice(item.price || 0)}`).join('\n');
+    // Resolve actual objects from IDs
+    const pkgObjects = selectedPackages.map(id => packages.find(p => p.id === id)).filter(Boolean);
+    const assObjects = selectedAssessments.map(id => individualAssessments.find(a => a.id === id)).filter(Boolean);
+    const allItems = [...pkgObjects, ...assObjects];
+    const itemList = allItems.map(item => `- ${item.name}: ${formatPrice(item.customPrice || item.price || 0)}`).join('\n');
 
     setEmailSubject(`Assessment Invoice - ${examineeName || 'Student'}`);
     setEmailBody(`Dear ${examineeName || 'Parent/Guardian'},
@@ -239,24 +243,28 @@ Kivi Educational Therapy`);
 
   const handleSendEmail = async () => {
     if (!email) {
-      alert('Please enter an email address');
+      toast.error('Please enter an email address');
       return;
     }
 
     setIsSendingEmail(true);
     try {
-      // Generate item list for email
       const total = calculateTotal();
-      const allItems = [...selectedPackages, ...selectedAssessments];
-      const itemList = allItems.map(item => `- ${item.name}: ${formatPrice(item.price || 0)}`).join('\n');
+      // Resolve actual objects from IDs
+      const pkgObjects = selectedPackages.map(id => packages.find(p => p.id === id)).filter(Boolean);
+      const assObjects = selectedAssessments.map(id => individualAssessments.find(a => a.id === id)).filter(Boolean);
+      const allItems = [...pkgObjects, ...assObjects];
+      const itemList = allItems.map(item => `- ${item.name}: ${formatPrice(item.customPrice || item.price || 0)}`).join('\n');
 
-      // Build items array for detailed invoice
+      // Build items array for detailed invoice with correct names and prices
       const items = allItems.map(item => ({
         name: item.name,
         description: item.category || item.description || '',
-        price: item.price || 0,
+        price: item.customPrice || item.price || 0,
         quantity: 1
       }));
+
+      console.log('📧 AssignAssessmentScreen - sending items:', items);
 
       const response = await api.request('/invoices/send-assessment', {
         method: 'POST',
@@ -268,9 +276,9 @@ Kivi Educational Therapy`);
           lastName: examineeName?.split(' ').slice(1).join(' ') || '',
           assessmentName: packageName || 'Custom Package',
           assessmentType: 'Package',
-          price: calculateTotal(),
-          individualPrice: calculateTotal(),
-          itemsCount: selectedPackages.length + selectedAssessments.length,
+          price: total,
+          individualPrice: total,
+          itemsCount: allItems.length,
           adminDate: adminDate,
           examiner: examiner,
           items: items,
@@ -280,14 +288,14 @@ Kivi Educational Therapy`);
       });
 
       if (response.success) {
-        alert('Invoice email sent successfully to ' + email);
+        toast.success('Invoice sent successfully to ' + email);
         setShowEmailScreen(false);
       } else {
-        alert('Failed to send email: ' + (response.message || 'Unknown error'));
+        toast.error('Failed to send email: ' + (response.message || 'Unknown error'));
       }
     } catch (error) {
       console.error('Email send error:', error);
-      alert('Error sending email. Please try again.');
+      toast.error('Error sending email. Please try again.');
     } finally {
       setIsSendingEmail(false);
     }

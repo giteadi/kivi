@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 import {
   FiMail,
   FiUser,
@@ -66,14 +67,19 @@ const InvoiceScreen = ({
   const handleSend = async () => {
     setIsSending(true);
     try {
-      await onSendInvoice({
+      const payload = {
         ...invoiceData,
         ...calculateTotals(),
         items: assessmentData?.items || []
-      });
-      onClose();
+      };
+      console.log('🧾 InvoiceScreen handleSend - assessmentData:', assessmentData);
+      console.log('🧾 InvoiceScreen handleSend - items being sent:', assessmentData?.items);
+      console.log('🧾 InvoiceScreen handleSend - full payload:', JSON.stringify(payload, null, 2));
+      await onSendInvoice(payload);
+      // onClose() is called by parent after success
     } catch (error) {
       console.error('Failed to send invoice:', error);
+      toast.error('Failed to send invoice');
     } finally {
       setIsSending(false);
     }

@@ -38,6 +38,7 @@ import { Document, Packer, Paragraph, Table, TableCell, TableRow, TextRun, Headi
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import html2canvas from 'html2canvas';
+import toast from 'react-hot-toast';
 
 const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, onCreateNewPatient, activeItem = 'patients', setActiveItem, onSelectExamineeForAssignment }) => {
   const dispatch = useDispatch();
@@ -966,14 +967,14 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
       const result = await response.json();
 
       if (result.success) {
-        alert('Invoice sent successfully to ' + email);
+        toast.success('Invoice sent successfully to ' + email);
         setShowInvoiceConfirm(false);
       } else {
-        alert('Failed to send invoice: ' + result.message);
+        toast.error('Failed to send invoice: ' + result.message);
       }
     } catch (error) {
       console.error('Error sending invoice:', error);
-      alert('Failed to send invoice. Please check your email configuration.');
+      toast.error('Failed to send invoice. Please check your email configuration.');
     } finally {
       setIsSendingInvoice(false);
     }
@@ -2328,26 +2329,47 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                       count: currentPackage?.assessments?.length || selectedAssessments.length || 1,
                       assessments: currentPackage?.assessments || [],
                       items: (() => {
+                        console.log('🔍 Building invoice items:');
+                        console.log('  currentPackage:', currentPackage);
+                        console.log('  currentAssessment:', currentAssessment);
+                        console.log('  selectedAssessments:', selectedAssessments);
+                        console.log('  assessmentPackages count:', assessmentPackages.length);
+
+                        // Priority 1: currentPackage with assessments list
+                        if (currentPackage?.assessments?.length > 0) {
+                          const pkgTotal = currentPackage.totalPrice || ASSESSMENT_PRICE;
+                          console.log('  ✅ Using currentPackage.assessments:', currentPackage.assessments);
+                          return currentPackage.assessments
+                            .filter(a => a) // remove nulls
+                            .map((a, idx) => ({
+                              name: a?.name || 'Assessment Tool',
+                              description: a?.category || '',
+                              price: idx === 0 ? pkgTotal : 0,
+                              quantity: 1
+                            }));
+                        }
+                        // Priority 2: selectedAssessments matched from assessmentPackages
                         const selectedPkg = assessmentPackages.find(p => selectedAssessments.includes(p.id));
-                        if (selectedPkg) {
-                          const toolCount = selectedPkg.includes?.length || 1;
-                          return (selectedPkg.includes || []).map((toolName, idx) => ({
+                        if (selectedPkg?.includes?.length > 0) {
+                          console.log('  ✅ Using selectedPkg.includes:', selectedPkg.includes);
+                          return selectedPkg.includes.map((toolName, idx) => ({
                             name: toolName,
                             description: selectedPkg.category || selectedPkg.name,
-                            price: idx === 0 ? selectedPkg.price : 0,  // full price on first item, 0 on rest (package deal)
+                            price: idx === 0 ? selectedPkg.price : 0,
                             quantity: 1
                           }));
-                        } else if (selectedAssessments.length > 0) {
-                          return selectedAssessments.map(id => {
-                            const pkg = assessmentPackages.find(p => p.id === id);
-                            return {
-                              name: pkg?.name || 'Assessment Tool',
-                              description: pkg?.category || '',
-                              price: pkg?.price || ASSESSMENT_PRICE,
-                              quantity: 1
-                            };
-                          });
                         }
+                        // Priority 3: currentAssessment single item
+                        if (currentAssessment?.name) {
+                          console.log('  ✅ Using currentAssessment:', currentAssessment);
+                          return [{
+                            name: currentAssessment.name,
+                            description: currentAssessment.category || '',
+                            price: currentAssessment.price || ASSESSMENT_PRICE,
+                            quantity: 1
+                          }];
+                        }
+                        console.log('  ❌ No items found - all sources empty');
                         return [];
                       })()
                     }}
@@ -2437,14 +2459,14 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                         console.log('Response:', result);
                         
                         if (result.success) {
-                          alert('Invoice sent successfully!');
+                          toast.success('Invoice sent successfully!');
                           setShowInvoiceScreen(false);
                         } else {
-                          alert('Failed to send: ' + result.message);
+                          toast.error('Failed to send: ' + result.message);
                         }
                       } catch (error) {
                         console.error('Error:', error);
-                        alert('Failed to send invoice');
+                        toast.error('Failed to send invoice');
                       } finally {
                         setIsSendingInvoice(false);
                       }

@@ -56,6 +56,8 @@ class InvoiceController {
         itemsData: items
       });
 
+      console.log('📦 FULL REQ.BODY:', JSON.stringify(req.body, null, 2));
+
       if (!email || !assessmentId) {
         return res.status(400).json({
           success: false,
