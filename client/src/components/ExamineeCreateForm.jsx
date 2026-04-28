@@ -795,6 +795,20 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
     languageOfTesting: '',
     customLanguage: '',
     email: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    emergencyContactName: '',
+    emergencyContactPhone: '',
+    emergencyContactRelation: '',
+    customField1: '',
+    customField2: '',
+    customField3: '',
+    customField4: '',
+    status: 'active',
+    registrationDate: '',
     comment: '',
     account: 'CENTRIX CENTRE',
     requiresAssessment: false,
@@ -863,6 +877,20 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
               languageOfTesting: patient.language_of_testing || '',
               customLanguage: patient.custom_language || '',
               email: patient.email || '',
+              phone: patient.phone || '',
+              address: patient.address || '',
+              city: patient.city || '',
+              state: patient.state || '',
+              zipCode: patient.zip_code || '',
+              emergencyContactName: patient.emergency_contact_name || '',
+              emergencyContactPhone: patient.emergency_contact_phone || '',
+              emergencyContactRelation: patient.emergency_contact_relation || '',
+              customField1: patient.custom_field_1 || '',
+              customField2: patient.custom_field_2 || '',
+              customField3: patient.custom_field_3 || '',
+              customField4: patient.custom_field_4 || '',
+              status: patient.status || 'active',
+              registrationDate: patient.registration_date ? new Date(patient.registration_date).toISOString().split('T')[0] : '',
               comment: patient.comment || '',
               account: patient.centre_name || 'CENTRIX CENTRE',
               requiresAssessment: patient.requires_assessment || false,
@@ -1155,9 +1183,22 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
         languageOfTesting: formData.languageOfTesting,
         customLanguage: formData.customLanguage,
         email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
+        emergencyContactName: formData.emergencyContactName,
+        emergencyContactPhone: formData.emergencyContactPhone,
+        emergencyContactRelation: formData.emergencyContactRelation,
+        customField1: formData.customField1,
+        customField2: formData.customField2,
+        customField3: formData.customField3,
+        customField4: formData.customField4,
+        status: formData.status,
+        registrationDate: formData.registrationDate,
         comment: formData.comment,
         centreName: formData.account,
-        status: 'active',
         requiresAssessment: formData.requiresAssessment,
         requiresTherapy: formData.requiresTherapy,
         evaluationData: evaluationData,
@@ -1405,6 +1446,17 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                         </div>
                       </div>
 
+                      <div>
+                        <label className={labelClass}>Examinee ID</label>
+                        <input
+                          type="text"
+                          value={formData.examineeId}
+                          onChange={(e) => handleChange('examineeId', e.target.value)}
+                          className={inputClass('examineeId')}
+                          placeholder="Auto-generated if empty"
+                        />
+                      </div>
+
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className={labelClass}>
@@ -1514,6 +1566,175 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                             placeholder="email@example.com"
                           />
                           <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className={labelClass}>Phone</label>
+                        <div className="relative">
+                          <input
+                            type="tel"
+                            value={formData.phone}
+                            onChange={(e) => handleChange('phone', e.target.value)}
+                            className={`${inputClass('phone')} pl-10`}
+                            placeholder="Enter phone number"
+                          />
+                          <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className={labelClass}>Address</label>
+                        <input
+                          type="text"
+                          value={formData.address}
+                          onChange={(e) => handleChange('address', e.target.value)}
+                          className={inputClass('address')}
+                          placeholder="Enter street address"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="col-span-1">
+                          <label className={labelClass}>City</label>
+                          <input
+                            type="text"
+                            value={formData.city}
+                            onChange={(e) => handleChange('city', e.target.value)}
+                            className={inputClass('city')}
+                            placeholder="City"
+                          />
+                        </div>
+                        <div className="col-span-1">
+                          <label className={labelClass}>State</label>
+                          <input
+                            type="text"
+                            value={formData.state}
+                            onChange={(e) => handleChange('state', e.target.value)}
+                            className={inputClass('state')}
+                            placeholder="State"
+                          />
+                        </div>
+                        <div className="col-span-1">
+                          <label className={labelClass}>Zip Code</label>
+                          <input
+                            type="text"
+                            value={formData.zipCode}
+                            onChange={(e) => handleChange('zipCode', e.target.value)}
+                            className={inputClass('zipCode')}
+                            placeholder="Zip"
+                          />
+                        </div>
+                      </div>
+
+                      <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide border-b pb-2 pt-4">
+                        Emergency Contact
+                      </h3>
+
+                      <div>
+                        <label className={labelClass}>Emergency Contact Name</label>
+                        <input
+                          type="text"
+                          value={formData.emergencyContactName}
+                          onChange={(e) => handleChange('emergencyContactName', e.target.value)}
+                          className={inputClass('emergencyContactName')}
+                          placeholder="Enter emergency contact name"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className={labelClass}>Emergency Contact Phone</label>
+                          <input
+                            type="tel"
+                            value={formData.emergencyContactPhone}
+                            onChange={(e) => handleChange('emergencyContactPhone', e.target.value)}
+                            className={inputClass('emergencyContactPhone')}
+                            placeholder="Enter phone number"
+                          />
+                        </div>
+                        <div>
+                          <label className={labelClass}>Relation</label>
+                          <input
+                            type="text"
+                            value={formData.emergencyContactRelation}
+                            onChange={(e) => handleChange('emergencyContactRelation', e.target.value)}
+                            className={inputClass('emergencyContactRelation')}
+                            placeholder="Relation to examinee"
+                          />
+                        </div>
+                      </div>
+
+                      <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide border-b pb-2 pt-4">
+                        Additional Information
+                      </h3>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className={labelClass}>Custom Field 1</label>
+                          <input
+                            type="text"
+                            value={formData.customField1}
+                            onChange={(e) => handleChange('customField1', e.target.value)}
+                            className={inputClass('customField1')}
+                            placeholder="Custom field 1"
+                          />
+                        </div>
+                        <div>
+                          <label className={labelClass}>Custom Field 2</label>
+                          <input
+                            type="text"
+                            value={formData.customField2}
+                            onChange={(e) => handleChange('customField2', e.target.value)}
+                            className={inputClass('customField2')}
+                            placeholder="Custom field 2"
+                          />
+                        </div>
+                        <div>
+                          <label className={labelClass}>Custom Field 3</label>
+                          <input
+                            type="text"
+                            value={formData.customField3}
+                            onChange={(e) => handleChange('customField3', e.target.value)}
+                            className={inputClass('customField3')}
+                            placeholder="Custom field 3"
+                          />
+                        </div>
+                        <div>
+                          <label className={labelClass}>Custom Field 4</label>
+                          <input
+                            type="text"
+                            value={formData.customField4}
+                            onChange={(e) => handleChange('customField4', e.target.value)}
+                            className={inputClass('customField4')}
+                            placeholder="Custom field 4"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className={labelClass}>Status</label>
+                          <div className="relative">
+                            <select
+                              value={formData.status}
+                              onChange={(e) => handleChange('status', e.target.value)}
+                              className={`${inputClass('status')} appearance-none`}
+                            >
+                              <option value="active">Active</option>
+                              <option value="inactive">Inactive</option>
+                            </select>
+                            <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className={labelClass}>Registration Date</label>
+                          <input
+                            type="date"
+                            value={formData.registrationDate}
+                            onChange={(e) => handleChange('registrationDate', e.target.value)}
+                            className={inputClass('registrationDate')}
+                          />
                         </div>
                       </div>
 

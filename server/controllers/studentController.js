@@ -301,6 +301,8 @@ class StudentController {
         phone: req.body.phone,
         date_of_birth: req.body.dateOfBirth,
         gender: req.body.gender,
+        school_name: req.body.schoolName,
+        grade: req.body.grade,
         centre_id: req.body.centreId || 1,
         centre_name: req.body.centreName,
         address: req.body.address,
