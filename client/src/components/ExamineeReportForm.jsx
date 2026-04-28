@@ -661,40 +661,77 @@ export default function ExamineeReportForm({
         });
       };
 
-      // ══ HEADER (Logo contains all text, so simple title) ══
-      pdf.setFont("times", "bold");
-      pdf.setFontSize(14);
-      pdf.text("MindSaid Learning Centre", margin, 14);
-      pdf.setFont("times", "italic");
-      pdf.setFontSize(10);
-      pdf.text("Learning This Ability", margin, 20);
-      pdf.setFont("times", "normal");
-      pdf.setFontSize(8);
-      pdf.text("Psycho-educational Assessment & Intervention Centre", margin, 25);
-      pdf.setLineWidth(0.5);
-      pdf.setDrawColor(41, 182, 246);
-      pdf.line(margin, 28, pageW - margin, 28);
-      pdf.setDrawColor(85, 85, 85);
-      pdf.setLineWidth(0.3);
+      // ══ HEADER with LOGO ══
+      // Add logo image
+      try {
+        const logoUrl = "https://res.cloudinary.com/bazeercloud/image/upload/v1777305181/MSL-LOGO-MAIN_lbhbid.png";
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = logoUrl;
+        });
+        
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        const imgData = canvas.toDataURL("image/png");
+        
+        // Add logo to PDF (width 180mm, height auto)
+        const logoWidth = 180;
+        const logoHeight = (img.height * logoWidth) / img.width;
+        pdf.addImage(imgData, "PNG", margin, 10, logoWidth, logoHeight);
+        
+        // Section I starts after logo
+        autoTable(pdf, {
+          startY: 10 + logoHeight + 3,
+          margin: { left: margin, right: margin },
+          body: [["Section I: IDENTIFYING INFORMATION"]],
+          theme: "plain",
+          styles: {
+            fontStyle: "bold",
+            fontSize: 10,
+            fillColor: [245, 245, 245],
+            cellPadding: { top: 3, bottom: 3, left: 4, right: 4 },
+            lineWidth: 0.3,
+            lineColor: [85, 85, 85],
+          },
+          columnStyles: { 0: { cellWidth: contentW } },
+        });
+      } catch (imgErr) {
+        // Fallback to text header if image fails
+        pdf.setFont("times", "bold");
+        pdf.setFontSize(14);
+        pdf.text("MindSaid Learning Centre", margin, 14);
+        pdf.setFont("times", "italic");
+        pdf.setFontSize(10);
+        pdf.text("Learning This Ability", margin, 20);
+        pdf.setFont("times", "normal");
+        pdf.setFontSize(8);
+        pdf.text("Psycho-educational Assessment & Intervention Centre", margin, 25);
+        
+        // Section I without logo
+        autoTable(pdf, {
+          startY: 32,
+          margin: { left: margin, right: margin },
+          body: [["Section I: IDENTIFYING INFORMATION"]],
+          theme: "plain",
+          styles: {
+            fontStyle: "bold",
+            fontSize: 10,
+            fillColor: [245, 245, 245],
+            cellPadding: { top: 3, bottom: 3, left: 4, right: 4 },
+            lineWidth: 0.3,
+            lineColor: [85, 85, 85],
+          },
+          columnStyles: { 0: { cellWidth: contentW } },
+        });
+      }
 
-      // Title row
-      autoTable(pdf, {
-        startY: 32,
-        margin: { left: margin, right: margin },
-        body: [["EXAMINEE REPORT FORM"]],
-        theme: "plain",
-        styles: {
-          fontStyle: "bold",
-          fontSize: 11,
-          cellPadding: { top: 3, bottom: 3, left: 4 },
-          lineWidth: 0.3,
-          lineColor: [85, 85, 85],
-        },
-        columnStyles: { 0: { cellWidth: contentW } },
-      });
-
-      // ══ SECTION I
-      sectionHeader("Section I: IDENTIFYING INFORMATION");
+      // Continue with rest of Section I data
       twoColTable([
         ["Examinee's Name:", s1.childName || "—", "Birth Date:", s1.birthDate || "—"],
         ["Age:", s1.age || "—", "Gender:", s1.gender || "—"],
