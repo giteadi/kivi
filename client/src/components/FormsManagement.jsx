@@ -2205,11 +2205,14 @@ function evalFormula(formula, grid) {
                   key={i} 
                   style={css.tab(activeSheet === i)} 
                   onClick={() => { 
+                    console.log('[DEBUG] Sheet tab clicked:', i, 'Sheet name:', s.name);
                     setActiveSheet(i); 
                     const newCache = sheets[i]?.formulaCache || buildFormulaCache(sheets[i]?.data);
                     formulaCacheRef.current = newCache;
-                    // ✅ Cache explicitly pass karo
-                    setSheetData(reEvaluateFormulas(sheets[i]?.data, newCache)); 
+                    console.log('[DEBUG] Setting sheet data:', sheets[i]?.data);
+                    // ✅ Cache explicitly pass karo aur sheet data update karo
+                    const evaluatedData = reEvaluateFormulas(sheets[i]?.data || [], newCache);
+                    setSheetData(evaluatedData); 
                   }}
                 >
                   {s.name}
@@ -2235,17 +2238,32 @@ function evalFormula(formula, grid) {
           <div style={{ flex: 1, overflow: "auto", padding: 0, background: "#F9FAFB", minHeight: 0, display: "flex", flexDirection: "column" }}>
             {sheetData[0]?.[0] === "__html__" ? (
               <ReportSheetViewer
+                key={`html-${activeSheet}`}
                 ref={viewerRef}
                 data={sheetData}
                 readOnly={false}
-                onDataChange={(newData) => setSheetData(newData)}
+                onDataChange={(newData) => {
+                  console.log('[DEBUG] HTML mode data changed');
+                  setSheetData(newData);
+                  // ✅ HTML mode mein bhi sheets array update karo
+                  setSheets(prev => {
+                    const copy = [...prev];
+                    copy[activeSheet] = {
+                      ...copy[activeSheet],
+                      data: newData
+                    };
+                    return copy;
+                  });
+                }}
               />
             ) : (
               <ReportSheetViewer
+                key={`excel-${activeSheet}`}
                 data={sheetData}
                 formulaCache={formulaCacheRef.current}
                 readOnly={false}
                 onDataChange={(newData) => {
+                  console.log('[DEBUG] Excel mode data changed');
                   setSheetData(newData);
                   // Also update the sheets array to keep in sync
                   setSheets(prev => {
