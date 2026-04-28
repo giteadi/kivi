@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import html2canvas from "html2canvas";
 import * as XLSX from "xlsx";
 import api from "../services/api";
@@ -12,11 +13,12 @@ const Cell = ({ children, bold, italic, colSpan, rowSpan, className = "", style 
     rowSpan={rowSpan}
     style={{
       border: "1px solid #555",
-      padding: "5px 7px",
+      padding: "6px 10px",
       fontSize: 13,
-      verticalAlign: "top",
+      verticalAlign: "middle",
       fontWeight: bold ? "bold" : "normal",
       fontStyle: italic ? "italic" : "normal",
+      lineHeight: "1.4",
       ...style,
     }}
     className={className}
@@ -25,10 +27,10 @@ const Cell = ({ children, bold, italic, colSpan, rowSpan, className = "", style 
   </td>
 );
 
-const SectionHeader = ({ children }) => (
+const SectionHeader = ({ children, colSpan = 10 }) => (
   <tr>
     <td
-      colSpan={10}
+      colSpan={colSpan}
       style={{
         border: "1px solid #555",
         padding: "6px 8px",
@@ -88,9 +90,9 @@ const Radio = ({ name, options, value, onChange }) => (
   <div
     style={{
       display: "flex",
-      justifyContent: "center",
-      gap: 10,
-      whiteSpace: "nowrap",
+      justifyContent: "flex-start",
+      gap: 6,
+      flexWrap: "wrap",
     }}
   >
     {options.map((opt) => (
@@ -99,9 +101,10 @@ const Radio = ({ name, options, value, onChange }) => (
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 3,
-          fontSize: 13,
+          gap: 2,
+          fontSize: 11,
           cursor: "pointer",
+          whiteSpace: "nowrap",
         }}
       >
         <input
@@ -110,9 +113,9 @@ const Radio = ({ name, options, value, onChange }) => (
           value={opt}
           checked={value === opt}
           onChange={() => onChange(opt)}
-          style={{ cursor: "pointer" }}
+          style={{ cursor: "pointer", width: 12, height: 12 }}
         />
-        {opt}
+        {opt === "Prefer not to say" ? "Other" : opt}
       </label>
     ))}
   </div>
@@ -134,11 +137,11 @@ const CB = ({ label, checked, onChange }) => (
 // YES/NO row for academic concerns table
 const AcRow = ({ category, label, data, setData }) => (
   <tr>
-    <Cell style={{ width: 180 }}>{category}</Cell>
-    <Cell style={{ width: 350 }}>{label}</Cell>
+    <Cell style={{ width: "20%" }}>{category}</Cell>
+    <Cell style={{ width: "50%" }}>{label}</Cell>
     <Cell
       style={{
-        width: 120,
+        width: "15%",
         textAlign: "center",
         whiteSpace: "nowrap",
       }}
@@ -150,7 +153,7 @@ const AcRow = ({ category, label, data, setData }) => (
         onChange={(v) => setData({ ...data, yn: v })}
       />
     </Cell>
-    <Cell style={{ width: 200 }}>
+    <Cell style={{ width: "15%" }}>
       <F value={data.comment} onChange={(v) => setData({ ...data, comment: v })} wide />
     </Cell>
   </tr>
@@ -159,9 +162,9 @@ const AcRow = ({ category, label, data, setData }) => (
 // Milestone row
 const MilestoneRow = ({ label, data, setData }) => (
   <tr>
-    <Cell bold>{label}</Cell>
+    <Cell bold style={{ width: "28%" }}>{label}</Cell>
     {["early", "normal", "average", "delayed"].map((k) => (
-      <Cell key={k} style={{ textAlign: "center" }}>
+      <Cell key={k} style={{ textAlign: "center", width: "10%" }}>
         <input
           type="checkbox"
           checked={!!data[k]}
@@ -170,10 +173,10 @@ const MilestoneRow = ({ label, data, setData }) => (
         />
       </Cell>
     ))}
-    <Cell>
+    <Cell style={{ width: "16%" }}>
       <F value={data.age} onChange={(v) => setData({ ...data, age: v })} wide />
     </Cell>
-    <Cell>
+    <Cell style={{ width: "16%" }}>
       <F value={data.comment} onChange={(v) => setData({ ...data, comment: v })} wide />
     </Cell>
   </tr>
@@ -556,438 +559,432 @@ export default function ExamineeReportForm({
   //   loadSavedReport();
   // }, [formData?.id, formData?.studentId]);
 
-  // ── PDF Export with Print-Optimized Layout ──
+  // ── PDF Export (jsPDF autoTable - proper bordered tables) ──
   const handleExportPdf = async () => {
     try {
-      console.log("📄 Creating print-optimized PDF...");
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pageW = 210;
+      const margin = 10;
+      const contentW = pageW - margin * 2;
 
-      // Create a clean print container
-      const printContainer = document.createElement("div");
-      printContainer.style.cssText = `
-        width: 794px;
-        margin: 0 auto;
-        background: #fff;
-        font-family: 'Times New Roman', Georgia, serif;
-        font-size: 11px;
-        line-height: 1.3;
-        color: #000;
-        padding: 20px;
-        box-sizing: border-box;
-      `;
+      // ── Helper: Section Header Table
+      const sectionHeader = (title) => {
+        autoTable(pdf, {
+          startY: pdf.lastAutoTable?.finalY ? pdf.lastAutoTable.finalY + 4 : undefined,
+          margin: { left: margin, right: margin },
+          body: [[title]],
+          theme: "plain",
+          styles: {
+            fontStyle: "bold",
+            fontSize: 10,
+            fillColor: [245, 245, 245],
+            textColor: [0, 0, 0],
+            cellPadding: { top: 3, bottom: 3, left: 4, right: 4 },
+            lineWidth: 0.3,
+            lineColor: [85, 85, 85],
+          },
+          columnStyles: { 0: { cellWidth: contentW } },
+        });
+      };
 
-      // Helper for radio symbols
-      const radioSymbol = (value, option) => value === option ? "●" : "○";
+      // ── Helper: Two-column field rows
+      const twoColTable = (rows) => {
+        autoTable(pdf, {
+          startY: pdf.lastAutoTable?.finalY ?? undefined,
+          margin: { left: margin, right: margin },
+          body: rows,
+          theme: "plain",
+          styles: {
+            fontSize: 9,
+            cellPadding: { top: 2, bottom: 2, left: 3, right: 3 },
+            lineWidth: 0.3,
+            lineColor: [85, 85, 85],
+            valign: "top",
+          },
+          columnStyles: {
+            0: { fontStyle: "bold", cellWidth: 42 },
+            1: { cellWidth: contentW / 2 - 42 },
+            2: { fontStyle: "bold", cellWidth: 38 },
+            3: { cellWidth: contentW / 2 - 38 },
+          },
+        });
+      };
 
-      // Build the print HTML with proper table structure
-      printContainer.innerHTML = `
-        <style>
-          .print-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #555; margin-bottom: 15px; }
-          .print-table td { border: 1px solid #555; padding: 5px; vertical-align: top; word-break: break-word; overflow-wrap: break-word; }
-          .print-table .header { font-weight: bold; background: #f0f0f0; }
-          .print-table .section { font-weight: bold; background: #f5f5f5; }
-          .radio-group { display: flex; gap: 15px; flex-wrap: wrap; }
-          .radio-item { white-space: nowrap; }
-        </style>
+      // ── Helper: Full-width single column rows
+      const fullColTable = (rows, colStyles = {}) => {
+        autoTable(pdf, {
+          startY: pdf.lastAutoTable?.finalY ?? undefined,
+          margin: { left: margin, right: margin },
+          body: rows,
+          theme: "plain",
+          styles: {
+            fontSize: 9,
+            cellPadding: { top: 2, bottom: 2, left: 3, right: 3 },
+            lineWidth: 0.3,
+            lineColor: [85, 85, 85],
+            valign: "top",
+          },
+          columnStyles: colStyles,
+        });
+      };
 
-        <div style="text-align: center; margin-bottom: 20px;">
-          <div style="font-size: 16px; font-weight: bold;">MindSaid Learning Centre</div>
-          <div style="font-size: 11px; font-style: italic;">Learning This Ability</div>
-          <div style="font-size: 9px;">Psycho-educational Assessment & Intervention Centre</div>
-          <div style="width: 100%; height: 2px; background: #00a0e3; margin: 10px 0;"></div>
-        </div>
+      // ── Helper: 4-column table with header row
+      const fourColTable = (head, body) => {
+        autoTable(pdf, {
+          startY: pdf.lastAutoTable?.finalY ?? undefined,
+          margin: { left: margin, right: margin },
+          head: [head],
+          body: body,
+          theme: "plain",
+          headStyles: {
+            fontStyle: "bold",
+            fontSize: 9,
+            fillColor: [230, 230, 230],
+            textColor: [0, 0, 0],
+            lineWidth: 0.3,
+            lineColor: [85, 85, 85],
+            cellPadding: { top: 2, bottom: 2, left: 3, right: 3 },
+          },
+          styles: {
+            fontSize: 9,
+            cellPadding: { top: 2, bottom: 2, left: 3, right: 3 },
+            lineWidth: 0.3,
+            lineColor: [85, 85, 85],
+            valign: "top",
+          },
+          columnStyles: {
+            0: { cellWidth: 38 },
+            1: { cellWidth: contentW - 38 - 22 - 30 },
+            2: { cellWidth: 22, halign: "center" },
+            3: { cellWidth: 30 },
+          },
+        });
+      };
 
-        <table class="print-table">
-          <tr>
-            <td colspan="4" class="header" style="padding: 6px; font-size: 12px;">EXAMINEE REPORT FORM</td>
-          </tr>
-          <tr>
-            <td colspan="4" class="section">Section I: IDENTIFYING INFORMATION</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold; width: 20%;">Examinee's Name:</td>
-            <td style="width: 30%;">${s1.childName || ''}</td>
-            <td style="font-weight: bold; width: 20%;">Birth date:</td>
-            <td style="width: 30%;">${s1.birthDate || ''}</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Age:</td>
-            <td>${s1.age || ''}</td>
-            <td style="font-weight: bold;">Gender:</td>
-            <td>
-              <div class="radio-group">
-                <span class="radio-item">${radioSymbol(s1.gender, "Male")} Male</span>
-                <span class="radio-item">${radioSymbol(s1.gender, "Female")} Female</span>
-                <span class="radio-item">${radioSymbol(s1.gender, "Prefer not to say")} Prefer not to say</span>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Nationality:</td>
-            <td>${s1.nationality || ''}</td>
-            <td style="font-weight: bold;">School Category:</td>
-            <td>${s1.schoolCategory || ''}</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Name of School:</td>
-            <td>${s1.schoolName || ''}</td>
-            <td style="font-weight: bold;">Grade:</td>
-            <td>${s1.grade || ''}</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Handedness:</td>
-            <td>
-              <div class="radio-group">
-                <span class="radio-item">${radioSymbol(s1.handedness, "Right")} Right</span>
-                <span class="radio-item">${radioSymbol(s1.handedness, "Left")} Left</span>
-                <span class="radio-item">${radioSymbol(s1.handedness, "Ambidexterity")} Ambidexterity</span>
-              </div>
-            </td>
-            <td style="font-weight: bold;">Mother Tongue:</td>
-            <td>${s1.motherTongue || ''}</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Language at home:</td>
-            <td colspan="3">${s1.languageHome || ''}</td>
-          </tr>
-          <tr>
-            <td colspan="4" style="font-style: italic; font-size: 9px;">
-              Reports of previous psycho-educational assessments: please share reports via email, if applicable
-            </td>
-          </tr>
-          <!-- Father's Details - Fixed column structure -->
-          <tr>
-            <td rowspan="3" style="font-weight: bold; vertical-align: top;">Father's Details</td>
-            <td style="font-weight: bold;">Name:</td>
-            <td colspan="2">${s1.fatherName || ''}</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Phone:</td>
-            <td>${s1.fatherPhone || ''}</td>
-            <td>
-              <span style="font-weight: bold;">Email:</span> <span style="word-break: break-all;">${s1.fatherEmail || ''}</span>
-            </td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Education:</td>
-            <td>${s1.fatherEdu || ''}</td>
-            <td>
-              <span style="font-weight: bold;">Profession:</span> ${s1.fatherProf || ''}
-            </td>
-          </tr>
-          <!-- Mother's Details - Fixed column structure -->
-          <tr>
-            <td rowspan="3" style="font-weight: bold; vertical-align: top;">Mother's Details</td>
-            <td style="font-weight: bold;">Name:</td>
-            <td colspan="2">${s1.motherName || ''}</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Phone:</td>
-            <td>${s1.motherPhone || ''}</td>
-            <td>
-              <span style="font-weight: bold;">Email:</span> <span style="word-break: break-all;">${s1.motherEmail || ''}</span>
-            </td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Education:</td>
-            <td>${s1.motherEdu || ''}</td>
-            <td>
-              <span style="font-weight: bold;">Profession:</span> ${s1.motherProf || ''}
-            </td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Residence Address:</td>
-            <td colspan="3">${s1.address || ''}</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Form completed by:</td>
-            <td>${s1.formBy || ''}</td>
-            <td style="font-weight: bold;">Referred by:</td>
-            <td>${s1.referredBy || ''}</td>
-          </tr>
-        </table>
+      // ══ LOGO + TITLE
+      pdf.setFont("times", "bold");
+      pdf.setFontSize(15);
+      pdf.text("MindSaid Learning Centre", pageW / 2, 14, { align: "center" });
+      pdf.setFont("times", "normal");
+      pdf.setFontSize(10);
+      pdf.text("Psycho-educational Assessment & Intervention Centre", pageW / 2, 20, { align: "center" });
+      pdf.setDrawColor(41, 182, 246);
+      pdf.setLineWidth(0.8);
+      pdf.line(margin, 23, pageW - margin, 23);
+      pdf.setLineWidth(0.3);
+      pdf.setDrawColor(85, 85, 85);
 
-        <!-- Section II: Academic Concerns -->
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; table-layout: fixed; border: 1px solid #555;">
-          <tr>
-            <td colspan="4" style="border: 1px solid #555; padding: 5px; font-weight: bold; background: #f5f5f5;">Section II: PRESENT ACADEMIC CONCERNS</td>
-          </tr>
-          <tr>
-            <td colspan="4" style="border: 1px solid #555; padding: 4px; font-size: 10px;">
-              <b>School attendance:</b> No. of days attended in school in one academic year: ${s2?.attendance || ''}
-            </td>
-          </tr>
-          <tr style="background: #f0f0f0;">
-            <td style="border: 1px solid #555; padding: 5px; font-weight: bold; width: 15%;">Academic Concerns</td>
-            <td style="border: 1px solid #555; padding: 5px; width: 55%;">Write YES if the examinee CAN do this or NO if the examinee CANNOT</td>
-            <td style="border: 1px solid #555; padding: 5px; font-weight: bold; width: 15%; text-align: center;">YES/NO</td>
-            <td style="border: 1px solid #555; padding: 5px; font-weight: bold; width: 15%;">Comments</td>
-          </tr>
-          ${Object.entries(s2?.categories || {}).map(([category, data]) => {
-            const questions = data.questions || [];
-            return questions.map((q, idx) => `
-              <tr>
-                ${idx === 0 ? `<td rowspan="${questions.length}" style="border: 1px solid #555; padding: 5px; font-weight: bold; vertical-align: top;">${category}</td>` : ''}
-                <td style="border: 1px solid #555; padding: 5px;">${q.label}</td>
-                <td style="border: 1px solid #555; padding: 5px; text-align: center;">
-                  ${radioSymbol(q.yn, "YES")} YES  
-                  ${radioSymbol(q.yn, "NO")} NO
-                </td>
-                <td style="border: 1px solid #555; padding: 5px;">${q.comment || ''}</td>
-              </tr>
-            `).join('');
-          }).join('')}
-        </table>
-
-        <!-- Section III: Family History -->
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; table-layout: fixed; border: 1px solid #555;">
-          <tr>
-            <td colspan="2" style="border: 1px solid #555; padding: 5px; font-weight: bold; background: #f5f5f5;">Section III: FAMILY HISTORY</td>
-          </tr>
-          <tr>
-            <td style="border: 1px solid #555; padding: 5px; width: 50%;">
-              <div style="font-weight: bold; margin-bottom: 5px;">Is there a history of (the) learning problems in the family?</div>
-              <div>${radioSymbol(s3.learningProblemFamily, "Yes")} Yes  ${radioSymbol(s3.learningProblemFamily, "No")} No</div>
-            </td>
-            <td style="border: 1px solid #555; padding: 5px;">
-              <div>${s3.learningProblemFamily === "Yes" ? `
-                ${radioSymbol(s3.learningDifficulties, true)} Learning difficulties<br/>
-                ${radioSymbol(s3.diagnosedDisorder, true)} Diagnosed disorder(s)<br/>
-                ${radioSymbol(s3.attentionProblems, true)} Attention Problems<br/>
-                ${radioSymbol(s3.emotionalDifficulties, true)} Emotional difficulties<br/>
-                ${radioSymbol(s3.other, true)} Other
-              ` : ''}</div>
-            </td>
-          </tr>
-          <tr>
-            <td colspan="2" style="border: 1px solid #555; padding: 5px;">
-              <b>Any history of learning problems in the family (specific subjects, handwriting, etc.):</b><br/>
-              ${s3.specificProblems || ''}
-            </td>
-          </tr>
-        </table>
-
-        <!-- Section IV: Medical History -->
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; table-layout: fixed; border: 1px solid #555;">
-          <tr>
-            <td colspan="3" style="border: 1px solid #555; padding: 5px; font-weight: bold; background: #f5f5f5;">Section IV: MEDICAL HISTORY - Pregnancy, Delivery and Examinee's developmental history</td>
-          </tr>
-          <tr>
-            <td rowspan="4" style="border: 1px solid #555; padding: 5px; font-weight: bold; width: 15%;">a) Pre-natal</td>
-            <td colspan="2" style="border: 1px solid #555; padding: 5px;">
-              <b>Describe Mother's health during pregnancy:</b>
-            </td>
-          </tr>
-          <tr>
-            <td style="border: 1px solid #555; padding: 4px; width: 40%;">${radioSymbol(s4.prenatal?.edema, true)} Edema</td>
-            <td style="border: 1px solid #555; padding: 4px;">${radioSymbol(s4.prenatal?.bloodPressure, true)} Blood pressure: High/Low</td>
-          </tr>
-          <tr>
-            <td style="border: 1px solid #555; padding: 4px;">${radioSymbol(s4.prenatal?.nausea, true)} Nausea & vomiting beyond 3rd month</td>
-            <td style="border: 1px solid #555; padding: 4px;">${radioSymbol(s4.prenatal?.diabetes, true)} Diabetes</td>
-          </tr>
-          <tr>
-            <td style="border: 1px solid #555; padding: 4px;">${radioSymbol(s4.prenatal?.falls, true)} Falls / Fainting spells</td>
-            <td style="border: 1px solid #555; padding: 4px;">${radioSymbol(s4.prenatal?.thyroid, true)} Thyroid</td>
-          </tr>
-          <!-- Post-natal -->
-          <tr>
-            <td rowspan="2" style="border: 1px solid #555; padding: 5px; font-weight: bold;">b) Post-natal</td>
-            <td colspan="2" style="border: 1px solid #555; padding: 5px; font-weight: bold;">Describe Mother's health during delivery (any complications):</td>
-          </tr>
-          <tr>
-            <td style="border: 1px solid #555; padding: 4px;">${radioSymbol(s4.postnatal?.fullTerm, true)} Delivery - Full term</td>
-            <td style="border: 1px solid #555; padding: 4px;">${radioSymbol(s4.postnatal?.cSection, true)} C-section</td>
-          </tr>
-          <!-- Birth details -->
-          <tr>
-            <td rowspan="2" style="border: 1px solid #555; padding: 5px; font-weight: bold;">c) Birth details</td>
-            <td style="border: 1px solid #555; padding: 4px; font-weight: bold;">Weight of examinee:</td>
-            <td style="border: 1px solid #555; padding: 4px;">
-              ${radioSymbol(s4.birth?.weight, "Average")} Average  
-              ${radioSymbol(s4.birth?.weight, "Low")} Low
-            </td>
-          </tr>
-          <tr>
-            <td style="border: 1px solid #555; padding: 4px; font-weight: bold;">Cry of examinee:</td>
-            <td style="border: 1px solid #555; padding: 4px;">
-              ${radioSymbol(s4.birth?.cry, "Immediate")} Immediate  
-              ${radioSymbol(s4.birth?.cry, "Delayed")} Delayed
-            </td>
-          </tr>
-        </table>
-
-        <!-- Developmental Milestones -->
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; table-layout: fixed; border: 1px solid #555;">
-          <tr>
-            <td colspan="7" style="border: 1px solid #555; padding: 5px; font-weight: bold; background: #f5f5f5;">Developmental Milestones</td>
-          </tr>
-          <tr style="background: #f0f0f0;">
-            <td style="border: 1px solid #555; padding: 4px; font-weight: bold; width: 30%;">Milestone</td>
-            <td style="border: 1px solid #555; padding: 4px; font-weight: bold; width: 10%;">Early</td>
-            <td style="border: 1px solid #555; padding: 4px; font-weight: bold; width: 10%;">Normal</td>
-            <td style="border: 1px solid #555; padding: 4px; font-weight: bold; width: 10%;">Average</td>
-            <td style="border: 1px solid #555; padding: 4px; font-weight: bold; width: 10%;">Delayed</td>
-            <td style="border: 1px solid #555; padding: 4px; font-weight: bold; width: 15%;">Age Achieved</td>
-            <td style="border: 1px solid #555; padding: 4px; font-weight: bold; width: 15%;">Comments</td>
-          </tr>
-          ${Array.isArray(s4.milestones) ? s4.milestones.map((m, i) => `
-            <tr>
-              <td style="border: 1px solid #555; padding: 4px;">${i + 1}. ${m.label || m.name || 'Milestone'}</td>
-              <td style="border: 1px solid #555; padding: 4px; text-align: center;">${radioSymbol(m.timing, "early")}</td>
-              <td style="border: 1px solid #555; padding: 4px; text-align: center;">${radioSymbol(m.timing, "normal")}</td>
-              <td style="border: 1px solid #555; padding: 4px; text-align: center;">${radioSymbol(m.timing, "average")}</td>
-              <td style="border: 1px solid #555; padding: 4px; text-align: center;">${radioSymbol(m.timing, "delayed")}</td>
-              <td style="border: 1px solid #555; padding: 4px;">${m.age || m.ageAchieved || ''}</td>
-              <td style="border: 1px solid #555; padding: 4px;">${m.comments || ''}</td>
-            </tr>
-          `).join('') : Object.entries(s4.milestones || {}).map(([key, m], i) => `
-            <tr>
-              <td style="border: 1px solid #555; padding: 4px;">${i + 1}. ${key}</td>
-              <td style="border: 1px solid #555; padding: 4px; text-align: center;">${radioSymbol(m?.timing, "early")}</td>
-              <td style="border: 1px solid #555; padding: 4px; text-align: center;">${radioSymbol(m?.timing, "normal")}</td>
-              <td style="border: 1px solid #555; padding: 4px; text-align: center;">${radioSymbol(m?.timing, "average")}</td>
-              <td style="border: 1px solid #555; padding: 4px; text-align: center;">${radioSymbol(m?.timing, "delayed")}</td>
-              <td style="border: 1px solid #555; padding: 4px;">${m?.age || m?.ageAchieved || ''}</td>
-              <td style="border: 1px solid #555; padding: 4px;">${m?.comments || ''}</td>
-            </tr>
-          `).join('')}
-        </table>
-
-        <!-- Section V: Educational History -->
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; table-layout: fixed; border: 1px solid #555;">
-          <tr>
-            <td colspan="2" style="border: 1px solid #555; padding: 5px; font-weight: bold; background: #f5f5f5;">Section V: EDUCATIONAL HISTORY</td>
-          </tr>
-          <tr>
-            <td style="border: 1px solid #555; padding: 5px; width: 40%; font-weight: bold;">Name of School/Institution:</td>
-            <td style="border: 1px solid #555; padding: 5px;">${s5.schoolName || ''}</td>
-          </tr>
-          <tr>
-            <td style="border: 1px solid #555; padding: 5px; font-weight: bold;">Type of School:</td>
-            <td style="border: 1px solid #555; padding: 5px;">
-              ${radioSymbol(s5.schoolType, "Mainstream")} Mainstream  
-              ${radioSymbol(s5.schoolType, "Special")} Special  
-              ${radioSymbol(s5.schoolType, "Home-schooled")} Home-schooled
-            </td>
-          </tr>
-          <tr>
-            <td style="border: 1px solid #555; padding: 5px; font-weight: bold;">Academic Performance:</td>
-            <td style="border: 1px solid #555; padding: 5px;">
-              ${radioSymbol(s5.performance, "Excellent")} Excellent  
-              ${radioSymbol(s5.performance, "Average")} Average  
-              ${radioSymbol(s5.performance, "Below Average")} Below Average
-            </td>
-          </tr>
-          <tr>
-            <td style="border: 1px solid #555; padding: 5px; font-weight: bold;">Any academic concerns:</td>
-            <td style="border: 1px solid #555; padding: 5px;">${s5.concerns || ''}</td>
-          </tr>
-        </table>
-
-        <!-- Section VI: Behaviour -->
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; table-layout: fixed; border: 1px solid #555;">
-          <tr>
-            <td colspan="2" style="border: 1px solid #555; padding: 5px; font-weight: bold; background: #f5f5f5;">Section VI: BEHAVIOUR AND PSYCHOLOGICAL CONCERNS</td>
-          </tr>
-          <tr>
-            <td style="border: 1px solid #555; padding: 5px; width: 50%;">
-              <div style="font-weight: bold; margin-bottom: 5px;">Tick relevant problem:</div>
-              <div>${radioSymbol(s6.buttoning, true)} Buttoning</div>
-              <div>${radioSymbol(s6.cycling, true)} Cycling</div>
-              <div>${radioSymbol(s6.tying, true)} Tying laces</div>
-              <div>${radioSymbol(s6.hyperactive, true)} Hyperactive</div>
-              <div>${radioSymbol(s6.aggressive, true)} Aggressive</div>
-              <div>${radioSymbol(s6.anxious, true)} Anxious</div>
-              <div>${radioSymbol(s6.speechDelay, true)} Speech delay</div>
-              <div>${radioSymbol(s6.socialWithdrawal, true)} Social withdrawal</div>
-            </td>
-            <td style="border: 1px solid #555; padding: 5px; width: 50%;">
-              <div style="font-weight: bold; margin-bottom: 5px;">Eye/Hand Coordination:</div>
-              <div>${radioSymbol(s6.coordination, "Organised")} Organised  ${radioSymbol(s6.coordination, "Disorganised")} Disorganised</div>
-              <br/>
-              <div style="font-weight: bold;">Emotional State:</div>
-              <div>${radioSymbol(s6.emotionalState, "Stable")} Stable  ${radioSymbol(s6.emotionalState, "Anxious")} Anxious</div>
-            </td>
-          </tr>
-          <tr>
-            <td colspan="2" style="border: 1px solid #555; padding: 5px;">
-              <b>Other problems/concerns:</b><br/>
-              ${s6.other || ''}
-            </td>
-          </tr>
-        </table>
-
-        <!-- Section VII: Other Information -->
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; table-layout: fixed; border: 1px solid #555;">
-          <tr>
-            <td colspan="2" style="border: 1px solid #555; padding: 5px; font-weight: bold; background: #f5f5f5;">Section VII: OTHER INFORMATION</td>
-          </tr>
-          <tr>
-            <td style="border: 1px solid #555; padding: 5px; font-weight: bold; width: 40%;">Parent's name:</td>
-            <td style="border: 1px solid #555; padding: 5px;">${s7.parentName || ''}</td>
-          </tr>
-          <tr>
-            <td style="border: 1px solid #555; padding: 5px; font-weight: bold;">Contact number:</td>
-            <td style="border: 1px solid #555; padding: 5px;">${s7.parentContact || ''}</td>
-          </tr>
-          <tr>
-            <td style="border: 1px solid #555; padding: 5px; font-weight: bold;">Email:</td>
-            <td style="border: 1px solid #555; padding: 5px; word-break: break-all;">${s7.parentEmail || ''}</td>
-          </tr>
-          <tr>
-            <td style="border: 1px solid #555; padding: 5px; font-weight: bold;">Any other relevant information:</td>
-            <td style="border: 1px solid #555; padding: 5px;">${s7.otherInfo || ''}</td>
-          </tr>
-        </table>
-
-        <div style="font-size: 9px; text-align: center; margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px;">
-          MindSaid Learning Centre - Psycho-educational Assessment & Intervention Centre
-        </div>
-      `;
-
-      // Add to body temporarily
-      document.body.appendChild(printContainer);
-
-      // Capture with html2canvas
-      const canvas = await html2canvas(printContainer, {
-        scale: 3,
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#ffffff",
-        width: 794,
-        height: printContainer.scrollHeight,
+      // Title row
+      autoTable(pdf, {
+        startY: 26,
+        margin: { left: margin, right: margin },
+        body: [["EXAMINEE REPORT FORM"]],
+        theme: "plain",
+        styles: {
+          fontStyle: "bold",
+          fontSize: 11,
+          cellPadding: { top: 3, bottom: 3, left: 4 },
+          lineWidth: 0.3,
+          lineColor: [85, 85, 85],
+        },
+        columnStyles: { 0: { cellWidth: contentW } },
       });
 
-      // Remove from body
-      document.body.removeChild(printContainer);
+      // ══ SECTION I
+      sectionHeader("Section I: IDENTIFYING INFORMATION");
+      twoColTable([
+        ["Examinee's Name:", s1.childName || "—", "Birth Date:", s1.birthDate || "—"],
+        ["Age:", s1.age || "—", "Gender:", s1.gender || "—"],
+        ["Nationality:", s1.nationality || "—", "Handedness:", s1.handedness || "—"],
+        ["Name of School:", s1.schoolName || "—", "School Category:", s1.schoolCategory || "—"],
+        ["Grade:", s1.grade || "—", "Mother Tongue:", s1.motherTongue || "—"],
+        ["Language at Home:", s1.languageHome || "—", "Referred By:", s1.referredBy || "—"],
+      ]);
+      fullColTable([
+        [{ content: `Address: ${s1.address || "—"}` }],
+        [{ content: `Form Completed By: ${s1.formBy || "—"}` }],
+        [{ content: `Previous Reports: ${s1.previousReports || "—"}` }],
+      ]);
 
-      // Create PDF
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      
-      const imgProps = pdf.getImageProperties(imgData);
-      const pdfWidth = 210;
-      const pdfHeight = 297;
-      const imgWidth = pdfWidth;
-      const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
-      
-      let heightLeft = imgHeight;
-      let position = 0;
+      // Father Details
+      autoTable(pdf, {
+        startY: pdf.lastAutoTable.finalY,
+        margin: { left: margin, right: margin },
+        body: [
+          [
+            { content: "Father's Details", rowSpan: 3, styles: { fontStyle: "bold", valign: "middle" } },
+            { content: "Name:", styles: { fontStyle: "bold" } },
+            { content: s1.fatherName || "—", colSpan: 2 },
+          ],
+          [
+            { content: "Phone:", styles: { fontStyle: "bold" } },
+            { content: s1.fatherPhone || "—" },
+            { content: s1.fatherEmail || "—" },
+          ],
+          [
+            { content: "Education:", styles: { fontStyle: "bold" } },
+            { content: s1.fatherEdu || "—" },
+            { content: s1.fatherProf || "—" },
+          ],
+          [
+            { content: "Mother's Details", rowSpan: 3, styles: { fontStyle: "bold", valign: "middle" } },
+            { content: "Name:", styles: { fontStyle: "bold" } },
+            { content: s1.motherName || "—", colSpan: 2 },
+          ],
+          [
+            { content: "Phone:", styles: { fontStyle: "bold" } },
+            { content: s1.motherPhone || "—" },
+            { content: s1.motherEmail || "—" },
+          ],
+          [
+            { content: "Education:", styles: { fontStyle: "bold" } },
+            { content: s1.motherEdu || "—" },
+            { content: s1.motherProf || "—" },
+          ],
+        ],
+        theme: "plain",
+        styles: {
+          fontSize: 9,
+          cellPadding: { top: 2, bottom: 2, left: 3, right: 3 },
+          lineWidth: 0.3,
+          lineColor: [85, 85, 85],
+          valign: "top",
+        },
+        columnStyles: {
+          0: { cellWidth: 32 },
+          1: { cellWidth: 24, fontStyle: "bold" },
+          2: { cellWidth: (contentW - 56) / 2 },
+          3: { cellWidth: (contentW - 56) / 2 },
+        },
+      });
 
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight;
+      // ══ SECTION II
+      sectionHeader("Section II: PRESENT ACADEMIC CONCERNS");
+      fullColTable([[`School Attendance (days/year): ${s2.attendance || "—"}`]], {
+        0: { fontStyle: "italic", cellWidth: contentW },
+      });
 
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight;
-      }
+      const acHead = ["Category", "Academic Concern", "YES/NO", "Comments"];
+      const acBody = [];
+      const acCategories = [
+        ["1. Attention", s2.attention], ["2. Listening", s2.listening],
+        ["3. Speaking", s2.speaking], ["4. Writing", s2.writing],
+        ["5. Reading", s2.reading], ["6. Math", s2.math],
+      ];
+      acCategories.forEach(([cat, rows]) => {
+        rows.forEach((row, i) => {
+          acBody.push([i === 0 ? cat : "", row.label, row.yn || "—", row.comment || ""]);
+        });
+      });
+      fourColTable(acHead, acBody);
+      fullColTable([[`General Comments: ${s2.generalComments || "—"}`]]);
+
+      // ══ SECTION III
+      sectionHeader("Section III: PRESENT FAMILY STATUS / HISTORY");
+      twoColTable([
+        ["Marital Status:", s3.maritalStatus || "—", "Consanguineous Marriage:", s3.consanguineous || "—"],
+        ["Father Age at Marriage:", s3.fatherAgeMarriage || "—", "Mother Age at Marriage:", s3.motherAgeMarriage || "—"],
+        ["Father Age at Birth:", s3.fatherAgeBirth || "—", "Mother Age at Birth:", s3.motherAgeBirth || "—"],
+        ["Family Type:", s3.familyType || "—", "Separation Date:", s3.separationDate || "—"],
+      ]);
+      s3.siblings.forEach((sib, i) => {
+        fullColTable([[`Sibling ${i + 1}: Gender – ${sib.gender || "—"}  |  Age – ${sib.age || "—"}  |  Grade – ${sib.grade || "—"}`]]);
+      });
+      const learningFlags = Object.entries({
+        learningDiff: "Learning difficulties", diagnosed: "Diagnosed disorder(s)",
+        attentionProb: "Attention problems", alcoholDrug: "Alcohol/Drug problems",
+        emotional: "Emotional difficulties", ownAbuse: "Own history of abuse", other: "Other",
+      }).filter(([k]) => s3.historyLearning[k]).map(([, lbl]) => lbl).join(", ") || "—";
+      fullColTable([
+        [`Family Learning History: ${learningFlags}`],
+        [`Relation: ${s3.historyLearning.relation || "—"}`],
+        [`H/o Learning Problems in Family: ${s3.historyLearningYN || "—"}`],
+        [`H/o Depression/Anxiety/Conduct Disorder: ${s3.historyDepression || "—"}`],
+      ]);
+
+      // ══ SECTION IV
+      sectionHeader("Section IV: MEDICAL HISTORY");
+      fullColTable([[`Pre-natal – Mother's health: ${s4.prenatal.desc || "—"}`]]);
+      const prenatal = [
+        s4.prenatal.edema && "Edema", s4.prenatal.bp && "BP High/Low",
+        s4.prenatal.nausea && "Nausea beyond 3rd month", s4.prenatal.diabetes && "Diabetes",
+        s4.prenatal.falls && "Falls/Fainting", s4.prenatal.thyroid && "Thyroid",
+      ].filter(Boolean).join(", ");
+      fullColTable([[`Prenatal Conditions: ${prenatal || "None"}`]]);
+      fullColTable([[`Post-natal – Delivery complications: ${s4.postnatal.desc || "—"}`]]);
+      const delivery = [
+        s4.postnatal.fullTerm && "Full term", s4.postnatal.csection && "C-section",
+        s4.postnatal.normal && "Normal", s4.postnatal.forceps && "Forceps",
+      ].filter(Boolean).join(", ");
+      twoColTable([
+        ["Delivery Type:", delivery || "—", "Birth Weight:", s4.weightAvg ? "Average" : s4.weightLow ? "Low" : "—"],
+        ["Cry at Birth:", s4.cryCry || "—", "", ""],
+      ]);
+
+      // Milestones
+      const milestoneLabels = {
+        socialSmile: "1. Social smile", turnedSide: "2. Turned side", crawling: "3. Crawling",
+        pincerGrip: "4. Pincer grip", walking: "5. Walking", babbling: "6. Babbling",
+        toiletTraining: "7. Toilet training", talkingSingleWords: "8. Talking (single words)",
+        talkingSentences: "9. Talking (sentences)", running: "10. Running", climbing: "11. Climbing",
+      };
+      const milestoneBody = Object.entries(s4.milestones).map(([key, val]) => {
+        const timing = val.early ? "Early" : val.normal ? "Normal" : val.average ? "Average" : val.delayed ? "Delayed" : "—";
+        return [milestoneLabels[key], timing, val.age || "—", val.comment || ""];
+      });
+      autoTable(pdf, {
+        startY: pdf.lastAutoTable.finalY,
+        margin: { left: margin, right: margin },
+        head: [["Developmental Milestone", "Timing", "Age Achieved", "Comments"]],
+        body: milestoneBody,
+        theme: "plain",
+        headStyles: {
+          fontStyle: "bold", fontSize: 9, fillColor: [230, 230, 230],
+          lineWidth: 0.3, lineColor: [85, 85, 85],
+          cellPadding: { top: 2, bottom: 2, left: 3, right: 3 },
+        },
+        styles: {
+          fontSize: 9, lineWidth: 0.3, lineColor: [85, 85, 85],
+          cellPadding: { top: 2, bottom: 2, left: 3, right: 3 },
+        },
+        columnStyles: {
+          0: { cellWidth: 55 }, 1: { cellWidth: 22, halign: "center" },
+          2: { cellWidth: 28, halign: "center" }, 3: { cellWidth: contentW - 105 },
+        },
+      });
+
+      const applicable = Object.entries({
+        buttoning: "Buttoning", tyingLaces: "Tying laces", cycling: "Cycling", penGrip: "Pen grip",
+        tellingTime: "Telling time", tellingLeftRight: "Left/Right", poorInterpersonal: "Poor interpersonal",
+        ruleBreaking: "Rule breaking", scholasticBackwardness: "Scholastic backwardness",
+        introvert: "Introvert", anxious: "Anxious", handAches: "Hand aches while writing",
+      }).filter(([k]) => s4.applicableProblems[k]).map(([, lbl]) => lbl).join(", ");
+      fullColTable([[`Applicable Problems: ${applicable || "None"}`]]);
+
+      const roomDesc = [
+        s4.applicableProblems.roomTidy && "Tidy", s4.applicableProblems.roomUntidy && "Untidy",
+        s4.applicableProblems.roomOrganised && "Organised", s4.applicableProblems.roomDisorganised && "Disorganised",
+      ].filter(Boolean).join(", ");
+      fullColTable([[`His/Her Room: ${roomDesc || "—"}${s4.roomComments ? "  |  " + s4.roomComments : ""}`]]);
+
+      [
+        ["Language difficulties", s4.langDiff], ["Eye examination", s4.eyeExam],
+        ["Speech assessment", s4.speechAssessment], ["Hearing test", s4.hearingTest],
+        ["Psychological test", s4.psychTest], ["Neurological assessment", s4.neuroAssessment],
+        ["Major illnesses", s4.majorIllnesses], ["H/o ADHD", s4.adhdHistory],
+        ["Medications", s4.medications],
+      ].forEach(([lbl, val]) => {
+        fullColTable([[{ content: `${lbl}:`, styles: { fontStyle: "bold" } }, val || "—"]], {
+          0: { cellWidth: 52 }, 1: { cellWidth: contentW - 52 },
+        });
+      });
+
+      // ══ SECTION V
+      sectionHeader("Section V: EDUCATIONAL HISTORY");
+      s5.prevSchools.forEach((sch, i) => {
+        fullColTable([[`Previous School ${i + 1}: ${sch.name || "—"}  |  Grade: ${sch.grade || "—"}`]]);
+      });
+      [
+        ["Satisfied with current school", s5.currentSchoolSatisfied],
+        ["Comments", s5.satisfactionComments],
+        ["Problem first noticed", s5.problemFirstNoticed],
+        ["How long", s5.howLong],
+        ["Difficult subjects", s5.difficultSubjects],
+        ["General progress", s5.generalProgress],
+        ["School's attitude", s5.schoolAttitude],
+        ["Tuition teacher's attitude", s5.tuitionAttitude],
+        ["Counselling / therapy", s5.counselling],
+        ["Concessions", s5.concessions],
+        ["Examinee's attitude", s5.childAttitude],
+        ["Forgets homework", s5.forgetsHomework],
+        ["Subjects chosen", s5.chosenSubjects],
+        ["Recent PTM remarks", s5.ptmRemarks],
+      ].forEach(([lbl, val]) => {
+        autoTable(pdf, {
+          startY: pdf.lastAutoTable.finalY,
+          margin: { left: margin, right: margin },
+          body: [[`${lbl}:`, val || "—"]],
+          theme: "plain",
+          styles: {
+            fontSize: 9, lineWidth: 0.3, lineColor: [85, 85, 85],
+            cellPadding: { top: 2, bottom: 2, left: 3, right: 3 }, valign: "top",
+          },
+          columnStyles: {
+            0: { fontStyle: "bold", cellWidth: 55 },
+            1: { cellWidth: contentW - 55 },
+          },
+        });
+      });
+
+      // ══ SECTION VI
+      sectionHeader("Section VI: BEHAVIOUR");
+      [
+        ["Peer relations", s6.peerRelations], ["Sibling relations", s6.siblingRelations],
+        ["Stressful events", s6.stressfulEvents], ["Behaviour concerns", s6.behaviourConcerns],
+      ].forEach(([lbl, val]) => {
+        autoTable(pdf, {
+          startY: pdf.lastAutoTable.finalY,
+          margin: { left: margin, right: margin },
+          body: [[`${lbl}:`, val || "—"]],
+          theme: "plain",
+          styles: {
+            fontSize: 9, lineWidth: 0.3, lineColor: [85, 85, 85],
+            cellPadding: { top: 2, bottom: 2, left: 3, right: 3 }, valign: "top",
+          },
+          columnStyles: {
+            0: { fontStyle: "bold", cellWidth: 40 },
+            1: { cellWidth: contentW - 40 },
+          },
+        });
+      });
+
+      // ══ SECTION VII
+      sectionHeader("Section VII: OTHER");
+      [
+        ["Play interests", s7.playInterests], ["Free time", s7.freeTime],
+        ["Special talents", s7.specialTalents], ["Forgets things", s7.forgetsThings],
+        ["Activities together", s7.togetherActivities], ["Acknowledging good behaviour", s7.acknowledgeBehaviour],
+        ["Primary disciplinarian", s7.primaryDisciplinarian], ["Discipline strategies", s7.disciplineStrategies],
+        ["Paediatrician", s7.pediatrician], ["Other information", s7.otherInfo],
+        ["How found us", s7.howFoundOut],
+      ].forEach(([lbl, val]) => {
+        autoTable(pdf, {
+          startY: pdf.lastAutoTable.finalY,
+          margin: { left: margin, right: margin },
+          body: [[`${lbl}:`, val || "—"]],
+          theme: "plain",
+          styles: {
+            fontSize: 9, lineWidth: 0.3, lineColor: [85, 85, 85],
+            cellPadding: { top: 2, bottom: 2, left: 3, right: 3 }, valign: "top",
+          },
+          columnStyles: {
+            0: { fontStyle: "bold", cellWidth: 55 },
+            1: { cellWidth: contentW - 55 },
+          },
+        });
+      });
+
+      // Confirmation
+      autoTable(pdf, {
+        startY: pdf.lastAutoTable.finalY + 4,
+        margin: { left: margin, right: margin },
+        body: [
+          [{ content: "I hereby confirm that all the facts given above are true and correct to the best of my knowledge.", styles: { fontStyle: "italic" } }],
+          [{ content: `Name of Parent: ${s7.parentName || "—"}` }],
+          [{ content: `Date: ${s7.date || "—"}` }],
+          [{ content: "Signature: ___________________________" }],
+        ],
+        theme: "plain",
+        styles: {
+          fontSize: 9, lineWidth: 0.3, lineColor: [85, 85, 85],
+          cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
+        },
+        columnStyles: { 0: { cellWidth: contentW } },
+      });
 
       pdf.save(`${s1.childName || "Examinee"}_Report_Form.pdf`);
-      console.log("✅ PDF Export successful");
     } catch (err) {
-      console.error("❌ PDF Export Error:", err);
+      console.error("PDF Export Error:", err);
       alert("PDF export failed: " + err.message);
     }
   };
@@ -1691,13 +1688,12 @@ export default function ExamineeReportForm({
     borderCollapse: "collapse",
     marginBottom: 0,
     fontSize: 13,
+    tableLayout: "fixed",
   };
 
   const sectionBox = {
-    border: "1px solid #e5e7eb",
-    marginBottom: 24,
+    marginBottom: 20,
     fontFamily: "'Times New Roman', Times, serif",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
   };
 
   return (
@@ -1773,11 +1769,12 @@ export default function ExamineeReportForm({
         ref={printRef}
         id="print-area"
         style={{
-          width: "100%",
-          maxWidth: "1400px",
-          padding: "20px",
+          width: "95%",
+          maxWidth: "1900px",
+          padding: "40px 80px",
           background: "#fff",
           margin: "0 auto",
+          boxSizing: "border-box",
         }}
       >
         {/* ── HEADER / LOGO ── */}
@@ -1798,104 +1795,101 @@ export default function ExamineeReportForm({
         </div>
 
         {/* ══ SECTION I ══════════════════════════════════════════════════════ */}
-        <div style={{ padding: "40px" }}>
+        <div style={{ padding: "20px 0" }}>
           <div style={sectionBox}>
             <table style={tbl}>
               <tbody>
                 <tr>
-                  <td colSpan={6} style={{ border: "1px solid #555", padding: "6px 8px", fontWeight: "bold", fontSize: 14 }}>
+                  <td colSpan={4} style={{ border: "1px solid #555", padding: "6px 8px", fontWeight: "bold", fontSize: 14 }}>
                     EXAMINEE REPORT FORM
                   </td>
                 </tr>
-                <SectionHeader>Section I: IDENTIFYING INFORMATION</SectionHeader>
+                <SectionHeader colSpan={4}>Section I: IDENTIFYING INFORMATION</SectionHeader>
               <tr>
-                <Cell bold colSpan={2}>Examinee's Name:</Cell>
-                <Cell colSpan={2}><F value={s1.childName} onChange={(v) => setS1({ ...s1, childName: v })} wide /></Cell>
+                <Cell bold>Examinee's Name:</Cell>
+                <Cell><F value={s1.childName} onChange={(v) => setS1({ ...s1, childName: v })} wide /></Cell>
                 <Cell bold>Birth date:</Cell>
                 <Cell><F value={s1.birthDate} onChange={(v) => setS1({ ...s1, birthDate: v })} /></Cell>
               </tr>
               <tr>
-                <Cell bold colSpan={2}>Age:</Cell>
-                <Cell colSpan={4}><F value={s1.age} onChange={(v) => setS1({ ...s1, age: v })} /></Cell>
+                <Cell bold>Age:</Cell>
+                <Cell colSpan={3}><F value={s1.age} onChange={(v) => setS1({ ...s1, age: v })} /></Cell>
               </tr>
               <tr>
-                <Cell bold colSpan={2}>Nationality:</Cell>
+                <Cell bold>Nationality:</Cell>
                 <Cell><F value={s1.nationality} onChange={(v) => setS1({ ...s1, nationality: v })} wide /></Cell>
-                <Cell bold colSpan={2}>Gender:</Cell>
+                <Cell bold>Gender:</Cell>
                 <Cell>
-                  <Radio name="gender" options={["Male", "Female", "Prefer not to say"]} value={s1.gender} onChange={(v) => setS1({ ...s1, gender: v })} />
+                  <Radio name="gender" options={["Male", "Female", "Other"]} value={s1.gender} onChange={(v) => setS1({ ...s1, gender: v })} />
                 </Cell>
               </tr>
               <tr>
-                <Cell bold colSpan={2}>Name of School:</Cell>
+                <Cell bold>Name of School:</Cell>
                 <Cell><F value={s1.schoolName} onChange={(v) => setS1({ ...s1, schoolName: v })} wide /></Cell>
                 <Cell bold>School Category: <span style={{ fontWeight: "normal", fontStyle: "italic" }}>(IB/IGCSE/ICSE)</span></Cell>
-                <Cell colSpan={2}><F value={s1.schoolCategory} onChange={(v) => setS1({ ...s1, schoolCategory: v })} wide /></Cell>
+                <Cell><F value={s1.schoolCategory} onChange={(v) => setS1({ ...s1, schoolCategory: v })} wide /></Cell>
               </tr>
               <tr>
-                <Cell bold colSpan={2}>
+                <Cell bold>
                   Handedness:&nbsp;
-                  <Radio name="hand" options={["Right", "Left", "Ambidexterity (both hands)"]} value={s1.handedness} onChange={(v) => setS1({ ...s1, handedness: v })} />
+                  <Radio name="hand" options={["Right", "Left", "Both"]} value={s1.handedness} onChange={(v) => setS1({ ...s1, handedness: v })} />
                 </Cell>
+                <Cell><F value={s1.handedness} onChange={(v) => setS1({ ...s1, handedness: v })} placeholder="Right/Left/Both" /></Cell>
                 <Cell bold>Grade:</Cell>
-                <Cell colSpan={3}><F value={s1.grade} onChange={(v) => setS1({ ...s1, grade: v })} /></Cell>
+                <Cell><F value={s1.grade} onChange={(v) => setS1({ ...s1, grade: v })} /></Cell>
               </tr>
               <tr>
-                <Cell bold colSpan={2}>Mother Tongue:</Cell>
+                <Cell bold>Mother Tongue:</Cell>
                 <Cell><F value={s1.motherTongue} onChange={(v) => setS1({ ...s1, motherTongue: v })} wide /></Cell>
-                <Cell bold>Language Spoken at home:</Cell>
-                <Cell colSpan={2}><F value={s1.languageHome} onChange={(v) => setS1({ ...s1, languageHome: v })} wide /></Cell>
+                <Cell bold>Language at home:</Cell>
+                <Cell><F value={s1.languageHome} onChange={(v) => setS1({ ...s1, languageHome: v })} wide /></Cell>
               </tr>
               <tr>
-                <Cell colSpan={6} italic>
+                <Cell colSpan={4} italic>
                   Reports of previous psycho-educational assessments: (please share reports via email, if applicable)
                   <F value={s1.previousReports} onChange={(v) => setS1({ ...s1, previousReports: v })} wide />
                 </Cell>
               </tr>
               {/* Father */}
               <tr>
-                <Cell bold rowSpan={3}>Father's Details</Cell>
-                <Cell bold>Name:</Cell>
-                <Cell colSpan={4}><F value={s1.fatherName} onChange={(v) => setS1({ ...s1, fatherName: v })} wide /></Cell>
+                <Cell bold rowSpan={3} style={{ width: "18%" }}>Father's Details</Cell>
+                <Cell bold style={{ width: "15%" }}>Name:</Cell>
+                <Cell colSpan={2}><F value={s1.fatherName} onChange={(v) => setS1({ ...s1, fatherName: v })} wide /></Cell>
               </tr>
               <tr>
                 <Cell bold>Phone</Cell>
                 <Cell><F value={s1.fatherPhone} onChange={(v) => setS1({ ...s1, fatherPhone: v })} wide /></Cell>
-                <Cell bold>Email</Cell>
-                <Cell colSpan={2}><F value={s1.fatherEmail} onChange={(v) => setS1({ ...s1, fatherEmail: v })} wide /></Cell>
+                <Cell><F value={s1.fatherEmail} onChange={(v) => setS1({ ...s1, fatherEmail: v })} wide placeholder="Email" /></Cell>
               </tr>
               <tr>
                 <Cell bold>Education</Cell>
                 <Cell><F value={s1.fatherEdu} onChange={(v) => setS1({ ...s1, fatherEdu: v })} wide /></Cell>
-                <Cell bold>Profession</Cell>
-                <Cell colSpan={2}><F value={s1.fatherProf} onChange={(v) => setS1({ ...s1, fatherProf: v })} wide /></Cell>
+                <Cell><F value={s1.fatherProf} onChange={(v) => setS1({ ...s1, fatherProf: v })} wide placeholder="Profession" /></Cell>
               </tr>
               {/* Mother */}
               <tr>
                 <Cell bold rowSpan={3}>Mother's Details</Cell>
                 <Cell bold>Name:</Cell>
-                <Cell colSpan={4}><F value={s1.motherName} onChange={(v) => setS1({ ...s1, motherName: v })} wide /></Cell>
+                <Cell colSpan={2}><F value={s1.motherName} onChange={(v) => setS1({ ...s1, motherName: v })} wide /></Cell>
               </tr>
               <tr>
                 <Cell bold>Phone</Cell>
                 <Cell><F value={s1.motherPhone} onChange={(v) => setS1({ ...s1, motherPhone: v })} wide /></Cell>
-                <Cell bold>Email</Cell>
-                <Cell colSpan={2}><F value={s1.motherEmail} onChange={(v) => setS1({ ...s1, motherEmail: v })} wide /></Cell>
+                <Cell><F value={s1.motherEmail} onChange={(v) => setS1({ ...s1, motherEmail: v })} wide placeholder="Email" /></Cell>
               </tr>
               <tr>
                 <Cell bold>Education</Cell>
                 <Cell><F value={s1.motherEdu} onChange={(v) => setS1({ ...s1, motherEdu: v })} wide /></Cell>
-                <Cell bold>Profession</Cell>
-                <Cell colSpan={2}><F value={s1.motherProf} onChange={(v) => setS1({ ...s1, motherProf: v })} wide /></Cell>
+                <Cell><F value={s1.motherProf} onChange={(v) => setS1({ ...s1, motherProf: v })} wide placeholder="Profession" /></Cell>
               </tr>
               <tr>
                 <Cell bold colSpan={2}>Residence Address</Cell>
-                <Cell colSpan={4}><F value={s1.address} onChange={(v) => setS1({ ...s1, address: v })} wide /></Cell>
+                <Cell colSpan={2}><F value={s1.address} onChange={(v) => setS1({ ...s1, address: v })} wide /></Cell>
               </tr>
               <tr>
-                <Cell bold colSpan={2}>Form completed by</Cell>
+                <Cell bold>Form completed by</Cell>
                 <Cell><F value={s1.formBy} onChange={(v) => setS1({ ...s1, formBy: v })} wide /></Cell>
-                <Cell bold colSpan={2}>Referred by:</Cell>
+                <Cell bold>Referred by:</Cell>
                 <Cell><F value={s1.referredBy} onChange={(v) => setS1({ ...s1, referredBy: v })} wide /></Cell>
               </tr>
             </tbody>
@@ -1906,7 +1900,7 @@ export default function ExamineeReportForm({
         <div style={sectionBox}>
           <table style={tbl}>
             <tbody>
-              <SectionHeader>Section II: PRESENT ACADEMIC CONCERNS</SectionHeader>
+              <SectionHeader colSpan={4}>Section II: PRESENT ACADEMIC CONCERNS</SectionHeader>
               <tr>
                 <Cell bold italic colSpan={4}>
                   School attendance: No. of days attended in school in one academic year:&nbsp;
@@ -1963,7 +1957,7 @@ export default function ExamineeReportForm({
         <div style={sectionBox}>
           <table style={tbl}>
             <tbody>
-              <SectionHeader>Section III: PRESENT FAMILY STATUS / HISTORY</SectionHeader>
+              <SectionHeader colSpan={4}>Section III: PRESENT FAMILY STATUS / HISTORY</SectionHeader>
               <tr>
                 <Cell bold>Marital Status</Cell>
                 <Cell colSpan={3}>
@@ -2052,52 +2046,52 @@ export default function ExamineeReportForm({
         <div style={sectionBox}>
           <table style={tbl}>
             <tbody>
-              <SectionHeader>Section IV: MEDICAL HISTORY – Pregnancy, Delivery and Examinee's developmental history</SectionHeader>
+              <SectionHeader colSpan={7}>Section IV: MEDICAL HISTORY – Pregnancy, Delivery and Examinee's developmental history</SectionHeader>
               {/* Pre-natal */}
               <tr>
                 <Cell bold>a) Pre-natal</Cell>
-                <Cell colSpan={5}>
+                <Cell colSpan={6}>
                   Describe Mother's health during pregnancy:&nbsp;
                   <F value={s4.prenatal.desc} onChange={(v) => setS4({ ...s4, prenatal: { ...s4.prenatal, desc: v } })} wide />
                 </Cell>
               </tr>
               <tr>
                 <Cell />
-                <Cell colSpan={2}><CB label="Edema" checked={s4.prenatal.edema} onChange={(v) => setS4({ ...s4, prenatal: { ...s4.prenatal, edema: v } })} /></Cell>
+                <Cell colSpan={3}><CB label="Edema" checked={s4.prenatal.edema} onChange={(v) => setS4({ ...s4, prenatal: { ...s4.prenatal, edema: v } })} /></Cell>
                 <Cell colSpan={3}><CB label="Blood pressure: High/Low" checked={s4.prenatal.bp} onChange={(v) => setS4({ ...s4, prenatal: { ...s4.prenatal, bp: v } })} /></Cell>
               </tr>
               <tr>
                 <Cell />
-                <Cell colSpan={2}><CB label="Nausea & vomiting beyond 3rd month" checked={s4.prenatal.nausea} onChange={(v) => setS4({ ...s4, prenatal: { ...s4.prenatal, nausea: v } })} /></Cell>
+                <Cell colSpan={3}><CB label="Nausea & vomiting beyond 3rd month" checked={s4.prenatal.nausea} onChange={(v) => setS4({ ...s4, prenatal: { ...s4.prenatal, nausea: v } })} /></Cell>
                 <Cell colSpan={3}><CB label="Diabetes" checked={s4.prenatal.diabetes} onChange={(v) => setS4({ ...s4, prenatal: { ...s4.prenatal, diabetes: v } })} /></Cell>
               </tr>
               <tr>
                 <Cell />
-                <Cell colSpan={2}><CB label="Falls / Fainting spells" checked={s4.prenatal.falls} onChange={(v) => setS4({ ...s4, prenatal: { ...s4.prenatal, falls: v } })} /></Cell>
+                <Cell colSpan={3}><CB label="Falls / Fainting spells" checked={s4.prenatal.falls} onChange={(v) => setS4({ ...s4, prenatal: { ...s4.prenatal, falls: v } })} /></Cell>
                 <Cell colSpan={3}><CB label="Thyroid" checked={s4.prenatal.thyroid} onChange={(v) => setS4({ ...s4, prenatal: { ...s4.prenatal, thyroid: v } })} /></Cell>
               </tr>
               {/* Post-natal */}
               <tr>
                 <Cell bold>b) Post-natal</Cell>
-                <Cell colSpan={5}>
+                <Cell colSpan={6}>
                   Describe Mother's health during delivery (any complications):&nbsp;
                   <F value={s4.postnatal.desc} onChange={(v) => setS4({ ...s4, postnatal: { ...s4.postnatal, desc: v } })} wide />
                 </Cell>
               </tr>
               <tr>
                 <Cell />
-                <Cell colSpan={2}><CB label="Delivery – Full term" checked={s4.postnatal.fullTerm} onChange={(v) => setS4({ ...s4, postnatal: { ...s4.postnatal, fullTerm: v } })} /></Cell>
+                <Cell colSpan={3}><CB label="Delivery – Full term" checked={s4.postnatal.fullTerm} onChange={(v) => setS4({ ...s4, postnatal: { ...s4.postnatal, fullTerm: v } })} /></Cell>
                 <Cell colSpan={3}><CB label="C-section" checked={s4.postnatal.csection} onChange={(v) => setS4({ ...s4, postnatal: { ...s4.postnatal, csection: v } })} /></Cell>
               </tr>
               <tr>
                 <Cell />
-                <Cell colSpan={2}><CB label="Normal" checked={s4.postnatal.normal} onChange={(v) => setS4({ ...s4, postnatal: { ...s4.postnatal, normal: v } })} /></Cell>
+                <Cell colSpan={3}><CB label="Normal" checked={s4.postnatal.normal} onChange={(v) => setS4({ ...s4, postnatal: { ...s4.postnatal, normal: v } })} /></Cell>
                 <Cell colSpan={3}><CB label="Forceps" checked={s4.postnatal.forceps} onChange={(v) => setS4({ ...s4, postnatal: { ...s4.postnatal, forceps: v } })} /></Cell>
               </tr>
               {/* Birth details */}
               <tr>
                 <Cell bold>c) Examinee's birth details</Cell>
-                <Cell colSpan={2}>
+                <Cell colSpan={3}>
                   Weight of the examinee:&nbsp;
                   <Radio name="weight" options={["Average", "Low"]} value={s4.weightAvg ? "Average" : s4.weightLow ? "Low" : ""} onChange={(v) => setS4({ ...s4, weightAvg: v === "Average", weightLow: v === "Low" })} />
                 </Cell>
@@ -2108,13 +2102,13 @@ export default function ExamineeReportForm({
               </tr>
               {/* Milestones header */}
               <tr>
-                <Cell bold>Developmental Milestones</Cell>
-                <Cell bold style={{ textAlign: "center" }}>Early</Cell>
-                <Cell bold style={{ textAlign: "center" }}>Normal</Cell>
-                <Cell bold style={{ textAlign: "center" }}>Average</Cell>
-                <Cell bold style={{ textAlign: "center" }}>Delayed</Cell>
-                <Cell bold>Age Achieved</Cell>
-                <Cell bold>Comments</Cell>
+                <Cell bold style={{ width: "28%" }}>Developmental Milestones</Cell>
+                <Cell bold style={{ textAlign: "center", width: "10%" }}>Early</Cell>
+                <Cell bold style={{ textAlign: "center", width: "10%" }}>Normal</Cell>
+                <Cell bold style={{ textAlign: "center", width: "10%" }}>Average</Cell>
+                <Cell bold style={{ textAlign: "center", width: "10%" }}>Delayed</Cell>
+                <Cell bold style={{ width: "16%" }}>Age Achieved</Cell>
+                <Cell bold style={{ width: "16%" }}>Comments</Cell>
               </tr>
               {[
                 ["socialSmile", "1. Social smile"],
@@ -2194,7 +2188,7 @@ export default function ExamineeReportForm({
         <div style={sectionBox}>
           <table style={tbl}>
             <tbody>
-              <SectionHeader>Section V: EDUCATIONAL HISTORY</SectionHeader>
+              <SectionHeader colSpan={4}>Section V: EDUCATIONAL HISTORY</SectionHeader>
               <tr>
                 <Cell colSpan={4}>
                   List the schools the examinee has attended previous to the current school:<br />
@@ -2244,7 +2238,7 @@ export default function ExamineeReportForm({
         <div style={sectionBox}>
           <table style={tbl}>
             <tbody>
-              <SectionHeader>Section VI: BEHAVIOUR</SectionHeader>
+              <SectionHeader colSpan={1}>Section VI: BEHAVIOUR</SectionHeader>
               {[
                 ["peerRelations", "How does the examinee get along with his peers?"],
                 ["siblingRelations", "How does the examinee get along with his siblings/cousins (in a joint family)?"],
@@ -2252,7 +2246,7 @@ export default function ExamineeReportForm({
                 ["behaviourConcerns", "List any concerns you have about the examinee's behaviour:"],
               ].map(([key, label]) => (
                 <tr key={key}>
-                  <Cell colSpan={4}>
+                  <Cell>
                     {label}
                     <br />
                     <F value={s6[key]} onChange={(v) => setS6({ ...s6, [key]: v })} wide />
@@ -2267,7 +2261,7 @@ export default function ExamineeReportForm({
         <div style={sectionBox}>
           <table style={tbl}>
             <tbody>
-              <SectionHeader>Section VII: OTHER</SectionHeader>
+              <SectionHeader colSpan={1}>Section VII: OTHER</SectionHeader>
               {[
                 ["playInterests", "List the examinee's play interests, toy preferences, and any special talents."],
                 ["freeTime", "What does the examinee want to do during his free time?"],
@@ -2278,10 +2272,10 @@ export default function ExamineeReportForm({
                 ["primaryDisciplinarian", "Who is the primary disciplinarian? What strategies do you use at home to implement discipline?"],
                 ["pediatrician", "Name of the examinee's pediatrician/primary care doctor:"],
                 ["otherInfo", "List any other information not covered above?"],
-                ["howFoundOut", "Please tell us how you found out about MindSaid Learning Centre for Learning & Development?"],
+                ["howFoundOut", "Please tell us how you found us?"],
               ].map(([key, label]) => (
                 <tr key={key}>
-                  <Cell colSpan={4}>
+                  <Cell>
                     {label}
                     <br />
                     <F value={s7[key]} onChange={(v) => setS7({ ...s7, [key]: v })} wide />
@@ -2289,14 +2283,14 @@ export default function ExamineeReportForm({
                 </tr>
               ))}
               <tr>
-                <Cell colSpan={4} bold italic>
+                <Cell bold italic>
                   School Records – please share last 2 years school final reports on WhatsApp - 8928186952/Email –
                   <F value={s7.schoolRecords} onChange={(v) => setS7({ ...s7, schoolRecords: v })} wide />
                 </Cell>
               </tr>
               {/* Confirmation */}
               <tr>
-                <Cell colSpan={4}>
+                <Cell>
                   I hereby confirm that all the facts given above are true and correct to the best of my knowledge.
                   <br /><br />
                   Name of parent filling the form:&nbsp;
