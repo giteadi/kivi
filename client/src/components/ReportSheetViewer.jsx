@@ -694,6 +694,27 @@ const ReportSheetViewer = forwardRef(function ReportSheetViewer({
 
   const topColor = reportMode ? "#064E3B" : "#1E40AF";
 
+  // Undo/Redo handlers for HTML mode
+  const handleUndo = useCallback(() => {
+    const doc = docRef.current;
+    if (!doc) return;
+    try {
+      doc.execCommand('undo', false, null);
+    } catch (err) {
+      console.warn('[Undo] Failed:', err);
+    }
+  }, []);
+
+  const handleRedo = useCallback(() => {
+    const doc = docRef.current;
+    if (!doc) return;
+    try {
+      doc.execCommand('redo', false, null);
+    } catch (err) {
+      console.warn('[Redo] Failed:', err);
+    }
+  }, []);
+
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
       <div style={{
@@ -706,14 +727,52 @@ const ReportSheetViewer = forwardRef(function ReportSheetViewer({
         <span style={{ opacity: 0.65, fontSize: 11 }}>
           {isExcel 
             ? (readOnly ? "Excel Grid (Read-only)" : "Excel Grid · Editable cells with formulas")
-            : (readOnly ? "Read-only preview" : "Click anywhere to edit · Ctrl+A select all · Ctrl+C/V copy/paste · Ctrl+B bold")
+            : (readOnly ? "Read-only preview" : "Click anywhere to edit · Ctrl+Z undo · Ctrl+Y redo · Ctrl+C/V copy/paste")
           }
         </span>
+        
+        {/* Undo/Redo buttons for HTML mode */}
+        {!isExcel && !readOnly && (
+          <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+            <button
+              onClick={handleUndo}
+              title="Undo (Ctrl+Z)"
+              style={{
+                background: "rgba(255,255,255,0.2)", color: "#fff",
+                border: "1px solid rgba(255,255,255,0.3)", borderRadius: 6,
+                padding: "4px 10px", fontSize: 11, fontWeight: 600,
+                cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 7v6h6M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
+              </svg>
+              Undo
+            </button>
+            <button
+              onClick={handleRedo}
+              title="Redo (Ctrl+Y)"
+              style={{
+                background: "rgba(255,255,255,0.2)", color: "#fff",
+                border: "1px solid rgba(255,255,255,0.3)", borderRadius: 6,
+                padding: "4px 10px", fontSize: 11, fontWeight: 600,
+                cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 7v6h-6M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13" />
+              </svg>
+              Redo
+            </button>
+          </div>
+        )}
+        
         {!reportMode && onCreateReport && (
           <button
             onClick={onCreateReport}
             style={{
-              marginLeft: "auto", background: "#fff", color: "#1E40AF",
+              marginLeft: isExcel || readOnly ? "auto" : 0,
+              background: "#fff", color: "#1E40AF",
               border: "none", borderRadius: 6, padding: "4px 14px",
               fontSize: 12, fontWeight: 600, cursor: "pointer",
             }}
