@@ -243,37 +243,32 @@ function buildDoc(bodyHtml) {
 <style>
   * { box-sizing: border-box; }
   html, body {
-    margin: 0; padding: 0;
-    background: #fff;
+    margin: 0; padding: 0; background: #fff;
     font-family: 'Times New Roman', Georgia, serif;
-    font-size: 13px;
-    color: #111;
-    line-height: 1.7;
+    font-size: 13px; color: #111; line-height: 1.6;
   }
   body { padding: 48px 56px 80px; min-height: 900px; outline: none; }
-  table { width: 100%; border-collapse: collapse; margin: 12px 0 16px; font-size: 13px; }
-  td, th { border: 1px solid #555; padding: 5px 10px; min-width: 60px; vertical-align: top; text-align: left; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; }
+  td, th { border: 1px solid #000; padding: 5px 10px; vertical-align: top; text-align: left; }
   th { background: #f0f0f0; font-weight: bold; }
   tr:nth-child(even) td { background: #fafafa; }
-  h1 { font-size: 17px; font-weight: bold; text-decoration: underline; margin: 16px 0 8px; }
-  h2 { font-size: 14px; font-weight: bold; text-decoration: underline; margin: 14px 0 6px; }
-  h3 { font-size: 13px; font-weight: bold; margin: 12px 0 4px; }
-  p  { margin: 0 0 8px; }
-  ul, ol { padding-left: 24px; margin: 6px 0 10px; }
-  ::selection, *::selection, td::selection, th::selection {
-    background: #3B82F6 !important; color: #fff !important;
-  }
-  img {
-    max-width: 100%;
-    height: auto;
-    display: block;
-    margin: 8px 0;
-    cursor: pointer;
-  }
-  img.selected, img:focus {
-    outline: 2px solid #3B82F6;
-    outline-offset: 2px;
-  }
+  h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 14px 0 6px; }
+  h2 { font-size: 13px; font-weight: bold; margin: 12px 0 5px; }
+  h3 { font-size: 13px; font-weight: bold; margin: 10px 0 4px; }
+  p  { margin: 0 0 5px; }
+  ul { list-style: disc; padding-left: 28px; margin: 4px 0 8px; }
+  ol { list-style: decimal; padding-left: 28px; margin: 4px 0 8px; }
+  li { margin-bottom: 3px; }
+  a  { color: #0563C1; text-decoration: underline; }
+  img { max-width: 100%; height: auto; display: block; margin: 8px 0; cursor: pointer; }
+  img.selected, img:focus { outline: 2px solid #3B82F6; outline-offset: 2px; }
+  strong, b { font-weight: bold; }
+  em, i { font-style: italic; }
+  u { text-decoration: underline; }
+  s, strike { text-decoration: line-through; }
+  sub { font-size: 10px; vertical-align: sub; }
+  sup { font-size: 10px; vertical-align: super; }
+  ::selection, *::selection { background: #3B82F6 !important; color: #fff !important; }
 </style>
 </head>
 <body>${bodyHtml}</body>

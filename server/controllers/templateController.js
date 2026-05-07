@@ -2,6 +2,7 @@ const Template = require('../models/Template');
 const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const mammoth = require('mammoth');
 
 class TemplateController {
   constructor() {
@@ -318,12 +319,56 @@ class TemplateController {
 
       const filePath = req.file.path;
       const fileName = req.file.originalname || req.file.filename;
+      const ext = path.extname(fileName).toLowerCase();
       
       console.log('📤 UPLOAD EXCEL: File received:', fileName);
       console.log('📤 UPLOAD EXCEL: File path:', filePath);
+      console.log('📤 UPLOAD EXCEL: File extension:', ext);
 
-      // Parse using Python
-      const parsedData = await this.parseExcelWithPython(filePath);
+      let parsedData;
+
+      // ── DOCX → Mammoth se convert karo (Python bypass) ──
+      if (ext === '.docx') {
+        try {
+          const result = await mammoth.convertToHtml(
+            { path: filePath },
+            {
+              convertImage: mammoth.images.imgElement(async (image) => {
+                const buffer = await image.read();
+                const b64 = buffer.toString('base64');
+                return { src: `data:${image.contentType};base64,${b64}` };
+              }),
+              styleMap: [
+                "p[style-name='Heading 1'] => h1:fresh",
+                "p[style-name='Heading 2'] => h2:fresh", 
+                "p[style-name='Heading 3'] => h3:fresh",
+                "p[style-name='Title'] => h1.title:fresh",
+              ]
+            }
+          );
+
+          const html = result.value;
+          const sheetName = fileName.replace(/\.docx$/i, '');
+          
+          parsedData = {
+            ok: true,
+            sheets: { [sheetName]: [['__html__', html]] },
+            names: [sheetName],
+            row_heights: {}
+          };
+
+          console.log('✅ MAMMOTH: DOCX converted, HTML length:', html.length);
+        } catch (mammothError) {
+          console.error('❌ MAMMOTH ERROR:', mammothError);
+          return res.status(400).json({
+            success: false,
+            message: 'DOCX parse failed: ' + mammothError.message
+          });
+        }
+      } else {
+        // ── Excel/CSV → existing Python parser ──
+        parsedData = await this.parseExcelWithPython(filePath);
+      }
       
       if (!parsedData.ok) {
         return res.status(400).json({
