@@ -2091,6 +2091,9 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                               value={formData.birthDate}
                               onChange={(e) => handleChange('birthDate', e.target.value)}
                               className={`${inputClass('birthDate')} pr-10`}
+                              autoComplete="off"
+                              autoCorrect="off"
+                              spellCheck="false"
                             />
                             <FiCalendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                           </div>
@@ -2351,13 +2354,13 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                       </div>
 
                       <div>
-                        <label className={labelClass}>Comment</label>
+                        <label className={labelClass}>Address</label>
                         <textarea
                           value={formData.comment}
                           onChange={(e) => handleChange('comment', e.target.value)}
                           rows={4}
                           className={inputClass('comment')}
-                          placeholder="Enter any additional comments..."
+                          placeholder="Enter full address..."
                           maxLength={500}
                         />
                         <div className="text-xs text-gray-500 mt-1 text-right">

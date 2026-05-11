@@ -52,20 +52,180 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
   });
 
   const [diagnosisData, setDiagnosisData] = useState({
-    autismSpectrum: false,
-    behaviourEmotional: false,
-    giftedTalented: false,
-    intellectualDisability: false,
-    languageDelay: false,
-    learningDisability: false,
-    moodRelated: false,
-    motorDelay: false,
-    personalityDisorders: false,
-    schizophrenia: false,
-    speech: false,
-    substanceAbuse: false,
-    traumaticBrainInjury: false,
-    other: false
+    autismSpectrum: {
+      aspergers: false,
+      autistic: false,
+      childhoodDisintegrative: false,
+      pervasiveDevelopmental: false,
+      retts: false,
+      other: false,
+      otherText: ''
+    },
+    behaviourEmotional: {
+      adhd: false,
+      conduct: false,
+      disruptive: false,
+      emotional: false,
+      intermittentExplosive: false,
+      kleptomania: false,
+      oppositionalDefiant: false,
+      pathologicalGambling: false,
+      pyromania: false,
+      trichotillomania: false,
+      other: false,
+      otherText: ''
+    },
+    giftedTalented: {
+      gifted: false,
+      other: false,
+      otherText: ''
+    },
+    intellectualDisability: {
+      borderline: false,
+      cognitiveDelay: false,
+      mild: false,
+      moderate: false,
+      profound: false,
+      severe: false,
+      other: false,
+      otherText: ''
+    },
+    languageDelay: {
+      expressive: false,
+      delay: false,
+      mixed: false,
+      phonological: false,
+      other: false,
+      otherText: ''
+    },
+    learningDisability: {
+      reading: false,
+      mathematics: false,
+      disorder: false,
+      writing: false,
+      nonverbal: false,
+      other: false,
+      otherText: ''
+    },
+    moodRelated: {
+      acuteStress: false,
+      agoraphobia: false,
+      anorexia: false,
+      bipolar: false,
+      bulimia: false,
+      conversion: false,
+      cyclothymic: false,
+      depressive: false,
+      dysthymic: false,
+      generalizedAnxiety: false,
+      majorDepressive: false,
+      ocd: false,
+      pain: false,
+      panic: false,
+      ptsd: false,
+      separationAnxiety: false,
+      socialPhobia: false,
+      somatization: false,
+      specificPhobia: false,
+      other: false,
+      otherText: ''
+    },
+    motorDelay: {
+      developmentalCoordination: false,
+      dyspraxia: false,
+      motorDelay: false,
+      paraplegia: false,
+      quadriplegia: false,
+      stereotypic: false,
+      other: false,
+      otherText: ''
+    },
+    personalityDisorders: {
+      antisocial: false,
+      avoidant: false,
+      borderline: false,
+      dependent: false,
+      histrionic: false,
+      narcissistic: false,
+      ocd: false,
+      ocpd: false,
+      paranoid: false,
+      schizoid: false,
+      schizotypal: false,
+      other: false,
+      otherText: ''
+    },
+    schizophrenia: {
+      briefPsychotic: false,
+      delusional: false,
+      schizoaffective: false,
+      catatonic: false,
+      disorganized: false,
+      paranoid: false,
+      residual: false,
+      undifferentiated: false,
+      schizophreniform: false,
+      other: false,
+      otherText: ''
+    },
+    speech: {
+      aphasia: false,
+      apraxia: false,
+      articulation: false,
+      brocas: false,
+      centralAuditory: false,
+      dysarthria: false,
+      fluency: false,
+      receptive: false,
+      voice: false,
+      other: false,
+      otherText: ''
+    },
+    substanceAbuse: {
+      alcoholAbuse: false,
+      alcoholDependence: false,
+      polysubstanceAbuse: false,
+      polysubstanceDependence: false,
+      substanceAbuse: false,
+      substanceDependence: false,
+      other: false,
+      otherText: ''
+    },
+    traumaticBrainInjury: {
+      tbi: false,
+      mild: false,
+      moderate: false,
+      severe: false,
+      other: false,
+      otherText: ''
+    },
+    other: {
+      adjustment: false,
+      cognitive: false,
+      creutzfeldtJakob: false,
+      alzheimers: false,
+      depersonalization: false,
+      dissociative: false,
+      epilepsy: false,
+      factitious: false,
+      genderIdentity: false,
+      huntingtons: false,
+      leftStroke: false,
+      leftEpilepsy: false,
+      mildCognitive: false,
+      parkinsons: false,
+      picks: false,
+      insomnia: false,
+      rightStroke: false,
+      rightEpilepsy: false,
+      seizure: false,
+      stroke: false,
+      tic: false,
+      tourettes: false,
+      vascularDementia: false,
+      other: false,
+      otherText: ''
+    }
   });
 
   const [historyData, setHistoryData] = useState({
@@ -185,6 +345,145 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
     employmentHistorySource: '',
     additionalInfo: ''
   });
+
+  // Diagnosis helper functions
+  const toggleDiagnosis = (category, subOption) => {
+    setDiagnosisData(prev => ({
+      ...prev,
+      [category]: {
+        ...prev[category],
+        [subOption]: !prev[category][subOption]
+      }
+    }));
+  };
+
+  const handleDiagnosisTextChange = (category, text) => {
+    setDiagnosisData(prev => ({
+      ...prev,
+      [category]: {
+        ...prev[category],
+        otherText: text
+      }
+    }));
+  };
+
+  const addDiagnosisOption = (category) => {
+    const text = diagnosisData[category].otherText;
+    if (text && text.trim()) {
+      const key = text.trim().replace(/\s+/g, '_').toLowerCase();
+      setDiagnosisData(prev => ({
+        ...prev,
+        [category]: {
+          ...prev[category],
+          [key]: true,
+          otherText: ''
+        }
+      }));
+    }
+  };
+
+  const removeDiagnosisOption = (category, key) => {
+    setDiagnosisData(prev => {
+      const newData = { ...prev[category] };
+      delete newData[key];
+      return {
+        ...prev,
+        [category]: newData
+      };
+    });
+  };
+
+  const formatDynamicOptionLabel = (key) => {
+    return key
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  // Education helper functions
+  const handleEducationArrayChange = (field, value) => {
+    setEducationSampleReportData(prev => {
+      const currentArray = prev[field] || [];
+      if (currentArray.includes(value)) {
+        return { ...prev, [field]: currentArray.filter(item => item !== value) };
+      } else {
+        return { ...prev, [field]: [...currentArray, value] };
+      }
+    });
+  };
+
+  const addEducationCustomItem = (field, customField, text) => {
+    if (text && text.trim()) {
+      const key = text.trim().toLowerCase().replace(/\s+/g, '_');
+      setEducationSampleReportData(prev => {
+        const currentArray = prev[field] || [];
+        if (!currentArray.includes(key)) {
+          return { ...prev, [field]: [...currentArray, key], [customField]: '' };
+        }
+        return { ...prev, [customField]: '' };
+      });
+    }
+  };
+
+  const removeEducationCustomItem = (field, item) => {
+    setEducationSampleReportData(prev => ({
+      ...prev,
+      [field]: (prev[field] || []).filter(i => i !== item)
+    }));
+  };
+
+  const [educationCustomText, setEducationCustomText] = useState({
+    personalStrengths: '',
+    personalWeaknesses: '',
+    peerStrengths: '',
+    peerWeaknesses: '',
+    learningDisabilities: ''
+  });
+
+  const handleEducationCustomTextChange = (field, text) => {
+    setEducationCustomText(prev => ({ ...prev, [field]: text }));
+  };
+
+  // Health helper functions
+  const handleHealthArrayChange = (field, value) => {
+    setHealthSampleReportData(prev => {
+      const currentArray = prev[field] || [];
+      if (currentArray.includes(value)) {
+        return { ...prev, [field]: currentArray.filter(item => item !== value) };
+      } else {
+        return { ...prev, [field]: [...currentArray, value] };
+      }
+    });
+  };
+
+  const addHealthCustomItem = (field, text) => {
+    if (text && text.trim()) {
+      const key = text.trim().toLowerCase().replace(/\s+/g, '_');
+      setHealthSampleReportData(prev => {
+        const currentArray = prev[field] || [];
+        if (!currentArray.includes(key)) {
+          return { ...prev, [field]: [...currentArray, key] };
+        }
+        return prev;
+      });
+    }
+  };
+
+  const removeHealthCustomItem = (field, item) => {
+    setHealthSampleReportData(prev => ({
+      ...prev,
+      [field]: (prev[field] || []).filter(i => i !== item)
+    }));
+  };
+
+  const [healthCustomText, setHealthCustomText] = useState({
+    sensoryHistory: '',
+    fineMotorHistory: '',
+    grossMotorHistory: ''
+  });
+
+  const handleHealthCustomTextChange = (field, text) => {
+    setHealthCustomText(prev => ({ ...prev, [field]: text }));
+  };
 
   const [personalSampleReportData, setPersonalSampleReportData] = useState({
     livingArrangement: '',
@@ -316,23 +615,22 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
           // ✅ Set diagnosis data
           console.log('🏥 Setting Diagnosis Data');
           const safeDiagData = diagData || {};
-          setDiagnosisData({
-            autismSpectrum: false,
-            behaviourEmotional: false,
-            giftedTalented: false,
-            intellectualDisability: false,
-            languageDelay: false,
-            learningDisability: false,
-            moodRelated: false,
-            motorDelay: false,
-            personalityDisorders: false,
-            schizophrenia: false,
-            speech: false,
-            substanceAbuse: false,
-            traumaticBrainInjury: false,
-            other: false,
-            ...safeDiagData
-          });
+          setDiagnosisData(prev => ({
+            autismSpectrum: { ...prev.autismSpectrum, ...(safeDiagData.autismSpectrum || {}) },
+            behaviourEmotional: { ...prev.behaviourEmotional, ...(safeDiagData.behaviourEmotional || {}) },
+            giftedTalented: { ...prev.giftedTalented, ...(safeDiagData.giftedTalented || {}) },
+            intellectualDisability: { ...prev.intellectualDisability, ...(safeDiagData.intellectualDisability || {}) },
+            languageDelay: { ...prev.languageDelay, ...(safeDiagData.languageDelay || {}) },
+            learningDisability: { ...prev.learningDisability, ...(safeDiagData.learningDisability || {}) },
+            moodRelated: { ...prev.moodRelated, ...(safeDiagData.moodRelated || {}) },
+            motorDelay: { ...prev.motorDelay, ...(safeDiagData.motorDelay || {}) },
+            personalityDisorders: { ...prev.personalityDisorders, ...(safeDiagData.personalityDisorders || {}) },
+            schizophrenia: { ...prev.schizophrenia, ...(safeDiagData.schizophrenia || {}) },
+            speech: { ...prev.speech, ...(safeDiagData.speech || {}) },
+            substanceAbuse: { ...prev.substanceAbuse, ...(safeDiagData.substanceAbuse || {}) },
+            traumaticBrainInjury: { ...prev.traumaticBrainInjury, ...(safeDiagData.traumaticBrainInjury || {}) },
+            other: { ...prev.other, ...(safeDiagData.other || {}) }
+          }));
           
           // ✅ Set history data - Merge with defaults to ensure all fields exist
           console.log('📋 Setting History Data (MERGING WITH DEFAULTS)');
@@ -1220,12 +1518,130 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
                 ))}
 
                 {/* Diagnosis Section */}
-                <div className="bg-white border rounded-lg p-4">
+                <div className="bg-white border rounded-lg p-4 space-y-4">
                   <h4 className="text-sm font-semibold text-gray-900 mb-3">Diagnosis</h4>
+                  
+                  {/* Autism Spectrum */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="px-4 py-2 bg-gray-50">
+                      <span className="font-medium text-sm">Autism Spectrum Disorder</span>
+                    </div>
+                    <div className="px-4 py-2 pl-10 space-y-1">
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" checked={diagnosisData.autismSpectrum.aspergers} onChange={() => toggleDiagnosis('autismSpectrum', 'aspergers')} />
+                        Asperger's Disorder
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" checked={diagnosisData.autismSpectrum.autistic} onChange={() => toggleDiagnosis('autismSpectrum', 'autistic')} />
+                        Autistic Disorder
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" checked={diagnosisData.autismSpectrum.childhoodDisintegrative} onChange={() => toggleDiagnosis('autismSpectrum', 'childhoodDisintegrative')} />
+                        Childhood Disintegrative Disorder
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" checked={diagnosisData.autismSpectrum.pervasiveDevelopmental} onChange={() => toggleDiagnosis('autismSpectrum', 'pervasiveDevelopmental')} />
+                        Pervasive Developmental Delay/Disability
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" checked={diagnosisData.autismSpectrum.retts} onChange={() => toggleDiagnosis('autismSpectrum', 'retts')} />
+                        Rett's Disorder
+                      </label>
+                      {Object.keys(diagnosisData.autismSpectrum).filter(key => !['aspergers', 'autistic', 'childhoodDisintegrative', 'pervasiveDevelopmental', 'retts', 'other', 'otherText'].includes(key)).map(key => (
+                        <div key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" className="rounded border-gray-300" checked={diagnosisData.autismSpectrum[key]} onChange={() => toggleDiagnosis('autismSpectrum', key)} />
+                            {formatDynamicOptionLabel(key)}
+                          </label>
+                          <button type="button" onClick={() => removeDiagnosisOption('autismSpectrum', key)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
+                        </div>
+                      ))}
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" checked={diagnosisData.autismSpectrum.other} onChange={() => toggleDiagnosis('autismSpectrum', 'other')} />
+                        Other
+                        <button type="button" onClick={() => removeDiagnosisOption('autismSpectrum', 'other')} className="text-red-500 hover:text-red-700 text-xs">✕</button>
+                      </label>
+                      {diagnosisData.autismSpectrum.other && (
+                        <div className="ml-6 w-full space-y-2">
+                          <input type="text" value={diagnosisData.autismSpectrum.otherText} onChange={(e) => handleDiagnosisTextChange('autismSpectrum', e.target.value)} placeholder="Please specify..." className="w-full px-2 py-1 text-sm border border-gray-300 rounded" />
+                          <button type="button" onClick={() => addDiagnosisOption('autismSpectrum')} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add as new checkbox option</button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Behaviour/Emotional */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="px-4 py-2 bg-gray-50">
+                      <span className="font-medium text-sm">Behaviour/Emotional Disorder</span>
+                    </div>
+                    <div className="px-4 py-2 pl-10 space-y-1">
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" checked={diagnosisData.behaviourEmotional.adhd} onChange={() => toggleDiagnosis('behaviourEmotional', 'adhd')} />
+                        Attention Deficit/Hyperactivity Disorder
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" checked={diagnosisData.behaviourEmotional.conduct} onChange={() => toggleDiagnosis('behaviourEmotional', 'conduct')} />
+                        Conduct Disorder
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" checked={diagnosisData.behaviourEmotional.disruptive} onChange={() => toggleDiagnosis('behaviourEmotional', 'disruptive')} />
+                        Disruptive Behavior Disorder
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" checked={diagnosisData.behaviourEmotional.emotional} onChange={() => toggleDiagnosis('behaviourEmotional', 'emotional')} />
+                        Emotional Disturbance
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" checked={diagnosisData.behaviourEmotional.intermittentExplosive} onChange={() => toggleDiagnosis('behaviourEmotional', 'intermittentExplosive')} />
+                        Intermittent Explosive Disorder
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" checked={diagnosisData.behaviourEmotional.kleptomania} onChange={() => toggleDiagnosis('behaviourEmotional', 'kleptomania')} />
+                        Kleptomania
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" checked={diagnosisData.behaviourEmotional.oppositionalDefiant} onChange={() => toggleDiagnosis('behaviourEmotional', 'oppositionalDefiant')} />
+                        Oppositional Defiant Disorder
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" checked={diagnosisData.behaviourEmotional.pathologicalGambling} onChange={() => toggleDiagnosis('behaviourEmotional', 'pathologicalGambling')} />
+                        Pathological Gambling
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" checked={diagnosisData.behaviourEmotional.pyromania} onChange={() => toggleDiagnosis('behaviourEmotional', 'pyromania')} />
+                        Pyromania
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" checked={diagnosisData.behaviourEmotional.trichotillomania} onChange={() => toggleDiagnosis('behaviourEmotional', 'trichotillomania')} />
+                        Trichotillomania
+                      </label>
+                      {Object.keys(diagnosisData.behaviourEmotional).filter(key => !['adhd', 'conduct', 'disruptive', 'emotional', 'intermittentExplosive', 'kleptomania', 'oppositionalDefiant', 'pathologicalGambling', 'pyromania', 'trichotillomania', 'other', 'otherText'].includes(key)).map(key => (
+                        <div key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" className="rounded border-gray-300" checked={diagnosisData.behaviourEmotional[key]} onChange={() => toggleDiagnosis('behaviourEmotional', key)} />
+                            {formatDynamicOptionLabel(key)}
+                          </label>
+                          <button type="button" onClick={() => removeDiagnosisOption('behaviourEmotional', key)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
+                        </div>
+                      ))}
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" className="rounded border-gray-300" checked={diagnosisData.behaviourEmotional.other} onChange={() => toggleDiagnosis('behaviourEmotional', 'other')} />
+                        Other
+                        <button type="button" onClick={() => removeDiagnosisOption('behaviourEmotional', 'other')} className="text-red-500 hover:text-red-700 text-xs">✕</button>
+                      </label>
+                      {diagnosisData.behaviourEmotional.other && (
+                        <div className="ml-6 w-full space-y-2">
+                          <input type="text" value={diagnosisData.behaviourEmotional.otherText} onChange={(e) => handleDiagnosisTextChange('behaviourEmotional', e.target.value)} placeholder="Please specify..." className="w-full px-2 py-1 text-sm border border-gray-300 rounded" />
+                          <button type="button" onClick={() => addDiagnosisOption('behaviourEmotional')} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add as new checkbox option</button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Add similar sections for other categories - keeping it compact for now */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {Object.entries({
-                      autismSpectrum: 'Autism Spectrum Disorder',
-                      behaviourEmotional: 'Behaviour/Emotional Disorder',
                       giftedTalented: 'Gifted and Talented',
                       intellectualDisability: 'Intellectual Disability',
                       languageDelay: 'Language Delay/Disorder',
@@ -1242,11 +1658,12 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
                       <label key={key} className="flex items-center space-x-2">
                         <input
                           type="checkbox"
-                          checked={diagnosisData[key] === true}
+                          checked={Object.values(diagnosisData[key]).some(v => v === true)}
                           onChange={(e) => {
+                            const anyChecked = Object.values(diagnosisData[key]).some(v => v === true);
                             setDiagnosisData(prev => ({
                               ...prev,
-                              [key]: e.target.checked
+                              [key]: { ...prev[key], [Object.keys(prev[key])[0]]: !anyChecked }
                             }));
                           }}
                           className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
@@ -1405,88 +1822,183 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
                 </div>
 
                 {/* Education Information */}
-                <div className="bg-white border rounded-lg p-4">
+                <div className="bg-white border rounded-lg p-4 space-y-4">
                   <h4 className="text-sm font-semibold text-gray-900 mb-3">Education</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Current Year/Grade
-                      </label>
-                      <input
-                        type="text"
-                        value={educationSampleReportData.currentYear || ''}
-                        onChange={(e) => setEducationSampleReportData(prev => ({ ...prev, currentYear: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                        placeholder="Enter current year/grade"
-                      />
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Current Year/Grade</label>
+                      <input type="text" value={educationSampleReportData.currentYear || ''} onChange={(e) => setEducationSampleReportData(prev => ({ ...prev, currentYear: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Enter current year/grade" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Mother's Education
-                      </label>
-                      <input
-                        type="text"
-                        value={educationSampleReportData.motherEducation || ''}
-                        onChange={(e) => setEducationSampleReportData(prev => ({ ...prev, motherEducation: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                        placeholder="Enter mother's education"
-                      />
+                      <label className="block text-sm font-medium text-gray-700 mb-2">School Name</label>
+                      <input type="text" value={educationSampleReportData.schoolName || ''} onChange={(e) => setEducationSampleReportData(prev => ({ ...prev, schoolName: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Enter school name" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Father's Education
-                      </label>
-                      <input
-                        type="text"
-                        value={educationSampleReportData.fatherEducation || ''}
-                        onChange={(e) => setEducationSampleReportData(prev => ({ ...prev, fatherEducation: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                        placeholder="Enter father's education"
-                      />
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Mother's Education</label>
+                      <input type="text" value={educationSampleReportData.motherEducation || ''} onChange={(e) => setEducationSampleReportData(prev => ({ ...prev, motherEducation: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Enter mother's education" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Father's Education</label>
+                      <input type="text" value={educationSampleReportData.fatherEducation || ''} onChange={(e) => setEducationSampleReportData(prev => ({ ...prev, fatherEducation: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Enter father's education" />
+                    </div>
+                  </div>
+
+                  {/* Academic Performance */}
+                  <div className="space-y-4 border-t pt-4">
+                    <h3 className="text-sm font-semibold text-blue-800">Academic Performance - Strengths and Weaknesses</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Personal Strengths */}
+                      <div className="space-y-2">
+                        <h4 className="text-xs font-medium text-gray-700">Personal Strengths:</h4>
+                        {['reading', 'writing', 'mathematics', 'language', 'science', 'art', 'athletics', 'music'].map((item) => (
+                          <label key={`strength-${item}`} className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                            <input type="checkbox" className="rounded border-gray-300" checked={(educationSampleReportData.personalStrengths || []).includes(item)} onChange={() => handleEducationArrayChange('personalStrengths', item)} />
+                            {item.charAt(0).toUpperCase() + item.slice(1)}
+                          </label>
+                        ))}
+                        {(educationSampleReportData.personalStrengths || []).filter(item => !['reading', 'writing', 'mathematics', 'language', 'science', 'art', 'athletics', 'music'].includes(item)).map((item) => (
+                          <div key={`strength-${item}`} className="flex items-center gap-2 text-xs text-gray-700">
+                            <label className="flex items-center gap-2 cursor-pointer flex-1">
+                              <input type="checkbox" className="rounded border-gray-300" checked={true} onChange={() => handleEducationArrayChange('personalStrengths', item)} />
+                              {item.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </label>
+                            <button type="button" onClick={() => removeEducationCustomItem('personalStrengths', item)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
+                          </div>
+                        ))}
+                        <div className="mt-2 space-y-2">
+                          <input type="text" value={educationCustomText.personalStrengths} onChange={(e) => handleEducationCustomTextChange('personalStrengths', e.target.value)} placeholder="Add custom strength..." className="w-full px-2 py-1 text-xs border border-gray-300 rounded" />
+                          <button type="button" onClick={() => addEducationCustomItem('personalStrengths', 'personalStrengths', educationCustomText.personalStrengths)} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add Strength</button>
+                        </div>
+                      </div>
+
+                      {/* Personal Weaknesses */}
+                      <div className="space-y-2">
+                        <h4 className="text-xs font-medium text-gray-700">Personal Weaknesses:</h4>
+                        {['reading', 'writing', 'mathematics', 'language', 'science', 'art', 'athletics', 'music'].map((item) => (
+                          <label key={`weakness-${item}`} className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                            <input type="checkbox" className="rounded border-gray-300" checked={(educationSampleReportData.personalWeaknesses || []).includes(item)} onChange={() => handleEducationArrayChange('personalWeaknesses', item)} />
+                            {item.charAt(0).toUpperCase() + item.slice(1)}
+                          </label>
+                        ))}
+                        {(educationSampleReportData.personalWeaknesses || []).filter(item => !['reading', 'writing', 'mathematics', 'language', 'science', 'art', 'athletics', 'music'].includes(item)).map((item) => (
+                          <div key={`weakness-${item}`} className="flex items-center gap-2 text-xs text-gray-700">
+                            <label className="flex items-center gap-2 cursor-pointer flex-1">
+                              <input type="checkbox" className="rounded border-gray-300" checked={true} onChange={() => handleEducationArrayChange('personalWeaknesses', item)} />
+                              {item.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </label>
+                            <button type="button" onClick={() => removeEducationCustomItem('personalWeaknesses', item)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
+                          </div>
+                        ))}
+                        <div className="mt-2 space-y-2">
+                          <input type="text" value={educationCustomText.personalWeaknesses} onChange={(e) => handleEducationCustomTextChange('personalWeaknesses', e.target.value)} placeholder="Add custom weakness..." className="w-full px-2 py-1 text-xs border border-gray-300 rounded" />
+                          <button type="button" onClick={() => addEducationCustomItem('personalWeaknesses', 'personalWeaknesses', educationCustomText.personalWeaknesses)} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add Weakness</button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Health Information */}
-                <div className="bg-white border rounded-lg p-4">
+                <div className="bg-white border rounded-lg p-4 space-y-4">
                   <h4 className="text-sm font-semibold text-gray-900 mb-3">Health</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Vision Result
-                      </label>
-                      <input
-                        type="text"
-                        value={healthSampleReportData.visionResult || ''}
-                        onChange={(e) => setHealthSampleReportData(prev => ({ ...prev, visionResult: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                        placeholder="Enter vision screening result"
-                      />
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Vision Result</label>
+                      <input type="text" value={healthSampleReportData.visionResult || ''} onChange={(e) => setHealthSampleReportData(prev => ({ ...prev, visionResult: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Enter vision screening result" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Hearing Result
-                      </label>
-                      <input
-                        type="text"
-                        value={healthSampleReportData.hearingResult || ''}
-                        onChange={(e) => setHealthSampleReportData(prev => ({ ...prev, hearingResult: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                        placeholder="Enter hearing screening result"
-                      />
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Hearing Result</label>
+                      <input type="text" value={healthSampleReportData.hearingResult || ''} onChange={(e) => setHealthSampleReportData(prev => ({ ...prev, hearingResult: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Enter hearing screening result" />
                     </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Current Medications
-                      </label>
-                      <textarea
-                        value={healthSampleReportData.currentMedications || ''}
-                        onChange={(e) => setHealthSampleReportData(prev => ({ ...prev, currentMedications: e.target.value }))}
-                        rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                        placeholder="Enter current medications"
-                      />
+                  </div>
+
+                  {/* Sensory and Motor Conditions */}
+                  <div className="space-y-4 border-t pt-4">
+                    <h3 className="text-sm font-semibold text-blue-800">Sensory and Motor Conditions</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Sensory History */}
+                      <div className="space-y-2">
+                        <h4 className="text-xs font-medium text-gray-700">Sensory History:</h4>
+                        {['sensory_modulation_dysfunction', 'sensory_integration_dysfunction', 'visual_perceptual_dysfunction', 'visual_processing', 'auditory_processing'].map((item) => (
+                          <label key={item} className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                            <input type="checkbox" className="rounded border-gray-300" checked={(healthSampleReportData.sensoryHistory || []).includes(item)} onChange={() => handleHealthArrayChange('sensoryHistory', item)} />
+                            {item.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </label>
+                        ))}
+                        {(healthSampleReportData.sensoryHistory || []).filter(item => !['sensory_modulation_dysfunction', 'sensory_integration_dysfunction', 'visual_perceptual_dysfunction', 'visual_processing', 'auditory_processing'].includes(item)).map((item) => (
+                          <div key={item} className="flex items-center gap-2 text-xs text-gray-700">
+                            <label className="flex items-center gap-2 cursor-pointer flex-1">
+                              <input type="checkbox" className="rounded border-gray-300" checked={true} onChange={() => handleHealthArrayChange('sensoryHistory', item)} />
+                              {item.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </label>
+                            <button type="button" onClick={() => removeHealthCustomItem('sensoryHistory', item)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
+                          </div>
+                        ))}
+                        <div className="mt-2 space-y-2">
+                          <input type="text" value={healthCustomText.sensoryHistory} onChange={(e) => handleHealthCustomTextChange('sensoryHistory', e.target.value)} placeholder="Add custom condition..." className="w-full px-2 py-1 text-xs border border-gray-300 rounded" />
+                          <button type="button" onClick={() => { addHealthCustomItem('sensoryHistory', healthCustomText.sensoryHistory); handleHealthCustomTextChange('sensoryHistory', ''); }} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add Condition</button>
+                        </div>
+                      </div>
+
+                      {/* Fine-Motor History */}
+                      <div className="space-y-2">
+                        <h4 className="text-xs font-medium text-gray-700">Fine-Motor History:</h4>
+                        {['poor_hand_strength', 'poor_manipulation_of_objects', 'poor_handwriting'].map((item) => (
+                          <label key={item} className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                            <input type="checkbox" className="rounded border-gray-300" checked={(healthSampleReportData.fineMotorHistory || []).includes(item)} onChange={() => handleHealthArrayChange('fineMotorHistory', item)} />
+                            {item.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </label>
+                        ))}
+                        {(healthSampleReportData.fineMotorHistory || []).filter(item => !['poor_hand_strength', 'poor_manipulation_of_objects', 'poor_handwriting'].includes(item)).map((item) => (
+                          <div key={item} className="flex items-center gap-2 text-xs text-gray-700">
+                            <label className="flex items-center gap-2 cursor-pointer flex-1">
+                              <input type="checkbox" className="rounded border-gray-300" checked={true} onChange={() => handleHealthArrayChange('fineMotorHistory', item)} />
+                              {item.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </label>
+                            <button type="button" onClick={() => removeHealthCustomItem('fineMotorHistory', item)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
+                          </div>
+                        ))}
+                        <div className="mt-2 space-y-2">
+                          <input type="text" value={healthCustomText.fineMotorHistory} onChange={(e) => handleHealthCustomTextChange('fineMotorHistory', e.target.value)} placeholder="Add custom condition..." className="w-full px-2 py-1 text-xs border border-gray-300 rounded" />
+                          <button type="button" onClick={() => { addHealthCustomItem('fineMotorHistory', healthCustomText.fineMotorHistory); handleHealthCustomTextChange('fineMotorHistory', ''); }} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add Condition</button>
+                        </div>
+                      </div>
+
+                      {/* Gross-Motor History */}
+                      <div className="space-y-2">
+                        <h4 className="text-xs font-medium text-gray-700">Gross-Motor History:</h4>
+                        {['poor_coordination', 'poor_endurance', 'poor_strength', 'poor_motor_planning', 'poor_balance', 'poor_postural_control', 'difficulty_learning_to_ride_a_bicycle'].map((item) => (
+                          <label key={item} className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                            <input type="checkbox" className="rounded border-gray-300" checked={(healthSampleReportData.grossMotorHistory || []).includes(item)} onChange={() => handleHealthArrayChange('grossMotorHistory', item)} />
+                            {item.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </label>
+                        ))}
+                        {(healthSampleReportData.grossMotorHistory || []).filter(item => !['poor_coordination', 'poor_endurance', 'poor_strength', 'poor_motor_planning', 'poor_balance', 'poor_postural_control', 'difficulty_learning_to_ride_a_bicycle'].includes(item)).map((item) => (
+                          <div key={item} className="flex items-center gap-2 text-xs text-gray-700">
+                            <label className="flex items-center gap-2 cursor-pointer flex-1">
+                              <input type="checkbox" className="rounded border-gray-300" checked={true} onChange={() => handleHealthArrayChange('grossMotorHistory', item)} />
+                              {item.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </label>
+                            <button type="button" onClick={() => removeHealthCustomItem('grossMotorHistory', item)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
+                          </div>
+                        ))}
+                        <div className="mt-2 space-y-2">
+                          <input type="text" value={healthCustomText.grossMotorHistory || ''} onChange={(e) => handleHealthCustomTextChange('grossMotorHistory', e.target.value)} placeholder="Add custom condition..." className="w-full px-2 py-1 text-xs border border-gray-300 rounded" />
+                          <button type="button" onClick={() => { addHealthCustomItem('grossMotorHistory', healthCustomText.grossMotorHistory); handleHealthCustomTextChange('grossMotorHistory', ''); }} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add Condition</button>
+                        </div>
+                      </div>
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Current Medications</label>
+                    <textarea
+                      value={healthSampleReportData.currentMedications || ''}
+                      onChange={(e) => setHealthSampleReportData(prev => ({ ...prev, currentMedications: e.target.value }))}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      placeholder="Enter current medications"
+                    />
                   </div>
                 </div>
 

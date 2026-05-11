@@ -181,17 +181,22 @@ const CentreCreateForm = ({ onClose, onSuccess }) => {
                     name="openingTime"
                     value={formData.openingTime || ''}
                     onChange={(e) => {
-                      handleChange(e);
-                      const closing = formData.closingTime || '20:00';
                       const opening = e.target.value || '09:00';
+                      const closing = formData.closingTime || '20:00';
                       const formatTime = (t) => {
+                        if (!t || !t.includes(':')) return '';
                         const [h, m] = t.split(':');
-                        const hour = parseInt(h);
+                        const hour = parseInt(h, 10);
+                        if (isNaN(hour)) return '';
                         const ampm = hour >= 12 ? 'PM' : 'AM';
                         const hour12 = hour % 12 || 12;
                         return `${hour12}:${m} ${ampm}`;
                       };
-                      setFormData(prev => ({ ...prev, operating_hours: `${formatTime(opening)} - ${formatTime(closing)}` }));
+                      setFormData(prev => ({
+                        ...prev,
+                        openingTime: opening,
+                        operating_hours: `${formatTime(opening)} - ${formatTime(closing)}`
+                      }));
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
@@ -203,17 +208,22 @@ const CentreCreateForm = ({ onClose, onSuccess }) => {
                     name="closingTime"
                     value={formData.closingTime || ''}
                     onChange={(e) => {
-                      handleChange(e);
                       const opening = formData.openingTime || '09:00';
                       const closing = e.target.value || '20:00';
                       const formatTime = (t) => {
+                        if (!t || !t.includes(':')) return '';
                         const [h, m] = t.split(':');
-                        const hour = parseInt(h);
+                        const hour = parseInt(h, 10);
+                        if (isNaN(hour)) return '';
                         const ampm = hour >= 12 ? 'PM' : 'AM';
                         const hour12 = hour % 12 || 12;
                         return `${hour12}:${m} ${ampm}`;
                       };
-                      setFormData(prev => ({ ...prev, operating_hours: `${formatTime(opening)} - ${formatTime(closing)}` }));
+                      setFormData(prev => ({
+                        ...prev,
+                        closingTime: closing,
+                        operating_hours: `${formatTime(opening)} - ${formatTime(closing)}`
+                      }));
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />

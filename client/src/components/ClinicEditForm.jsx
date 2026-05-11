@@ -18,6 +18,8 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
     status: 'active',
     established: '',
     operatingHours: '',
+    openingTime: '',
+    closingTime: '',
     description: '',
     specialties: [],
     facilities: [],
@@ -43,6 +45,32 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
         if (response.success && response.data) {
           const data = response.data;
           // Map database fields (snake_case) to form fields (camelCase)
+          // Parse opening/closing time from operating_hours if available
+          const operatingHours = data.operating_hours || '';
+          let openingTime = '';
+          let closingTime = '';
+          if (operatingHours && operatingHours.includes(' - ')) {
+            const [opening, closing] = operatingHours.split(' - ');
+            // Convert 12-hour format to 24-hour format for input[type=time]
+            const parseTime = (timeStr) => {
+              if (!timeStr) return '';
+              const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+              if (match) {
+                let hour = parseInt(match[1], 10);
+                const minute = match[2];
+                const ampm = match[3].toUpperCase();
+                if (ampm === 'PM' && hour !== 12) hour += 12;
+                if (ampm === 'AM' && hour === 12) hour = 0;
+                return `${hour.toString().padStart(2, '0')}:${minute}`;
+              }
+              // If already in 24-hour format
+              if (timeStr.match(/^\d{2}:\d{2}$/)) return timeStr;
+              return '';
+            };
+            openingTime = parseTime(opening?.trim());
+            closingTime = parseTime(closing?.trim());
+          }
+          
           setFormData({
             name: data.name || '',
             country: data.country || 'India',
@@ -57,7 +85,9 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
             established: data.established_date
               ? new Date(data.established_date).toISOString().split('T')[0]
               : '',
-            operatingHours: data.operating_hours || '',
+            operatingHours: operatingHours,
+            openingTime: openingTime,
+            closingTime: closingTime,
             description: data.description || '',
             specialties: parseJsonField(data.specialties),
             facilities: parseJsonField(data.facilities),
@@ -177,19 +207,19 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
         country: formData.country,
         city: formData.city,
         state: formData.state,
-        zip_code: formData.zipCode,
+        zipCode: formData.zipCode,
         phone: formData.phone,
         email: formData.email,
         website: formData.website,
         status: formData.status,
         description: formData.description,
-        operating_hours: formData.operatingHours,
-        specialties: JSON.stringify(formData.specialties),
-        facilities: JSON.stringify(formData.facilities),
-        services: JSON.stringify(servicesArray),
-        insurance_accepted: formData.insurance,
-        languages_supported: formData.languages,
-        established_date: formData.established
+        operatingHours: formData.operatingHours,
+        specialties: formData.specialties,
+        facilities: formData.facilities,
+        services: servicesArray,
+        insurance: formData.insurance,
+        languages: formData.languages,
+        established: formData.established
           ? formData.established.split('T')[0]
           : null
       };
@@ -448,10 +478,8 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
                       type="time"
                       value={formData.openingTime || ''}
                       onChange={(e) => {
-                        handleInputChange('openingTime', e.target.value);
-                        // Auto-update operatingHours format
-                        const closing = formData.closingTime || '20:00';
-                        const opening = e.target.value || '09:00';
+                        const openingValue = e.target.value || '09:00';
+                        const closingValue = formData.closingTime || '20:00';
                         const formatTime = (t) => {
                           const [h, m] = t.split(':');
                           const hour = parseInt(h);
@@ -459,7 +487,11 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
                           const hour12 = hour % 12 || 12;
                           return `${hour12}:${m} ${ampm}`;
                         };
-                        handleInputChange('operatingHours', `${formatTime(opening)} - ${formatTime(closing)}`);
+                        setFormData(prev => ({
+                          ...prev,
+                          openingTime: openingValue,
+                          operatingHours: `${formatTime(openingValue)} - ${formatTime(closingValue)}`
+                        }));
                       }}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
                     />
@@ -470,10 +502,8 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
                       type="time"
                       value={formData.closingTime || ''}
                       onChange={(e) => {
-                        handleInputChange('closingTime', e.target.value);
-                        // Auto-update operatingHours format
-                        const opening = formData.openingTime || '09:00';
-                        const closing = e.target.value || '20:00';
+                        const closingValue = e.target.value || '20:00';
+                        const openingValue = formData.openingTime || '09:00';
                         const formatTime = (t) => {
                           const [h, m] = t.split(':');
                           const hour = parseInt(h);
@@ -481,7 +511,11 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
                           const hour12 = hour % 12 || 12;
                           return `${hour12}:${m} ${ampm}`;
                         };
-                        handleInputChange('operatingHours', `${formatTime(opening)} - ${formatTime(closing)}`);
+                        setFormData(prev => ({
+                          ...prev,
+                          closingTime: closingValue,
+                          operatingHours: `${formatTime(openingValue)} - ${formatTime(closingValue)}`
+                        }));
                       }}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
                     />

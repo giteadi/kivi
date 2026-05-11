@@ -218,21 +218,20 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
       className="hidden lg:block bg-white dark:bg-[#1c1c1e] shadow-lg dark:shadow-black/20 h-screen fixed left-0 top-0 z-10 overflow-y-auto will-change-[width] transition-colors duration-300"
     >
       {/* Logo */}
-      <div className="p-6 border-b dark:border-gray-800">
+      <div className="p-4 border-b dark:border-gray-800">
         <div className="flex items-center justify-between">
-          <div className={`flex items-center space-x-3 ${sidebarCollapsed ? 'hidden' : ''}`}>
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
+          <div className={`flex-1 flex items-center justify-center ${sidebarCollapsed ? 'hidden' : ''}`}>
+            <div className="w-40 h-30 rounded-lg flex items-center justify-center overflow-hidden">
               <img
                 src="https://res.cloudinary.com/bazeercloud/image/upload/q_auto/f_auto/v1775895427/ChatGPT_Image_Apr_11_2026_01_45_49_PM_trwcph.png"
                 alt="Centrix Logo"
                 className="w-full h-full object-contain"
               />
             </div>
-            <span className="text-xl font-semibold text-gray-800 dark:text-white">Centrix</span>
           </div>
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2c2c2e] transition-colors dark:text-gray-300"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2c2c2e] transition-colors dark:text-gray-300 flex-shrink-0"
             title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
             {sidebarCollapsed ? <FiMenu className="w-5 h-5" /> : <FiX className="w-5 h-5" />}
