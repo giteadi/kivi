@@ -402,6 +402,36 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
     additionalInfo: ''
   });
 
+  // State for custom education items
+  const [educationCustomText, setEducationCustomText] = useState({
+    personalStrengths: '',
+    personalWeaknesses: '',
+    peerStrengths: '',
+    peerWeaknesses: '',
+    learningDisabilities: ''
+  });
+
+  const [educationOtherVisible, setEducationOtherVisible] = useState({
+    personalStrengths: false,
+    personalWeaknesses: false,
+    peerStrengths: false,
+    peerWeaknesses: false,
+    learningDisabilities: false
+  });
+
+  // State for custom health items
+  const [healthCustomText, setHealthCustomText] = useState({
+    sensoryHistory: '',
+    fineMotorHistory: '',
+    grossMotorHistory: ''
+  });
+
+  const [healthOtherVisible, setHealthOtherVisible] = useState({
+    sensoryHistory: false,
+    fineMotorHistory: false,
+    grossMotorHistory: false
+  });
+
   // State for Employment Sample Report Sentence
   const [showEmploymentSampleReport, setShowEmploymentSampleReport] = useState(false);
   const [employmentSampleReportSentence, setEmploymentSampleReportSentence] = useState('');
@@ -1337,6 +1367,31 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
     });
   };
 
+  const handleEducationCustomTextChange = (field, text) => {
+    setEducationCustomText(prev => ({ ...prev, [field]: text }));
+  };
+
+  const addEducationCustomItem = (field, text) => {
+    if (text && text.trim()) {
+      const key = text.trim().toLowerCase().replace(/\s+/g, '_');
+      setEducationSampleReportData(prev => {
+        const currentArray = prev[field] || [];
+        if (!currentArray.includes(key)) {
+          return { ...prev, [field]: [...currentArray, key] };
+        }
+        return prev;
+      });
+      setEducationCustomText(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const removeEducationCustomItem = (field, item) => {
+    setEducationSampleReportData(prev => ({
+      ...prev,
+      [field]: (prev[field] || []).filter(i => i !== item)
+    }));
+  };
+
   // Generate Education sample report sentence
   const generateEducationSampleReportSentence = () => {
     const firstName = formData.firstName || 'Charlie';
@@ -1392,6 +1447,31 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
         return { ...prev, [field]: [...currentArray, value] };
       }
     });
+  };
+
+  const handleHealthCustomTextChange = (field, text) => {
+    setHealthCustomText(prev => ({ ...prev, [field]: text }));
+  };
+
+  const addHealthCustomItem = (field, text) => {
+    if (text && text.trim()) {
+      const key = text.trim().toLowerCase().replace(/\s+/g, '_');
+      setHealthSampleReportData(prev => {
+        const currentArray = prev[field] || [];
+        if (!currentArray.includes(key)) {
+          return { ...prev, [field]: [...currentArray, key] };
+        }
+        return prev;
+      });
+      setHealthCustomText(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const removeHealthCustomItem = (field, item) => {
+    setHealthSampleReportData(prev => ({
+      ...prev,
+      [field]: (prev[field] || []).filter(i => i !== item)
+    }));
   };
 
   // Generate Health sample report sentence
@@ -5918,13 +5998,13 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                 <h4 className="text-sm font-semibold text-blue-700 mb-3">Academic Performance - Strengths and Weaknesses</h4>
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                  <div>
+                                  <div className="space-y-2">
                                     <label className="text-xs text-gray-600 mb-2 block">Personal Strengths (select up to three):</label>
                                     <div className="grid grid-cols-2 gap-2">
-                                      {['reading', 'writing', 'mathematics', 'language', 'science', 'art', 'athletics', 'music', 'other'].map((item) => (
+                                      {['reading', 'writing', 'mathematics', 'language', 'science', 'art', 'athletics', 'music'].map((item) => (
                                         <label key={item} className="flex items-center gap-1 text-xs cursor-pointer">
-                                          <input 
-                                            type="checkbox" 
+                                          <input
+                                            type="checkbox"
                                             checked={educationSampleReportData.personalStrengths.includes(item)}
                                             onChange={() => handleEducationArrayChange('personalStrengths', item)}
                                             className="rounded border-gray-300"
@@ -5932,15 +6012,56 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                           <span className="capitalize">{item}</span>
                                         </label>
                                       ))}
+                                      {educationSampleReportData.personalStrengths.filter(item => !['reading', 'writing', 'mathematics', 'language', 'science', 'art', 'athletics', 'music'].includes(item)).map((item) => (
+                                        <div key={`strength-${item}`} className="flex items-center gap-2 text-xs text-gray-700">
+                                          <label className="flex items-center gap-1 cursor-pointer flex-1">
+                                            <input
+                                              type="checkbox"
+                                              className="rounded border-gray-300"
+                                              checked={true}
+                                              onChange={() => handleEducationArrayChange('personalStrengths', item)}
+                                            />
+                                            {item.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                          </label>
+                                          <button type="button" onClick={() => removeEducationCustomItem('personalStrengths', item)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
+                                        </div>
+                                      ))}
                                     </div>
+                                    <label className="flex items-center gap-1 text-xs text-gray-700 cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        className="rounded border-gray-300"
+                                        checked={educationOtherVisible.personalStrengths}
+                                        onChange={(e) => setEducationOtherVisible(prev => ({ ...prev, personalStrengths: e.target.checked }))}
+                                      />
+                                      Other
+                                    </label>
+                                    {educationOtherVisible.personalStrengths && (
+                                      <div className="mt-2 space-y-2">
+                                        <input
+                                          type="text"
+                                          value={educationCustomText.personalStrengths}
+                                          onChange={(e) => handleEducationCustomTextChange('personalStrengths', e.target.value)}
+                                          placeholder="Add custom strength..."
+                                          className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => { addEducationCustomItem('personalStrengths', educationCustomText.personalStrengths); setEducationOtherVisible(prev => ({ ...prev, personalStrengths: false })); }}
+                                          className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded"
+                                        >
+                                          + Add as new checkbox option
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
-                                  <div>
+                                  <div className="space-y-2">
                                     <label className="text-xs text-gray-600 mb-2 block">Personal Weaknesses (select up to three):</label>
                                     <div className="grid grid-cols-2 gap-2">
-                                      {['reading', 'writing', 'mathematics', 'language', 'science', 'art', 'athletics', 'music', 'other'].map((item) => (
+                                      {['reading', 'writing', 'mathematics', 'language', 'science', 'art', 'athletics', 'music'].map((item) => (
                                         <label key={item} className="flex items-center gap-1 text-xs cursor-pointer">
-                                          <input 
-                                            type="checkbox" 
+                                          <input
+                                            type="checkbox"
                                             checked={educationSampleReportData.personalWeaknesses.includes(item)}
                                             onChange={() => handleEducationArrayChange('personalWeaknesses', item)}
                                             className="rounded border-gray-300"
@@ -5948,18 +6069,59 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                           <span className="capitalize">{item}</span>
                                         </label>
                                       ))}
+                                      {educationSampleReportData.personalWeaknesses.filter(item => !['reading', 'writing', 'mathematics', 'language', 'science', 'art', 'athletics', 'music'].includes(item)).map((item) => (
+                                        <div key={`weakness-${item}`} className="flex items-center gap-2 text-xs text-gray-700">
+                                          <label className="flex items-center gap-1 cursor-pointer flex-1">
+                                            <input
+                                              type="checkbox"
+                                              className="rounded border-gray-300"
+                                              checked={true}
+                                              onChange={() => handleEducationArrayChange('personalWeaknesses', item)}
+                                            />
+                                            {item.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                          </label>
+                                          <button type="button" onClick={() => removeEducationCustomItem('personalWeaknesses', item)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
+                                        </div>
+                                      ))}
                                     </div>
+                                    <label className="flex items-center gap-1 text-xs text-gray-700 cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        className="rounded border-gray-300"
+                                        checked={educationOtherVisible.personalWeaknesses}
+                                        onChange={(e) => setEducationOtherVisible(prev => ({ ...prev, personalWeaknesses: e.target.checked }))}
+                                      />
+                                      Other
+                                    </label>
+                                    {educationOtherVisible.personalWeaknesses && (
+                                      <div className="mt-2 space-y-2">
+                                        <input
+                                          type="text"
+                                          value={educationCustomText.personalWeaknesses}
+                                          onChange={(e) => handleEducationCustomTextChange('personalWeaknesses', e.target.value)}
+                                          placeholder="Add custom weakness..."
+                                          className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => { addEducationCustomItem('personalWeaknesses', educationCustomText.personalWeaknesses); setEducationOtherVisible(prev => ({ ...prev, personalWeaknesses: false })); }}
+                                          className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded"
+                                        >
+                                          + Add as new checkbox option
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                  <div>
+                                  <div className="space-y-2">
                                     <label className="text-xs text-gray-600 mb-2 block">Strengths Compared to Peers (select up to three):</label>
                                     <div className="grid grid-cols-2 gap-2">
-                                      {['reading', 'writing', 'mathematics', 'language', 'science', 'art', 'athletics', 'music', 'other'].map((item) => (
+                                      {['reading', 'writing', 'mathematics', 'language', 'science', 'art', 'athletics', 'music'].map((item) => (
                                         <label key={item} className="flex items-center gap-1 text-xs cursor-pointer">
-                                          <input 
-                                            type="checkbox" 
+                                          <input
+                                            type="checkbox"
                                             checked={educationSampleReportData.peerStrengths.includes(item)}
                                             onChange={() => handleEducationArrayChange('peerStrengths', item)}
                                             className="rounded border-gray-300"
@@ -5967,15 +6129,56 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                           <span className="capitalize">{item}</span>
                                         </label>
                                       ))}
+                                      {educationSampleReportData.peerStrengths.filter(item => !['reading', 'writing', 'mathematics', 'language', 'science', 'art', 'athletics', 'music'].includes(item)).map((item) => (
+                                        <div key={`peer-strength-${item}`} className="flex items-center gap-2 text-xs text-gray-700">
+                                          <label className="flex items-center gap-1 cursor-pointer flex-1">
+                                            <input
+                                              type="checkbox"
+                                              className="rounded border-gray-300"
+                                              checked={true}
+                                              onChange={() => handleEducationArrayChange('peerStrengths', item)}
+                                            />
+                                            {item.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                          </label>
+                                          <button type="button" onClick={() => removeEducationCustomItem('peerStrengths', item)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
+                                        </div>
+                                      ))}
                                     </div>
+                                    <label className="flex items-center gap-1 text-xs text-gray-700 cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        className="rounded border-gray-300"
+                                        checked={educationOtherVisible.peerStrengths}
+                                        onChange={(e) => setEducationOtherVisible(prev => ({ ...prev, peerStrengths: e.target.checked }))}
+                                      />
+                                      Other
+                                    </label>
+                                    {educationOtherVisible.peerStrengths && (
+                                      <div className="mt-2 space-y-2">
+                                        <input
+                                          type="text"
+                                          value={educationCustomText.peerStrengths}
+                                          onChange={(e) => handleEducationCustomTextChange('peerStrengths', e.target.value)}
+                                          placeholder="Add custom strength..."
+                                          className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => { addEducationCustomItem('peerStrengths', educationCustomText.peerStrengths); setEducationOtherVisible(prev => ({ ...prev, peerStrengths: false })); }}
+                                          className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded"
+                                        >
+                                          + Add as new checkbox option
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
-                                  <div>
+                                  <div className="space-y-2">
                                     <label className="text-xs text-gray-600 mb-2 block">Weaknesses Compared to Peers (select up to three):</label>
                                     <div className="grid grid-cols-2 gap-2">
-                                      {['reading', 'writing', 'mathematics', 'language', 'science', 'art', 'athletics', 'music', 'other'].map((item) => (
+                                      {['reading', 'writing', 'mathematics', 'language', 'science', 'art', 'athletics', 'music'].map((item) => (
                                         <label key={item} className="flex items-center gap-1 text-xs cursor-pointer">
-                                          <input 
-                                            type="checkbox" 
+                                          <input
+                                            type="checkbox"
                                             checked={educationSampleReportData.peerWeaknesses.includes(item)}
                                             onChange={() => handleEducationArrayChange('peerWeaknesses', item)}
                                             className="rounded border-gray-300"
@@ -5983,17 +6186,58 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                           <span className="capitalize">{item}</span>
                                         </label>
                                       ))}
+                                      {educationSampleReportData.peerWeaknesses.filter(item => !['reading', 'writing', 'mathematics', 'language', 'science', 'art', 'athletics', 'music'].includes(item)).map((item) => (
+                                        <div key={`peer-weakness-${item}`} className="flex items-center gap-2 text-xs text-gray-700">
+                                          <label className="flex items-center gap-1 cursor-pointer flex-1">
+                                            <input
+                                              type="checkbox"
+                                              className="rounded border-gray-300"
+                                              checked={true}
+                                              onChange={() => handleEducationArrayChange('peerWeaknesses', item)}
+                                            />
+                                            {item.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                          </label>
+                                          <button type="button" onClick={() => removeEducationCustomItem('peerWeaknesses', item)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
+                                        </div>
+                                      ))}
                                     </div>
+                                    <label className="flex items-center gap-1 text-xs text-gray-700 cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        className="rounded border-gray-300"
+                                        checked={educationOtherVisible.peerWeaknesses}
+                                        onChange={(e) => setEducationOtherVisible(prev => ({ ...prev, peerWeaknesses: e.target.checked }))}
+                                      />
+                                      Other
+                                    </label>
+                                    {educationOtherVisible.peerWeaknesses && (
+                                      <div className="mt-2 space-y-2">
+                                        <input
+                                          type="text"
+                                          value={educationCustomText.peerWeaknesses}
+                                          onChange={(e) => handleEducationCustomTextChange('peerWeaknesses', e.target.value)}
+                                          placeholder="Add custom weakness..."
+                                          className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => { addEducationCustomItem('peerWeaknesses', educationCustomText.peerWeaknesses); setEducationOtherVisible(prev => ({ ...prev, peerWeaknesses: false })); }}
+                                          className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded"
+                                        >
+                                          + Add as new checkbox option
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
 
-                                <div className="mb-4">
+                                <div className="mb-4 space-y-2">
                                   <label className="text-xs text-gray-600 mb-2 block">Diagnosed Specific Learning Disorders/Disabilities:</label>
                                   <div className="grid grid-cols-2 gap-2">
-                                    {['reading', 'writing', 'mathematics', 'other', 'other2', 'other3'].map((item) => (
+                                    {['reading', 'writing', 'mathematics'].map((item) => (
                                       <label key={item} className="flex items-center gap-1 text-xs cursor-pointer">
-                                        <input 
-                                          type="checkbox" 
+                                        <input
+                                          type="checkbox"
                                           checked={educationSampleReportData.learningDisabilities.includes(item)}
                                           onChange={() => handleEducationArrayChange('learningDisabilities', item)}
                                           className="rounded border-gray-300"
@@ -6001,7 +6245,48 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                         <span className="capitalize">{item}</span>
                                       </label>
                                     ))}
+                                    {educationSampleReportData.learningDisabilities.filter(item => !['reading', 'writing', 'mathematics'].includes(item)).map((item) => (
+                                      <div key={`disability-${item}`} className="flex items-center gap-2 text-xs text-gray-700">
+                                        <label className="flex items-center gap-1 cursor-pointer flex-1">
+                                          <input
+                                            type="checkbox"
+                                            className="rounded border-gray-300"
+                                            checked={true}
+                                            onChange={() => handleEducationArrayChange('learningDisabilities', item)}
+                                          />
+                                          {item.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                        </label>
+                                        <button type="button" onClick={() => removeEducationCustomItem('learningDisabilities', item)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
+                                      </div>
+                                    ))}
                                   </div>
+                                  <label className="flex items-center gap-1 text-xs text-gray-700 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      className="rounded border-gray-300"
+                                      checked={educationOtherVisible.learningDisabilities}
+                                      onChange={(e) => setEducationOtherVisible(prev => ({ ...prev, learningDisabilities: e.target.checked }))}
+                                    />
+                                    Other
+                                  </label>
+                                  {educationOtherVisible.learningDisabilities && (
+                                    <div className="mt-2 space-y-2">
+                                      <input
+                                        type="text"
+                                        value={educationCustomText.learningDisabilities}
+                                        onChange={(e) => handleEducationCustomTextChange('learningDisabilities', e.target.value)}
+                                        placeholder="Add custom disability..."
+                                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => { addEducationCustomItem('learningDisabilities', educationCustomText.learningDisabilities); setEducationOtherVisible(prev => ({ ...prev, learningDisabilities: false })); }}
+                                        className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded"
+                                      >
+                                        + Add as new checkbox option
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
 
                                 {/* Additional Info */}
@@ -6122,94 +6407,18 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                               )}
                             </div>
                           </div>
-                                <h4 className="text-sm font-semibold text-blue-700 mb-3">Vision and Hearing Conditions</h4>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                  <div>
-                                    <label className={labelClass}>Date of Vision Screening:</label>
-                                    <input
-                                      type="text"
-                                      value={healthSampleReportData.visionDate}
-                                      onChange={(e) => handleHealthSampleReportTextChange('visionDate', e.target.value)}
-                                      placeholder="e.g., 01/01/2024"
-                                      className={inputClass('visionDate')}
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className={labelClass}>Results of Vision Screening:</label>
-                                    <select 
-                                      value={healthSampleReportData.visionResult}
-                                      onChange={(e) => handleHealthSampleReportTextChange('visionResult', e.target.value)}
-                                      className={`${inputClass('visionResult')} appearance-none`}
-                                    >
-                                      <option value="">Please Select...</option>
-                                      <option value="that he has normal visual acuity">Normal visual acuity</option>
-                                      <option value="normal visual acuity with the aid of corrective lenses">Normal visual acuity with corrective lenses</option>
-                                      <option value="a need for follow-up vision screening">Need for follow-up vision screening</option>
-                                      <option value="a need for a complete vision examination">Need for complete vision examination</option>
-                                      <option value="other">Other</option>
-                                    </select>
-                                    {healthSampleReportData.visionResult === 'other' && (
-                                      <input
-                                        type="text"
-                                        value={healthSampleReportData.visionResultOther || ''}
-                                        onChange={(e) => handleHealthSampleReportTextChange('visionResultOther', e.target.value)}
-                                        placeholder="Please specify..."
-                                        className={`${inputClass('visionResultOther')} mt-2`}
-                                      />
-                                    )}
-                                  </div>
-                                </div>
+                        </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div>
-                                    <label className={labelClass}>Date of Hearing Screening:</label>
-                                    <input
-                                      type="text"
-                                      value={healthSampleReportData.hearingDate}
-                                      onChange={(e) => handleHealthSampleReportTextChange('hearingDate', e.target.value)}
-                                      placeholder="e.g., 01/01/2024"
-                                      className={inputClass('hearingDate')}
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className={labelClass}>Results of Hearing Screening:</label>
-                                    <select 
-                                      value={healthSampleReportData.hearingResult}
-                                      onChange={(e) => handleHealthSampleReportTextChange('hearingResult', e.target.value)}
-                                      className={`${inputClass('hearingResult')} appearance-none`}
-                                    >
-                                      <option value="">Please Select...</option>
-                                      <option value="within normal limits">Within normal limits</option>
-                                      <option value="within normal limits with the assistance of a hearing aid">Within normal limits when aided</option>
-                                      <option value="needs a referral to assess the functioning of the inner ear">Needs referral for inner ear assessment</option>
-                                      <option value="a need for a follow-up hearing screening">Need for follow-up hearing screening</option>
-                                      <option value="further assessment needed; refer to audiologist">Further assessment needed</option>
-                                      <option value="other">Other</option>
-                                    </select>
-                                    {healthSampleReportData.hearingResult === 'other' && (
-                                      <input
-                                        type="text"
-                                        value={healthSampleReportData.hearingResultOther || ''}
-                                        onChange={(e) => handleHealthSampleReportTextChange('hearingResultOther', e.target.value)}
-                                        placeholder="Please specify..."
-                                        className={`${inputClass('hearingResultOther')} mt-2`}
-                                      />
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Sensory and Motor */}
+                        {/* Sensory and Motor */}
                               <div className="mb-6">
                                 <h4 className="text-sm font-semibold text-blue-700 mb-3">Sensory or Motor Conditions</h4>
                                 
-                                <div className="mb-4">
+                                <div className="mb-4 space-y-2">
                                   <label className="text-xs text-gray-600 mb-2 block">Sensory Conditions:</label>
                                   <div className="flex gap-4 mb-2">
                                     <label className="flex items-center gap-1 text-xs cursor-pointer">
-                                      <input 
-                                        type="radio" 
+                                      <input
+                                        type="radio"
                                         name="sensoryDysfunction"
                                         value="no_history"
                                         checked={healthSampleReportData.sensoryDysfunction === 'no_history'}
@@ -6219,8 +6428,8 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                       No history of sensory dysfunction
                                     </label>
                                     <label className="flex items-center gap-1 text-xs cursor-pointer">
-                                      <input 
-                                        type="radio" 
+                                      <input
+                                        type="radio"
                                         name="sensoryDysfunction"
                                         value="history"
                                         checked={healthSampleReportData.sensoryDysfunction === 'history'}
@@ -6231,10 +6440,10 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                     </label>
                                   </div>
                                   <div className="grid grid-cols-2 gap-2">
-                                    {['sensory modulation dysfunction', 'sensory integration dysfunction', 'visual perceptual dysfunction', 'visual processing', 'auditory processing', 'other'].map((item) => (
+                                    {['sensory modulation dysfunction', 'sensory integration dysfunction', 'visual perceptual dysfunction', 'visual processing', 'auditory processing'].map((item) => (
                                       <label key={item} className="flex items-center gap-1 text-xs cursor-pointer">
-                                        <input 
-                                          type="checkbox" 
+                                        <input
+                                          type="checkbox"
                                           checked={healthSampleReportData.sensoryHistory.includes(item)}
                                           onChange={() => handleHealthArrayChange('sensoryHistory', item)}
                                           className="rounded border-gray-300"
@@ -6242,15 +6451,56 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                         <span className="capitalize">{item}</span>
                                       </label>
                                     ))}
+                                    {healthSampleReportData.sensoryHistory.filter(item => !['sensory modulation dysfunction', 'sensory integration dysfunction', 'visual perceptual dysfunction', 'visual processing', 'auditory processing'].includes(item)).map((item) => (
+                                      <div key={`sensory-${item}`} className="flex items-center gap-2 text-xs text-gray-700">
+                                        <label className="flex items-center gap-1 cursor-pointer flex-1">
+                                          <input
+                                            type="checkbox"
+                                            className="rounded border-gray-300"
+                                            checked={true}
+                                            onChange={() => handleHealthArrayChange('sensoryHistory', item)}
+                                          />
+                                          {item.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                        </label>
+                                        <button type="button" onClick={() => removeHealthCustomItem('sensoryHistory', item)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
+                                      </div>
+                                    ))}
                                   </div>
+                                  <label className="flex items-center gap-1 text-xs text-gray-700 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      className="rounded border-gray-300"
+                                      checked={healthOtherVisible.sensoryHistory}
+                                      onChange={(e) => setHealthOtherVisible(prev => ({ ...prev, sensoryHistory: e.target.checked }))}
+                                    />
+                                    Other
+                                  </label>
+                                  {healthOtherVisible.sensoryHistory && (
+                                    <div className="mt-2 space-y-2">
+                                      <input
+                                        type="text"
+                                        value={healthCustomText.sensoryHistory}
+                                        onChange={(e) => handleHealthCustomTextChange('sensoryHistory', e.target.value)}
+                                        placeholder="Add custom condition..."
+                                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => { addHealthCustomItem('sensoryHistory', healthCustomText.sensoryHistory); setHealthOtherVisible(prev => ({ ...prev, sensoryHistory: false })); }}
+                                        className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded"
+                                      >
+                                        + Add as new checkbox option
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
 
-                                <div className="mb-4">
+                                <div className="mb-4 space-y-2">
                                   <label className="text-xs text-gray-600 mb-2 block">Motor Conditions:</label>
                                   <div className="flex gap-4 mb-2">
                                     <label className="flex items-center gap-1 text-xs cursor-pointer">
-                                      <input 
-                                        type="radio" 
+                                      <input
+                                        type="radio"
                                         name="motorDysfunction"
                                         value="no_history"
                                         checked={healthSampleReportData.motorDysfunction === 'no_history'}
@@ -6260,8 +6510,8 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                       No history of motor dysfunction
                                     </label>
                                     <label className="flex items-center gap-1 text-xs cursor-pointer">
-                                      <input 
-                                        type="radio" 
+                                      <input
+                                        type="radio"
                                         name="motorDysfunction"
                                         value="history"
                                         checked={healthSampleReportData.motorDysfunction === 'history'}
@@ -6270,6 +6520,122 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                                       />
                                       A history of motor dysfunction
                                     </label>
+                                  </div>
+
+                                  <div className="mb-3">
+                                    <label className="text-xs text-gray-600 mb-2 block">Fine-Motor History:</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                      {['poor coordination', 'poor pencil grasp', 'poor scissor skills', 'other'].map((item) => (
+                                        <label key={item} className="flex items-center gap-1 text-xs cursor-pointer">
+                                          <input
+                                            type="checkbox"
+                                            checked={healthSampleReportData.fineMotorHistory.includes(item)}
+                                            onChange={() => handleHealthArrayChange('fineMotorHistory', item)}
+                                            className="rounded border-gray-300"
+                                          />
+                                          <span className="capitalize">{item}</span>
+                                        </label>
+                                      ))}
+                                      {healthSampleReportData.fineMotorHistory.filter(item => !['poor coordination', 'poor pencil grasp', 'poor scissor skills', 'other'].includes(item)).map((item) => (
+                                        <div key={`fine-motor-${item}`} className="flex items-center gap-2 text-xs text-gray-700">
+                                          <label className="flex items-center gap-1 cursor-pointer flex-1">
+                                            <input
+                                              type="checkbox"
+                                              className="rounded border-gray-300"
+                                              checked={true}
+                                              onChange={() => handleHealthArrayChange('fineMotorHistory', item)}
+                                            />
+                                            {item.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                          </label>
+                                          <button type="button" onClick={() => removeHealthCustomItem('fineMotorHistory', item)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    <label className="flex items-center gap-1 text-xs text-gray-700 cursor-pointer mt-2">
+                                      <input
+                                        type="checkbox"
+                                        className="rounded border-gray-300"
+                                        checked={healthOtherVisible.fineMotorHistory}
+                                        onChange={(e) => setHealthOtherVisible(prev => ({ ...prev, fineMotorHistory: e.target.checked }))}
+                                      />
+                                      Other
+                                    </label>
+                                    {healthOtherVisible.fineMotorHistory && (
+                                      <div className="mt-2 space-y-2">
+                                        <input
+                                          type="text"
+                                          value={healthCustomText.fineMotorHistory}
+                                          onChange={(e) => handleHealthCustomTextChange('fineMotorHistory', e.target.value)}
+                                          placeholder="Add custom condition..."
+                                          className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => { addHealthCustomItem('fineMotorHistory', healthCustomText.fineMotorHistory); setHealthOtherVisible(prev => ({ ...prev, fineMotorHistory: false })); }}
+                                          className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded"
+                                        >
+                                          + Add as new checkbox option
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  <div className="mb-3">
+                                    <label className="text-xs text-gray-600 mb-2 block">Gross-Motor History:</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                      {['clumsiness', 'poor balance', 'difficulty climbing stairs', 'other'].map((item) => (
+                                        <label key={item} className="flex items-center gap-1 text-xs cursor-pointer">
+                                          <input
+                                            type="checkbox"
+                                            checked={healthSampleReportData.grossMotorHistory.includes(item)}
+                                            onChange={() => handleHealthArrayChange('grossMotorHistory', item)}
+                                            className="rounded border-gray-300"
+                                          />
+                                          <span className="capitalize">{item}</span>
+                                        </label>
+                                      ))}
+                                      {healthSampleReportData.grossMotorHistory.filter(item => !['clumsiness', 'poor balance', 'difficulty climbing stairs', 'other'].includes(item)).map((item) => (
+                                        <div key={`gross-motor-${item}`} className="flex items-center gap-2 text-xs text-gray-700">
+                                          <label className="flex items-center gap-1 cursor-pointer flex-1">
+                                            <input
+                                              type="checkbox"
+                                              className="rounded border-gray-300"
+                                              checked={true}
+                                              onChange={() => handleHealthArrayChange('grossMotorHistory', item)}
+                                            />
+                                            {item.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                          </label>
+                                          <button type="button" onClick={() => removeHealthCustomItem('grossMotorHistory', item)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    <label className="flex items-center gap-1 text-xs text-gray-700 cursor-pointer mt-2">
+                                      <input
+                                        type="checkbox"
+                                        className="rounded border-gray-300"
+                                        checked={healthOtherVisible.grossMotorHistory}
+                                        onChange={(e) => setHealthOtherVisible(prev => ({ ...prev, grossMotorHistory: e.target.checked }))}
+                                      />
+                                      Other
+                                    </label>
+                                    {healthOtherVisible.grossMotorHistory && (
+                                      <div className="mt-2 space-y-2">
+                                        <input
+                                          type="text"
+                                          value={healthCustomText.grossMotorHistory}
+                                          onChange={(e) => handleHealthCustomTextChange('grossMotorHistory', e.target.value)}
+                                          placeholder="Add custom condition..."
+                                          className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => { addHealthCustomItem('grossMotorHistory', healthCustomText.grossMotorHistory); setHealthOtherVisible(prev => ({ ...prev, grossMotorHistory: false })); }}
+                                          className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded"
+                                        >
+                                          + Add as new checkbox option
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>

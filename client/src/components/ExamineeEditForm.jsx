@@ -411,16 +411,17 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
     });
   };
 
-  const addEducationCustomItem = (field, customField, text) => {
+  const addEducationCustomItem = (field, text) => {
     if (text && text.trim()) {
       const key = text.trim().toLowerCase().replace(/\s+/g, '_');
       setEducationSampleReportData(prev => {
         const currentArray = prev[field] || [];
         if (!currentArray.includes(key)) {
-          return { ...prev, [field]: [...currentArray, key], [customField]: '' };
+          return { ...prev, [field]: [...currentArray, key] };
         }
-        return { ...prev, [customField]: '' };
+        return prev;
       });
+      setEducationCustomText(prev => ({ ...prev, [field]: '' }));
     }
   };
 
@@ -437,6 +438,15 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
     peerStrengths: '',
     peerWeaknesses: '',
     learningDisabilities: ''
+  });
+
+  // State for other checkbox visibility in Education
+  const [educationOtherVisible, setEducationOtherVisible] = useState({
+    personalStrengths: false,
+    personalWeaknesses: false,
+    peerStrengths: false,
+    peerWeaknesses: false,
+    learningDisabilities: false
   });
 
   const handleEducationCustomTextChange = (field, text) => {
@@ -479,6 +489,12 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
     sensoryHistory: '',
     fineMotorHistory: '',
     grossMotorHistory: ''
+  });
+
+  const [healthOtherVisible, setHealthOtherVisible] = useState({
+    sensoryHistory: false,
+    fineMotorHistory: false,
+    grossMotorHistory: false
   });
 
   const handleHealthCustomTextChange = (field, text) => {
@@ -1865,10 +1881,17 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
                             <button type="button" onClick={() => removeEducationCustomItem('personalStrengths', item)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
                           </div>
                         ))}
-                        <div className="mt-2 space-y-2">
-                          <input type="text" value={educationCustomText.personalStrengths} onChange={(e) => handleEducationCustomTextChange('personalStrengths', e.target.value)} placeholder="Add custom strength..." className="w-full px-2 py-1 text-xs border border-gray-300 rounded" />
-                          <button type="button" onClick={() => addEducationCustomItem('personalStrengths', 'personalStrengths', educationCustomText.personalStrengths)} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add Strength</button>
-                        </div>
+                        {/* Other checkbox */}
+                        <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                          <input type="checkbox" className="rounded border-gray-300" checked={educationOtherVisible.personalStrengths} onChange={(e) => setEducationOtherVisible(prev => ({ ...prev, personalStrengths: e.target.checked }))} />
+                          Other
+                        </label>
+                        {educationOtherVisible.personalStrengths && (
+                          <div className="mt-2 space-y-2">
+                            <input type="text" value={educationCustomText.personalStrengths} onChange={(e) => handleEducationCustomTextChange('personalStrengths', e.target.value)} placeholder="Add custom strength..." className="w-full px-2 py-1 text-xs border border-gray-300 rounded" />
+                            <button type="button" onClick={() => { addEducationCustomItem('personalStrengths', educationCustomText.personalStrengths); setEducationOtherVisible(prev => ({ ...prev, personalStrengths: false })); }} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add as new checkbox option</button>
+                          </div>
+                        )}
                       </div>
 
                       {/* Personal Weaknesses */}
@@ -1889,10 +1912,17 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
                             <button type="button" onClick={() => removeEducationCustomItem('personalWeaknesses', item)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
                           </div>
                         ))}
-                        <div className="mt-2 space-y-2">
-                          <input type="text" value={educationCustomText.personalWeaknesses} onChange={(e) => handleEducationCustomTextChange('personalWeaknesses', e.target.value)} placeholder="Add custom weakness..." className="w-full px-2 py-1 text-xs border border-gray-300 rounded" />
-                          <button type="button" onClick={() => addEducationCustomItem('personalWeaknesses', 'personalWeaknesses', educationCustomText.personalWeaknesses)} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add Weakness</button>
-                        </div>
+                        {/* Other checkbox */}
+                        <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                          <input type="checkbox" className="rounded border-gray-300" checked={educationOtherVisible.personalWeaknesses} onChange={(e) => setEducationOtherVisible(prev => ({ ...prev, personalWeaknesses: e.target.checked }))} />
+                          Other
+                        </label>
+                        {educationOtherVisible.personalWeaknesses && (
+                          <div className="mt-2 space-y-2">
+                            <input type="text" value={educationCustomText.personalWeaknesses} onChange={(e) => handleEducationCustomTextChange('personalWeaknesses', e.target.value)} placeholder="Add custom weakness..." className="w-full px-2 py-1 text-xs border border-gray-300 rounded" />
+                            <button type="button" onClick={() => { addEducationCustomItem('personalWeaknesses', educationCustomText.personalWeaknesses); setEducationOtherVisible(prev => ({ ...prev, personalWeaknesses: false })); }} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add as new checkbox option</button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1934,10 +1964,16 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
                             <button type="button" onClick={() => removeHealthCustomItem('sensoryHistory', item)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
                           </div>
                         ))}
-                        <div className="mt-2 space-y-2">
-                          <input type="text" value={healthCustomText.sensoryHistory} onChange={(e) => handleHealthCustomTextChange('sensoryHistory', e.target.value)} placeholder="Add custom condition..." className="w-full px-2 py-1 text-xs border border-gray-300 rounded" />
-                          <button type="button" onClick={() => { addHealthCustomItem('sensoryHistory', healthCustomText.sensoryHistory); handleHealthCustomTextChange('sensoryHistory', ''); }} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add Condition</button>
-                        </div>
+                        <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                          <input type="checkbox" className="rounded border-gray-300" checked={healthOtherVisible.sensoryHistory} onChange={(e) => setHealthOtherVisible(prev => ({ ...prev, sensoryHistory: e.target.checked }))} />
+                          Other
+                        </label>
+                        {healthOtherVisible.sensoryHistory && (
+                          <div className="mt-2 space-y-2">
+                            <input type="text" value={healthCustomText.sensoryHistory} onChange={(e) => handleHealthCustomTextChange('sensoryHistory', e.target.value)} placeholder="Add custom condition..." className="w-full px-2 py-1 text-xs border border-gray-300 rounded" />
+                            <button type="button" onClick={() => { addHealthCustomItem('sensoryHistory', healthCustomText.sensoryHistory); setHealthOtherVisible(prev => ({ ...prev, sensoryHistory: false })); }} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add as new checkbox option</button>
+                          </div>
+                        )}
                       </div>
 
                       {/* Fine-Motor History */}
@@ -1958,10 +1994,16 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
                             <button type="button" onClick={() => removeHealthCustomItem('fineMotorHistory', item)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
                           </div>
                         ))}
-                        <div className="mt-2 space-y-2">
-                          <input type="text" value={healthCustomText.fineMotorHistory} onChange={(e) => handleHealthCustomTextChange('fineMotorHistory', e.target.value)} placeholder="Add custom condition..." className="w-full px-2 py-1 text-xs border border-gray-300 rounded" />
-                          <button type="button" onClick={() => { addHealthCustomItem('fineMotorHistory', healthCustomText.fineMotorHistory); handleHealthCustomTextChange('fineMotorHistory', ''); }} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add Condition</button>
-                        </div>
+                        <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                          <input type="checkbox" className="rounded border-gray-300" checked={healthOtherVisible.fineMotorHistory} onChange={(e) => setHealthOtherVisible(prev => ({ ...prev, fineMotorHistory: e.target.checked }))} />
+                          Other
+                        </label>
+                        {healthOtherVisible.fineMotorHistory && (
+                          <div className="mt-2 space-y-2">
+                            <input type="text" value={healthCustomText.fineMotorHistory} onChange={(e) => handleHealthCustomTextChange('fineMotorHistory', e.target.value)} placeholder="Add custom condition..." className="w-full px-2 py-1 text-xs border border-gray-300 rounded" />
+                            <button type="button" onClick={() => { addHealthCustomItem('fineMotorHistory', healthCustomText.fineMotorHistory); setHealthOtherVisible(prev => ({ ...prev, fineMotorHistory: false })); }} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add as new checkbox option</button>
+                          </div>
+                        )}
                       </div>
 
                       {/* Gross-Motor History */}
@@ -1982,10 +2024,16 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
                             <button type="button" onClick={() => removeHealthCustomItem('grossMotorHistory', item)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
                           </div>
                         ))}
-                        <div className="mt-2 space-y-2">
-                          <input type="text" value={healthCustomText.grossMotorHistory || ''} onChange={(e) => handleHealthCustomTextChange('grossMotorHistory', e.target.value)} placeholder="Add custom condition..." className="w-full px-2 py-1 text-xs border border-gray-300 rounded" />
-                          <button type="button" onClick={() => { addHealthCustomItem('grossMotorHistory', healthCustomText.grossMotorHistory); handleHealthCustomTextChange('grossMotorHistory', ''); }} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add Condition</button>
-                        </div>
+                        <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                          <input type="checkbox" className="rounded border-gray-300" checked={healthOtherVisible.grossMotorHistory} onChange={(e) => setHealthOtherVisible(prev => ({ ...prev, grossMotorHistory: e.target.checked }))} />
+                          Other
+                        </label>
+                        {healthOtherVisible.grossMotorHistory && (
+                          <div className="mt-2 space-y-2">
+                            <input type="text" value={healthCustomText.grossMotorHistory || ''} onChange={(e) => handleHealthCustomTextChange('grossMotorHistory', e.target.value)} placeholder="Add custom condition..." className="w-full px-2 py-1 text-xs border border-gray-300 rounded" />
+                            <button type="button" onClick={() => { addHealthCustomItem('grossMotorHistory', healthCustomText.grossMotorHistory); setHealthOtherVisible(prev => ({ ...prev, grossMotorHistory: false })); }} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add as new checkbox option</button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

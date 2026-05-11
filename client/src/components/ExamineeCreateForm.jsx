@@ -683,16 +683,17 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
   };
 
   // Helper to add custom item to education arrays
-  const addEducationCustomItem = (field, customField, text) => {
+  const addEducationCustomItem = (field, text) => {
     if (text && text.trim()) {
       const key = text.trim().toLowerCase().replace(/\s+/g, '_');
       setEducationSampleReportData(prev => {
         const currentArray = prev[field] || [];
         if (!currentArray.includes(key)) {
-          return { ...prev, [field]: [...currentArray, key], [customField]: '' };
+          return { ...prev, [field]: [...currentArray, key] };
         }
-        return { ...prev, [customField]: '' };
+        return prev;
       });
+      setEducationCustomText(prev => ({ ...prev, [field]: '' }));
     }
   };
 
@@ -711,6 +712,15 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
     peerStrengths: '',
     peerWeaknesses: '',
     learningDisabilities: ''
+  });
+
+  // State for other checkbox visibility in Education
+  const [educationOtherVisible, setEducationOtherVisible] = useState({
+    personalStrengths: false,
+    personalWeaknesses: false,
+    peerStrengths: false,
+    peerWeaknesses: false,
+    learningDisabilities: false
   });
 
   const handleEducationCustomTextChange = (field, text) => {
@@ -5636,23 +5646,38 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                                       </button>
                                     </div>
                                   ))}
-                                {/* Other input */}
-                                <div className="mt-2 space-y-2">
+                                {/* Other checkbox */}
+                                <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
                                   <input
-                                    type="text"
-                                    value={educationCustomText.personalStrengths}
-                                    onChange={(e) => handleEducationCustomTextChange('personalStrengths', e.target.value)}
-                                    placeholder="Add custom strength..."
-                                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                                    type="checkbox"
+                                    className="rounded border-gray-300"
+                                    checked={educationOtherVisible.personalStrengths}
+                                    onChange={(e) => setEducationOtherVisible(prev => ({ ...prev, personalStrengths: e.target.checked }))}
                                   />
-                                  <button
-                                    type="button"
-                                    onClick={() => addEducationCustomItem('personalStrengths', 'personalStrengths', educationCustomText.personalStrengths)}
-                                    className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded"
-                                  >
-                                    + Add Strength
-                                  </button>
-                                </div>
+                                  Other
+                                </label>
+                                {/* Other input - shown when Other checkbox is checked */}
+                                {educationOtherVisible.personalStrengths && (
+                                  <div className="mt-2 space-y-2">
+                                    <input
+                                      type="text"
+                                      value={educationCustomText.personalStrengths}
+                                      onChange={(e) => handleEducationCustomTextChange('personalStrengths', e.target.value)}
+                                      placeholder="Add custom strength..."
+                                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        addEducationCustomItem('personalStrengths', educationCustomText.personalStrengths);
+                                        setEducationOtherVisible(prev => ({ ...prev, personalStrengths: false }));
+                                      }}
+                                      className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded"
+                                    >
+                                      + Add as new checkbox option
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             </div>
 
@@ -5675,10 +5700,17 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                                     <button type="button" onClick={() => removeEducationCustomItem('personalWeaknesses', item)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
                                   </div>
                                 ))}
-                                <div className="mt-2 space-y-2">
-                                  <input type="text" value={educationCustomText.personalWeaknesses} onChange={(e) => handleEducationCustomTextChange('personalWeaknesses', e.target.value)} placeholder="Add custom weakness..." className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500" />
-                                  <button type="button" onClick={() => addEducationCustomItem('personalWeaknesses', 'personalWeaknesses', educationCustomText.personalWeaknesses)} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add Weakness</button>
-                                </div>
+                                {/* Other checkbox */}
+                                <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                                  <input type="checkbox" className="rounded border-gray-300" checked={educationOtherVisible.personalWeaknesses} onChange={(e) => setEducationOtherVisible(prev => ({ ...prev, personalWeaknesses: e.target.checked }))} />
+                                  Other
+                                </label>
+                                {educationOtherVisible.personalWeaknesses && (
+                                  <div className="mt-2 space-y-2">
+                                    <input type="text" value={educationCustomText.personalWeaknesses} onChange={(e) => handleEducationCustomTextChange('personalWeaknesses', e.target.value)} placeholder="Add custom weakness..." className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500" />
+                                    <button type="button" onClick={() => { addEducationCustomItem('personalWeaknesses', educationCustomText.personalWeaknesses); setEducationOtherVisible(prev => ({ ...prev, personalWeaknesses: false })); }} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add as new checkbox option</button>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -5703,10 +5735,17 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                                     <button type="button" onClick={() => removeEducationCustomItem('peerStrengths', item)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
                                   </div>
                                 ))}
-                                <div className="mt-2 space-y-2">
-                                  <input type="text" value={educationCustomText.peerStrengths} onChange={(e) => handleEducationCustomTextChange('peerStrengths', e.target.value)} placeholder="Add custom strength..." className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500" />
-                                  <button type="button" onClick={() => addEducationCustomItem('peerStrengths', 'peerStrengths', educationCustomText.peerStrengths)} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add Strength</button>
-                                </div>
+                                {/* Other checkbox */}
+                                <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                                  <input type="checkbox" className="rounded border-gray-300" checked={educationOtherVisible.peerStrengths} onChange={(e) => setEducationOtherVisible(prev => ({ ...prev, peerStrengths: e.target.checked }))} />
+                                  Other
+                                </label>
+                                {educationOtherVisible.peerStrengths && (
+                                  <div className="mt-2 space-y-2">
+                                    <input type="text" value={educationCustomText.peerStrengths} onChange={(e) => handleEducationCustomTextChange('peerStrengths', e.target.value)} placeholder="Add custom strength..." className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500" />
+                                    <button type="button" onClick={() => { addEducationCustomItem('peerStrengths', educationCustomText.peerStrengths); setEducationOtherVisible(prev => ({ ...prev, peerStrengths: false })); }} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add as new checkbox option</button>
+                                  </div>
+                                )}
                               </div>
                             </div>
 
@@ -5729,10 +5768,17 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                                     <button type="button" onClick={() => removeEducationCustomItem('peerWeaknesses', item)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
                                   </div>
                                 ))}
-                                <div className="mt-2 space-y-2">
-                                  <input type="text" value={educationCustomText.peerWeaknesses} onChange={(e) => handleEducationCustomTextChange('peerWeaknesses', e.target.value)} placeholder="Add custom weakness..." className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500" />
-                                  <button type="button" onClick={() => addEducationCustomItem('peerWeaknesses', 'peerWeaknesses', educationCustomText.peerWeaknesses)} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add Weakness</button>
-                                </div>
+                                {/* Other checkbox */}
+                                <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                                  <input type="checkbox" className="rounded border-gray-300" checked={educationOtherVisible.peerWeaknesses} onChange={(e) => setEducationOtherVisible(prev => ({ ...prev, peerWeaknesses: e.target.checked }))} />
+                                  Other
+                                </label>
+                                {educationOtherVisible.peerWeaknesses && (
+                                  <div className="mt-2 space-y-2">
+                                    <input type="text" value={educationCustomText.peerWeaknesses} onChange={(e) => handleEducationCustomTextChange('peerWeaknesses', e.target.value)} placeholder="Add custom weakness..." className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500" />
+                                    <button type="button" onClick={() => { addEducationCustomItem('peerWeaknesses', educationCustomText.peerWeaknesses); setEducationOtherVisible(prev => ({ ...prev, peerWeaknesses: false })); }} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add as new checkbox option</button>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -5758,11 +5804,17 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                                 </div>
                               ))}
                             </div>
-                            {/* Add custom disability */}
-                            <div className="mt-2 space-y-2 max-w-xs">
-                              <input type="text" value={educationCustomText.learningDisabilities} onChange={(e) => handleEducationCustomTextChange('learningDisabilities', e.target.value)} placeholder="Add custom disability..." className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500" />
-                              <button type="button" onClick={() => addEducationCustomItem('learningDisabilities', 'learningDisabilities', educationCustomText.learningDisabilities)} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add Disability</button>
-                            </div>
+                            {/* Other checkbox */}
+                            <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                              <input type="checkbox" className="rounded border-gray-300" checked={educationOtherVisible.learningDisabilities} onChange={(e) => setEducationOtherVisible(prev => ({ ...prev, learningDisabilities: e.target.checked }))} />
+                              Other
+                            </label>
+                            {educationOtherVisible.learningDisabilities && (
+                              <div className="mt-2 space-y-2">
+                                <input type="text" value={educationCustomText.learningDisabilities} onChange={(e) => handleEducationCustomTextChange('learningDisabilities', e.target.value)} placeholder="Add custom disability..." className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500" />
+                                <button type="button" onClick={() => { addEducationCustomItem('learningDisabilities', educationCustomText.learningDisabilities); setEducationOtherVisible(prev => ({ ...prev, learningDisabilities: false })); }} className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded">+ Add as new checkbox option</button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>

@@ -137,16 +137,21 @@ class CentreController {
         updateData.established_date = updateData.established_date.toString().split('T')[0];
       }
 
-      // JSON type columns (MySQL JSON) - need JS array
+      // JSON type columns (MySQL JSON) - keep as JSON strings for SQL
       const jsonTypeColumns = ['specialties', 'facilities'];
       jsonTypeColumns.forEach(field => {
         if (updateData[field] !== undefined) {
-          try {
-            updateData[field] = typeof updateData[field] === 'string'
-              ? JSON.parse(updateData[field])
-              : (Array.isArray(updateData[field]) ? updateData[field] : []);
-          } catch {
-            updateData[field] = [];
+          if (Array.isArray(updateData[field])) {
+            updateData[field] = JSON.stringify(updateData[field]);
+          } else if (typeof updateData[field] === 'string') {
+            // Validate it's valid JSON, keep as is
+            try {
+              JSON.parse(updateData[field]);
+            } catch {
+              updateData[field] = JSON.stringify([]);
+            }
+          } else {
+            updateData[field] = JSON.stringify([]);
           }
         }
       });
