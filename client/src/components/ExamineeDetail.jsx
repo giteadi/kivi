@@ -474,6 +474,15 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [selectedAssessmentToEdit, setSelectedAssessmentToEdit] = useState(null);
   const [isEditAssessmentModalOpen, setIsEditAssessmentModalOpen] = useState(false);
+  
+  // Task 1.1 — Delete confirmation modal state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Task 1.2 — Unsaved changes tracking
+  const [isDirty, setIsDirty] = useState(false);
+  const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
+  const [pendingNavAction, setPendingNavAction] = useState(null);
 
   // Handle report form data changes from ExamineeReportForm
   const handleReportDataChange = (sectionData) => {
@@ -1129,8 +1138,22 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       }
       
       console.log('✅ All data loaded successfully');
+      // Reset dirty flag after data loads
+      setIsDirty(false);
     }
   }, [currentPatient]);
+
+  // Task 1.2 — beforeunload warning when there are unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
 
   // Calculate age when birth date changes
   useEffect(() => {
@@ -1154,6 +1177,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   // Form handlers
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    setIsDirty(true);
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: null }));
     }
@@ -1167,6 +1191,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       ...prev,
       [category]: { ...prev[category], other: checked }
     }));
+    setIsDirty(true);
   };
 
   const handleEvaluationFieldChange = (category, field, checked) => {
@@ -1174,6 +1199,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       ...prev,
       [category]: { ...prev[category], [field]: checked }
     }));
+    setIsDirty(true);
   };
 
   const handleEvaluationTextChange = (category, text) => {
@@ -1181,6 +1207,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       ...prev,
       [category]: { ...prev[category], otherText: text }
     }));
+    setIsDirty(true);
   };
 
   const toggleDiagnosis = (category, subOption) => {
@@ -1608,6 +1635,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
       if (response.success) {
         console.log('✅ Save Successful!');
         toast.success('Examinee updated successfully!');
+        setIsDirty(false); // Task 1.2 — reset dirty flag after successful save
         dispatch(fetchPatient(examineeId));
       } else {
         console.error('❌ Save Failed:', response.message);
@@ -1995,13 +2023,121 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="flex-1 lg:ml-64">
+        {/* Task 1.1 — Delete Confirmation Modal */}
+        <AnimatePresence>
+          {showDeleteConfirm && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+              >
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <FiTrash2 className="w-5 h-5 text-red-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Delete Examinee</h3>
+                    <p className="text-sm text-gray-500">This action cannot be undone.</p>
+                  </div>
+                </div>
+                <p className="text-gray-700 mb-6">
+                  Are you sure you want to delete <span className="font-semibold">{formData.firstName} {formData.lastName}</span>? All their data, assessments, and reports will be permanently removed.
+                </p>
+                <div className="flex items-center justify-end space-x-3">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    disabled={isDeleting}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      setIsDeleting(true);
+                      try {
+                        await api.deletePatient(examineeId);
+                        toast.success('Examinee deleted successfully!');
+                        setShowDeleteConfirm(false);
+                        onBack && onBack();
+                      } catch (error) {
+                        toast.error('Failed to delete examinee: ' + error.message);
+                      } finally {
+                        setIsDeleting(false);
+                      }
+                    }}
+                    disabled={isDeleting}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium disabled:opacity-50"
+                  >
+                    {isDeleting ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Task 1.2 — Unsaved Changes Warning Modal */}
+        <AnimatePresence>
+          {showUnsavedWarning && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+              >
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Unsaved Changes</h3>
+                <p className="text-gray-600 mb-6">You have unsaved changes. If you leave now, your changes will be lost.</p>
+                <div className="flex items-center justify-end space-x-3">
+                  <button
+                    onClick={() => setShowUnsavedWarning(false)}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                  >
+                    Stay
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowUnsavedWarning(false);
+                      setIsDirty(false);
+                      if (pendingNavAction) pendingNavAction();
+                      setPendingNavAction(null);
+                    }}
+                    className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors text-sm font-medium"
+                  >
+                    Leave anyway
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Header */}
         <div className="bg-white shadow-sm border-b sticky top-0 z-20">
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center space-x-4">
                 <button
-                  onClick={onBack}
+                  onClick={() => {
+                    if (isDirty) {
+                      setPendingNavAction(() => onBack);
+                      setShowUnsavedWarning(true);
+                    } else {
+                      onBack && onBack();
+                    }
+                  }}
                   className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
                 >
                   <FiArrowLeft className="w-5 h-5" />
@@ -2010,6 +2146,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                 <div className="h-6 w-px bg-gray-200" />
                 <h1 className="text-xl font-semibold text-gray-900">
                   Edit Examinee: {formData.firstName} {formData.lastName}
+                  {isDirty && <span className="ml-2 text-xs font-normal text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Unsaved changes</span>}
                 </h1>
               </div>
               <div className="flex items-center space-x-3">
@@ -2020,24 +2157,6 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                 >
                   <FiSave className="w-4 h-4" />
                   <span>{isSaving ? 'Saving...' : 'Save'}</span>
-                </button>
-                <button
-                  onClick={() => {
-                    if (window.confirm('Are you sure you want to delete this examinee?')) {
-                      api.deletePatient(examineeId)
-                        .then(() => {
-                          toast.success('Examinee deleted successfully!');
-                          onBack && onBack();
-                        })
-                        .catch((error) => {
-                          toast.error('Failed to delete examinee: ' + error.message);
-                        });
-                    }
-                  }}
-                  className="flex items-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all text-sm font-medium"
-                >
-                  <FiTrash2 className="w-4 h-4" />
-                  <span>Delete</span>
                 </button>
               </div>
             </div>
@@ -7059,6 +7178,19 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
                 )}
             </div>
           </motion.div>
+
+          {/* Task 1.1 — Danger Zone */}
+          <div className="mt-8 border border-red-200 rounded-xl bg-red-50 p-6">
+            <h3 className="text-base font-semibold text-red-700 mb-1">Danger Zone</h3>
+            <p className="text-sm text-red-600 mb-4">Permanently delete this examinee and all associated data. This action cannot be undone.</p>
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-white border border-red-300 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all text-sm font-medium"
+            >
+              <FiTrash2 className="w-4 h-4" />
+              <span>Delete Examinee</span>
+            </button>
+          </div>
         </div>
 
 

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import toast from 'react-hot-toast';
 
 const ExportDropdown = ({ onExportDocx, onExportXlsx, onExportPdf, ghost = false }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,7 +26,7 @@ const ExportDropdown = ({ onExportDocx, onExportXlsx, onExportPdf, ghost = false
       }
     } catch (err) {
       console.error('Export failed:', err);
-      alert('Export failed: ' + err.message);
+      toast.error('Export failed: ' + err.message);
     }
     setIsOpen(false);
   };

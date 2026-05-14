@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { FiArrowLeft, FiSave, FiFileText, FiCheck, FiAlertCircle } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 
 const TemplateBasedEncounter = ({ template, patientData, onSave, onCancel }) => {
   const [formData, setFormData] = useState({});
@@ -56,7 +57,7 @@ const TemplateBasedEncounter = ({ template, patientData, onSave, onCancel }) => 
       await onSave(encounterData);
     } catch (error) {
       console.error('Error saving encounter:', error);
-      alert('Error saving encounter. Please try again.');
+      toast.error('Error saving encounter. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

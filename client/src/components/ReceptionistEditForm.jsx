@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiSave, FiX, FiUser, FiMail, FiPhone, FiMapPin, FiClock, FiDollarSign } from 'react-icons/fi';
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 
 const ReceptionistEditForm = ({ receptionistId, onSave, onCancel }) => {
   // Mock data - in real app this would come from API based on receptionistId
@@ -107,7 +108,7 @@ const ReceptionistEditForm = ({ receptionistId, onSave, onCancel }) => {
       onSave(updatedData);
     } catch (error) {
       console.error('Error updating receptionist:', error);
-      alert('Error updating receptionist. Please try again.');
+      toast.error('Error updating receptionist. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

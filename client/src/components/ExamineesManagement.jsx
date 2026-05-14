@@ -1,5 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import ExamineeDrawer from './ExamineeDrawer';
 import { motion, AnimatePresence } from 'framer-motion';
+import { FixedSizeList as VirtualList } from 'react-window';
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getPaginationRowModel,
+  getFilteredRowModel,
+  createColumnHelper,
+  flexRender,
+} from '@tanstack/react-table';
 import {
   FiSearch,
   FiPlus,
@@ -53,6 +64,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
   const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'desc' }); // Newest first
   const [showFilters, setShowFilters] = useState(false);
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [advancedSearchData, setAdvancedSearchData] = useState({
     firstName: '', firstNameOp: 'startsWith',
     middleName: '', middleNameOp: 'startsWith',
@@ -96,6 +108,52 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
   // State for API-fetched packages
   const [assessmentPackages, setAssessmentPackages] = useState([]);
   const [packagesLoading, setPackagesLoading] = useState(false);
+
+  // Task 3.1 — Slide-out drawer state
+  const [drawerExaminee, setDrawerExaminee] = useState(null);
+
+  // Task 3.3 — Inline editing state
+  const [inlineEdit, setInlineEdit] = useState(null); // { id, field, value }
+  const inlineInputRef = useRef(null);
+
+  const startInlineEdit = useCallback((e, patient, field) => {
+    e.stopPropagation();
+    setInlineEdit({ id: patient.id, field, value: patient[field] || '' });
+  }, []);
+
+  const commitInlineEdit = useCallback(async () => {
+    if (!inlineEdit) return;
+    const { id, field, value } = inlineEdit;
+    setInlineEdit(null);
+    try {
+      const fieldMap = { firstName: 'first_name', lastName: 'last_name', status: 'status' };
+      const apiField = fieldMap[field] || field;
+      await api.updatePatient(id, { [apiField]: value });
+      dispatch(fetchPatients());
+      toast.success('Updated successfully');
+    } catch {
+      toast.error('Failed to update');
+    }
+  }, [inlineEdit, dispatch]);
+
+  useEffect(() => {
+    if (inlineEdit && inlineInputRef.current) {
+      inlineInputRef.current.focus();
+      inlineInputRef.current.select();
+    }
+  }, [inlineEdit]);
+
+  // Task 3.4 — Tag-based active filters
+  const [activeTagFilters, setActiveTagFilters] = useState({ gender: null, status: null });
+
+  // Task 3.8 — Debounced search
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+  const debounceTimer = useRef(null);
+  const handleSearchChange = useCallback((value) => {
+    setSearchTerm(value);
+    clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => setDebouncedSearch(value), 300);
+  }, []);
 
   useEffect(() => {
     dispatch(fetchPatients());
@@ -172,16 +230,20 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
   // Filter and sort
   const filteredPatients = transformedPatients.filter(patient => {
     const matchesSearch =
-      patient.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.examineeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.systemId.toLowerCase().includes(searchTerm.toLowerCase());
+      patient.firstName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      patient.lastName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      patient.examineeId.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      patient.systemId.toLowerCase().includes(debouncedSearch.toLowerCase());
     
     const matchesStatus = filters.status === 'all' || patient.status === filters.status;
     const matchesCenter = filters.center === 'all' || patient.center === filters.center;
     const matchesGender = filters.gender === 'all' || patient.gender === filters.gender;
+
+    // Task 3.4 — tag filters
+    const matchesTagGender = !activeTagFilters.gender || patient.gender === activeTagFilters.gender;
+    const matchesTagStatus = !activeTagFilters.status || patient.status === activeTagFilters.status;
     
-    return matchesSearch && matchesStatus && matchesCenter && matchesGender;
+    return matchesSearch && matchesStatus && matchesCenter && matchesGender && matchesTagGender && matchesTagStatus;
   }).sort((a, b) => {
     const valA = String(a[sortConfig.key] ?? '');
     const valB = String(b[sortConfig.key] ?? '');
@@ -196,6 +258,47 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedPatients = filteredPatients.slice(startIndex, startIndex + itemsPerPage);
 
+  // Task 3.5 — Virtualize when > 100 rows (bypass pagination for virtual mode)
+  const VIRTUAL_THRESHOLD = 100;
+  const useVirtualList = filteredPatients.length > VIRTUAL_THRESHOLD;
+  // In virtual mode, show all filtered rows; in normal mode, paginate
+  const displayPatients = useVirtualList ? filteredPatients : paginatedPatients;
+
+  // Task 3.10 — TanStack Table column definitions (used for column meta + future extensibility)
+  const columnHelper = useMemo(() => createColumnHelper(), []);
+  const columns = useMemo(() => [
+    columnHelper.accessor('systemId',    { header: 'System ID',   enableSorting: true }),
+    columnHelper.accessor('lastName',    { header: 'Last Name',   enableSorting: true }),
+    columnHelper.accessor('firstName',   { header: 'First Name',  enableSorting: true }),
+    columnHelper.accessor('examineeId',  { header: 'Examinee ID', enableSorting: true }),
+    columnHelper.accessor('birthDate',   { header: 'Birth Date',  enableSorting: true }),
+    columnHelper.accessor('gender',      { header: 'Gender',      enableSorting: true }),
+    columnHelper.accessor('status',      { header: 'Status',      enableSorting: true }),
+  ], [columnHelper]);
+
+  const [tanSorting, setTanSorting] = useState([]);
+  const [tanPagination, setTanPagination] = useState({ pageIndex: 0, pageSize: itemsPerPage });
+
+  // Keep TanStack pagination in sync when itemsPerPage dropdown changes
+  useEffect(() => {
+    setTanPagination(prev => ({ ...prev, pageSize: itemsPerPage, pageIndex: 0 }));
+    setCurrentPage(1);
+  }, [itemsPerPage]);
+
+  const table = useReactTable({
+    data: filteredPatients,
+    columns,
+    state: { sorting: tanSorting, pagination: tanPagination },
+    onSortingChange: setTanSorting,
+    onPaginationChange: setTanPagination,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    manualFiltering: true, // we handle filtering ourselves
+  });
+
+  // Legacy sort handler kept for compatibility (no longer drives the table)
   const handleSort = (key) => {
     setSortConfig(prev => ({
       key,
@@ -210,10 +313,11 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
   };
 
   const toggleAllSelection = () => {
-    if (selectedItems.length === paginatedPatients.length) {
+    const visibleRows = table.getRowModel().rows;
+    if (selectedItems.length === visibleRows.length && visibleRows.length > 0) {
       setSelectedItems([]);
     } else {
-      setSelectedItems(paginatedPatients.map(p => p.id));
+      setSelectedItems(visibleRows.map(r => r.original.id));
     }
   };
 
@@ -470,11 +574,11 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
         XLSX.utils.book_append_sheet(wb, ws, 'Examinees');
         XLSX.writeFile(wb, `${result.filename}.xlsx`);
       } else {
-        alert('Failed to export data: ' + result.message);
+        toast.error('Failed to export data: ' + result.message);
       }
     } catch (error) {
       console.error('Export error:', error);
-      alert('Failed to export data');
+      toast.error('Failed to export data');
     }
   };
 
@@ -557,11 +661,11 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
         a.click();
         URL.revokeObjectURL(url);
       } else {
-        alert('Failed to export data: ' + result.message);
+        toast.error('Failed to export data: ' + result.message);
       }
     } catch (error) {
       console.error('Export error:', error);
-      alert('Failed to export data');
+      toast.error('Failed to export data');
     }
   };
 
@@ -638,11 +742,11 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
         console.log('✅ PDF Export completed successfully!');
       } else {
         console.error('❌ No data received from backend');
-        alert('No data available to export. Please try again.');
+        toast.error('No data available to export. Please try again.');
       }
     } catch (error) {
       console.error('❌ PDF Export error:', error);
-      alert('Failed to export PDF: ' + error.message);
+      toast.error('Failed to export PDF: ' + error.message);
     }
   };
 
@@ -671,7 +775,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
       }
     } catch (error) {
       console.error('❌ Download failed:', error);
-      alert('Download failed: ' + error.message);
+      toast.error('Download failed: ' + error.message);
     }
     setShowDownloadMenu(false);
   };
@@ -685,20 +789,20 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
         handlePrint();
         break;
       case 'email':
-        alert('Email functionality to be implemented');
+        toast('Email functionality coming soon', { icon: '📧' });
         break;
       case 'viewDetails':
         if (selectedItems.length === 1) {
           onViewPatient && onViewPatient(selectedItems[0]);
         } else {
-          alert('Please select exactly one examinee to view details');
+          toast.error('Please select exactly one examinee to view details');
         }
         break;
       case 'edit':
         if (selectedItems.length === 1) {
           onEditPatient && onEditPatient(selectedItems[0]);
         } else {
-          alert('Please select exactly one examinee to edit');
+          toast.error('Please select exactly one examinee to edit');
         }
         break;
       case 'exportAll':
@@ -720,7 +824,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
     console.log('📊 Data to print:', dataToPrint.length, 'records');
     
     if (dataToPrint.length === 0) {
-      alert('No data available to print');
+      toast.error('No data available to print');
       return;
     }
     
@@ -795,7 +899,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
       }, 500);
     } else {
       console.error('❌ Failed to open print window - popup might be blocked');
-      alert('Please allow popups to print');
+      toast.error('Please allow popups to print');
     }
   };
 
@@ -814,12 +918,12 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
     const assessmentId = currentAssessment?.id || currentPackage?.assessments?.[0]?.id || selectedPkg?.id || selectedAssessments[0];
     
     if (!assessmentId) {
-      alert('No assessment selected. Please select an assessment first.');
+      toast.error('No assessment selected. Please select an assessment first.');
       return;
     }
     
     if (!selectedItems || selectedItems.length === 0) {
-      alert('No examinee selected. Please select an examinee first.');
+      toast.error('No examinee selected. Please select an examinee first.');
       return;
     }
 
@@ -863,17 +967,17 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
         const message = result.data.totalItems > 0 
           ? `Assessment saved successfully! ${result.data.totalItems} responses saved.`
           : 'Assessment saved successfully!';
-        alert(message);
+        toast.success(message);
         if (closeAfterSave) {
           setShowAssessmentAdmin(false);
           setAssessmentItemResponses({});
         }
       } else {
-        alert('Failed to save assessment: ' + result.message);
+        toast.error('Failed to save assessment: ' + result.message);
       }
     } catch (error) {
       console.error('Error saving assessment:', error);
-      alert('Failed to save assessment. Please try again.');
+      toast.error('Failed to save assessment. Please try again.');
     } finally {
       setIsSavingAssessment(false);
     }
@@ -886,12 +990,12 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
     const hasPackage = currentPackage?.id || selectedAssessments.some(id => assessmentPackages.find(p => p.id === id));
     
     if (!hasAssessment && !hasPackage) {
-      alert('No assessment or package selected.');
+      toast.error('No assessment or package selected.');
       return;
     }
     
     if (!selectedItems || selectedItems.length === 0) {
-      alert('Please select an examinee first.');
+      toast.error('Please select an examinee first.');
       return;
     }
 
@@ -899,7 +1003,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
     const email = emailInput?.value;
     
     if (!email) {
-      alert('Please enter an email address for the examinee.');
+      toast.error('Please enter an email address for the examinee.');
       return;
     }
 
@@ -1060,7 +1164,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                     
                     <button
                       disabled={selectedItems.length === 0}
-                      onClick={() => onDeletePatient && onDeletePatient(selectedItems)}
+                      onClick={() => selectedItems.length > 0 && setShowBulkDeleteConfirm(true)}
                       className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                         selectedItems.length > 0
                           ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30'
@@ -1332,7 +1436,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                       type="text"
                       placeholder="Search examinees..."
                       value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onChange={(e) => handleSearchChange(e.target.value)}
                       className="pl-10 pr-4 py-2 w-full sm:w-64 border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-300"
                     />
                   </div>
@@ -1342,12 +1446,83 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                 </div>
               </div>
 
-              {/* Data Table */}
+              {/* Task 3.4 — Tag-based filter chips */}
+              <div className="flex flex-wrap items-center gap-2 px-1 pb-2">
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Filter:</span>
+                {[
+                  { label: 'Male', key: 'gender', value: 'Male' },
+                  { label: 'Female', key: 'gender', value: 'Female' },
+                  { label: 'Active', key: 'status', value: 'Active' },
+                  { label: 'Inactive', key: 'status', value: 'Inactive' },
+                ].map(tag => {
+                  const isActive = activeTagFilters[tag.key] === tag.value;
+                  return (
+                    <button
+                      key={tag.label}
+                      onClick={() => setActiveTagFilters(prev => ({
+                        ...prev,
+                        [tag.key]: prev[tag.key] === tag.value ? null : tag.value
+                      }))}
+                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
+                        isActive
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                          : 'bg-white dark:bg-[#2c2c2e] text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-blue-400 hover:text-blue-600'
+                      }`}
+                    >
+                      {tag.label}
+                    </button>
+                  );
+                })}
+                {(activeTagFilters.gender || activeTagFilters.status) && (
+                  <button
+                    onClick={() => setActiveTagFilters({ gender: null, status: null })}
+                    className="px-3 py-1 rounded-full text-xs font-medium text-red-500 border border-red-200 hover:bg-red-50 transition-all"
+                  >
+                    ✕ Clear all
+                  </button>
+                )}
+              </div>
+
+              {/* Data Table — Examinees */}
               <div className="bg-white dark:bg-[#1c1c1e] rounded-xl shadow-sm dark:shadow-black/20 border dark:border-gray-800 overflow-hidden">
                 {isLoading ? (
-                  <div className="p-12 text-center">
-                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4" />
-                    <p className="text-gray-500 dark:text-gray-400">Loading examinees...</p>
+                  /* Task 2.8 — Skeleton loader for examinees table */
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 dark:bg-[#2c2c2e] border-b dark:border-gray-700">
+                        <tr>
+                          {['', 'ID', 'Name', 'Grade', 'Status', 'Therapist', 'Actions'].map((h, i) => (
+                            <th key={i} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                          <tr key={i} className="animate-pulse">
+                            <td className="px-4 py-3 w-12"><div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded" /></td>
+                            <td className="px-4 py-3"><div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-12" /></td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center space-x-3">
+                                <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                                <div className="space-y-1">
+                                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-28" />
+                                  <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded w-20" />
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3"><div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16" /></td>
+                            <td className="px-4 py-3"><div className="h-5 bg-gray-200 dark:bg-gray-700 rounded-full w-16" /></td>
+                            <td className="px-4 py-3"><div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-24" /></td>
+                            <td className="px-4 py-3">
+                              <div className="flex space-x-2">
+                                <div className="w-6 h-6 bg-gray-200 dark:bg-gray-700 rounded" />
+                                <div className="w-6 h-6 bg-gray-200 dark:bg-gray-700 rounded" />
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 ) : error ? (
                   <div className="p-12 text-center text-red-500">
@@ -1356,83 +1531,63 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                   </div>
                 ) : (
                   <>
+                    {/* Task 3.5 — Virtual list indicator */}
+                    {useVirtualList && (
+                      <div className="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-100 dark:border-blue-800 flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                        Showing all {filteredPatients.length} results — virtualized for performance
+                      </div>
+                    )}
                     <div className="overflow-x-auto">
                       <table className="w-full">
+                        {/* Task 3.10 — TanStack Table: header groups drive sorting */}
                         <thead className="bg-gray-50 dark:bg-[#2c2c2e] border-b dark:border-gray-700">
-                          <tr>
-                            <th className="px-4 py-3 w-12">
-                              <button
-                                onClick={toggleAllSelection}
-                                className="text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                              >
-                                {selectedItems.length === paginatedPatients.length && paginatedPatients.length > 0 ? (
-                                  <FiCheckSquare className="w-5 h-5 text-blue-600" />
-                                ) : (
-                                  <FiSquare className="w-5 h-5" />
-                                )}
-                              </button>
-                            </th>
-                            <th className="px-4 py-3 text-left">
-                              <button
-                                onClick={() => handleSort('systemId')}
-                                className="flex items-center space-x-1 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700"
-                              >
-                                <span>System ID</span>
-                                <SortIcon columnKey="systemId" />
-                              </button>
-                            </th>
-                            <th className="px-4 py-3 text-left">
-                              <button
-                                onClick={() => handleSort('lastName')}
-                                className="flex items-center space-x-1 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700"
-                              >
-                                <span>Last Name</span>
-                                <SortIcon columnKey="lastName" />
-                              </button>
-                            </th>
-                            <th className="px-4 py-3 text-left">
-                              <button
-                                onClick={() => handleSort('firstName')}
-                                className="flex items-center space-x-1 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700"
-                              >
-                                <span>First Name</span>
-                                <SortIcon columnKey="firstName" />
-                              </button>
-                            </th>
-                            <th className="px-4 py-3 text-left">
-                              <button
-                                onClick={() => handleSort('examineeId')}
-                                className="flex items-center space-x-1 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700"
-                              >
-                                <span>Examinee ID</span>
-                                <SortIcon columnKey="examineeId" />
-                              </button>
-                            </th>
-                            <th className="px-4 py-3 text-left">
-                              <button
-                                onClick={() => handleSort('birthDate')}
-                                className="flex items-center space-x-1 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700"
-                              >
-                                <span>Birth Date</span>
-                                <SortIcon columnKey="birthDate" />
-                              </button>
-                            </th>
-                            <th className="px-4 py-3 text-left">
-                              <button
-                                onClick={() => handleSort('gender')}
-                                className="flex items-center space-x-1 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700"
-                              >
-                                <span>Gender</span>
-                                <SortIcon columnKey="gender" />
-                              </button>
-                            </th>
-                            <th className="px-4 py-3 text-left">
-                              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Services</span>
-                            </th>
-                          </tr>
+                          {table.getHeaderGroups().map(headerGroup => (
+                            <tr key={headerGroup.id}>
+                              {/* Checkbox select-all */}
+                              <th className="px-4 py-3 w-12">
+                                <button
+                                  onClick={toggleAllSelection}
+                                  className="text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                >
+                                  {selectedItems.length === table.getRowModel().rows.length && table.getRowModel().rows.length > 0 ? (
+                                    <FiCheckSquare className="w-5 h-5 text-blue-600" />
+                                  ) : (
+                                    <FiSquare className="w-5 h-5" />
+                                  )}
+                                </button>
+                              </th>
+                              {headerGroup.headers.map(header => (
+                                <th key={header.id} className="px-4 py-3 text-left">
+                                  {header.column.getCanSort() ? (
+                                    <button
+                                      onClick={header.column.getToggleSortingHandler()}
+                                      className="flex items-center space-x-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                                    >
+                                      <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
+                                      {header.column.getIsSorted() === 'asc' && <FiArrowUp className="w-4 h-4 text-blue-600" />}
+                                      {header.column.getIsSorted() === 'desc' && <FiArrowDown className="w-4 h-4 text-blue-600" />}
+                                      {!header.column.getIsSorted() && <FiChevronDown className="w-4 h-4 text-gray-400" />}
+                                    </button>
+                                  ) : (
+                                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                      {flexRender(header.column.columnDef.header, header.getContext())}
+                                    </span>
+                                  )}
+                                </th>
+                              ))}
+                              {/* Services column — not in TanStack columns, rendered manually */}
+                              <th className="px-4 py-3 text-left">
+                                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Services</span>
+                              </th>
+                            </tr>
+                          ))}
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                          {paginatedPatients.map((patient, index) => (
+                          {/* Task 3.10 — TanStack Table: rows come from table.getRowModel() (sorted + paginated) */}
+                          {table.getRowModel().rows.map((row, index) => {
+                            const patient = row.original;
+                            return (
                             <motion.tr
                               key={patient.id}
                               initial={{ opacity: 0 }}
@@ -1441,7 +1596,10 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                               className={`hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors cursor-pointer ${
                                 selectedItems.includes(patient.id) ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''
                               }`}
-                              onClick={() => onViewPatient && onViewPatient(patient.id)}
+                              onClick={() => {
+                                const fullPatient = transformedPatients.find(p => p.id === patient.id);
+                                setDrawerExaminee(fullPatient || patient);
+                              }}
                             >
                               <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                                 <button
@@ -1459,10 +1617,46 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                                 {patient.systemId}
                               </td>
                               <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-medium">
-                                {patient.lastName}
+                                {inlineEdit?.id === patient.id && inlineEdit?.field === 'lastName' ? (
+                                  <input
+                                    ref={inlineInputRef}
+                                    value={inlineEdit.value}
+                                    onChange={e => setInlineEdit(prev => ({ ...prev, value: e.target.value }))}
+                                    onBlur={commitInlineEdit}
+                                    onKeyDown={e => { if (e.key === 'Enter') commitInlineEdit(); if (e.key === 'Escape') setInlineEdit(null); }}
+                                    onClick={e => e.stopPropagation()}
+                                    className="w-full px-2 py-0.5 border border-blue-400 rounded text-sm outline-none ring-2 ring-blue-200 bg-white dark:bg-gray-800 dark:text-white"
+                                  />
+                                ) : (
+                                  <span
+                                    onDoubleClick={e => startInlineEdit(e, patient, 'lastName')}
+                                    title="Double-click to edit"
+                                    className="cursor-text hover:bg-blue-50 dark:hover:bg-blue-900/20 px-1 rounded transition-colors"
+                                  >
+                                    {patient.lastName}
+                                  </span>
+                                )}
                               </td>
                               <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
-                                {patient.firstName}
+                                {inlineEdit?.id === patient.id && inlineEdit?.field === 'firstName' ? (
+                                  <input
+                                    ref={inlineEdit.field === 'firstName' ? inlineInputRef : null}
+                                    value={inlineEdit.value}
+                                    onChange={e => setInlineEdit(prev => ({ ...prev, value: e.target.value }))}
+                                    onBlur={commitInlineEdit}
+                                    onKeyDown={e => { if (e.key === 'Enter') commitInlineEdit(); if (e.key === 'Escape') setInlineEdit(null); }}
+                                    onClick={e => e.stopPropagation()}
+                                    className="w-full px-2 py-0.5 border border-blue-400 rounded text-sm outline-none ring-2 ring-blue-200 bg-white dark:bg-gray-800 dark:text-white"
+                                  />
+                                ) : (
+                                  <span
+                                    onDoubleClick={e => startInlineEdit(e, patient, 'firstName')}
+                                    title="Double-click to edit"
+                                    className="cursor-text hover:bg-blue-50 dark:hover:bg-blue-900/20 px-1 rounded transition-colors"
+                                  >
+                                    {patient.firstName}
+                                  </span>
+                                )}
                               </td>
                               <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 font-mono">
                                 {patient.examineeId}
@@ -1501,36 +1695,54 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                                 </div>
                               </td>
                             </motion.tr>
-                          ))}
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>
 
                     {filteredPatients.length === 0 && (
-                      <div className="p-12 text-center">
-                        <FiUser className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                        <p className="text-gray-500 dark:text-gray-400 font-medium">No examinees found</p>
-                        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Try adjusting your search or filters</p>
+                      <div className="p-16 text-center">
+                        <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <FiUser className="w-10 h-10 text-blue-400" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                          {searchTerm ? 'No examinees match your search' : 'No examinees yet'}
+                        </h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                          {searchTerm ? 'Try adjusting your search or filter criteria' : 'Add your first examinee to get started'}
+                        </p>
+                        {!searchTerm && (
+                          <button
+                            onClick={() => onCreateNewPatient && onCreateNewPatient()}
+                            className="inline-flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg hover:from-emerald-600 hover:to-teal-600 transition-all text-sm font-medium"
+                          >
+                            <FiPlus className="w-4 h-4" />
+                            <span>Add your first examinee →</span>
+                          </button>
+                        )}
                       </div>
                     )}
                   </>
                 )}
               </div>
 
-              {/* Pagination */}
+              {/* Pagination — Task 3.10: driven by TanStack Table */}
               {filteredPatients.length > 0 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-[#1c1c1e] rounded-xl shadow-sm dark:shadow-black/20 border dark:border-gray-800 p-4">
                   <div className="flex items-center space-x-4">
                     <span className="text-sm text-gray-500 dark:text-gray-400">
-                      Page {currentPage} of {totalPages}
+                      Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
                     </span>
                     <div className="flex items-center space-x-2">
                       <span className="text-sm text-gray-500 dark:text-gray-400">Show</span>
                       <select
-                        value={itemsPerPage}
+                        value={table.getState().pagination.pageSize}
                         onChange={(e) => {
-                          setItemsPerPage(Number(e.target.value));
-                          setCurrentPage(1);
+                          const size = Number(e.target.value);
+                          setItemsPerPage(size);
+                          table.setPageSize(size);
+                          table.setPageIndex(0);
                         }}
                         className="px-2 py-1 border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2c2c2e] rounded text-sm focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-colors duration-300"
                       >
@@ -1545,34 +1757,41 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
 
                   <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                      disabled={currentPage === 1}
-                      className="p-2 rounded-lg border hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      onClick={() => table.previousPage()}
+                      disabled={!table.getCanPreviousPage()}
+                      className="p-2 rounded-lg border hover:bg-gray-50 dark:hover:bg-[#2c2c2e] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
                       <FiChevronLeft className="w-4 h-4" />
                     </button>
-                    
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      const page = i + 1;
+
+                    {Array.from({ length: Math.min(5, table.getPageCount()) }, (_, i) => {
+                      const currentIdx = table.getState().pagination.pageIndex;
+                      const pageCount = table.getPageCount();
+                      // Show a window of 5 pages centred on current page
+                      let start = Math.max(0, currentIdx - 2);
+                      const end = Math.min(pageCount - 1, start + 4);
+                      start = Math.max(0, end - 4);
+                      const page = start + i;
+                      if (page > end) return null;
                       return (
                         <button
                           key={page}
-                          onClick={() => setCurrentPage(page)}
+                          onClick={() => table.setPageIndex(page)}
                           className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg text-sm font-medium transition-colors ${
-                            currentPage === page
+                            currentIdx === page
                               ? 'bg-blue-600 text-white'
-                              : 'hover:bg-gray-100 text-gray-700'
+                              : 'hover:bg-gray-100 dark:hover:bg-[#2c2c2e] text-gray-700 dark:text-gray-300'
                           }`}
                         >
-                          {page}
+                          {page + 1}
                         </button>
                       );
                     })}
-                    
+
                     <button
-                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                      disabled={currentPage === totalPages}
-                      className="p-2 rounded-lg border hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      onClick={() => table.nextPage()}
+                      disabled={!table.getCanNextPage()}
+                      className="p-2 rounded-lg border hover:bg-gray-50 dark:hover:bg-[#2c2c2e] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
                       <FiChevronRight className="w-4 h-4" />
                     </button>
@@ -2715,6 +2934,70 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
       </div>
     </div>
   </div>
+
+  {/* ── Bulk Delete Confirmation Modal ── */}
+  <AnimatePresence>
+    {showBulkDeleteConfirm && (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+        onClick={() => setShowBulkDeleteConfirm(false)}
+      >
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.95, opacity: 0 }}
+          transition={{ duration: 0.15 }}
+          className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="flex items-start space-x-4">
+            <div className="p-2 bg-red-100 rounded-lg flex-shrink-0">
+              <FiAlertTriangle className="w-6 h-6 text-red-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Delete {selectedItems.length === 1 ? 'Examinee' : `${selectedItems.length} Examinees`}?
+              </h3>
+              <p className="mt-1 text-sm text-gray-600">
+                This action <span className="font-medium text-red-600">cannot be undone</span>. All data for the selected {selectedItems.length === 1 ? 'examinee' : 'examinees'} will be permanently removed.
+              </p>
+            </div>
+          </div>
+          <div className="mt-6 flex justify-end space-x-3">
+            <button
+              onClick={() => setShowBulkDeleteConfirm(false)}
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                setShowBulkDeleteConfirm(false);
+                onDeletePatient && onDeletePatient(selectedItems);
+                setSelectedItems([]);
+              }}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm font-medium flex items-center space-x-2"
+            >
+              <FiTrash2 className="w-4 h-4" />
+              <span>Yes, Delete</span>
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+
+  {/* Task 3.1 — Slide-out Examinee Drawer */}
+  <ExamineeDrawer
+    examinee={drawerExaminee}
+    onClose={() => setDrawerExaminee(null)}
+    onEdit={(id) => { onViewPatient && onViewPatient(id); }}
+    onDelete={(id) => { onDeletePatient && onDeletePatient(id); setDrawerExaminee(null); }}
+    onNewReport={(examinee) => { onSelectExamineeForAssignment && onSelectExamineeForAssignment(examinee); }}
+  />
 </div>
 );
 };

@@ -119,9 +119,22 @@ const PlansList = () => {
   };
 
   const handleDeletePlan = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this plan?')) {
-      return;
-    }
+    const confirmed = await new Promise((resolve) => {
+      toast(
+        (t) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span style={{ fontWeight: 600 }}>Delete this plan?</span>
+            <span style={{ fontSize: 13, color: '#6b7280' }}>This action cannot be undone.</span>
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <button onClick={() => { toast.dismiss(t.id); resolve(true); }} style={{ padding: '4px 12px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Delete</button>
+              <button onClick={() => { toast.dismiss(t.id); resolve(false); }} style={{ padding: '4px 12px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Cancel</button>
+            </div>
+          </div>
+        ),
+        { duration: Infinity, icon: '⚠️' }
+      );
+    });
+    if (!confirmed) return;
 
     try {
       await api.request(`/plans/${id}`, {

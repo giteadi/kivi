@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import * as XLSX from "xlsx";
+import toast from "react-hot-toast";
 import {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
   AlignmentType, HeadingLevel, BorderStyle, WidthType, ShadingType, LevelFormat, ImageRun,
@@ -652,7 +653,7 @@ async function exportSheetToPdf(sheetData, fileName, viewerRef) {
     pdf.save(fileName.replace(/\.[^/.]+$/, "") + ".pdf");
   } catch (err) {
     console.error("[PDF Export Error]", err);
-    alert("PDF export failed: " + err.message);
+    toast.error("PDF export failed: " + err.message);
   }
 }
 
@@ -679,7 +680,7 @@ function RenameModal({ form, onClose, onRename }) {
 
   const handleRename = async () => {
     const trimmed = newName.trim();
-    if (!trimmed) { alert("Name cannot be empty"); return; }
+    if (!trimmed) { toast.error("Name cannot be empty"); return; }
     if (trimmed === form.name) { onClose(); return; }
     
     setSaving(true);
@@ -692,7 +693,7 @@ function RenameModal({ form, onClose, onRename }) {
       onRename(form.id, trimmed);
       onClose();
     } catch (err) {
-      alert("Rename failed: " + err.message);
+      toast.error("Rename failed: " + err.message);
     } finally {
       setSaving(false);
     }
@@ -742,8 +743,22 @@ export default function FormsManagement() {
   // Report panel state (like TemplateManager)
   const [reportPanel, setReportPanel] = useState(null);
 
+  // Task 2.1 — close overflow menu on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   // Rename modal state
   const [renameTarget, setRenameTarget] = useState(null);
+  // Task 2.1 — overflow menu state
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const menuRef = useRef(null);
 
   // Folder state
   const [folders, setFolders] = useState([]);
@@ -841,7 +856,7 @@ export default function FormsManagement() {
       console.error("❌ [DEBUG] Create folder error:", e);
       console.error("❌ [DEBUG] Error status:", e.status);
       console.error("❌ [DEBUG] Error message:", e.message);
-      alert("Failed to create folder: " + (e.message || "Unknown error"));
+      toast.error("Failed to create folder: " + (e.message || "Unknown error"));
     } finally {
       setCreatingFolder(false);
     }
@@ -859,13 +874,28 @@ export default function FormsManagement() {
       setSelectedFolderId(null);
       await loadFolders();
     } catch (e) {
-      alert("Failed to rename folder: " + (e.message || "Unknown error"));
+      toast.error("Failed to rename folder: " + (e.message || "Unknown error"));
     }
   };
 
   // Delete folder
   const handleDeleteFolder = async (folderId) => {
-    if (!confirm("Delete this folder and all its contents?")) return;
+    const confirmed = await new Promise((resolve) => {
+      toast(
+        (t) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span style={{ fontWeight: 600 }}>Delete this folder?</span>
+            <span style={{ fontSize: 13, color: '#6b7280' }}>All contents will be deleted.</span>
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <button onClick={() => { toast.dismiss(t.id); resolve(true); }} style={{ padding: '4px 12px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Delete</button>
+              <button onClick={() => { toast.dismiss(t.id); resolve(false); }} style={{ padding: '4px 12px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Cancel</button>
+            </div>
+          </div>
+        ),
+        { duration: Infinity, icon: '⚠️' }
+      );
+    });
+    if (!confirmed) return;
     try {
       await api.delete(`/forms/folders/${folderId}`);
       if (currentFolderId === folderId) {
@@ -873,8 +903,9 @@ export default function FormsManagement() {
       }
       await loadFolders();
       await loadForms();
+      toast.success("Folder deleted successfully");
     } catch (e) {
-      alert("Failed to delete folder: " + (e.message || "Unknown error"));
+      toast.error("Failed to delete folder: " + (e.message || "Unknown error"));
     }
   };
 
@@ -947,8 +978,9 @@ export default function FormsManagement() {
       // ← headers bilkul mat do, FormData ke saath browser khud set karta hai
       setShowUpload(false);
       loadForms();
+      toast.success("File uploaded successfully");
     } catch (err) {
-      alert("Upload failed: " + (err.response?.data?.message || err.message));
+      toast.error("Upload failed: " + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
     }
@@ -1320,7 +1352,7 @@ function evalFormula(formula, grid) {
       
     } catch (err) {
       console.error('[DEBUG] Error parsing file for new report:', err);
-      alert('Failed to create new report: ' + err.message);
+      toast.error('Failed to create new report: ' + err.message);
     }
   };
 
@@ -1372,10 +1404,10 @@ function evalFormula(formula, grid) {
       await api.post('/forms/upload', formData);
       await loadForms();
       setReportPanel(null);
-      alert(`✅ Report "${baseName}" saved successfully!`);
+      toast.success(`Report "${baseName}" saved successfully!`);
     } catch (err) {
       console.error('[DEBUG] Save report failed:', err);
-      alert("Save failed: " + err.message);
+      toast.error("Save failed: " + err.message);
     }
   };
 
@@ -1715,9 +1747,9 @@ function evalFormula(formula, grid) {
               await api.delete(`/forms/${fileId}`);
               setShowViewer(false);
               loadForms();
-              alert('Corrupted file deleted successfully');
+              toast.success('Corrupted file deleted successfully');
             } catch (err) {
-              alert('Delete failed: ' + err.message);
+              toast.error('Delete failed: ' + err.message);
             }
           };
           
@@ -1733,7 +1765,7 @@ function evalFormula(formula, grid) {
 
       setShowViewer(true);
     } catch (err) {
-      alert("Failed to load form: " + err.message);
+      toast.error("Failed to load form: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -1741,12 +1773,27 @@ function evalFormula(formula, grid) {
 
   // Delete form
   const handleDeleteForm = async (id) => {
-    if (!confirm("Delete this form?")) return;
+    const confirmed = await new Promise((resolve) => {
+      toast(
+        (t) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span style={{ fontWeight: 600 }}>Delete this form?</span>
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <button onClick={() => { toast.dismiss(t.id); resolve(true); }} style={{ padding: '4px 12px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Delete</button>
+              <button onClick={() => { toast.dismiss(t.id); resolve(false); }} style={{ padding: '4px 12px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Cancel</button>
+            </div>
+          </div>
+        ),
+        { duration: Infinity, icon: '⚠️' }
+      );
+    });
+    if (!confirmed) return;
     try {
       await api.delete(`/forms/${id}`);
       loadForms();
+      toast.success("Form deleted successfully");
     } catch (e) {
-      alert("Delete failed: " + e.message);
+      toast.error("Delete failed: " + e.message);
     }
   };
 
@@ -1785,8 +1832,9 @@ function evalFormula(formula, grid) {
 
       await api.post('/forms/upload', formData);
       loadForms();
+      toast.success("Form duplicated successfully");
     } catch (err) {
-      alert("Duplicate failed: " + err.message);
+      toast.error("Duplicate failed: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -1867,7 +1915,7 @@ function evalFormula(formula, grid) {
       setShowViewer(true);
 
     } catch (err) {
-      alert("New form failed: " + err.message);
+      toast.error("New form failed: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -2038,9 +2086,9 @@ function evalFormula(formula, grid) {
       await api.post('/forms/upload', formData);
       await loadForms();
       setShowNewDocModal(false);
-      alert(`New document "${nameRaw.trim()}" created successfully!`);
+      toast.success(`New document "${nameRaw.trim()}" created successfully!`);
     } catch (err) {
-      alert('New document failed: ' + (err.response?.data?.message || err.message));
+      toast.error('New document failed: ' + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
     }
@@ -2099,10 +2147,10 @@ function evalFormula(formula, grid) {
       // Refresh forms list
       await loadForms();
       
-      alert("✅ Changes saved successfully!");
+      toast.success("Changes saved successfully!");
     } catch (err) {
       console.error("Save error:", err);
-      alert("Save failed: " + err.message);
+      toast.error("Save failed: " + err.message);
     }
   };
 
@@ -2301,7 +2349,7 @@ function evalFormula(formula, grid) {
               if (selectedForm || forms.length > 0) {
                 handleNewFromTemplate(selectedForm || forms[0], { stopPropagation: () => {} });
               } else {
-                alert("Pehle ek template form select/upload karo");
+                toast.error("Pehle ek template form select/upload karo");
               }
             }}>
               ✨ New from Template
@@ -2442,13 +2490,46 @@ function evalFormula(formula, grid) {
 
             {/* Forms Grid */}
             {loading ? (
-              <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+              /* Skeleton loader — 6 placeholder cards */
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="bg-white dark:bg-[#1c1c1e] rounded-xl border border-gray-200 dark:border-gray-700 p-4 animate-pulse">
+                    <div className="flex items-start gap-3">
+                      <div className="w-9 h-9 bg-gray-200 dark:bg-gray-700 rounded-lg flex-shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+                        <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded w-1/2" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : filteredForms.length === 0 ? (
-              <div className="text-center py-16 px-5 text-gray-500 dark:text-gray-400 bg-white dark:bg-[#1c1c1e] rounded-xl border border-gray-200 dark:border-gray-700 transition-colors duration-300">
-                <Icon d={icons.file} size={48} />
-                <p className="mt-4">No forms found. Upload your first form!</p>
-                {currentFolderId && <p className="text-xs mt-2">in this folder</p>}
-            </div>
+              <div className="bg-white dark:bg-[#1c1c1e] rounded-xl border border-gray-200 dark:border-gray-700 transition-colors duration-300">
+                <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                  <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5 bg-blue-50 dark:bg-blue-900/20">
+                    <Icon d={icons.file} size={40} className="text-blue-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                    {search ? 'No forms match your search' : currentFolderId ? 'This folder is empty' : 'No forms yet'}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-xs">
+                    {search
+                      ? 'Try a different search term or clear the search to see all forms.'
+                      : currentFolderId
+                      ? 'Upload a form into this folder to get started.'
+                      : 'Upload your first form or template to get started.'}
+                  </p>
+                  {!search && (
+                    <button
+                      onClick={() => setShowUpload(true)}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-medium rounded-lg hover:from-blue-600 hover:to-indigo-600 transition-all shadow-sm hover:shadow-md"
+                    >
+                      Upload your first form →
+                    </button>
+                  )}
+                </div>
+              </div>
           ) : (
             <div style={{
               display: "grid",
@@ -2477,40 +2558,57 @@ function evalFormula(formula, grid) {
                       </p>
                     </div>
                     <div className="flex flex-col gap-1 flex-shrink-0">
+                      {/* Task 2.1 — Primary CTA + ⋯ overflow menu */}
                       <button
                         className="text-xs px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md transition-colors"
                         onClick={async (e) => {
                           e.stopPropagation();
-                          console.log('[DEBUG] Opening report editor');
-
-                          // Open report editor - patient name will be entered in the editor
                           await openCreateReport(form);
                         }}
                         title="New Report"
                       >
                         New Report
                       </button>
-                      <button
-                        className="text-xs px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-md transition-colors"
-                        onClick={(e) => { e.stopPropagation(); setRenameTarget(form); }}
-                        title="Rename"
-                      >
-                        Rename
-                      </button>
-                      <button
-                        className="text-xs px-2 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors"
-                        onClick={(e) => handleDuplicateForm(form, e)}
-                        title="Duplicate"
-                      >
-                        Copy
-                      </button>
-                      <button
-                        className="text-xs px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
-                        onClick={(e) => { e.stopPropagation(); handleDeleteForm(form.id); }}
-                        title="Delete"
-                      >
-                        Delete
-                      </button>
+                      <div className="relative" ref={openMenuId === form.id ? menuRef : null}>
+                        <button
+                          className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors flex items-center gap-1"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenMenuId(openMenuId === form.id ? null : form.id);
+                          }}
+                          title="More options"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                            <circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>
+                          </svg>
+                        </button>
+                        {openMenuId === form.id && (
+                          <div
+                            className="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-[#2c2c2e] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-30"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              className="w-full text-left text-xs px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
+                              onClick={(e) => { e.stopPropagation(); setRenameTarget(form); setOpenMenuId(null); }}
+                            >
+                              ✏️ Rename
+                            </button>
+                            <button
+                              className="w-full text-left text-xs px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
+                              onClick={(e) => { handleDuplicateForm(form, e); setOpenMenuId(null); }}
+                            >
+                              📋 Copy
+                            </button>
+                            <div className="border-t border-gray-100 dark:border-gray-700" />
+                            <button
+                              className="w-full text-left text-xs px-3 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 transition-colors"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteForm(form.id); setOpenMenuId(null); }}
+                            >
+                              🗑️ Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2612,12 +2710,13 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
   const [sheetList, setSheetList] = useState(allSheets);
   const [showNewSheetModal, setShowNewSheetModal] = useState(false);
   const [newSheetName, setNewSheetName] = useState("");
+  const [showBackConfirm, setShowBackConfirm] = useState(false);
 
   const viewerRef = useRef(null);
 
   const addNewSheet = () => {
     const name = newSheetName.trim() || `Sheet ${sheetList.length + 1}`;
-    if (sheetList.includes(name)) { alert("Sheet name already exists!"); return; }
+    if (sheetList.includes(name)) { toast.error("Sheet name already exists!"); return; }
     setReportData(prev => ({ ...prev, [name]: [["__html__", "<p><br></p>"]] }));
     setSheetList(prev => [...prev, name]);
     setActiveSheet(name);
@@ -2629,11 +2728,23 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
 
   return (
     <div style={css.panel}>
+      {showBackConfirm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div style={{ background: '#fff', borderRadius: 12, padding: 24, maxWidth: 380, width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+            <h3 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 700 }}>Discard changes?</h3>
+            <p style={{ margin: '0 0 20px', fontSize: 14, color: '#6b7280' }}>Your unsaved changes will be lost.</p>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowBackConfirm(false)} style={{ padding: '6px 16px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 500 }}>Stay</button>
+              <button onClick={() => { setShowBackConfirm(false); onBack(); }} style={{ padding: '6px 16px', background: '#1f2937', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 500 }}>Leave</button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header - Green like TemplateManager */}
       <div style={{ ...css.panelHeader, background: "#064E3B", borderColor: "#065F46" }}>
         <button
           style={{ ...css.btn("ghost"), color: "#D1FAE5", borderColor: "#065F46" }}
-          onClick={() => { if (confirm("Discard changes and go back?")) onBack(); }}
+          onClick={() => setShowBackConfirm(true)}
         >
           <Icon d={icons.back} size={15} /> Back
         </button>

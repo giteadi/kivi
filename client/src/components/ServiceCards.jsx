@@ -1,9 +1,10 @@
-import { motion } from 'framer-motion';
-import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiFilter, FiUpload, FiActivity, FiClock, FiCheck, FiMapPin, FiUser } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiFilter, FiUpload, FiActivity, FiClock, FiCheck, FiMapPin, FiUser, FiAlertTriangle } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchServices } from '../store/slices/serviceSlice';
 import ImportModal from './ImportModal';
+import toast from 'react-hot-toast';
 
 const ServiceCards = ({ onViewService, onEditService, onDeleteService, onCreateNewService }) => {
   const dispatch = useDispatch();
@@ -13,6 +14,7 @@ const ServiceCards = ({ onViewService, onEditService, onDeleteService, onCreateN
   const [selectedCategory, setSelectedCategory] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [deleteConfirmService, setDeleteConfirmService] = useState(null);
 
   // Load services on component mount
   useEffect(() => {
@@ -124,9 +126,7 @@ const ServiceCards = ({ onViewService, onEditService, onDeleteService, onCreateN
             whileTap={{ scale: 0.95 }}
             onClick={(e) => {
               e.stopPropagation();
-              if (window.confirm(`Are you sure you want to delete "${service.name}"?`)) {
-                onDeleteService && onDeleteService(service.id);
-              }
+              setDeleteConfirmService(service);
             }}
             className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
             title="Delete Service"
@@ -429,6 +429,58 @@ const ServiceCards = ({ onViewService, onEditService, onDeleteService, onCreateN
         onClose={() => setIsImportModalOpen(false)}
         importType="services"
       />
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteConfirmService && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setDeleteConfirmService(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start gap-4 mb-4">
+                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                  <FiAlertTriangle className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Delete Programme?</h3>
+                  <p className="mt-1 text-sm text-gray-600">
+                    Are you sure you want to delete <span className="font-medium">"{deleteConfirmService.name}"</span>? This cannot be undone.
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setDeleteConfirmService(null)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    onDeleteService && onDeleteService(deleteConfirmService.id);
+                    toast.success(`"${deleteConfirmService.name}" deleted`);
+                    setDeleteConfirmService(null);
+                  }}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm font-medium flex items-center gap-2"
+                >
+                  <FiTrash2 className="w-4 h-4" />
+                  Yes, Delete
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

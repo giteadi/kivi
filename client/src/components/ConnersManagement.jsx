@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import * as XLSX from "xlsx";
+import toast from "react-hot-toast";
 import {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
   AlignmentType, HeadingLevel, BorderStyle, WidthType, ShadingType, LevelFormat, ImageRun,
@@ -640,7 +641,7 @@ async function exportSheetToPdf(sheetData, fileName, viewerRef) {
     pdf.save(fileName.replace(/\.[^/.]+$/, "") + ".pdf");
   } catch (err) {
     console.error("[PDF Export Error]", err);
-    alert("PDF export failed: " + err.message);
+    toast.error("PDF export failed: " + err.message);
   }
 }
 
@@ -653,7 +654,7 @@ function RenameModal({ form, onClose, onRename }) {
 
   const handleRename = async () => {
     const trimmed = newName.trim();
-    if (!trimmed) { alert("Name cannot be empty"); return; }
+    if (!trimmed) { toast.error("Name cannot be empty"); return; }
     if (trimmed === form.name) { onClose(); return; }
     
     setSaving(true);
@@ -666,7 +667,7 @@ function RenameModal({ form, onClose, onRename }) {
       onRename(form.id, trimmed);
       onClose();
     } catch (err) {
-      alert("Rename failed: " + err.message);
+      toast.error("Rename failed: " + err.message);
     } finally {
       setSaving(false);
     }
@@ -798,7 +799,7 @@ export default function ConnersManagement() {
       console.error("❌ [DEBUG] Create coner folder error:", e);
       console.error("❌ [DEBUG] Error status:", e.status);
       console.error("❌ [DEBUG] Error message:", e.message);
-      alert("Failed to create Conners folder: " + (e.message || "Unknown error"));
+      toast.error("Failed to create Conners folder: " + (e.message || "Unknown error"));
     } finally {
       setCreatingFolder(false);
     }
@@ -816,13 +817,28 @@ export default function ConnersManagement() {
       setSelectedFolderId(null);
       await loadFolders();
     } catch (e) {
-      alert("Failed to rename Conners folder: " + (e.message || "Unknown error"));
+      toast.error("Failed to rename Conners folder: " + (e.message || "Unknown error"));
     }
   };
 
   // Delete folder
   const handleDeleteFolder = async (folderId) => {
-    if (!confirm("Delete this folder and all its contents?")) return;
+    const confirmed = await new Promise((resolve) => {
+      toast(
+        (t) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span style={{ fontWeight: 600 }}>Delete this folder?</span>
+            <span style={{ fontSize: 13, color: '#6b7280' }}>All contents will be deleted.</span>
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <button onClick={() => { toast.dismiss(t.id); resolve(true); }} style={{ padding: '4px 12px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Delete</button>
+              <button onClick={() => { toast.dismiss(t.id); resolve(false); }} style={{ padding: '4px 12px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Cancel</button>
+            </div>
+          </div>
+        ),
+        { duration: Infinity, icon: '⚠️' }
+      );
+    });
+    if (!confirmed) return;
     try {
       await api.delete(`/coners/folders/${folderId}`);
       if (currentFolderId === folderId) {
@@ -831,7 +847,7 @@ export default function ConnersManagement() {
       await loadFolders();
       await loadForms();
     } catch (e) {
-      alert("Failed to delete Conners folder: " + (e.message || "Unknown error"));
+      toast.error("Failed to delete Conners folder: " + (e.message || "Unknown error"));
     }
   };
 
@@ -903,7 +919,7 @@ export default function ConnersManagement() {
       setShowUpload(false);
       loadForms();
     } catch (err) {
-      alert("Upload failed: " + (err.response?.data?.message || err.message));
+      toast.error("Upload failed: " + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
     }
@@ -1004,9 +1020,9 @@ export default function ConnersManagement() {
       await api.post('/coners/upload', formData);
       await loadForms();
       setShowNewDocModal(false);
-      alert('New document created!');
+      toast.success('New document created!');
     } catch (err) {
-      alert('New document failed: ' + (err.response?.data?.message || err.message));
+      toast.error('New document failed: ' + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
     }
@@ -1271,7 +1287,7 @@ export default function ConnersManagement() {
     
     // If no template_data, show error
     console.error('[DEBUG] Coner has no template_data. Please re-upload the file.');
-    alert('This Conners file needs to be re-uploaded to support the New Report feature. Please upload it again.');
+    toast.error('This Conners file needs to be re-uploaded to support the New Report feature. Please upload it again.');
   };
 
   // Save report (like TemplateManager) - FIXED: Preserve original format
@@ -1317,9 +1333,9 @@ export default function ConnersManagement() {
       await api.post('/coners/upload', formData);
       await loadForms();
       setReportPanel(null);
-      alert(`✅ Report "${baseName}" saved successfully!`);
+      toast.success(`Report "${baseName}" saved successfully!`);
     } catch (err) {
-      alert("Save failed: " + err.message);
+      toast.error("Save failed: " + err.message);
     }
   };
 
@@ -1488,7 +1504,7 @@ export default function ConnersManagement() {
 
       setShowViewer(true);
     } catch (err) {
-      alert("Failed to load form: " + err.message);
+      toast.error("Failed to load form: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -1496,12 +1512,26 @@ export default function ConnersManagement() {
 
   // Delete form
   const handleDeleteForm = async (id) => {
-    if (!confirm("Are you sure you want to delete this conor?")) return;
+    const confirmed = await new Promise((resolve) => {
+      toast(
+        (t) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span style={{ fontWeight: 600 }}>Delete this Conners form?</span>
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <button onClick={() => { toast.dismiss(t.id); resolve(true); }} style={{ padding: '4px 12px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Delete</button>
+              <button onClick={() => { toast.dismiss(t.id); resolve(false); }} style={{ padding: '4px 12px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Cancel</button>
+            </div>
+          </div>
+        ),
+        { duration: Infinity, icon: '⚠️' }
+      );
+    });
+    if (!confirmed) return;
     try {
       await api.delete(`/coners/${id}`);
       loadForms();
     } catch (e) {
-      alert("Delete failed: " + e.message);
+      toast.error("Delete failed: " + e.message);
     }
   };
 
@@ -1541,7 +1571,7 @@ export default function ConnersManagement() {
       const uploadResponse = await api.post('/coners/upload', formData);
       loadForms();
     } catch (err) {
-      alert("Duplicate failed: " + err.message);
+      toast.error("Duplicate failed: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -1621,7 +1651,7 @@ export default function ConnersManagement() {
       setShowViewer(true);
 
     } catch (err) {
-      alert("New form failed: " + err.message);
+      toast.error("New form failed: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -1709,10 +1739,10 @@ export default function ConnersManagement() {
       // Refresh forms list
       await loadForms();
       
-      alert("✅ Changes saved successfully!");
+      toast.success("Changes saved successfully!");
     } catch (err) {
       console.error("Save error:", err);
-      alert("Save failed: " + err.message);
+      toast.error("Save failed: " + err.message);
     }
   };
 
@@ -1732,7 +1762,7 @@ export default function ConnersManagement() {
     }
 
     if (!blob) {
-      alert("Export failed: Could not create file");
+      toast.error("Export failed: Could not create file");
       return;
     }
     
@@ -1750,7 +1780,7 @@ export default function ConnersManagement() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    alert("Downloaded successfully!");
+    toast.success("Downloaded successfully!");
   };
 
   // ─── Render ───────────────────────────────────────────────────────────────────
@@ -2135,13 +2165,44 @@ export default function ConnersManagement() {
 
             {/* Forms Grid */}
             {loading ? (
-              <p>Loading...</p>
+              /* Skeleton loader */
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} style={{ background: "#fff", borderRadius: 12, border: "1px solid #E5E7EB", padding: 16 }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                      <div style={{ width: 36, height: 36, background: "#E5E7EB", borderRadius: 8, flexShrink: 0, animation: "pulse 1.5s ease-in-out infinite" }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ height: 12, background: "#E5E7EB", borderRadius: 4, width: "75%", marginBottom: 8, animation: "pulse 1.5s ease-in-out infinite" }} />
+                        <div style={{ height: 10, background: "#F3F4F6", borderRadius: 4, width: "50%", animation: "pulse 1.5s ease-in-out infinite" }} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : filteredForms.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "60px 20px", color: "#6B7280", background: "#fff", borderRadius: 12, border: "1px solid #E5E7EB" }}>
-                <Icon d={icons.file} size={48} />
-                <p>No forms found. Upload your first form!</p>
-                {currentFolderId && <p style={{ fontSize: 12 }}>in this folder</p>}
-            </div>
+              <div style={{ textAlign: "center", padding: "64px 24px", background: "#fff", borderRadius: 12, border: "1px solid #E5E7EB" }}>
+                <div style={{ width: 72, height: 72, borderRadius: "50%", background: "#EFF6FF", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+                  <Icon d={icons.file} size={36} style={{ color: "#60A5FA" }} />
+                </div>
+                <p style={{ fontSize: 16, fontWeight: 600, color: "#111827", margin: "0 0 8px" }}>
+                  {search ? "No forms match your search" : currentFolderId ? "This folder is empty" : "No forms yet"}
+                </p>
+                <p style={{ fontSize: 14, color: "#6B7280", maxWidth: 260, margin: "0 auto 24px" }}>
+                  {search
+                    ? "Try a different search term or clear the search."
+                    : currentFolderId
+                    ? "Upload a form into this folder to get started."
+                    : "Upload your first Conners form to get started."}
+                </p>
+                {!search && (
+                  <button
+                    onClick={() => setShowUpload(true)}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 20px", background: "linear-gradient(to right, #3B82F6, #6366F1)", color: "#fff", fontSize: 14, fontWeight: 500, borderRadius: 8, border: "none", cursor: "pointer" }}
+                  >
+                    Upload your first form →
+                  </button>
+                )}
+              </div>
           ) : (
             <div style={{ 
               display: "grid", 
@@ -2304,7 +2365,7 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
 
   const addNewSheet = () => {
     const name = newSheetName.trim() || `Sheet ${sheetList.length + 1}`;
-    if (sheetList.includes(name)) { alert("Sheet name already exists!"); return; }
+    if (sheetList.includes(name)) { toast.error("Sheet name already exists!"); return; }
     setReportData(prev => ({ ...prev, [name]: [["__html__", "<p><br></p>"]] }));
     setSheetList(prev => [...prev, name]);
     setActiveSheet(name);

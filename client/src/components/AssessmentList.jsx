@@ -27,6 +27,7 @@ const AssessmentList = () => {
   });
   const [showFilters, setShowFilters] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [editingAssessment, setEditingAssessment] = useState(null);
 
   // Form state for create/edit
@@ -121,13 +122,14 @@ const AssessmentList = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this assessment?')) return;
-    
+    setDeleteConfirmId(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    const id = deleteConfirmId;
+    setDeleteConfirmId(null);
     try {
-      const response = await api.request(`/plans/${id}`, {
-        method: 'DELETE'
-      });
-      
+      const response = await api.request(`/plans/${id}`, { method: 'DELETE' });
       if (response.success) {
         toast.success('Assessment deleted successfully');
         fetchAssessments();
@@ -274,15 +276,24 @@ const AssessmentList = () => {
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredAssessments.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                      <FiActivity className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                      <p>No assessments found</p>
-                      <button
-                        onClick={() => setIsCreateModalOpen(true)}
-                        className="mt-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
-                      >
-                        Create your first assessment
-                      </button>
+                    <td colSpan="5" className="px-6 py-16 text-center">
+                      <div className="flex flex-col items-center justify-center">
+                        <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5 bg-blue-50 dark:bg-blue-900/20">
+                          <FiActivity className="w-10 h-10 text-blue-400 dark:text-blue-500" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                          No assessments found
+                        </h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-xs">
+                          Create your first assessment plan to get started.
+                        </p>
+                        <button
+                          onClick={() => setIsCreateModalOpen(true)}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-medium rounded-lg hover:from-blue-600 hover:to-indigo-600 transition-all shadow-sm hover:shadow-md"
+                        >
+                          Create your first assessment →
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ) : (
@@ -438,6 +449,39 @@ const AssessmentList = () => {
           </motion.div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteConfirmId && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setDeleteConfirmId(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white dark:bg-[#1c1c1e] rounded-xl shadow-xl max-w-md w-full p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start gap-4 mb-4">
+                <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+                  <FiTrash2 className="w-5 h-5 text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Delete Assessment?</h3>
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">This action cannot be undone.</p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3">
+                <button onClick={() => setDeleteConfirmId(null)} className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-[#2c2c2e] transition-colors text-sm font-medium">Cancel</button>
+                <button onClick={handleConfirmDelete} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm font-medium flex items-center gap-2">
+                  <FiTrash2 className="w-4 h-4" /> Yes, Delete
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

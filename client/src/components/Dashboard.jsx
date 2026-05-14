@@ -29,13 +29,16 @@ import {
   FiX,
   FiLoader
 } from 'react-icons/fi';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDashboardData, setFilters, clearFilters } from '../store/slices/dashboardSlice';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import StatsCard from './StatsCard';
 import RevenueCard from './RevenueCard';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+} from 'recharts';
 
 // Route mapping - same as Sidebar
 const routeMapping = {
@@ -195,6 +198,23 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
     };
     return colors[type] || 'bg-blue-500';
   };
+
+  // Task 3.11 — Build weekly activity chart data from upcomingAssessments
+  const weeklyChartData = useMemo(() => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const counts = { assessment: Array(7).fill(0), therapy: Array(7).fill(0) };
+    upcomingAssessments.forEach(ev => {
+      const d = new Date(ev.date);
+      const dow = d.getDay();
+      if (ev.type === 'therapy') counts.therapy[dow]++;
+      else counts.assessment[dow]++;
+    });
+    return days.map((day, i) => ({
+      day,
+      Assessments: counts.assessment[i],
+      Therapy: counts.therapy[i],
+    }));
+  }, [upcomingAssessments]);
 
   // Quick Action Cards Data
   const quickActions = [
@@ -670,6 +690,40 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
               )
             ))}
           </div>
+        </motion.div>
+
+        {/* Task 3.11 — Weekly Activity Chart */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="bg-white dark:bg-[#1c1c1e] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 mb-8"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-violet-100 dark:bg-violet-900/30 rounded-lg">
+                <FiTrendingUp className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-800 dark:text-white">Weekly Activity</h3>
+                <p className="text-xs text-gray-400">Sessions scheduled this week by day</p>
+              </div>
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={weeklyChartData} barSize={18} barGap={4}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+              <XAxis dataKey="day" tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={24} />
+              <Tooltip
+                contentStyle={{ borderRadius: 10, border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontSize: 13 }}
+                cursor={{ fill: 'rgba(99,102,241,0.06)' }}
+              />
+              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
+              <Bar dataKey="Assessments" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Therapy" fill="#10b981" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </motion.div>
 
         {/* Upcoming Assessments Section */}

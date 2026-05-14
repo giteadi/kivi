@@ -3,6 +3,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import html2canvas from "html2canvas";
 import * as XLSX from "xlsx";
+import toast from "react-hot-toast";
 import api from "../services/api";
 import { examineeApi } from "../services/examineeApi";
 
@@ -1025,7 +1026,7 @@ export default function ExamineeReportForm({
       pdf.save(`${s1.childName || "Examinee"}_Report_Form.pdf`);
     } catch (err) {
       console.error("PDF Export Error:", err);
-      alert("PDF export failed: " + err.message);
+      toast.error("PDF export failed: " + err.message);
     }
   };
 
@@ -1036,7 +1037,7 @@ export default function ExamineeReportForm({
       
       const element = document.getElementById("print-area");
       if (!element) {
-        alert("Print area not found");
+        toast.error("Print area not found");
         return;
       }
 
@@ -1365,7 +1366,7 @@ export default function ExamineeReportForm({
     } catch (err) {
       console.error("[DOCX Export] FAILED:", err);
       console.error("[DOCX Export] Error stack:", err.stack);
-      alert("DOCX export failed: " + err.message);
+      toast.error("DOCX export failed: " + err.message);
     }
   };
 
@@ -1399,7 +1400,7 @@ export default function ExamineeReportForm({
       const examineeId = formData?.id || formData?.studentId || formData?.examineeId;
       
       if (!examineeId) {
-        alert("Examinee ID not found! Cannot save.");
+        toast.error("Examinee ID not found! Cannot save.");
         console.error("No examineeId found in formData:", formData);
         return;
       }
@@ -1410,7 +1411,7 @@ export default function ExamineeReportForm({
       const result = await examineeApi.saveReportForm(examineeId, formDataToSave);
       console.log("✅ [FRONTEND] Save result:", result);
       
-      alert("Form saved successfully!");
+      toast.success("Form saved successfully!");
       
       // Update parent component with report form data after successful save
       if (onReportDataChange) {
@@ -1439,7 +1440,7 @@ export default function ExamineeReportForm({
       }
     } catch (error) {
       console.error("❌ Save failed:", error);
-      alert("Failed to save form: " + error.message);
+      toast.error("Failed to save form: " + error.message);
     }
   };
 

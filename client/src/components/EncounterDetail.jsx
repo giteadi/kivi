@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { FiArrowLeft, FiMail, FiMapPin, FiUser, FiTrash2 } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 import PrintEncounter from './PrintEncounter';
 import CloseEncounter from './CloseEncounter';
 import { useSidebar } from '../App';
@@ -284,15 +285,15 @@ const EncounterDetail = ({ encounterId, onBack }) => {
 
       if (response.success) {
         console.log('🔍 EncounterDetail: Encounter data saved successfully');
-        alert('Encounter data saved successfully');
+        toast.success('Encounter data saved successfully');
         onBack();
       } else {
         console.error('🔍 EncounterDetail: Failed to save encounter data:', response);
-        alert('Failed to save encounter data');
+        toast.error('Failed to save encounter data');
       }
     } catch (error) {
       console.error('🔍 EncounterDetail: Error saving encounter data:', error);
-      alert('Error saving encounter data');
+      toast.error('Error saving encounter data');
     }
   };
 
@@ -328,14 +329,14 @@ const EncounterDetail = ({ encounterId, onBack }) => {
 
       if (response.success) {
         console.log('🔍 EncounterDetail: Progress saved successfully');
-        alert('Progress saved successfully! You can continue working or close the encounter later.');
+        toast.success('Progress saved successfully! You can continue working or close the encounter later.');
       } else {
         console.error('🔍 EncounterDetail: Failed to save progress:', response);
-        alert('Failed to save progress. Please try again.');
+        toast.error('Failed to save progress. Please try again.');
       }
     } catch (error) {
       console.error('🔍 EncounterDetail: Error saving progress:', error);
-      alert('Error saving progress. Please try again.');
+      toast.error('Error saving progress. Please try again.');
     }
   };
 

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { FiUsers } from 'react-icons/fi';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 import ADHD2Template from './templates/ADHD2Template';
 
 // Simple Template List - No database, just hardcoded for now
@@ -120,11 +122,11 @@ const SimpleGenerateReportModal = ({ isOpen, onClose }) => {
 
   const next = () => {
     if (step === 1 && !selectedExaminee) {
-      alert('Please select an examinee');
+      toast.error('Please select an examinee');
       return;
     }
     if (step === 2 && !selectedTemplate) {
-      alert('Please select a template');
+      toast.error('Please select a template');
       return;
     }
     setStep(step + 1);
@@ -245,8 +247,21 @@ const SimpleGenerateReportModal = ({ isOpen, onClose }) => {
               )}
               
               {examinees.length === 0 && !loading && (
-                <div style={{ textAlign: 'center', padding: 40, color: '#6b7280' }}>
-                  No examinees found. Please add examinees first.
+                <div style={{ textAlign: 'center', padding: '48px 24px' }}>
+                  <div style={{
+                    width: 72, height: 72, borderRadius: '50%',
+                    background: '#EFF6FF', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center',
+                    margin: '0 auto 16px'
+                  }}>
+                    <FiUsers style={{ width: 36, height: 36, color: '#60A5FA' }} />
+                  </div>
+                  <p style={{ fontSize: 16, fontWeight: 600, color: '#111827', marginBottom: 8 }}>
+                    No examinees found
+                  </p>
+                  <p style={{ fontSize: 14, color: '#6b7280', maxWidth: 260, margin: '0 auto' }}>
+                    Add examinees first before generating reports.
+                  </p>
                 </div>
               )}
             </div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FiSearch, FiFileText, FiArrowRight, FiClock, FiUsers, FiArrowLeft, FiX } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 import GenerateReportModal from './GenerateReportModal';
 
 // Simple Template List - Hardcoded templates
@@ -299,7 +300,7 @@ const AssessmentTemplateSelector = ({ onSelectTemplate, onCancel, studentName = 
     if (readyTemplates.includes(template.id)) {
       setShowGenerateModal(true);
     } else {
-      alert(`${template.name} template is coming soon! Please select a template marked as READY for testing.`);
+      toast(`${template.name} template is coming soon! Please select a template marked as READY for testing.`, { icon: '🚧' });
     }
     
     if (onSelectTemplate) {

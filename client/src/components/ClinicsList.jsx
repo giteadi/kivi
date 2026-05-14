@@ -5,6 +5,7 @@ import api from '../services/api';
 import FiltersPanel from './FiltersPanel';
 import CentreCreateForm from './CentreCreateForm';
 import { useToast } from './Toast';
+import toast from 'react-hot-toast';
 
 const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewClinic }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,25 +42,30 @@ const ClinicsList = ({ onViewClinic, onEditClinic, onDeleteClinic, onCreateNewCl
 
   // Delete centre
   const handleDeleteCentre = async (id) => {
-    if (window.confirm('Are you sure you want to delete this center?')) {
-      try {
-        const result = await api.deleteClinic(id);
-        
-        if (result.success) {
-          // Refresh the centres list
-          fetchCentres();
-          toast.success('Center deleted successfully!', { duration: 3000 });
-          // Call the prop handler if it exists (for backward compatibility)
-          if (onDeleteClinic) {
-            onDeleteClinic(id);
-          }
-        } else {
-          toast.error('Failed to delete center: ' + result.message, { duration: 4000 });
-        }
-      } catch (err) {
-        toast.error('Error deleting center', { duration: 4000 });
-      }
-    }
+    toast.custom((t) => (
+      <div style={{ background: '#fff', padding: '16px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', gap: '12px', minWidth: '280px' }}>
+        <p style={{ margin: 0, fontWeight: 600 }}>Delete this center?</p>
+        <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>This action cannot be undone.</p>
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+          <button onClick={() => toast.dismiss(t.id)} style={{ padding: '6px 14px', borderRadius: '6px', border: '1px solid #ddd', cursor: 'pointer', background: '#f5f5f5' }}>Cancel</button>
+          <button onClick={async () => {
+            toast.dismiss(t.id);
+            try {
+              const result = await api.deleteClinic(id);
+              if (result.success) {
+                fetchCentres();
+                toast.success('Center deleted successfully!', { duration: 3000 });
+                if (onDeleteClinic) onDeleteClinic(id);
+              } else {
+                toast.error('Failed to delete center: ' + result.message, { duration: 4000 });
+              }
+            } catch (err) {
+              toast.error('Error deleting center', { duration: 4000 });
+            }
+          }} style={{ padding: '6px 14px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#ef4444', color: '#fff', fontWeight: 600 }}>Delete</button>
+        </div>
+      </div>
+    ), { duration: Infinity });
   };
 
   // Transform API data to match component structure

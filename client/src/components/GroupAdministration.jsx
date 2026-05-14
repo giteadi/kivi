@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { FiPlus, FiTrash2, FiAlertTriangle } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 
 const GroupAdministration = () => {
   const [groups, setGroups] = useState([]);
@@ -17,16 +18,16 @@ const GroupAdministration = () => {
 
   const handleNewGroup = () => {
     // TODO: Implement new group creation
-    alert('New Group functionality to be implemented');
+    toast('New Group functionality to be implemented', { icon: '🚧' });
   };
 
   const handleDeleteGroup = () => {
     if (selectedGroups.length === 0) {
-      alert('Please select at least one group to delete');
+      toast.error('Please select at least one group to delete');
       return;
     }
     // TODO: Implement delete functionality
-    alert(`Delete ${selectedGroups.length} group(s)`);
+    toast(`Delete ${selectedGroups.length} group(s)`, { icon: '🗑️' });
   };
 
   const handleSelectGroup = (groupId) => {

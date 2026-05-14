@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { FiSearch, FiRotateCcw, FiEdit, FiEye, FiFileText } from 'react-icons/fi';
+import { FiSearch, FiRotateCcw, FiEdit, FiEye, FiFileText, FiUsers } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 import api from '../services/api';
 
 const Report = () => {
@@ -61,23 +62,23 @@ const Report = () => {
 
   const handleGenerateReport = () => {
     if (!selectedExaminee) {
-      alert('Please select an examinee first');
+      toast.error('Please select an examinee first');
       return;
     }
     if (examineeAssessments.length === 0) {
-      alert('No assessments found for this examinee. Please create an assessment first.');
+      toast.error('No assessments found for this examinee. Please create an assessment first.');
       return;
     }
-    alert(`Generating report for ${selectedExamineeData?.firstName} ${selectedExamineeData?.lastName} with ${examineeAssessments.length} assessment(s)`);
+    toast(`Generating report for ${selectedExamineeData?.firstName} ${selectedExamineeData?.lastName} with ${examineeAssessments.length} assessment(s)`, { icon: '📄' });
   };
 
   const handleEditAssessment = (assessment) => {
-    alert(`Edit assessment: ${assessment.name || assessment.assessment_name}`);
+    toast(`Edit assessment: ${assessment.name || assessment.assessment_name}`, { icon: '✏️' });
     // TODO: Navigate to assessment edit page or open modal
   };
 
   const handleViewAssessment = (assessment) => {
-    alert(`View assessment details:\n${assessment.name || assessment.assessment_name}\nDate: ${assessment.date || assessment.scheduled_date}`);
+    toast(`${assessment.name || assessment.assessment_name} — ${assessment.date || assessment.scheduled_date}`, { icon: '👁️' });
   };
 
   return (
@@ -258,8 +259,16 @@ const Report = () => {
                   </tr>
                 ) : examinees.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="px-3 py-8 text-center text-gray-500">
-                      No examinees found. Please add examinees first.
+                    <td colSpan="8" className="px-6 py-16 text-center">
+                      <div className="flex flex-col items-center justify-center">
+                        <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5 bg-blue-50">
+                          <FiUsers className="w-10 h-10 text-blue-400" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No examinees found</h3>
+                        <p className="text-sm text-gray-500 mb-6 max-w-xs">
+                          Add examinees first before generating reports.
+                        </p>
+                      </div>
                     </td>
                   </tr>
                 ) : (

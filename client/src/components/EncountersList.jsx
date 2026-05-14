@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchServices } from '../store/slices/serviceSlice';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 import { useSidebar } from '../App';
 
 const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgramme }) => {
@@ -90,7 +91,7 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
     
     if (!originalProgramme) {
       console.error('❌ Could not find original programme data for id:', transformedProgramme.id);
-      alert('Error: Could not load programme data for editing');
+      toast.error('Error: Could not load programme data for editing');
       return;
     }
     
@@ -106,7 +107,7 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
     try {
       // Validate required fields
       if (!newSessionData.title) {
-        alert('Please fill in all required fields (Title)');
+        toast.error('Please fill in all required fields (Title)');
         return;
       }
 
@@ -143,7 +144,7 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
       
       if (response.success) {
         console.log(`Success! ${isEditMode ? 'Updated' : 'Created'} programme and closing modal...`);
-        alert(`Programme ${isEditMode ? 'updated' : 'created'} successfully!`);
+        toast.success(`Programme ${isEditMode ? 'updated' : 'created'} successfully!`);
         
         // Close modal and reset state
         setShowNewSessionModal(false);
@@ -173,11 +174,11 @@ const EncountersList = ({ onEditProgramme, onDeleteProgramme, onCreateNewProgram
           console.log('Skipping callback for edit mode - no navigation needed');
         }
       } else {
-        alert(`Failed to ${isEditMode ? 'update' : 'create'} programme: ${response.message || 'Unknown error'}`);
+        toast.error(`Failed to ${isEditMode ? 'update' : 'create'} programme: ${response.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error(`Error ${isEditMode ? 'updating' : 'creating'} session:`, error);
-      alert(`Error ${isEditMode ? 'updating' : 'creating'} session: ${error.message}`);
+      toast.error(`Error ${isEditMode ? 'updating' : 'creating'} session: ${error.message}`);
     }
   };
 

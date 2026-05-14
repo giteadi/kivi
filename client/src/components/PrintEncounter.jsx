@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { FiPrinter, FiDownload, FiMail, FiEye } from 'react-icons/fi';
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 
 const PrintEncounter = ({ sessionData, problems, observations, notes }) => {
   const [selectedSections, setSelectedSections] = useState({
@@ -60,25 +61,21 @@ const PrintEncounter = ({ sessionData, problems, observations, notes }) => {
   };
 
   const handlePrint = () => {
-    // In a real app, this would generate and print the document
     console.log('Printing encounter with sections:', selectedSections);
-    alert('Print functionality would be implemented here');
+    toast('Print functionality would be implemented here', { icon: '🖨️' });
   };
 
   const handleDownload = () => {
-    // In a real app, this would generate and download the document
     console.log('Downloading encounter as:', printFormat);
-    alert(`Download as ${printFormat.toUpperCase()} would be implemented here`);
+    toast(`Download as ${printFormat.toUpperCase()} would be implemented here`, { icon: '⬇️' });
   };
 
   const handleEmail = () => {
-    // In a real app, this would open email dialog
-    alert('Email functionality would be implemented here');
+    toast('Email functionality would be implemented here', { icon: '📧' });
   };
 
   const handlePreview = () => {
-    // In a real app, this would show print preview
-    alert('Print preview would be implemented here');
+    toast('Print preview would be implemented here', { icon: '👁️' });
   };
 
   return (

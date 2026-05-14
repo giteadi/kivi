@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FiMessageSquare, 
   FiMail, 
@@ -11,9 +11,11 @@ import {
   FiTrash2,
   FiRefreshCw,
   FiSearch,
-  FiFilter
+  FiFilter,
+  FiAlertTriangle
 } from 'react-icons/fi';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 
 const Queries = () => {
   const [queries, setQueries] = useState([]);
@@ -22,6 +24,7 @@ const Queries = () => {
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
   useEffect(() => {
     fetchQueries();
@@ -70,18 +73,22 @@ const Queries = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this query?')) return;
-    
+    setDeleteConfirmId(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    const id = deleteConfirmId;
+    setDeleteConfirmId(null);
     try {
       await api.delete(`/contact-queries/${id}`);
       setQueries(queries.filter(q => q.id !== id));
-      
-      // Update localStorage
       const localQueries = JSON.parse(localStorage.getItem('contactQueries') || '[]');
       const updatedLocal = localQueries.filter(q => q.id !== id);
       localStorage.setItem('contactQueries', JSON.stringify(updatedLocal));
+      toast.success('Query deleted successfully');
     } catch (err) {
       console.error('Error deleting query:', err);
+      toast.error('Failed to delete query');
     }
   };
 
@@ -448,6 +455,54 @@ const Queries = () => {
           </motion.div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteConfirmId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setDeleteConfirmId(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white dark:bg-[#1c1c1e] rounded-xl shadow-xl max-w-md w-full p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start gap-4 mb-4">
+                <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+                  <FiAlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Delete Query?</h3>
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    This action cannot be undone. The query will be permanently removed.
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setDeleteConfirmId(null)}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-[#2c2c2e] transition-colors text-sm font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm font-medium flex items-center gap-2"
+                >
+                  <FiTrash2 className="w-4 h-4" />
+                  Yes, Delete
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

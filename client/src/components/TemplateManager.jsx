@@ -6,6 +6,7 @@
 
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import * as XLSX from "xlsx";
+import toast from "react-hot-toast";
 import {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
   AlignmentType, HeadingLevel, BorderStyle, WidthType, ShadingType, LevelFormat, ImageRun,
@@ -16,6 +17,23 @@ import api from "../services/api";
 import ReportSheetViewer from "./ReportSheetViewer";
 import Sidebar from "./Sidebar";
 import ExportDropdown from "./ExportDropdown";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragOverlay,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 const Icon = ({ d, size = 16, stroke = "currentColor", fill = "none" }) => (
@@ -569,20 +587,111 @@ async function exportToPdf(allData, sheetNames, patientName, templateName, viewe
     pdf.save(`${patientName || "Report"}_${templateName || "export"}.pdf`);
   } catch (err) {
     console.error("[PDF Export Error]", err);
-    alert("PDF export failed: " + err.message);
+    toast.error("PDF export failed: " + err.message);
   }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
 // RENAME MODAL COMPONENT
 // ══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
+// MERGE MODAL — name the merged template before saving
+// ══════════════════════════════════════════════════════════════════════════════
+function MergeModal({ templates, onClose, onMerge }) {
+  const defaultName = templates.map(t => {
+    const parts = t.name.split("—").map(s => s.trim());
+    return parts.length >= 2 ? parts[1] : t.name;
+  }).join(" + ");
+
+  const [name, setName] = useState(defaultName);
+  const [saving, setSaving] = useState(false);
+
+  const handleMerge = async () => {
+    const trimmed = name.trim();
+    if (!trimmed) { toast.error("Please enter a name for the merged template"); return; }
+    setSaving(true);
+    try {
+      await onMerge(trimmed);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Build preview: list all sheets from all templates
+  const sheetPreview = templates.flatMap(t =>
+    (t.sheetNames || []).map(s => ({ sheet: s, from: t.name.split("—")[0]?.trim() || t.name }))
+  );
+
+  return (
+    <div style={css.overlay}>
+      <div style={{ ...css.modal, background: "#fff", maxWidth: 480 }} className="dark:bg-[#1c1c1e]">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }} className="text-gray-900 dark:text-white">
+              🔀 Merge {templates.length} Templates
+            </h3>
+            <p style={{ margin: "4px 0 0", fontSize: 12, color: "#6b7280" }}>
+              All sheets will be combined into one template
+            </p>
+          </div>
+          <button style={css.iconBtn} onClick={onClose} className="border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400">
+            <Icon d={icons.x} size={16} />
+          </button>
+        </div>
+
+        {/* Sheet preview */}
+        <div style={{ background: "#F9FAFB", borderRadius: 8, padding: "10px 14px", marginBottom: 16, maxHeight: 160, overflowY: "auto" }} className="dark:bg-[#252528]">
+          <p style={{ margin: "0 0 8px", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "#9CA3AF" }}>
+            Sheets to merge ({sheetPreview.length} total)
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {sheetPreview.map((item, i) => (
+              <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px", background: "#E0E7FF", color: "#3730A3", borderRadius: 6, fontSize: 11, fontWeight: 500 }}>
+                <span style={{ opacity: 0.6, fontSize: 10 }}>{item.from} /</span>
+                {item.sheet}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Name input */}
+        <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: "#374151" }} className="dark:text-gray-300">
+          Merged Template Name
+        </label>
+        <input
+          style={{ ...css.input, border: "1px solid #D1D5DB", background: "#fff", color: "#111827" }}
+          className="dark:bg-[#2c2c2e] dark:border-gray-700 dark:text-white"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          autoFocus
+          onKeyDown={e => { if (e.key === "Enter") handleMerge(); if (e.key === "Escape") onClose(); }}
+          placeholder="Enter merged template name…"
+        />
+
+        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 20 }}>
+          <button style={css.btn("ghost")} onClick={onClose} className="border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300">
+            Cancel
+          </button>
+          <button
+            style={{ ...css.btn("primary"), opacity: saving ? 0.7 : 1 }}
+            onClick={handleMerge}
+            disabled={saving}
+          >
+            {saving ? "⏳ Merging…" : "🔀 Merge & Save"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function RenameModal({ template, onClose, onRename }) {
   const [newName, setNewName] = useState(template.name || "");
   const [saving, setSaving] = useState(false);
 
   const handleRename = async () => {
     const trimmed = newName.trim();
-    if (!trimmed) { alert("Name cannot be empty"); return; }
+    if (!trimmed) { toast.error("Name cannot be empty"); return; }
     if (trimmed === template.name) { onClose(); return; }
     setSaving(true);
     try {
@@ -595,7 +704,7 @@ function RenameModal({ template, onClose, onRename }) {
       onRename(template.id, trimmed);
       onClose();
     } catch (err) {
-      alert("Rename failed: " + err.message);
+      toast.error("Rename failed: " + err.message);
     } finally {
       setSaving(false);
     }
@@ -639,12 +748,13 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
   const [sheetList, setSheetList]         = useState(allSheets);
   const [showNewSheetModal, setShowNewSheetModal] = useState(false);
   const [newSheetName, setNewSheetName]   = useState("");
+  const [showBackConfirm, setShowBackConfirm] = useState(false);
 
   const viewerRef = useRef(null);
 
   const addNewSheet = () => {
     const name = newSheetName.trim() || `Sheet ${sheetList.length + 1}`;
-    if (sheetList.includes(name)) { alert("Sheet name already exists!"); return; }
+    if (sheetList.includes(name)) { toast.error("Sheet name already exists!"); return; }
     setReportData(prev => ({ ...prev, [name]: [["__html__", "<p><br></p>"]] }));
     setSheetList(prev => [...prev, name]);
     setActiveSheet(name);
@@ -654,10 +764,22 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
 
   return (
     <div style={css.panel}>
+      {showBackConfirm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div style={{ background: '#fff', borderRadius: 12, padding: 24, maxWidth: 380, width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+            <h3 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 700 }}>Discard changes?</h3>
+            <p style={{ margin: '0 0 20px', fontSize: 14, color: '#6b7280' }}>Your unsaved changes will be lost.</p>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowBackConfirm(false)} style={{ padding: '6px 16px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 500 }}>Stay</button>
+              <button onClick={() => { setShowBackConfirm(false); onBack(); }} style={{ padding: '6px 16px', background: '#1f2937', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 500 }}>Leave</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div style={{ ...css.panelHeader, background: "#064E3B", borderColor: "#065F46" }}>
         <button
           style={{ ...css.btn("ghost"), color: "#D1FAE5", borderColor: "#065F46" }}
-          onClick={() => { if (confirm("Discard changes and go back?")) onBack(); }}
+          onClick={() => setShowBackConfirm(true)}
         >
           <Icon d={icons.back} size={15} /> Back
         </button>
@@ -813,8 +935,8 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
                   template_data: { sheets: localSheets, sheetNames: template.sheetNames, row_heights: template.rowHeights || {} }
                 });
                 onTemplateUpdated?.(template.id, localSheets);
-                alert("Template saved successfully!");
-              } catch (err) { alert("Save failed: " + err.message); }
+                toast.success("Template saved successfully!");
+              } catch (err) { toast.error("Save failed: " + err.message); }
             }}
           >
             <Icon d={icons.save} size={14} /> Save Changes
@@ -864,6 +986,87 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
 // ══════════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ══════════════════════════════════════════════════════════════════════════════
+// Task 3.9 — Sortable card wrapper for dnd-kit
+function SortableTemplateCard({ t, isSel, openMenuId, menuRef, setOpenMenuId, openView, openCreateReport, setRenameTarget, deleteTpl, toggleSel, getDisplayName, icons, isDragging }) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: t.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.3 : 1,
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      onClick={() => openView(t)}
+      className={`bg-white dark:bg-[#1c1c1e] rounded-xl overflow-hidden cursor-pointer transition-all ${isSel ? 'border-2 border-blue-500 shadow-[0_0_0_3px_rgba(59,130,246,0.1)]' : 'border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'}`}
+    >
+      <div style={{ padding: "14px 16px 10px", display: "flex", alignItems: "flex-start", gap: 12 }}>
+        {/* Drag handle */}
+        <div
+          {...attributes}
+          {...listeners}
+          onClick={e => e.stopPropagation()}
+          className="w-5 h-9 flex items-center justify-center flex-shrink-0 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 transition-colors"
+          title="Drag to reorder"
+        >
+          <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor"><circle cx="4" cy="3" r="1.5"/><circle cx="8" cy="3" r="1.5"/><circle cx="4" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="4" cy="13" r="1.5"/><circle cx="8" cy="13" r="1.5"/></svg>
+        </div>
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"><Icon d={icons.file} size={20} /></div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p className="text-sm font-semibold mb-0.5 leading-tight truncate text-gray-900 dark:text-white" title={t.name}>
+            {getDisplayName(t)}
+          </p>
+          {t.type === "report" && (() => {
+            const parts = t.name.split("—").map(s => s.trim());
+            return parts.length >= 3 ? <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">{parts[parts.length - 1]}</p> : null;
+          })()}
+          <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+            <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${t.type === "report" ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400'}`}>{t.type}</span>
+            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">{(t.sheetNames || []).length} sheets</span>
+          </div>
+        </div>
+        <input type="checkbox" checked={isSel} onChange={e => { e.stopPropagation(); toggleSel(t); }} onClick={e => e.stopPropagation()} className="accent-blue-600 w-4 h-4" />
+      </div>
+      <div className="border-t border-gray-100 dark:border-gray-700 p-2 flex items-center justify-between gap-1">
+        <button
+          onClick={(e) => { e.stopPropagation(); openCreateReport(t); }}
+          className="text-xs px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md transition-colors font-medium"
+          title="New Report"
+        >
+          + New Report
+        </button>
+        <div style={{ position: 'relative' }} ref={openMenuId === t.id ? menuRef : null}>
+          <button
+            onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === t.id ? null : t.id); }}
+            className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400"
+            title="More options"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+          </button>
+          {openMenuId === t.id && (
+            <div style={{ position: 'absolute', right: 0, bottom: '110%', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 100, minWidth: 140, overflow: 'hidden' }} className="dark:bg-[#1c1c1e] dark:border-gray-700">
+              <button onClick={(e) => { e.stopPropagation(); openView(t); setOpenMenuId(null); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, textAlign: 'left' }} className="hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                View / Edit
+              </button>
+              <button onClick={(e) => { e.stopPropagation(); setRenameTarget(t); setOpenMenuId(null); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, textAlign: 'left' }} className="hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                Rename
+              </button>
+              <div style={{ height: 1, background: '#e5e7eb', margin: '2px 0' }} className="dark:bg-gray-700" />
+              <button onClick={(e) => { e.stopPropagation(); deleteTpl(t.id); setOpenMenuId(null); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, textAlign: 'left', color: '#ef4444' }} className="hover:bg-red-50 dark:hover:bg-red-900/20">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                Delete
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function TemplateManager() {
   const [templates, setTemplates]   = useState([]);
   const [loading, setLoading]       = useState(false);
@@ -878,6 +1081,32 @@ export default function TemplateManager() {
 
   // FIX 3: Rename modal state
   const [renameTarget, setRenameTarget] = useState(null);
+
+  // Task — Merge modal state
+  const [showMergeModal, setShowMergeModal] = useState(false);
+
+  // Task 2.1 — overflow menu state
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const menuRef = useRef(null);
+
+  // Task 3.9 — dnd-kit drag-and-drop order
+  const [templateOrder, setTemplateOrder] = useState([]);
+  const [activeDragId, setActiveDragId] = useState(null);
+  const dndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  // Close overflow menu on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const fileRef = useRef(null);
 
@@ -906,6 +1135,18 @@ export default function TemplateManager() {
           };
         });
         setTemplates(transformed);
+        // Task 3.9 — init order from localStorage or default
+        const savedOrder = localStorage.getItem('templateOrder');
+        if (savedOrder) {
+          try {
+            const parsed = JSON.parse(savedOrder);
+            // merge: keep saved order, append any new ids
+            const newIds = transformed.map(t => t.id).filter(id => !parsed.includes(id));
+            setTemplateOrder([...parsed, ...newIds]);
+          } catch { setTemplateOrder(transformed.map(t => t.id)); }
+        } else {
+          setTemplateOrder(transformed.map(t => t.id));
+        }
       } else {
         setTemplates([]);
       }
@@ -926,15 +1167,29 @@ export default function TemplateManager() {
       );
       const result = await response.json();
       if (result.success) await fetchTemplates();
-      else alert("Upload failed: " + (result.message || "Unknown error"));
-    } catch (err) { alert("Error: " + err.message); }
+      else toast.error("Upload failed: " + (result.message || "Unknown error"));
+    } catch (err) { toast.error("Error: " + err.message); }
     finally { setLoading(false); e.target.value = ""; }
   };
 
   const deleteTpl = async (id) => {
-    if (!confirm("Delete this template?")) return;
+    const confirmed = await new Promise((resolve) => {
+      toast(
+        (t) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span style={{ fontWeight: 600 }}>Delete this template?</span>
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <button onClick={() => { toast.dismiss(t.id); resolve(true); }} style={{ padding: '4px 12px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Delete</button>
+              <button onClick={() => { toast.dismiss(t.id); resolve(false); }} style={{ padding: '4px 12px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Cancel</button>
+            </div>
+          </div>
+        ),
+        { duration: Infinity, icon: '⚠️' }
+      );
+    });
+    if (!confirmed) return;
     try { await api.deleteTemplate(id); await fetchTemplates(); }
-    catch { alert("Failed to delete"); }
+    catch { toast.error("Failed to delete"); }
   };
 
   const openView = (tpl) => { setActiveTemplate(tpl); setPanel("view"); };
@@ -1070,9 +1325,9 @@ export default function TemplateManager() {
       await fetchTemplates();
       setPanel(null);
       setReportPanel(null);
-      alert(`✅ Report "${name}" saved successfully!`);
+      toast.success(`Report "${name}" saved successfully!`);
     } catch (err) {
-      alert("Save failed: " + err.message);
+      toast.error("Save failed: " + err.message);
     }
   };
 
@@ -1081,10 +1336,91 @@ export default function TemplateManager() {
     setTemplates(prev => prev.map(t => t.id === id ? { ...t, name: newName } : t));
   };
 
-  const filtered = useMemo(() =>
-    templates.filter(t => !search || t.name?.toLowerCase().includes(search.toLowerCase())),
-    [templates, search]
-  );
+  // Merge selected templates — combine all sheets into one new template
+  const handleMerge = async (mergedName) => {
+    const mergedSheets = {};
+    const mergedSheetNames = [];
+
+    selected.forEach(tpl => {
+      (tpl.sheetNames || []).forEach(sheetName => {
+        // Deduplicate sheet names: if collision, prefix with template name
+        let finalName = sheetName;
+        if (mergedSheets[finalName] !== undefined) {
+          const base = tpl.name.split("—")[0]?.trim() || tpl.name;
+          finalName = `${base} - ${sheetName}`.substring(0, 31);
+          // If still collides, append index
+          let idx = 2;
+          while (mergedSheets[finalName] !== undefined) {
+            finalName = `${base} - ${sheetName} (${idx++})`.substring(0, 31);
+          }
+        }
+        mergedSheets[finalName] = tpl.sheets[sheetName] || [["__html__", "<p><br></p>"]];
+        mergedSheetNames.push(finalName);
+      });
+    });
+
+    try {
+      await api.createTemplate({
+        name: mergedName,
+        type: "import",
+        description: `Merged from: ${selected.map(t => t.name).join(", ")}`,
+        template_data: {
+          sheets: mergedSheets,
+          sheetNames: mergedSheetNames,
+        },
+      });
+      await fetchTemplates();
+      setSelected([]);
+      setShowMergeModal(false);
+      toast.success(`"${mergedName}" created with ${mergedSheetNames.length} sheets`);
+    } catch (err) {
+      toast.error("Merge failed: " + err.message);
+      throw err; // re-throw so MergeModal can reset saving state
+    }
+  };
+
+  // Bulk delete selected templates
+  const handleBulkDelete = async () => {
+    const confirmed = await new Promise((resolve) => {
+      toast(
+        (t) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span style={{ fontWeight: 600 }}>Delete {selected.length} templates?</span>
+            <span style={{ fontSize: 12, color: '#6b7280' }}>This cannot be undone.</span>
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <button onClick={() => { toast.dismiss(t.id); resolve(true); }} style={{ padding: '4px 12px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Delete All</button>
+              <button onClick={() => { toast.dismiss(t.id); resolve(false); }} style={{ padding: '4px 12px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Cancel</button>
+            </div>
+          </div>
+        ),
+        { duration: Infinity, icon: '⚠️' }
+      );
+    });
+    if (!confirmed) return;
+    try {
+      await Promise.all(selected.map(t => api.deleteTemplate(t.id)));
+      await fetchTemplates();
+      setSelected([]);
+      toast.success(`${selected.length} templates deleted`);
+    } catch {
+      toast.error("Some deletions failed");
+    }
+  };
+
+  const filtered = useMemo(() => {
+    const base = templates.filter(t => !search || t.name?.toLowerCase().includes(search.toLowerCase()));
+    // Task 3.9 — sort by drag-and-drop order
+    if (templateOrder.length > 0) {
+      return [...base].sort((a, b) => {
+        const ai = templateOrder.indexOf(a.id);
+        const bi = templateOrder.indexOf(b.id);
+        if (ai === -1) return 1;
+        if (bi === -1) return -1;
+        return ai - bi;
+      });
+    }
+    return base;
+  }, [templates, search, templateOrder]);
 
   const toggleSel = (t) => setSelected(s => s.find(x => x.id === t.id) ? s.filter(x => x.id !== t.id) : [...s, t]);
 
@@ -1132,6 +1468,57 @@ export default function TemplateManager() {
         </div>
 
         <div style={css.content}>
+          {/* ── BULK ACTION BAR ── */}
+          {selected.length > 0 && (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
+              padding: "10px 16px", marginBottom: 16,
+              background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 10,
+            }} className="dark:bg-blue-900/20 dark:border-blue-800">
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  width: 24, height: 24, borderRadius: "50%",
+                  background: "#2563EB", color: "#fff", fontSize: 12, fontWeight: 700,
+                }}>
+                  {selected.length}
+                </span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "#1E40AF" }} className="dark:text-blue-300">
+                  template{selected.length > 1 ? "s" : ""} selected
+                </span>
+              </div>
+              <div style={{ display: "flex", gap: 8, marginLeft: "auto", flexWrap: "wrap" }}>
+                {selected.length >= 2 && (
+                  <button
+                    style={{ ...css.btn("primary"), background: "#7C3AED", borderColor: "#7C3AED" }}
+                    onClick={() => setShowMergeModal(true)}
+                    title="Combine sheets from all selected templates into one"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/>
+                    </svg>
+                    Merge Templates
+                  </button>
+                )}
+                <button
+                  style={{ ...css.btn("red") }}
+                  onClick={handleBulkDelete}
+                  title="Delete all selected templates"
+                >
+                  <Icon d={icons.trash} size={14} />
+                  Delete {selected.length > 1 ? `All ${selected.length}` : ""}
+                </button>
+                <button
+                  style={css.btn("ghost")}
+                  onClick={() => setSelected([])}
+                  className="border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400"
+                >
+                  <Icon d={icons.x} size={14} />
+                  Clear
+                </button>
+              </div>
+            </div>
+          )}
           {filtered.length === 0 ? (
             <div className="text-center py-16 text-gray-400 dark:text-gray-500">
               <div className="text-5xl mb-3">📂</div>
@@ -1142,66 +1529,58 @@ export default function TemplateManager() {
               </button>
             </div>
           ) : view === "grid" ? (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(250px,1fr))", gap: 16 }}>
-              {filtered.map(t => {
-                const isSel = !!selected.find(s => s.id === t.id);
-                return (
-                  <div key={t.id} onClick={() => openView(t)} className={`bg-white dark:bg-[#1c1c1e] rounded-xl overflow-hidden cursor-pointer transition-all ${isSel ? 'border-2 border-blue-500 shadow-[0_0_0_3px_rgba(59,130,246,0.1)]' : 'border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'}`}>
-                    <div style={{ padding: "14px 16px 10px", display: "flex", alignItems: "flex-start", gap: 12 }}>
-                      <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"><Icon d={icons.file} size={20} /></div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        {/* FIX 2: Show patient name + template name for reports */}
-                        <p className="text-sm font-semibold mb-0.5 leading-tight truncate text-gray-900 dark:text-white" title={t.name}>
-                          {getDisplayName(t)}
-                        </p>
-                        {/* Show date as subtitle for reports */}
-                        {t.type === "report" && (() => {
-                          const parts = t.name.split("—").map(s => s.trim());
-                          return parts.length >= 3 ? <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">{parts[parts.length - 1]}</p> : null;
-                        })()}
-                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${t.type === "report" ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400'}`}>{t.type}</span>
-                          <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">{(t.sheetNames || []).length} sheets</span>
-                        </div>
-                      </div>
-                      <input type="checkbox" checked={isSel} onChange={() => {}} className="accent-blue-600 w-4 h-4" />
+            <DndContext
+              sensors={dndSensors}
+              collisionDetection={closestCenter}
+              onDragStart={({ active }) => setActiveDragId(active.id)}
+              onDragEnd={({ active, over }) => {
+                setActiveDragId(null);
+                if (!over || active.id === over.id) return;
+                setTemplateOrder(prev => {
+                  const ids = prev.length > 0 ? prev : filtered.map(t => t.id);
+                  const oldIdx = ids.indexOf(active.id);
+                  const newIdx = ids.indexOf(over.id);
+                  if (oldIdx === -1 || newIdx === -1) return prev;
+                  const next = arrayMove(ids, oldIdx, newIdx);
+                  localStorage.setItem('templateOrder', JSON.stringify(next));
+                  return next;
+                });
+              }}
+            >
+              <SortableContext items={filtered.map(t => t.id)} strategy={rectSortingStrategy}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(250px,1fr))", gap: 16 }}>
+                  {filtered.map(t => (
+                    <SortableTemplateCard
+                      key={t.id}
+                      t={t}
+                      isSel={!!selected.find(s => s.id === t.id)}
+                      openMenuId={openMenuId}
+                      menuRef={menuRef}
+                      setOpenMenuId={setOpenMenuId}
+                      openView={openView}
+                      openCreateReport={openCreateReport}
+                      setRenameTarget={setRenameTarget}
+                      deleteTpl={deleteTpl}
+                      toggleSel={toggleSel}
+                      getDisplayName={getDisplayName}
+                      icons={icons}
+                      isDragging={activeDragId === t.id}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+              <DragOverlay>
+                {activeDragId ? (() => {
+                  const t = filtered.find(x => x.id === activeDragId);
+                  if (!t) return null;
+                  return (
+                    <div className="bg-white dark:bg-[#1c1c1e] rounded-xl border-2 border-blue-400 shadow-2xl opacity-90 p-4">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{getDisplayName(t)}</p>
                     </div>
-                    <div className="border-t border-gray-100 dark:border-gray-700 p-2 flex items-center justify-between gap-1 flex-wrap">
-                      <div className="flex gap-1 flex-wrap">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); openView(t); }}
-                          className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
-                          title="View/Edit"
-                        >
-                          View
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); openCreateReport(t); }}
-                          className="text-xs px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md transition-colors"
-                          title="New Report"
-                        >
-                          New Report
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setRenameTarget(t); }}
-                          className="text-xs px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-md transition-colors"
-                          title="Rename"
-                        >
-                          Rename
-                        </button>
-                      </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); deleteTpl(t.id); }}
-                        className="text-xs px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
-                        title="Delete"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })() : null}
+              </DragOverlay>
+            </DndContext>
           ) : (
             <div className="bg-white dark:bg-[#1c1c1e] rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-300">
               <table className="w-full text-sm">
@@ -1240,35 +1619,40 @@ export default function TemplateManager() {
                           {new Date(t.createdAt).toLocaleDateString()}
                         </td>
                         <td className="px-3 py-3 border-b border-gray-100 dark:border-gray-700">
-                          <div className="flex gap-1 justify-end flex-wrap">
-                            <button
-                              onClick={(e) => { e.stopPropagation(); openView(t); }}
-                              className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
-                              title="View"
-                            >
-                              View
-                            </button>
+                          <div className="flex gap-1 justify-end items-center">
                             <button
                               onClick={(e) => { e.stopPropagation(); openCreateReport(t); }}
-                              className="text-xs px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md transition-colors"
+                              className="text-xs px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md transition-colors font-medium"
                               title="New Report"
                             >
-                              New Report
+                              + New Report
                             </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setRenameTarget(t); }}
-                              className="text-xs px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-md transition-colors"
-                              title="Rename"
-                            >
-                              Rename
-                            </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); deleteTpl(t.id); }}
-                              className="text-xs px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
-                              title="Delete"
-                            >
-                              Delete
-                            </button>
+                            <div style={{ position: 'relative' }} ref={openMenuId === `list-${t.id}` ? menuRef : null}>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === `list-${t.id}` ? null : `list-${t.id}`); }}
+                                className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400"
+                                title="More options"
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                              </button>
+                              {openMenuId === `list-${t.id}` && (
+                                <div style={{ position: 'absolute', right: 0, bottom: '110%', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 100, minWidth: 140, overflow: 'hidden' }} className="dark:bg-[#1c1c1e] dark:border-gray-700">
+                                  <button onClick={(e) => { e.stopPropagation(); openView(t); setOpenMenuId(null); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, textAlign: 'left' }} className="hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    View / Edit
+                                  </button>
+                                  <button onClick={(e) => { e.stopPropagation(); setRenameTarget(t); setOpenMenuId(null); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, textAlign: 'left' }} className="hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                                    Rename
+                                  </button>
+                                  <div style={{ height: 1, background: '#e5e7eb', margin: '2px 0' }} className="dark:bg-gray-700" />
+                                  <button onClick={(e) => { e.stopPropagation(); deleteTpl(t.id); setOpenMenuId(null); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, textAlign: 'left', color: '#ef4444' }} className="hover:bg-red-50 dark:hover:bg-red-900/20">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                    Delete
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </td>
                       </tr>
@@ -1310,6 +1694,15 @@ export default function TemplateManager() {
           template={renameTarget}
           onClose={() => setRenameTarget(null)}
           onRename={handleRename}
+        />
+      )}
+
+      {/* ── MERGE MODAL ── */}
+      {showMergeModal && selected.length >= 2 && (
+        <MergeModal
+          templates={selected}
+          onClose={() => setShowMergeModal(false)}
+          onMerge={handleMerge}
         />
       )}
     </div>

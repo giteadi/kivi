@@ -234,17 +234,27 @@ const SessionList = ({ onViewEncounter }) => {
   const handleDeleteSession = async (sessionId) => {
     console.log('🔍 SessionList: handleDeleteSession called for session:', sessionId);
 
-    if (window.confirm('Are you sure you want to delete this session?')) {
-      try {
-        await dispatch(deleteSession(sessionId));
-        console.log('🔍 SessionList: Session deleted successfully, fetching updated sessions');
-        dispatch(fetchSessions());
-      } catch (error) {
-        console.error('🔍 SessionList: Error deleting session:', error);
-      }
-    } else {
-      console.log('🔍 SessionList: Session deletion cancelled by user');
-    }
+    toast.custom((t) => (
+      <div style={{ background: '#fff', padding: '16px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', gap: '12px', minWidth: '280px' }}>
+        <p style={{ margin: 0, fontWeight: 600 }}>Delete this session?</p>
+        <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>This action cannot be undone.</p>
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+          <button onClick={() => { toast.dismiss(t.id); console.log('🔍 SessionList: Session deletion cancelled by user'); }} style={{ padding: '6px 14px', borderRadius: '6px', border: '1px solid #ddd', cursor: 'pointer', background: '#f5f5f5' }}>Cancel</button>
+          <button onClick={async () => {
+            toast.dismiss(t.id);
+            try {
+              await dispatch(deleteSession(sessionId));
+              console.log('🔍 SessionList: Session deleted successfully, fetching updated sessions');
+              dispatch(fetchSessions());
+              toast.success('Session deleted successfully');
+            } catch (error) {
+              console.error('🔍 SessionList: Error deleting session:', error);
+              toast.error('Failed to delete session');
+            }
+          }} style={{ padding: '6px 14px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#ef4444', color: '#fff', fontWeight: 600 }}>Delete</button>
+        </div>
+      </div>
+    ), { duration: Infinity });
   };
 
   const openEditForm = (session) => {

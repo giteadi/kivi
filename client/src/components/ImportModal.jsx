@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiUpload, FiDownload, FiInfo, FiMail, FiMessageSquare, FiCheck } from 'react-icons/fi';
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 
 const ImportModal = ({ isOpen, onClose, importType = 'patients' }) => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -125,13 +126,12 @@ const ImportModal = ({ isOpen, onClose, importType = 'patients' }) => {
   };
 
   const handleDownloadSample = () => {
-    // In a real app, this would download the actual sample file
-    alert(`Downloading ${currentImport.sampleFileName} sample file...`);
+    toast(`Downloading ${currentImport.sampleFileName} sample file...`, { icon: '⬇️' });
   };
 
   const handleImport = async () => {
     if (!selectedFile || !fileFormat || fileFormat === 'Choose file format...') {
-      alert('Please select a file and format before importing.');
+      toast.error('Please select a file and format before importing.');
       return;
     }
 
@@ -141,7 +141,7 @@ const ImportModal = ({ isOpen, onClose, importType = 'patients' }) => {
       // Simulate file upload
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      alert(`${currentImport.title} completed successfully! ${Math.floor(Math.random() * 50) + 10} records imported.`);
+      toast.success(`${currentImport.title} completed successfully! ${Math.floor(Math.random() * 50) + 10} records imported.`);
       
       // Reset form
       setSelectedFile(null);
@@ -150,7 +150,7 @@ const ImportModal = ({ isOpen, onClose, importType = 'patients' }) => {
       
       onClose();
     } catch (error) {
-      alert('Import failed. Please try again.');
+      toast.error('Import failed. Please try again.');
     } finally {
       setIsUploading(false);
     }

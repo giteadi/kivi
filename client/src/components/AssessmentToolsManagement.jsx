@@ -1,18 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  FiTool,
-  FiPlus,
-  FiEdit2,
-  FiTrash2,
-  FiX,
-  FiSave,
-  FiDollarSign,
-  FiTag,
-  FiFileText,
-  FiSearch,
-  FiFilter,
-  FiArrowLeft
+  FiTool as Wrench,
+  FiPlus as Plus,
+  FiEdit2 as Pencil,
+  FiTrash2 as Trash2,
+  FiX as X,
+  FiSave as Save,
+  FiDollarSign as DollarSign,
+  FiTag as Tag,
+  FiFileText as FileText,
+  FiSearch as Search,
+  FiFilter as Filter,
+  FiArrowLeft as ArrowLeft,
+  FiChevronDown as ChevronDown,
 } from 'react-icons/fi';
 import api from '../services/api';
 import toast from 'react-hot-toast';
@@ -23,6 +24,7 @@ const AssessmentToolsManagement = ({ onBack }) => {
   const [showModal, setShowModal] = useState(false);
   const [editingTool, setEditingTool] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [formData, setFormData] = useState({
     assessment_id: '',
@@ -158,7 +160,40 @@ const AssessmentToolsManagement = ({ onBack }) => {
     }
   };
 
-  const filteredTools = tools.filter(tool => {
+  // Task 3.8 — Debounce search 300ms
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearchTerm(searchTerm), 300);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
+
+  // Task 3.6 — Accordion: track which categories are open (default all open)
+  const [openCategories, setOpenCategories] = useState(() => {
+    try {
+      const saved = localStorage.getItem('assessmentAccordion');
+      return saved ? JSON.parse(saved) : null; // null = all open
+    } catch { return null; }
+  });
+
+  const toggleCategory = useCallback((category) => {
+    setOpenCategories(prev => {
+      const allCats = Object.keys(groupedToolsRef.current || {});
+      const current = prev === null ? allCats : prev;
+      const next = current.includes(category)
+        ? current.filter(c => c !== category)
+        : [...current, category];
+      localStorage.setItem('assessmentAccordion', JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  const isCategoryOpen = (category) => {
+    if (openCategories === null) return true;
+    return openCategories.includes(category);
+  };
+
+  const groupedToolsRef = useRef({});
+
+  const filteredTools = (tools || []).filter(tool => {
     const matchesSearch = tool.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          tool.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          tool.assessment_id?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -183,6 +218,7 @@ const AssessmentToolsManagement = ({ onBack }) => {
     acc[category].push(tool);
     return acc;
   }, {});
+  groupedToolsRef.current = groupedTools;
 
   return (
     <div className="lg:ml-64 min-h-screen bg-gray-50 p-6">
@@ -194,7 +230,7 @@ const AssessmentToolsManagement = ({ onBack }) => {
               onClick={onBack}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <FiArrowLeft className="w-5 h-5 text-gray-600" />
+              <ArrowLeft className="w-5 h-5 text-gray-600" />
             </button>
           )}
           <div>
@@ -209,7 +245,7 @@ const AssessmentToolsManagement = ({ onBack }) => {
           onClick={() => handleOpenModal()}
           className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
-          <FiPlus className="w-4 h-4" />
+          <Plus className="w-4 h-4" />
           <span>Add Tool</span>
         </motion.button>
       </div>
@@ -219,7 +255,7 @@ const AssessmentToolsManagement = ({ onBack }) => {
         <div className="flex flex-col lg:flex-row lg:items-center space-y-4 lg:space-y-0 lg:space-x-4">
           {/* Search */}
           <div className="flex-1 relative">
-            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
               placeholder="Search tools..."
@@ -231,7 +267,7 @@ const AssessmentToolsManagement = ({ onBack }) => {
 
           {/* Category Filter */}
           <div className="flex items-center space-x-2">
-              <FiFilter className="text-gray-400 w-4 h-4" />
+              <Filter className="text-gray-400 w-4 h-4" />
               <select
                 value={filterCategory}
                 onChange={(e) => setFilterCategory(e.target.value)}
@@ -278,18 +314,42 @@ const AssessmentToolsManagement = ({ onBack }) => {
           <div className="space-y-6">
             {Object.entries(groupedTools).map(([category, categoryTools]) => (
               <div key={category} className="bg-white rounded-xl shadow-sm border overflow-hidden">
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
+                {/* Task 3.6 — Accordion header */}
+                <button
+                  onClick={() => toggleCategory(category)}
+                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex items-center justify-between text-left"
+                >
                   <h2 className="text-lg font-bold text-white flex items-center space-x-2">
-                    <FiTool className="w-5 h-5" />
+                  <Wrench className="w-5 h-5" />
                     <span>{category}</span>
                     <span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-sm">
                       {categoryTools.length}
                     </span>
                   </h2>
-                </div>
+                  <motion.div
+                    animate={{ rotate: isCategoryOpen(category) ? 0 : -90 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown className="w-5 h-5 text-white" />
+                  </motion.div>
+                </button>
 
+                <AnimatePresence initial={false}>
+                  {isCategoryOpen(category) && (
+                    <motion.div
+                      key="content"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.22, ease: 'easeInOut' }}
+                      style={{ overflow: 'hidden' }}
+                    >
                 <div className="divide-y">
-                  {categoryTools.map((tool) => (
+                  {categoryTools.map((tool) => {
+                    // Task 3.7 — Animated price-relative progress bar
+                    const maxPrice = Math.max(...categoryTools.map(t => Number(t.price) || 0));
+                    const pct = maxPrice > 0 ? Math.round((Number(tool.price) / maxPrice) * 100) : 0;
+                    return (
                     <div key={tool.id} className="p-4 hover:bg-gray-50 transition-colors">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
@@ -307,6 +367,18 @@ const AssessmentToolsManagement = ({ onBack }) => {
                           {tool.description && (
                             <p className="text-sm text-gray-600 mt-1">{tool.description}</p>
                           )}
+                          {/* Task 3.7 — Animated progress bar (price relative to category max) */}
+                          <div className="mt-2 flex items-center gap-2">
+                            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden max-w-[160px]">
+                              <motion.div
+                                className="h-full bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${pct}%` }}
+                                transition={{ duration: 0.8, ease: 'easeOut', delay: 0.1 }}
+                              />
+                            </div>
+                            <span className="text-xs text-gray-400">{pct}%</span>
+                          </div>
                         </div>
 
                         <div className="flex items-center space-x-4">
@@ -320,20 +392,24 @@ const AssessmentToolsManagement = ({ onBack }) => {
                               onClick={() => handleOpenModal(tool)}
                               className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                             >
-                              <FiEdit2 className="w-4 h-4" />
+                              <Pencil className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDelete(tool.id)}
                               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             >
-                              <FiTrash2 className="w-4 h-4" />
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
                         </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             ))}
           </div>
@@ -341,7 +417,7 @@ const AssessmentToolsManagement = ({ onBack }) => {
 
         {!loading && filteredTools.length === 0 && (
           <div className="text-center py-12">
-            <FiTool className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+            <Wrench className="w-16 h-16 mx-auto mb-4 text-gray-300" />
             <p className="text-gray-500">No tools found</p>
           </div>
         )}
@@ -365,14 +441,14 @@ const AssessmentToolsManagement = ({ onBack }) => {
             >
               <div className="p-6 border-b flex items-center justify-between">
                 <h3 className="text-xl font-bold text-gray-800 flex items-center space-x-2">
-                  <FiTool className="w-5 h-5" />
+                  <Wrench className="w-5 h-5" />
                   <span>{editingTool ? 'Edit Tool' : 'Add New Tool'}</span>
                 </h3>
                 <button
                   onClick={handleCloseModal}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  <FiX className="w-5 h-5" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
@@ -469,7 +545,7 @@ const AssessmentToolsManagement = ({ onBack }) => {
                     type="submit"
                     className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center space-x-2"
                   >
-                    <FiSave className="w-4 h-4" />
+                    <Save className="w-4 h-4" />
                     <span>{editingTool ? 'Update Tool' : 'Create Tool'}</span>
                   </button>
                 </div>

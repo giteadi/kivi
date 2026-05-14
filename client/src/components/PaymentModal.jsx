@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiCreditCard, FiShield, FiCheck } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 import api from '../services/api';
 
 const PaymentModal = ({ isOpen, onClose, selectedPlan, onPaymentSuccess }) => {
@@ -70,7 +71,7 @@ const PaymentModal = ({ isOpen, onClose, selectedPlan, onPaymentSuccess }) => {
 
     } catch (error) {
       console.error('Payment error:', error);
-      alert('Payment failed. Please try again.');
+      toast.error('Payment failed. Please try again.');
       setIsProcessing(false);
     }
   };
@@ -94,7 +95,7 @@ const PaymentModal = ({ isOpen, onClose, selectedPlan, onPaymentSuccess }) => {
 
     } catch (error) {
       console.error('Payment verification error:', error);
-      alert('Payment verification failed. Please contact support.');
+      toast.error('Payment verification failed. Please contact support.');
     } finally {
       setIsProcessing(false);
     }

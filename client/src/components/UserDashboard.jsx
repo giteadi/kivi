@@ -6,6 +6,7 @@ import { fetchServices } from '../store/slices/serviceSlice';
 import { closeBookingModal } from '../store/slices/bookingSlice';
 import { store } from '../store/store';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 import { 
   FiCalendar, 
   FiClock, 
@@ -384,7 +385,7 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
       // Check if we have all required data
       if (!bookingData.therapistId || !bookingData.date || !bookingData.time) {
         console.error('Missing booking data:', bookingData);
-        alert('Payment successful but missing booking information. Please select therapist, date, and time.');
+        toast.error('Payment successful but missing booking information. Please select therapist, date, and time.');
         return;
       }
       
@@ -393,15 +394,15 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
       const result = await dispatch(bookSession(bookingData));
       
       if (result.meta.requestStatus === 'fulfilled') {
-        alert(`Payment successful and session booked for ${plan.name}!`);
+        toast.success(`Payment successful and session booked for ${plan.name}!`);
         // Close booking modal after successful booking
         dispatch(closeBookingModal());
       } else {
-        alert('Payment successful but session booking failed. Please contact support.');
+        toast.error('Payment successful but session booking failed. Please contact support.');
       }
     } catch (error) {
       console.error('Session creation after payment failed:', error);
-      alert('Payment successful but session booking failed. Please contact support.');
+      toast.error('Payment successful but session booking failed. Please contact support.');
     } finally {
       // Clear preserved booking data
       window.preservedBookingData = null;
@@ -522,13 +523,13 @@ const UserDashboard = ({ selectedPlan, onSelectNewPlan }) => {
         // Update user in Redux store
         dispatch(updateUser(response.data));
         setIsEditingProfile(false);
-        alert('Profile updated successfully!');
+        toast.success('Profile updated successfully!');
       } else {
-        alert('Failed to update profile');
+        toast.error('Failed to update profile');
       }
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('Error updating profile');
+      toast.error('Error updating profile');
     }
   };
 

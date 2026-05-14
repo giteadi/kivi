@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { FiPlus, FiTrash2, FiSave, FiArrowLeft, FiEdit3, FiMove } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 
 const TemplateBuilder = ({ template = null, onSave, onCancel }) => {
   const [templateData, setTemplateData] = useState({
@@ -101,7 +102,7 @@ const TemplateBuilder = ({ template = null, onSave, onCancel }) => {
 
   const handleSave = () => {
     if (!templateData.name.trim()) {
-      alert('Please enter a template name');
+      toast.error('Please enter a template name');
       return;
     }
     onSave(templateData);

@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { FiSearch, FiPlus, FiEye, FiEdit3, FiTrash2, FiUser, FiPhone, FiMail, FiMapPin, FiCalendar, FiUsers, FiFilter, FiRefreshCw } from 'react-icons/fi';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDoctors } from '../store/slices/doctorSlice';
 import FiltersPanel from './FiltersPanel';
@@ -15,26 +15,56 @@ const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDo
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState({});
   const [isRefreshing, setIsRefreshing] = useState(false);
+  // Task 2.2 — auto-refresh state
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [relativeTime, setRelativeTime] = useState('');
+  const autoRefreshRef = useRef(null);
 
   // Load therapists on component mount
   useEffect(() => {
     console.log('🚀 DoctorsList component mounted, fetching therapists...');
     dispatch(fetchDoctors());
+    setLastUpdated(new Date());
   }, [dispatch]);
 
+  // Task 2.2 — auto-refresh every 60 seconds
+  useEffect(() => {
+    autoRefreshRef.current = setInterval(() => {
+      dispatch(fetchDoctors());
+      setLastUpdated(new Date());
+    }, 60000);
+    return () => clearInterval(autoRefreshRef.current);
+  }, [dispatch]);
+
+  // Task 2.2 — update relative time string every 30 seconds
+  useEffect(() => {
+    const updateRelative = () => {
+      if (!lastUpdated) return;
+      const diffMs = Date.now() - lastUpdated.getTime();
+      const diffMin = Math.floor(diffMs / 60000);
+      if (diffMin < 1) setRelativeTime('just now');
+      else if (diffMin === 1) setRelativeTime('1 min ago');
+      else setRelativeTime(`${diffMin} min ago`);
+    };
+    updateRelative();
+    const t = setInterval(updateRelative, 30000);
+    return () => clearInterval(t);
+  }, [lastUpdated]);
+
   // Refresh data function
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     console.log('🔄 Refreshing therapists data...');
     setIsRefreshing(true);
     try {
       await dispatch(fetchDoctors()).unwrap();
+      setLastUpdated(new Date());
       console.log('✅ Therapists data refreshed successfully!');
     } catch (error) {
       console.error('❌ Failed to refresh data:', error);
     } finally {
       setIsRefreshing(false);
     }
-  };
+  }, [dispatch]);
 
   // Apply filters when they change
   useEffect(() => {
@@ -145,17 +175,14 @@ const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDo
             )}
           </div>
           
-          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="flex items-center space-x-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors disabled:opacity-50"
-            >
-              <FiRefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
-            </motion.button>
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 items-end sm:items-center">
+            {/* Task 2.2 — Last updated timestamp instead of manual Refresh button */}
+            {lastUpdated && (
+              <span className="text-xs text-gray-400 flex items-center space-x-1">
+                <FiRefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span>Last updated: {relativeTime}</span>
+              </span>
+            )}
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -258,11 +285,53 @@ const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDo
           className="bg-white dark:bg-[#1c1c1e] rounded-xl shadow-sm dark:shadow-black/20 border dark:border-gray-800 overflow-hidden"
         >
           {isLoading ? (
-            <div className="text-center py-12">
-              <div className="text-gray-500 dark:text-gray-400">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-lg font-medium">Loading therapists...</p>
-              </div>
+            /* Task 2.8 — Skeleton loader rows */
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-blue-600 text-white dark:bg-blue-700">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Therapist</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Specialty</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Clinic</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Contact</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Patients</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-[#1c1c1e] divide-y divide-gray-200 dark:divide-gray-700">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center">
+                          <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full mr-4" />
+                          <div className="space-y-2">
+                            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-32" />
+                            <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded w-24" />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4"><div className="h-5 bg-gray-200 dark:bg-gray-700 rounded-full w-20" /></td>
+                      <td className="px-6 py-4"><div className="h-5 bg-gray-200 dark:bg-gray-700 rounded-full w-24" /></td>
+                      <td className="px-6 py-4">
+                        <div className="space-y-2">
+                          <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded w-28" />
+                          <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded w-36" />
+                        </div>
+                      </td>
+                      <td className="px-6 py-4"><div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16" /></td>
+                      <td className="px-6 py-4"><div className="h-5 bg-gray-200 dark:bg-gray-700 rounded-full w-16" /></td>
+                      <td className="px-6 py-4">
+                        <div className="flex space-x-2">
+                          <div className="w-6 h-6 bg-gray-200 dark:bg-gray-700 rounded" />
+                          <div className="w-6 h-6 bg-gray-200 dark:bg-gray-700 rounded" />
+                          <div className="w-6 h-6 bg-gray-200 dark:bg-gray-700 rounded" />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : error ? (
             <div className="text-center py-12">
@@ -414,12 +483,29 @@ const DoctorsList = ({ onViewDoctor, onEditDoctor, onDeleteDoctor, onCreateNewDo
           )}
 
           {!isLoading && !error && filteredDoctors.length === 0 && (
-            <div className="text-center py-12">
-              <div className="text-gray-500 dark:text-gray-400">
-                <FiUser className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium">No therapists found</p>
-                <p className="text-sm">Try adjusting your search or filter criteria</p>
+            <div className="text-center py-16">
+              <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FiUsers className="w-10 h-10 text-blue-400" />
               </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                {searchTerm || filterClinic !== 'all' || filterSpecialty !== 'all'
+                  ? 'No therapists match your filters'
+                  : 'No therapists yet'}
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                {searchTerm || filterClinic !== 'all' || filterSpecialty !== 'all'
+                  ? 'Try adjusting your search or filter criteria'
+                  : 'Add your first therapist to get started'}
+              </p>
+              {!searchTerm && filterClinic === 'all' && filterSpecialty === 'all' && (
+                <button
+                  onClick={() => onCreateNewDoctor && onCreateNewDoctor()}
+                  className="inline-flex items-center space-x-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors text-sm font-medium"
+                >
+                  <FiPlus className="w-4 h-4" />
+                  <span>Add your first therapist →</span>
+                </button>
+              )}
             </div>
           )}
         </motion.div>

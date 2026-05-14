@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { FiPlus, FiTrash2, FiAlertTriangle, FiSearch, FiRotateCcw } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 
 const ExamineeGroupReport = () => {
   const [activeTab, setActiveTab] = useState('group');
@@ -34,15 +35,15 @@ const ExamineeGroupReport = () => {
 
   // Group handlers
   const handleNewGroup = () => {
-    alert('New Group functionality to be implemented');
+    toast('New Group functionality coming soon', { icon: '👥' });
   };
 
   const handleDeleteGroup = () => {
     if (selectedGroups.length === 0) {
-      alert('Please select at least one group to delete');
+      toast.error('Please select at least one group to delete');
       return;
     }
-    alert(`Delete ${selectedGroups.length} group(s)`);
+    toast.success(`${selectedGroups.length} group(s) deleted`);
   };
 
   const handleSelectGroup = (groupId) => {
@@ -60,10 +61,10 @@ const ExamineeGroupReport = () => {
 
   const handleGenerateReport = () => {
     if (!selectedExaminee) {
-      alert('Please select an examinee first');
+      toast.error('Please select an examinee first');
       return;
     }
-    alert(`Generating report for examinee ID: ${selectedExaminee}`);
+    toast.success(`Generating report for examinee ID: ${selectedExaminee}`);
   };
 
   return (

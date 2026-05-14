@@ -1,6 +1,6 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useEffect, createContext, useContext, lazy, Suspense } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, Link } from 'react-router-dom';
 import { setCredentials } from './store/slices/authSlice';
 import { fetchDoctors } from './store/slices/doctorSlice';
@@ -19,74 +19,95 @@ const SidebarContext = createContext();
 
 export const useSidebar = () => {
   const context = useContext(SidebarContext);
-  // Return context or a default value to prevent errors
   return context || { sidebarCollapsed: false, setSidebarCollapsed: () => {} };
 };
 
+// ── Always-loaded (needed on first paint or auth flow) ──────────────────────
 import Login from './components/Login';
 import Register from './components/Register';
 import Homepage from './components/Homepage';
-import UserDashboard from './components/UserDashboard';
-// import TherapistDashboard from './components/TherapistDashboard'; // Temporarily disabled
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
-import AppointmentsList from './components/AppointmentsList';
-import AppointmentDetail from './components/AppointmentDetail';
-import PatientsList from './components/PatientsList';
-import PatientProfile from './components/PatientProfile';
-import ExamineeEditForm from './components/ExamineeEditForm';
-import DoctorsList from './components/DoctorsList';
-import DoctorProfile from './components/DoctorProfile';
-import DoctorEditForm from './components/DoctorEditForm';
-import TherapistCreateForm from './components/TherapistCreateForm';
-import ReceptionistsList from './components/ReceptionistsList';
-import ReceptionistProfile from './components/ReceptionistProfile';
-import ReceptionistEditForm from './components/ReceptionistEditForm';
-import EncounterDetail from './components/EncounterDetail';
-import EncountersList from './components/EncountersList';
-import EncounterTemplates from './components/EncounterTemplates';
-import TemplateBuilder from './components/TemplateBuilder';
-import TemplateViewer from './components/TemplateViewer';
-import TemplateSelector from './components/TemplateSelector';
-import TemplateBasedEncounter from './components/TemplateBasedEncounter';
 import MobileMenu from './components/MobileMenu';
-import GroupAdministration from './components/GroupAdministration';
-import Report from './components/Report';
-import ExamineeGroupReport from './components/ExamineeGroupReport';
-import ClinicRevenue from './components/ClinicRevenue';
-import DoctorRevenue from './components/DoctorRevenue';
-import TaxList from './components/TaxList';
-import BillingRecords from './components/BillingRecords';
-import ClinicsList from './components/ClinicsList';
-import ClinicProfile from './components/ClinicProfile';
-import ClinicEditForm from './components/ClinicEditForm';
-import ServicesList from './components/ServicesList';
-import ServiceCards from './components/ServiceCards';
-import ServiceCreateForm from './components/ServiceCreateForm';
-import ServiceEditForm from './components/ServiceEditForm';
-import ExamineeCreateForm from './components/ExamineeCreateForm';
-import ExamineeDetail from './components/ExamineeDetail';
-// import TherapistCreateForm from './components/TherapistCreateForm'; // Temporarily disabled
-import SessionCreateForm from './components/SessionCreateForm';
-import SessionEditForm from './components/SessionEditForm';
-import SessionList from './components/SessionList';
-import PlansList from './components/PlansList';
-import AdminSessionsList from './components/AdminSessionsList';
-import TemplateManager from './components/TemplateManager';
-import FormsManagement from './components/FormsManagement';
-import ConnersManagement from './components/ConnersManagement';
-import ExamineesManagement from './components/ExamineesManagement';
-import PackageManagement from './components/PackageManagement';
-import AssessmentToolsManagement from './components/AssessmentToolsManagement';
-import AssignAssessmentScreen from './components/AssignAssessmentScreen';
-import AssessmentList from './components/AssessmentList';
-import TherapyList from './components/TherapyList';
-import Queries from './components/Queries';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
-import CenterVisibilitySettings from './components/CenterVisibilitySettings';
-import AssessmentCalendar from './components/AssessmentCalendar';
+
+// ── Lazy-loaded (heavy pages — split into separate chunks) ──────────────────
+const UserDashboard            = lazy(() => import('./components/UserDashboard'));
+const AppointmentsList         = lazy(() => import('./components/AppointmentsList'));
+const AppointmentDetail        = lazy(() => import('./components/AppointmentDetail'));
+const PatientsList             = lazy(() => import('./components/PatientsList'));
+const PatientProfile           = lazy(() => import('./components/PatientProfile'));
+const ExamineeEditForm         = lazy(() => import('./components/ExamineeEditForm'));
+const DoctorsList              = lazy(() => import('./components/DoctorsList'));
+const DoctorProfile            = lazy(() => import('./components/DoctorProfile'));
+const DoctorEditForm           = lazy(() => import('./components/DoctorEditForm'));
+const TherapistCreateForm      = lazy(() => import('./components/TherapistCreateForm'));
+const ReceptionistsList        = lazy(() => import('./components/ReceptionistsList'));
+const ReceptionistProfile      = lazy(() => import('./components/ReceptionistProfile'));
+const ReceptionistEditForm     = lazy(() => import('./components/ReceptionistEditForm'));
+const EncounterDetail          = lazy(() => import('./components/EncounterDetail'));
+const EncountersList           = lazy(() => import('./components/EncountersList'));
+const EncounterTemplates       = lazy(() => import('./components/EncounterTemplates'));
+const TemplateBuilder          = lazy(() => import('./components/TemplateBuilder'));
+const TemplateViewer           = lazy(() => import('./components/TemplateViewer'));
+const TemplateSelector         = lazy(() => import('./components/TemplateSelector'));
+const TemplateBasedEncounter   = lazy(() => import('./components/TemplateBasedEncounter'));
+const GroupAdministration      = lazy(() => import('./components/GroupAdministration'));
+const Report                   = lazy(() => import('./components/Report'));
+const ExamineeGroupReport      = lazy(() => import('./components/ExamineeGroupReport'));
+const ClinicRevenue            = lazy(() => import('./components/ClinicRevenue'));
+const DoctorRevenue            = lazy(() => import('./components/DoctorRevenue'));
+const TaxList                  = lazy(() => import('./components/TaxList'));
+const BillingRecords           = lazy(() => import('./components/BillingRecords'));
+const ClinicsList              = lazy(() => import('./components/ClinicsList'));
+const ClinicProfile            = lazy(() => import('./components/ClinicProfile'));
+const ClinicEditForm           = lazy(() => import('./components/ClinicEditForm'));
+const ServicesList             = lazy(() => import('./components/ServicesList'));
+const ServiceCards             = lazy(() => import('./components/ServiceCards'));
+const ServiceCreateForm        = lazy(() => import('./components/ServiceCreateForm'));
+const ServiceEditForm          = lazy(() => import('./components/ServiceEditForm'));
+const ExamineeCreateForm       = lazy(() => import('./components/ExamineeCreateForm'));
+const ExamineeDetail           = lazy(() => import('./components/ExamineeDetail'));
+const SessionCreateForm        = lazy(() => import('./components/SessionCreateForm'));
+const SessionEditForm          = lazy(() => import('./components/SessionEditForm'));
+const SessionList              = lazy(() => import('./components/SessionList'));
+const PlansList                = lazy(() => import('./components/PlansList'));
+const AdminSessionsList        = lazy(() => import('./components/AdminSessionsList'));
+const TemplateManager          = lazy(() => import('./components/TemplateManager'));
+const FormsManagement          = lazy(() => import('./components/FormsManagement'));
+const ConnersManagement        = lazy(() => import('./components/ConnersManagement'));
+const ExamineesManagement      = lazy(() => import('./components/ExamineesManagement'));
+const PackageManagement        = lazy(() => import('./components/PackageManagement'));
+const AssessmentToolsManagement = lazy(() => import('./components/AssessmentToolsManagement'));
+const AssignAssessmentScreen   = lazy(() => import('./components/AssignAssessmentScreen'));
+const AssessmentList           = lazy(() => import('./components/AssessmentList'));
+const TherapyList              = lazy(() => import('./components/TherapyList'));
+const Queries                  = lazy(() => import('./components/Queries'));
+const CenterVisibilitySettings = lazy(() => import('./components/CenterVisibilitySettings'));
+const AssessmentCalendar       = lazy(() => import('./components/AssessmentCalendar'));
+
+// Fallback spinner for Suspense
+const PageLoader = () => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+    <div style={{ width: 36, height: 36, border: '3px solid #e5e7eb', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+  </div>
+);
+
+// Task 3.13 — Page transition wrapper
+const PageTransition = ({ children, keyId }) => (
+  <motion.div
+    key={keyId}
+    initial={{ opacity: 0, y: 8 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -8 }}
+    transition={{ duration: 0.2, ease: 'easeOut' }}
+  >
+    {children}
+  </motion.div>
+);
 
 function App() {
   const dispatch = useDispatch();
@@ -532,17 +553,25 @@ function App() {
   };
 
   const handleDeleteTemplate = (template) => {
-    if (window.confirm(`Are you sure you want to delete "${template.name}"?`)) {
-      // In a real app, this would delete from backend
-      alert('Template deleted successfully!');
-      handleBackToTemplates();
-    }
+    toast(
+      (t) => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <span style={{ fontWeight: 600 }}>Delete "{template.name}"?</span>
+          <span style={{ fontSize: 13, color: '#6b7280' }}>This cannot be undone.</span>
+          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+            <button onClick={() => { toast.dismiss(t.id); toast.success('Template deleted successfully!'); handleBackToTemplates(); }} style={{ padding: '4px 12px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Delete</button>
+            <button onClick={() => toast.dismiss(t.id)} style={{ padding: '4px 12px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Cancel</button>
+          </div>
+        </div>
+      ),
+      { duration: Infinity, icon: '⚠️' }
+    );
   };
 
   const handleSaveTemplate = (templateData) => {
     // In a real app, this would save to backend
     console.log('Saving template:', templateData);
-    alert('Template saved successfully!');
+    toast.success('Template saved successfully!');
     handleBackToTemplates();
   };
 
@@ -575,7 +604,7 @@ function App() {
   const handleSaveEncounter = (encounterData) => {
     // In a real app, this would save to backend
     console.log('Saving encounter:', encounterData);
-    alert('Encounter report created successfully!');
+    toast.success('Encounter report created successfully!');
     setSelectedTemplate(null);
     setSelectedPatient(null);
     setCurrentView('encounters-list');
@@ -647,7 +676,7 @@ function App() {
   const handleSaveReceptionist = (updatedData) => {
     // In a real app, this would save to backend
     console.log('Saving staff member:', updatedData);
-    alert(`Staff member ${updatedData.name} updated successfully!`);
+    toast.success(`Staff member ${updatedData.name} updated successfully!`);
     setSelectedReceptionistId(null);
     setCurrentView('receptionists-list');
     setActiveItem('receptionists');
@@ -776,7 +805,7 @@ setActiveItem('doctors');
   };
 
   const handleEditAppointment = (appointmentId) => {
-    alert(`Edit appointment ${appointmentId} - Edit form coming soon`);
+    toast(`Edit appointment ${appointmentId} - Edit form coming soon`, { icon: '🔧' });
   };
 
   const handleEditEncounter = (encounterId) => {
@@ -793,120 +822,176 @@ setActiveItem('doctors');
       return;
     }
     
-    const confirmMessage = ids.length === 1 
-      ? 'Are you sure you want to delete this examinee?' 
-      : `Are you sure you want to delete ${ids.length} examinees?`;
-    
-    if (window.confirm(confirmMessage)) {
-      try {
-        console.log('🗑️ Deleting students:', ids);
-        
-        // Delete each student
-        const results = await Promise.all(
-          ids.map(id => 
-            api.request(`/students/${id}`, {
-              method: 'DELETE'
-            })
-          )
-        );
-        
-        const allSuccessful = results.every(r => r.success);
-        
-        if (allSuccessful) {
-          toast.success(ids.length === 1 ? 'Examinee deleted successfully!' : `${ids.length} examinees deleted successfully!`);
-          // Refresh the students list
-          dispatch(fetchPatients());
-        } else {
-          toast.error('Some deletions failed. Please try again.');
+    try {
+      console.log('🗑️ Deleting students:', ids);
+      
+      // Delete each student
+      const results = await Promise.all(
+        ids.map(id => 
+          api.request(`/students/${id}`, {
+            method: 'DELETE'
+          })
+        )
+      );
+      
+      const allSuccessful = results.every(r => r.success);
+      
+      if (allSuccessful) {
+        toast.success(ids.length === 1 ? 'Examinee deleted successfully!' : `${ids.length} examinees deleted successfully!`);
+        // Refresh the students list
+        dispatch(fetchPatients());
+        // Navigate back to list if we were on edit page
+        if (currentView === 'patient-edit') {
+          setSelectedPatientId(null);
+          setCurrentView('patients-list');
+          setActiveItem('patients');
         }
-      } catch (error) {
-        console.error('Error deleting examinee(s):', error);
-        toast.error('Failed to delete examinee(s). Please try again.');
+      } else {
+        toast.error('Some deletions failed. Please try again.');
       }
+    } catch (error) {
+      console.error('Error deleting examinee(s):', error);
+      toast.error('Failed to delete examinee(s). Please try again.');
     }
   };
 
   const handleDeleteDoctor = async (doctorId) => {
-    if (window.confirm('Are you sure you want to delete this therapist?')) {
-      try {
-        const response = await api.request(`/therapists/${doctorId}`, {
-          method: 'DELETE'
-        });
-        
-        if (response.success) {
-          toast.success('Therapist deleted successfully!');
-          dispatch(fetchDoctors());
-        } else {
-          toast.error('Failed to delete therapist');
-        }
-      } catch (error) {
-        console.error('Error deleting therapist:', error);
-        toast.error('Failed to delete therapist. Please try again.');
+    const confirmed = await new Promise((resolve) => {
+      const toastId = toast(
+        (t) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span style={{ fontWeight: 600 }}>Delete this therapist?</span>
+            <span style={{ fontSize: 13, color: '#6b7280' }}>This action cannot be undone.</span>
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <button
+                onClick={() => { toast.dismiss(t.id); resolve(true); }}
+                style={{ padding: '4px 12px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}
+              >Delete</button>
+              <button
+                onClick={() => { toast.dismiss(t.id); resolve(false); }}
+                style={{ padding: '4px 12px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}
+              >Cancel</button>
+            </div>
+          </div>
+        ),
+        { duration: Infinity, icon: '⚠️' }
+      );
+    });
+    if (!confirmed) return;
+    try {
+      const response = await api.request(`/therapists/${doctorId}`, {
+        method: 'DELETE'
+      });
+      
+      if (response.success) {
+        toast.success('Therapist deleted successfully!');
+        dispatch(fetchDoctors());
+      } else {
+        toast.error('Failed to delete therapist');
       }
+    } catch (error) {
+      console.error('Error deleting therapist:', error);
+      toast.error('Failed to delete therapist. Please try again.');
     }
   };
 
   const handleDeleteReceptionist = async (receptionistId) => {
-    if (window.confirm('Are you sure you want to delete this staff member?')) {
-      try {
-        const response = await api.request(`/receptionists/${receptionistId}`, {
-          method: 'DELETE'
-        });
-        
-        if (response.success) {
-          toast.success('Staff member deleted successfully!');
-          // Refresh the page to update the list (no Redux slice for receptionists)
-          window.location.reload();
-        } else {
-          toast.error('Failed to delete staff member');
-        }
-      } catch (error) {
-        console.error('Error deleting staff member:', error);
-        toast.error('Failed to delete staff member. Please try again.');
+    const confirmed = await new Promise((resolve) => {
+      toast(
+        (t) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span style={{ fontWeight: 600 }}>Delete this staff member?</span>
+            <span style={{ fontSize: 13, color: '#6b7280' }}>This action cannot be undone.</span>
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <button onClick={() => { toast.dismiss(t.id); resolve(true); }} style={{ padding: '4px 12px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Delete</button>
+              <button onClick={() => { toast.dismiss(t.id); resolve(false); }} style={{ padding: '4px 12px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Cancel</button>
+            </div>
+          </div>
+        ),
+        { duration: Infinity, icon: '⚠️' }
+      );
+    });
+    if (!confirmed) return;
+    try {
+      const response = await api.request(`/receptionists/${receptionistId}`, {
+        method: 'DELETE'
+      });
+      
+      if (response.success) {
+        toast.success('Staff member deleted successfully!');
+        window.location.reload();
+      } else {
+        toast.error('Failed to delete staff member');
       }
+    } catch (error) {
+      console.error('Error deleting staff member:', error);
+      toast.error('Failed to delete staff member. Please try again.');
     }
   };
 
   const handleDeleteAppointment = async (appointmentId) => {
-    if (window.confirm('Are you sure you want to delete this session?')) {
-      try {
-        const response = await api.request(`/appointments/${appointmentId}`, {
-          method: 'DELETE'
-        });
-        
-        if (response.success) {
-          toast.success('Session deleted successfully!');
-          // Refresh the list
-          dispatch(fetchAppointments());
-        } else {
-          toast.error('Failed to delete session');
-        }
-      } catch (error) {
-        console.error('Error deleting session:', error);
-        toast.error('Failed to delete session. Please try again.');
+    const confirmed = await new Promise((resolve) => {
+      toast(
+        (t) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span style={{ fontWeight: 600 }}>Delete this session?</span>
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <button onClick={() => { toast.dismiss(t.id); resolve(true); }} style={{ padding: '4px 12px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Delete</button>
+              <button onClick={() => { toast.dismiss(t.id); resolve(false); }} style={{ padding: '4px 12px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Cancel</button>
+            </div>
+          </div>
+        ),
+        { duration: Infinity, icon: '⚠️' }
+      );
+    });
+    if (!confirmed) return;
+    try {
+      const response = await api.request(`/appointments/${appointmentId}`, {
+        method: 'DELETE'
+      });
+      
+      if (response.success) {
+        toast.success('Session deleted successfully!');
+        dispatch(fetchAppointments());
+      } else {
+        toast.error('Failed to delete session');
       }
+    } catch (error) {
+      console.error('Error deleting session:', error);
+      toast.error('Failed to delete session. Please try again.');
     }
   };
 
   const handleDeleteEncounter = async (encounterId) => {
-    if (window.confirm('Are you sure you want to delete this programme?')) {
-      try {
-        // Call the delete API endpoint
-        const response = await api.request(`/services/${encounterId}`, {
-          method: 'DELETE'
-        });
-        
-        if (response.success) {
-          alert('Programme deleted successfully!');
-          // Refresh the list by dispatching fetchServices again
-          dispatch(fetchServices());
-        } else {
-          alert('Failed to delete programme');
-        }
-      } catch (error) {
-        console.error('Error deleting programme:', error);
-        alert('Error deleting programme');
+    const confirmed = await new Promise((resolve) => {
+      toast(
+        (t) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span style={{ fontWeight: 600 }}>Delete this programme?</span>
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <button onClick={() => { toast.dismiss(t.id); resolve(true); }} style={{ padding: '4px 12px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Delete</button>
+              <button onClick={() => { toast.dismiss(t.id); resolve(false); }} style={{ padding: '4px 12px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Cancel</button>
+            </div>
+          </div>
+        ),
+        { duration: Infinity, icon: '⚠️' }
+      );
+    });
+    if (!confirmed) return;
+    try {
+      const response = await api.request(`/services/${encounterId}`, {
+        method: 'DELETE'
+      });
+      
+      if (response.success) {
+        toast.success('Programme deleted successfully!');
+        dispatch(fetchServices());
+      } else {
+        toast.error('Failed to delete programme');
       }
+    } catch (error) {
+      console.error('Error deleting programme:', error);
+      toast.error('Error deleting programme');
     }
   };
 
@@ -927,11 +1012,11 @@ setActiveItem('doctors');
   };
 
   const handleCreateNewReceptionist = () => {
-    alert('Create new staff member functionality - Form coming soon');
+    toast('Create new staff member functionality - Form coming soon', { icon: '🔧' });
   };
 
   const handleCreateNewClinic = () => {
-    alert('Create new centre functionality - Form coming soon');
+    toast('Create new centre functionality - Form coming soon', { icon: '🔧' });
   };
 
   const handleCreateNewAppointment = () => {
@@ -948,56 +1033,23 @@ setActiveItem('doctors');
 
   const handleSaveSession = (sessionData) => {
     console.log('Creating new session:', sessionData);
-    alert('Session scheduled successfully!');
+    toast.success('Session scheduled successfully!');
     setIsSessionCreateModalOpen(false);
-    // Here you would typically dispatch an action to create the session
-    // dispatch(createSession(sessionData));
-    
-    // Refresh the encounters list to show the new session
-    // You might want to add this session to the Redux store
   };
 
   const handleSaveSessionEdit = (sessionData) => {
     console.log('Updating session:', sessionData);
-    alert('Session updated successfully!');
+    toast.success('Session updated successfully!');
     setIsSessionEditModalOpen(false);
     setSelectedSessionId(null);
-    // Here you would typically dispatch an action to update the session
-    // dispatch(updateSession(sessionData));
-    
-    // Refresh the encounters list to show the updated session
   };
 
   // Service CRUD handlers
   const handleViewService = (serviceId) => {
-    // Find the service data and show details in a modal or navigate to detail view
-    const service = servicesData.find(s => s.id === serviceId);
-    if (service) {
-      const details = `
-╔════════════════════════════════════════╗
-║         SERVICE DETAILS                 ║
-╚════════════════════════════════════════╝
-
-📋 NAME: ${service.name}
-🏷️  CATEGORY: ${service.category}
-💰 FEE: ₹${service.fee}
-⏱️  DURATION: ${service.duration} minutes
-📍 CENTRE: Centre ${service.centre_id}
-📊 STATUS: ${service.status.toUpperCase()}
-🆔 PROGRAMME ID: ${service.programme_id}
-
-📝 DESCRIPTION:
-${service.description || 'No description available'}
-
-🎯 OBJECTIVES:
-${service.objectives || 'No objectives specified'}
-
-👥 TARGET AGE GROUP:
-${service.target_age_group || 'Not specified'}
-
-      `;
-      alert(details);
-    }
+    // Navigate to service detail view
+    setSelectedServiceId(serviceId);
+    setCurrentView('service-view');
+    setActiveItem('services');
   };
 
   const handleEditService = (serviceId) => {
@@ -1007,34 +1059,45 @@ ${service.target_age_group || 'Not specified'}
   };
 
   const handleDeleteService = async (serviceId) => {
-    if (window.confirm('Are you sure you want to delete this programme?')) {
-      try {
-        const response = await api.request(`/programmes/${serviceId}`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          toast.success(`Programme deleted successfully!`);
-          // Refresh the services data
-          const servicesResponse = await api.request('/programmes');
-          const servicesResult = await servicesResponse.json();
-
-          if (servicesResult.success) {
-            // Update Redux store
-            dispatch({ type: 'services/fetchServices/fulfilled', payload: servicesResult.data });
-          }
-        } else {
-          toast.error(`Failed to delete programme: ${result.message}`);
+    const confirmed = await new Promise((resolve) => {
+      toast(
+        (t) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span style={{ fontWeight: 600 }}>Delete this programme?</span>
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <button onClick={() => { toast.dismiss(t.id); resolve(true); }} style={{ padding: '4px 12px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Delete</button>
+              <button onClick={() => { toast.dismiss(t.id); resolve(false); }} style={{ padding: '4px 12px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Cancel</button>
+            </div>
+          </div>
+        ),
+        { duration: Infinity, icon: '⚠️' }
+      );
+    });
+    if (!confirmed) return;
+    try {
+      const response = await api.request(`/programmes/${serviceId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
         }
-      } catch (error) {
-        console.error('Error deleting service:', error);
-        toast.error('An error occurred while deleting the programme. Please try again.');
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success(`Programme deleted successfully!`);
+        const servicesResponse = await api.request('/programmes');
+        const servicesResult = await servicesResponse.json();
+
+        if (servicesResult.success) {
+          dispatch({ type: 'services/fetchServices/fulfilled', payload: servicesResult.data });
+        }
+      } else {
+        toast.error(`Failed to delete programme: ${result.message}`);
       }
+    } catch (error) {
+      console.error('Error deleting service:', error);
+      toast.error('An error occurred while deleting the programme. Please try again.');
     }
   };
 
@@ -1077,7 +1140,7 @@ ${service.target_age_group || 'Not specified'}
       if (result.success) {
         console.log('=== Service saved successfully ===');
         const action = isUpdate ? 'updated' : 'created';
-        alert(`Programme "${serviceData.name}" ${action} successfully!`);
+        toast.success(`Programme "${serviceData.name}" ${action} successfully!`);
 
         // Refresh services data
         const servicesResponse = await api.request('/programmes');
@@ -1092,11 +1155,11 @@ ${service.target_age_group || 'Not specified'}
         setActiveItem('services');
       } else {
         console.error('=== Save failed ===', result);
-        alert('Failed to save programme. Please try again.');
+        toast.error('Failed to save programme. Please try again.');
       }
     } catch (error) {
       console.error('=== Save error ===', error);
-      alert('An error occurred while saving the programme. Please try again.');
+      toast.error('An error occurred while saving the programme. Please try again.');
     }
   };
 
@@ -1106,9 +1169,18 @@ ${service.target_age_group || 'Not specified'}
   };
 
   const handleDeleteClinic = (clinicId) => {
-    if (window.confirm('Are you sure you want to delete this centre?')) {
-      alert(`Centre ${clinicId} deleted successfully!`);
-    }
+    toast(
+      (t) => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <span style={{ fontWeight: 600 }}>Delete this centre?</span>
+          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+            <button onClick={() => { toast.dismiss(t.id); toast.success(`Centre ${clinicId} deleted successfully!`); }} style={{ padding: '4px 12px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Delete</button>
+            <button onClick={() => toast.dismiss(t.id)} style={{ padding: '4px 12px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>Cancel</button>
+          </div>
+        </div>
+      ),
+      { duration: Infinity, icon: '⚠️' }
+    );
   };
 
   const handleEditClinic = (clinicId) => {
@@ -1149,13 +1221,13 @@ ${service.target_age_group || 'Not specified'}
         throw new Error(res?.message || 'Failed to update centre');
       }
 
-      alert(`Center ${updatedData.name} updated successfully!`);
+      toast.success(`Centre ${updatedData.name} updated successfully!`);
       setSelectedClinicId(null);
       setCurrentView('clinics-list');
       setActiveItem('clinics');
     } catch (e) {
       console.error('Failed to save clinic:', e);
-      alert('Failed to save clinic');
+      toast.error('Failed to save clinic');
     }
   };
 
@@ -1225,6 +1297,7 @@ ${service.target_age_group || 'Not specified'}
           isEditMode={true}
           onSave={handleSavePatient}
           onCancel={handleCancelPatientEdit}
+          onDelete={handleDeletePatient}
         />
       );
     }
@@ -1508,10 +1581,10 @@ ${service.target_age_group || 'Not specified'}
         return <DoctorRevenue />;
       
       case 'taxes':
-        return <TaxList onViewTax={(id) => alert(`View tax ${id}`)} onEditTax={(id) => alert(`Edit tax ${id}`)} onDeleteTax={(id) => alert(`Delete tax ${id}`)} onCreateNewTax={() => alert('Create new tax functionality')} />;
+        return <TaxList onViewTax={(id) => toast(`View tax ${id}`, { icon: '👁️' })} onEditTax={(id) => toast(`Edit tax ${id}`, { icon: '✏️' })} onDeleteTax={(id) => toast(`Delete tax ${id}`, { icon: '🗑️' })} onCreateNewTax={() => toast('Create new tax functionality', { icon: '🔧' })} />;
       
       case 'billing-records':
-        return <BillingRecords onViewBilling={(id) => alert(`View billing ${id}`)} onEditBilling={(id) => alert(`Edit billing ${id}`)} onDeleteBilling={(id) => alert(`Delete billing ${id}`)} onCreateNewBilling={() => alert('Create new billing functionality')} />;
+        return <BillingRecords onViewBilling={(id) => toast(`View billing ${id}`, { icon: '👁️' })} onEditBilling={(id) => toast(`Edit billing ${id}`, { icon: '✏️' })} onDeleteBilling={(id) => toast(`Delete billing ${id}`, { icon: '🗑️' })} onCreateNewBilling={() => toast('Create new billing functionality', { icon: '🔧' })} />;
       
       case 'admin-sessions':
         return <AdminSessionsList />;
@@ -1574,7 +1647,9 @@ ${service.target_age_group || 'Not specified'}
           animate={{ opacity: 1 }}
           className={`transition-all duration-300 ${activeItem === 'template-manager' ? 'ml-0' : ''}`}
         >
-          <Routes>
+          <Suspense fallback={<PageLoader />}>
+          <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
             <Route path="/dashboard" element={
               currentView === 'dashboard' ? (
                 <Dashboard 
@@ -1712,6 +1787,8 @@ ${service.target_age_group || 'Not specified'}
             <Route path="/admin/sessions" element={<AdminSessionsList />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Routes>
+          </AnimatePresence>
+          </Suspense>
         </motion.main>
 
         {/* Session Create Modal */}

@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { FiAlertTriangle, FiCheck, FiX, FiSave, FiLock } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 
 const CloseEncounter = ({ onClose, onSave, sessionData }) => {
   const [closeReason, setCloseReason] = useState('');
@@ -41,7 +42,7 @@ const CloseEncounter = ({ onClose, onSave, sessionData }) => {
 
   const handleCloseEncounter = () => {
     if (!closeReason) {
-      alert('Please select a reason for closing the encounter');
+      toast.error('Please select a reason for closing the encounter');
       return;
     }
 
@@ -49,12 +50,11 @@ const CloseEncounter = ({ onClose, onSave, sessionData }) => {
       onSave();
     }
 
-    // In a real app, this would close the encounter in the backend
     console.log('Closing encounter with reason:', closeReason);
     console.log('Final notes:', finalNotes);
     console.log('Follow-up required:', followUpRequired);
     
-    alert('Encounter closed successfully');
+    toast.success('Encounter closed successfully');
     if (onClose) {
       onClose();
     }

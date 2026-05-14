@@ -604,7 +604,8 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
         {!loading && !error && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             className="bg-white dark:bg-[#1c1c1e] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-300">
-            <table className="w-full table-fixed">
+            <div className="overflow-x-auto">
+            <table className="w-full table-fixed min-w-[900px]">
               <thead className="bg-blue-600 text-white">
                 <tr>
                   <th className="w-12 px-3 py-3 text-left text-xs font-medium uppercase"><input type="checkbox" className="rounded accent-blue-600" /></th>
@@ -689,6 +690,7 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
                 ))}
               </tbody>
             </table>
+            </div>
 
             {filteredBilling.length === 0 && (
               <div className="text-center py-12 text-gray-500 dark:text-gray-400 transition-colors duration-300">

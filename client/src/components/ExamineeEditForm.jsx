@@ -1,10 +1,10 @@
-import { motion } from 'framer-motion';
-import { FiArrowLeft, FiSave, FiX, FiUser, FiMail, FiPhone, FiMapPin, FiUpload, FiTrash2, FiFile, FiImage } from 'react-icons/fi';
-import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiArrowLeft, FiSave, FiX, FiUser, FiMail, FiPhone, FiMapPin, FiUpload, FiTrash2, FiFile, FiImage, FiAlertTriangle, FiEdit3, FiCalendar, FiBook, FiHome, FiActivity } from 'react-icons/fi';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useToast } from './Toast';
 import api from '../services/api';
 
-const StudentEditForm = ({ studentId, onSave, onCancel }) => {
+const StudentEditForm = ({ studentId, onSave, onCancel, onDelete }) => {
   const toast = useToast();
   const hasFetched = useRef(false);
   const hasSaved = useRef(false);
@@ -510,6 +510,32 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isDirty, setIsDirty] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
+  const pendingNavigationRef = useRef(null);
+
+  // Task 3.2 — View/Edit mode split
+  // Default: read-only view. "Edit" button switches to edit mode.
+  const [isEditMode, setIsEditMode] = useState(false);
+  // Snapshot of formData at the time edit mode was entered, used for Cancel restore
+  const formDataSnapshot = useRef(null);
+
+  const enterEditMode = () => {
+    formDataSnapshot.current = { ...formData };
+    setIsEditMode(true);
+  };
+
+  const exitEditMode = () => {
+    if (isDirty && formDataSnapshot.current) {
+      // Restore original values
+      setFormData(formDataSnapshot.current);
+      setIsDirty(false);
+    }
+    setIsEditMode(false);
+    setErrors({});
+  };
   
   // State for Identity Proof documents
   const [identityProofs, setIdentityProofs] = useState([]);
@@ -707,17 +733,63 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
     };
   }, [studentId]);
 
+  // Browser beforeunload warning when dirty
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
+    setIsDirty(true);
     
     if (errors[field]) {
       setErrors(prev => ({
         ...prev,
         [field]: ''
       }));
+    }
+  };
+
+  // Safe cancel — show warning if dirty, or exit edit mode
+  const handleCancelClick = () => {
+    if (isEditMode) {
+      if (isDirty) {
+        setShowUnsavedWarning(true);
+        pendingNavigationRef.current = 'exitEdit';
+      } else {
+        exitEditMode();
+      }
+    } else {
+      onCancel();
+    }
+  };
+
+  // Handle delete with confirmation
+  const handleDeleteClick = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setIsDeleting(true);
+    try {
+      if (onDelete) {
+        await onDelete(formData.id);
+      }
+    } catch (error) {
+      toast.error('Error deleting examinee');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -760,7 +832,7 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
     
     files.forEach(file => {
       if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        alert(`File ${file.name} is too large. Maximum size is 10MB.`);
+        toast.error(`File ${file.name} is too large. Maximum size is 10MB.`);
         return;
       }
     });
@@ -880,6 +952,7 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
       
       if (result.success) {
         toast.success('Student updated successfully');
+        setIsDirty(false);
         onSave(result.data);
       } else {
         toast.error(result.message || 'Failed to update student');
@@ -895,8 +968,58 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
 
   if (loading) {
     return (
-      <div className="lg:ml-64 min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">Loading student data...</div>
+      <div className="lg:ml-64 min-h-screen bg-gray-50">
+        <div className="p-4 lg:p-6">
+          {/* Skeleton Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="h-6 w-40 bg-gray-200 rounded animate-pulse" />
+            <div className="flex space-x-3">
+              <div className="h-9 w-24 bg-gray-200 rounded-lg animate-pulse" />
+              <div className="h-9 w-32 bg-gray-200 rounded-lg animate-pulse" />
+            </div>
+          </div>
+          {/* Skeleton Breadcrumb */}
+          <div className="flex items-center space-x-2 mb-6">
+            <div className="h-4 w-12 bg-gray-200 rounded animate-pulse" />
+            <div className="h-4 w-4 bg-gray-200 rounded animate-pulse" />
+            <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+            <div className="h-4 w-4 bg-gray-200 rounded animate-pulse" />
+            <div className="h-4 w-28 bg-gray-200 rounded animate-pulse" />
+          </div>
+          {/* Skeleton Form Card */}
+          <div className="bg-white rounded-xl shadow-sm border">
+            <div className="p-6 border-b">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gray-200 rounded-lg animate-pulse" />
+                <div>
+                  <div className="h-5 w-32 bg-gray-200 rounded animate-pulse mb-2" />
+                  <div className="h-4 w-48 bg-gray-200 rounded animate-pulse" />
+                </div>
+              </div>
+            </div>
+            {/* Skeleton Tabs */}
+            <div className="flex px-6 border-b bg-gray-50/50">
+              {['Demographics', 'Evaluation', 'History', 'Documents'].map(t => (
+                <div key={t} className="px-6 py-3">
+                  <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+            {/* Skeleton Fields */}
+            <div className="p-6 space-y-6">
+              {[1, 2, 3].map(row => (
+                <div key={row} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[1, 2, 3].map(col => (
+                    <div key={col}>
+                      <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mb-2" />
+                      <div className="h-10 w-full bg-gray-200 rounded-lg animate-pulse" />
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -910,34 +1033,76 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={onCancel}
+              onClick={isEditMode ? handleCancelClick : onCancel}
               className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
             >
               <FiArrowLeft className="w-5 h-5" />
               <span>Back to Examinees</span>
             </motion.button>
+            {isEditMode && isDirty && (
+              <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">
+                Unsaved changes
+              </span>
+            )}
+            {isEditMode && (
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
+                Editing
+              </span>
+            )}
           </div>
           
           <div className="flex items-center space-x-3">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={onCancel}
-              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <FiX className="w-4 h-4" />
-              <span>Cancel</span>
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50"
-            >
-              <FiSave className="w-4 h-4" />
-              <span>{isSubmitting ? 'Saving...' : 'Update Examinee'}</span>
-            </motion.button>
+            {!isEditMode ? (
+              /* View mode — show Edit button + Delete in danger zone */
+              <>
+                {onDelete && (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="button"
+                    onClick={handleDeleteClick}
+                    className="flex items-center space-x-2 px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                  >
+                    <FiTrash2 className="w-4 h-4" />
+                    <span>Delete</span>
+                  </motion.button>
+                )}
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  type="button"
+                  onClick={enterEditMode}
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                >
+                  <FiEdit3 className="w-4 h-4" />
+                  <span>Edit</span>
+                </motion.button>
+              </>
+            ) : (
+              /* Edit mode — show Cancel + Save */
+              <>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleCancelClick}
+                  type="button"
+                  className="flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <FiX className="w-4 h-4" />
+                  <span>Cancel</span>
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <FiSave className="w-4 h-4" />
+                  <span>{isSubmitting ? 'Saving...' : 'Save Changes'}</span>
+                </motion.button>
+              </>
+            )}
           </div>
         </div>
 
@@ -947,27 +1112,178 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
           <span className="mx-2">›</span>
           <span>Examinees</span>
           <span className="mx-2">›</span>
-          <span className="text-gray-800">Edit Examinee</span>
+          <span className="text-gray-800">{isEditMode ? 'Edit Examinee' : 'View Examinee'}</span>
         </div>
 
-        {/* Form */}
+        {/* Form / View Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-xl shadow-sm border"
         >
           <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <FiUser className="w-6 h-6 text-blue-600" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className={`p-2 rounded-lg ${isEditMode ? 'bg-blue-100' : 'bg-emerald-100'}`}>
+                  <FiUser className={`w-6 h-6 ${isEditMode ? 'text-blue-600' : 'text-emerald-600'}`} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-800">
+                    {formData.firstName} {formData.lastName}
+                  </h2>
+                  <p className="text-gray-500 text-sm">
+                    {isEditMode ? 'Editing examinee record' : 'Examinee profile — read only'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-semibold text-gray-800">Edit Student</h2>
-                <p className="text-gray-600">Update student information</p>
-              </div>
+              {!isEditMode && (
+                <button
+                  onClick={enterEditMode}
+                  className="flex items-center space-x-2 px-3 py-1.5 text-sm text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+                >
+                  <FiEdit3 className="w-4 h-4" />
+                  <span>Edit</span>
+                </button>
+              )}
             </div>
           </div>
 
+          <AnimatePresence mode="wait">
+            {!isEditMode ? (
+              /* ── READ-ONLY VIEW ── */
+              <motion.div
+                key="view-mode"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="p-6"
+              >
+                {/* Personal Info */}
+                <div className="mb-8">
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <FiUser className="w-4 h-4" /> Personal Information
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[
+                      { label: 'First Name', value: formData.firstName },
+                      { label: 'Middle Name', value: formData.middleName },
+                      { label: 'Last Name', value: formData.lastName },
+                      { label: 'Date of Birth', value: formData.dateOfBirth },
+                      { label: 'Gender', value: formData.gender },
+                      { label: 'Language of Testing', value: formData.languageOfTesting },
+                      { label: 'Status', value: formData.status },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="bg-gray-50 rounded-lg p-3">
+                        <p className="text-xs text-gray-400 font-medium mb-1">{label}</p>
+                        <p className="text-sm text-gray-900 font-medium">{value || '—'}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Contact Info */}
+                <div className="mb-8">
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <FiMail className="w-4 h-4" /> Contact
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[
+                      { label: 'Email', value: formData.email },
+                      { label: 'Phone', value: formData.phone },
+                      { label: 'Address', value: formData.address },
+                      { label: 'City', value: formData.city },
+                      { label: 'State', value: formData.state },
+                      { label: 'Zip Code', value: formData.zipCode },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="bg-gray-50 rounded-lg p-3">
+                        <p className="text-xs text-gray-400 font-medium mb-1">{label}</p>
+                        <p className="text-sm text-gray-900 font-medium">{value || '—'}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* School Info */}
+                <div className="mb-8">
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <FiBook className="w-4 h-4" /> School
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[
+                      { label: 'School Name', value: formData.schoolName },
+                      { label: 'Grade', value: formData.grade },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="bg-gray-50 rounded-lg p-3">
+                        <p className="text-xs text-gray-400 font-medium mb-1">{label}</p>
+                        <p className="text-sm text-gray-900 font-medium">{value || '—'}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Emergency Contact */}
+                <div className="mb-8">
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <FiPhone className="w-4 h-4" /> Emergency Contact
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[
+                      { label: 'Name', value: formData.emergencyContactName },
+                      { label: 'Phone', value: formData.emergencyContactPhone },
+                      { label: 'Relation', value: formData.emergencyContactRelation },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="bg-gray-50 rounded-lg p-3">
+                        <p className="text-xs text-gray-400 font-medium mb-1">{label}</p>
+                        <p className="text-sm text-gray-900 font-medium">{value || '—'}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Flags */}
+                <div>
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <FiActivity className="w-4 h-4" /> Service Flags
+                  </h3>
+                  <div className="flex gap-3 flex-wrap">
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium ${
+                      formData.requiresAssessment
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'bg-gray-100 text-gray-400'
+                    }`}>
+                      Assessment {formData.requiresAssessment ? '✓' : '✗'}
+                    </span>
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium ${
+                      formData.requiresTherapy
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-gray-100 text-gray-400'
+                    }`}>
+                      Therapy {formData.requiresTherapy ? '✓' : '✗'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Edit CTA at bottom */}
+                <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
+                  <button
+                    onClick={enterEditMode}
+                    className="flex items-center space-x-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+                  >
+                    <FiEdit3 className="w-4 h-4" />
+                    <span>Edit this record</span>
+                  </button>
+                </div>
+              </motion.div>
+            ) : (
+              /* ── EDIT FORM ── */
+              <motion.div
+                key="edit-mode"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* ✅ ADD TABS - Same as ExamineeDetail */}
             <div className="border-b bg-gray-50/50 -mx-6 -mt-6 mb-6">
@@ -2257,8 +2573,120 @@ const StudentEditForm = ({ studentId, onSave, onCancel }) => {
               </div>
             )}
           </form>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       </div>
+
+      {/* ── Delete Confirmation Modal ── */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowDeleteConfirm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-start space-x-4">
+                <div className="p-2 bg-red-100 rounded-lg flex-shrink-0">
+                  <FiAlertTriangle className="w-6 h-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Delete Examinee?</h3>
+                  <p className="mt-1 text-sm text-gray-600">
+                    Are you sure you want to delete{' '}
+                    <span className="font-medium text-gray-900">
+                      {formData.firstName} {formData.lastName}
+                    </span>
+                    ? This action <span className="font-medium text-red-600">cannot be undone</span> and will permanently remove all their data.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  disabled={isDeleting}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-50 flex items-center space-x-2"
+                >
+                  <FiTrash2 className="w-4 h-4" />
+                  <span>{isDeleting ? 'Deleting...' : 'Yes, Delete'}</span>
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Unsaved Changes Warning Modal ── */}
+      <AnimatePresence>
+        {showUnsavedWarning && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+            >
+              <div className="flex items-start space-x-4">
+                <div className="p-2 bg-amber-100 rounded-lg flex-shrink-0">
+                  <FiAlertTriangle className="w-6 h-6 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Unsaved Changes</h3>
+                  <p className="mt-1 text-sm text-gray-600">
+                    You have unsaved changes. If you leave now, your changes will be lost.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowUnsavedWarning(false)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                >
+                  Stay & Keep Editing
+                </button>
+                <button
+                  onClick={() => {
+                    setShowUnsavedWarning(false);
+                    setIsDirty(false);
+                    if (pendingNavigationRef.current === 'exitEdit') {
+                      exitEditMode();
+                    } else {
+                      onCancel();
+                    }
+                    pendingNavigationRef.current = null;
+                  }}
+                  className="px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white rounded-lg transition-colors text-sm font-medium"
+                >
+                  Leave Anyway
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

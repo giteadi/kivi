@@ -3,6 +3,7 @@ import { FiArrowLeft, FiSave, FiX, FiMapPin, FiPhone, FiMail, FiGlobe, FiClock, 
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import LocationSelector from './LocationSelector';
+import toast from 'react-hot-toast';
 
 const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -98,7 +99,7 @@ const ClinicEditForm = ({ clinicId, onSave, onCancel }) => {
         }
       } catch (error) {
         console.error('Error fetching clinic data:', error);
-        alert('Failed to load clinic data');
+        toast.error('Failed to load clinic data');
       } finally {
         setLoading(false);
       }

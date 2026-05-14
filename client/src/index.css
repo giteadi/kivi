@@ -49,3 +49,78 @@ html.dark ::-webkit-scrollbar-thumb {
 html.dark ::-webkit-scrollbar-thumb:hover {
   background: #4a4a4c;
 }
+
+/* ─── Task 2.4 — Global micro-animations ─────────────────────────────────── */
+
+/* Cards: subtle lift on hover */
+.card-hover,
+.bg-white.rounded-xl,
+.bg-white.rounded-lg {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Buttons: smooth transitions */
+button,
+a[role="button"] {
+  transition: background-color 0.15s ease, color 0.15s ease,
+              border-color 0.15s ease, box-shadow 0.15s ease,
+              transform 0.15s ease, opacity 0.15s ease;
+}
+
+/* Sidebar items */
+nav a,
+nav button {
+  transition: background-color 0.15s ease, color 0.15s ease, padding 0.15s ease;
+}
+
+/* Table rows */
+tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+/* ─── Task 2.8 — Skeleton shimmer animation ──────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.animate-pulse {
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Shimmer variant for skeleton cells */
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+html.dark .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #2c2c2e 25%,
+    #3a3a3c 50%,
+    #2c2c2e 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+/* ─── Task 2.3 — Table row hover (global fallback) ───────────────────────── */
+table tbody tr:hover {
+  background-color: #f9fafb;
+  cursor: pointer;
+}
+
+html.dark table tbody tr:hover {
+  background-color: #2c2c2e;
+}

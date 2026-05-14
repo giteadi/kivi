@@ -12,14 +12,16 @@ import {
   FiInfo,
   FiCheckCircle,
   FiPhone,
-  FiFileText
+  FiFileText,
+  FiTrash2,
+  FiAlertTriangle
 } from 'react-icons/fi';
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../services/api';
 import { fetchPatients } from '../store/slices/patientSlice';
 import Sidebar from './Sidebar';
 
-const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActiveItem, examineeId = null, isEditMode = false }) => {
+const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActiveItem, examineeId = null, isEditMode = false, onDelete }) => {
   console.log('🚀 ExamineeCreateForm MOUNTED!');
   console.log('📍 Props:', { examineeId, isEditMode, activeItem });
   
@@ -30,6 +32,10 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [age, setAge] = useState({ years: 0, months: 0 });
+  const [isDirty, setIsDirty] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
   
   // Centers state for dynamic center selection
   const [centers, setCenters] = useState([]);
@@ -1405,6 +1411,7 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
         console.log('📦 Result Data:', result.data);
         // Refresh the patients list
         dispatch(fetchPatients());
+        setIsDirty(false);
         onSave && onSave(result.data);
       } else {
         console.error('❌ Submit Failed:', result.message);
@@ -1417,6 +1424,46 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
     } finally {
       setIsSaving(false);
       console.log('💾 Submit Process Complete');
+    }
+  };
+
+  // Browser beforeunload warning when dirty
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
+
+  // Safe cancel — show warning if dirty
+  const handleCancelClick = () => {
+    if (isDirty) {
+      setShowUnsavedWarning(true);
+    } else {
+      onCancel();
+    }
+  };
+
+  // Handle delete with confirmation
+  const handleDeleteClick = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setIsDeleting(true);
+    try {
+      if (onDelete) {
+        await onDelete(examineeId);
+      }
+    } catch (error) {
+      console.error('Error deleting examinee:', error);
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -1479,7 +1526,7 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center space-x-4">
                 <button
-                  onClick={onCancel}
+                  onClick={handleCancelClick}
                   className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
                 >
                   <FiArrowLeft className="w-5 h-5" />
@@ -1487,8 +1534,23 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                 </button>
                 <div className="h-6 w-px bg-gray-200" />
                 <h1 className="text-xl font-semibold text-gray-900">{isEditMode ? 'Edit Examinee' : 'New Examinee'}</h1>
+                {isDirty && (
+                  <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">
+                    Unsaved changes
+                  </span>
+                )}
               </div>
               <div className="flex items-center space-x-3">
+                {isEditMode && onDelete && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteClick}
+                    className="flex items-center space-x-2 px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-all text-sm font-medium"
+                  >
+                    <FiTrash2 className="w-4 h-4" />
+                    <span>Delete</span>
+                  </button>
+                )}
                 <button
                   onClick={handleSubmit}
                   disabled={isSaving}
@@ -1498,7 +1560,7 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                   <span>{isSaving ? 'Saving...' : (isEditMode ? 'Update' : 'Save')}</span>
                 </button>
                 <button
-                  onClick={onCancel}
+                  onClick={handleCancelClick}
                   className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all text-sm font-medium"
                 >
                   <FiX className="w-4 h-4" />
@@ -6597,6 +6659,110 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
           )}
         </motion.div>
       </div>
+
+      {/* ── Delete Confirmation Modal ── */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowDeleteConfirm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-start space-x-4">
+                <div className="p-2 bg-red-100 rounded-lg flex-shrink-0">
+                  <FiAlertTriangle className="w-6 h-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Delete Examinee?</h3>
+                  <p className="mt-1 text-sm text-gray-600">
+                    Are you sure you want to delete{' '}
+                    <span className="font-medium text-gray-900">
+                      {formData.firstName} {formData.lastName}
+                    </span>
+                    ? This action <span className="font-medium text-red-600">cannot be undone</span> and will permanently remove all their data.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  disabled={isDeleting}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-50 flex items-center space-x-2"
+                >
+                  <FiTrash2 className="w-4 h-4" />
+                  <span>{isDeleting ? 'Deleting...' : 'Yes, Delete'}</span>
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Unsaved Changes Warning Modal ── */}
+      <AnimatePresence>
+        {showUnsavedWarning && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+            >
+              <div className="flex items-start space-x-4">
+                <div className="p-2 bg-amber-100 rounded-lg flex-shrink-0">
+                  <FiAlertTriangle className="w-6 h-6 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Unsaved Changes</h3>
+                  <p className="mt-1 text-sm text-gray-600">
+                    You have unsaved changes. If you leave now, your changes will be lost.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowUnsavedWarning(false)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                >
+                  Stay & Keep Editing
+                </button>
+                <button
+                  onClick={() => {
+                    setShowUnsavedWarning(false);
+                    setIsDirty(false);
+                    onCancel();
+                  }}
+                  className="px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white rounded-lg transition-colors text-sm font-medium"
+                >
+                  Leave Anyway
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   </div>
   );
