@@ -403,8 +403,8 @@ sshpass -p Bazeer@12345 ssh root@195.35.45.17 "mysql -u root -pTiger@123 kivi < 
 # 1. Local build
 cd /Users/adityasharma/Desktop/kivi/client && npm run build
 
-# 2. Create archive
-tar -czf /tmp/kivi-dist.tar.gz -C dist .
+# 2. Create archive (--no-xattrs suppresses macOS metadata warnings on Linux)
+COPYFILE_DISABLE=1 tar -czf /tmp/kivi-dist.tar.gz -C dist .
 
 # 3. Upload
 scp /tmp/kivi-dist.tar.gz aditya@195.35.45.17:/tmp/
