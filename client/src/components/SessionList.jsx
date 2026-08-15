@@ -84,14 +84,16 @@ const SessionList = ({ onViewEncounter }) => {
   useEffect(() => {
     console.log('🔍 SessionList: Plans updated, checking for new plans. Previous count:', previousSessionsCount.current, 'Current count:', plans.length);
 
+    let timeoutId;
     if (plans.length > previousSessionsCount.current && previousSessionsCount.current > 0) {
       const latestPlan = plans[0]; // Assuming newest plan is first
       console.log('🔍 SessionList: New plan detected:', latestPlan);
       setNewSessions(prev => new Set(prev).add(latestPlan.id));
       setShowNotification(true);
-      setTimeout(() => setShowNotification(false), 5000);
+      timeoutId = setTimeout(() => setShowNotification(false), 5000);
     }
     previousSessionsCount.current = plans.length;
+    return () => clearTimeout(timeoutId);
   }, [plans]);
 
   // Helper function to get client name

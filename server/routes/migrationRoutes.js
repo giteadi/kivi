@@ -1,6 +1,9 @@
 const express = require('express');
+const { authenticateToken } = require('../middleware/auth');
 const { getDb } = require('../database');
 const router = express.Router();
+
+router.use(authenticateToken);
 
 // Run migration and check database
 router.post('/run-migration', async (req, res) => {
@@ -10,18 +13,25 @@ router.post('/run-migration', async (req, res) => {
     // Check and add missing columns to kivi_therapists table
     const checkAndAddColumn = async (tableName, columnName, columnDefinition) => {
       try {
+        // Defensive identifier validation (migrations are hardcoded, but never trust user input)
+        const isSafeId = (n) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(n);
+        if (!isSafeId(tableName) || !isSafeId(columnName)) {
+          console.error(`❌ Invalid table/column name: ${tableName}.${columnName}`);
+          return;
+        }
+
         // Check if column exists
         const [columns] = await new Promise((resolve, reject) => {
-          db.query(`SHOW COLUMNS FROM ${tableName} LIKE '${columnName}'`, (err, results) => {
+          db.query(`SHOW COLUMNS FROM ${db.escapeId(tableName)} LIKE ?`, [columnName], (err, results) => {
             if (err) reject(err);
             else resolve(results);
           });
         });
-        
+
         // If column doesn't exist, add it
         if (columns.length === 0) {
           await new Promise((resolve, reject) => {
-            db.query(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnDefinition}`, (err, results) => {
+            db.query(`ALTER TABLE ${db.escapeId(tableName)} ADD COLUMN ${db.escapeId(columnName)} ${columnDefinition}`, (err, results) => {
               if (err) reject(err);
               else resolve(results);
             });

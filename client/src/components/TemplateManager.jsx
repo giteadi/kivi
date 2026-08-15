@@ -1218,7 +1218,7 @@ export default function TemplateManager() {
     setLoading(true); setError(null);
     try {
       const response = await api.getTemplates();
-      if (response.success && response.data?.length > 0) {
+      if (response?.success && Array.isArray(response.data)) {
         const transformed = response.data.map(t => {
           let parsedData = t.template_data;
           if (typeof parsedData === "string") {
@@ -1263,11 +1263,7 @@ export default function TemplateManager() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || "https://dashboard.iplanbymsl.in/api"}/templates/upload`,
-        { method: "POST", headers: { Authorization: `Bearer ${localStorage.getItem("token") || ""}` }, body: formData }
-      );
-      const result = await response.json();
+      const result = await api.request('/templates/upload', { method: 'POST', body: formData });
       if (result.success) await fetchTemplates();
       else toast.error("Upload failed: " + (result.message || "Unknown error"));
     } catch (err) { toast.error("Error: " + err.message); }
@@ -1427,14 +1423,7 @@ export default function TemplateManager() {
         }));
         
         // ✅ Upload endpoint use karo
-        await fetch(
-          `${import.meta.env.VITE_API_URL || "https://dashboard.iplanbymsl.in/api"}/templates/upload`,
-          {
-            method: "POST",
-            headers: { Authorization: `Bearer ${localStorage.getItem("token") || ""}` },
-            body: formData,
-          }
-        );
+        await api.request('/templates/upload', { method: 'POST', body: formData });
       } else {
         // Word/HTML format → existing logic
         await api.createTemplate({

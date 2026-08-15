@@ -449,14 +449,47 @@ def ref_to_rc(ref):
     m = re.match(r'([A-Za-z]+)(\d+)', ref)
     return (int(m.group(2)) - 1, col_to_idx(m.group(1))) if m else (0, 0)
 
+def idx_to_col(idx):
+    """0-based column index → A, B, ... Z, AA, AB ..."""
+    letters = ''
+    idx += 1
+    while idx > 0:
+        idx, rem = divmod(idx - 1, 26)
+        letters = chr(65 + rem) + letters
+    return letters
+
+# Cell references, ignoring anything inside a quoted string literal.
+_REF_RE = re.compile(r'"[^"]*"|(\$?)([A-Z]{1,3})(\$?)(\d+)')
+
+def shift_refs(formula, d_row, d_col):
+    """
+    Offset the relative references in a shared formula.
+
+    Excel stores one master formula per shared group; each member re-uses it
+    shifted by its distance from the master. $-anchored parts stay put.
+    """
+    if not d_row and not d_col:
+        return formula
+
+    def move(m):
+        if m.group(0).startswith('"'):
+            return m.group(0)  # string literal — leave alone
+        col_abs, col, row_abs, row = m.group(1), m.group(2), m.group(3), m.group(4)
+        new_col = col if col_abs else idx_to_col(max(0, col_to_idx(col) + d_col))
+        new_row = row if row_abs else str(max(1, int(row) + d_row))
+        return f'{col_abs}{new_col}{row_abs}{new_row}'
+
+    return _REF_RE.sub(move, formula)
+
 def parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts):
     ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
     root = safe_xml_parse(ws_bytes)
     if root is None:
-        return {}, 0, 0, {}  # ← {} add kiya row_heights ke liye
-    
+        return {}, 0, 0, {}, {}, []
+
     # ── Parse merged cells first ─────────────────────────
     merge_map = {}  # (r, c) → (top_r, top_c) for every non-top-left cell in a merge
+    merges = []     # [top_r, top_c, bottom_r, bottom_c] kept so the UI can re-merge
     for mc in root.findall(f'.//{{{ns}}}mergeCell'):
         ref = mc.attrib.get('ref', '')
         if ':' not in ref:
@@ -464,13 +497,16 @@ def parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts):
         start_ref, end_ref = ref.split(':')
         sr, sc = ref_to_rc(start_ref)
         er, ec = ref_to_rc(end_ref)
+        merges.append([sr, sc, er, ec])
         for r in range(sr, er + 1):
             for c in range(sc, ec + 1):
                 if r == sr and c == sc:
                     continue  # top-left keeps its own value
                 merge_map[(r, c)] = (sr, sc)
-    
+
     grid = {}
+    formulas = {}  # 'r_c' → '=FORMULA' so edits never overwrite a live formula
+    shared_masters = {}  # si → (formula_text, row, col) for shared-formula groups
     max_r = max_c = 0
     row_heights = {}  # ← NEW: {row_index: height_in_points}
 
@@ -497,6 +533,25 @@ def parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts):
             fmt   = fmt_ids[sidx] if sidx < len(fmt_ids) else 0
             v_el  = c_el.find(f'{{{ns}}}v')
             raw   = None
+
+            # Record the formula but still display Excel's cached <v> result,
+            # so the grid shows exactly what Excel last computed.
+            f_el = c_el.find(f'{{{ns}}}f')
+            if f_el is not None:
+                if f_el.text:
+                    formulas[f'{r}_{c}'] = '=' + f_el.text
+                    if f_el.attrib.get('t') == 'shared':
+                        # Master of a shared group — remember it so the members
+                        # below, which carry only an si reference, can be filled in.
+                        si = f_el.attrib.get('si')
+                        if si is not None:
+                            shared_masters[si] = (f_el.text, r, c)
+                elif f_el.attrib.get('t') == 'shared':
+                    si = f_el.attrib.get('si')
+                    if si in shared_masters:
+                        src, sr, sc = shared_masters[si]
+                        formulas[f'{r}_{c}'] = '=' + shift_refs(src, r - sr, c - sc)
+
             if ctype == 's' and v_el is not None:
                 try:
                     raw = shared[int(v_el.text)]
@@ -520,7 +575,7 @@ def parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts):
         if (tr, tc) in grid:
             grid[(r, c)] = grid[(tr, tc)]
 
-    return grid, max_r, max_c, row_heights  # ← row_heights bhi return karo
+    return grid, max_r, max_c, row_heights, formulas, merges
 
 def get_sheet_embeddings(zf):
     result = {}
@@ -571,6 +626,7 @@ def get_sheet_embeddings(zf):
 # ─── MAIN XLSX PARSER ────────────────────────────────────────────────────────
 def parse_xlsx(file_path):
     sheets, sheet_names, sheet_row_heights = {}, [], {}  # ← NEW: sheet_row_heights dict
+    sheet_formulas, sheet_merges = {}, {}
     try:
         with zipfile.ZipFile(file_path, 'r') as zf:
             all_files = set(zf.namelist())
@@ -607,12 +663,16 @@ def parse_xlsx(file_path):
 
                 # Regular cells
                 cell_grid, max_r, max_c, row_heights = {}, 0, 0, {}  # ← NEW: row_heights
+                formulas, merges = {}, []
                 if ws_path in all_files:
                     try:
                         ws_bytes = zf.read(ws_path)
-                        cell_grid, max_r, max_c, row_heights = parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts)  # ← row_heights unpack
+                        cell_grid, max_r, max_c, row_heights, formulas, merges = parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts)
                     except Exception as e:
                         log(f"  Cell error: {e}")
+
+                sheet_formulas[name] = formulas
+                sheet_merges[name] = merges
 
                 non_empty = sum(1 for v in cell_grid.values() if str(v).strip())
 
@@ -701,6 +761,8 @@ def parse_xlsx(file_path):
         'sheets': sheets,
         'names': sheet_names,
         'row_heights': sheet_row_heights,  # ← NEW: return row heights
+        'formulas': sheet_formulas,        # per sheet: 'r_c' → '=FORMULA'
+        'merges': sheet_merges,            # per sheet: [[r1, c1, r2, c2], ...]
         'meta': {'total_cells': total}
     }
 

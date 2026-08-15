@@ -228,7 +228,7 @@ const AssessmentCalendar = () => {
       }
       
       const response = await api.request(`/calendar?${params.toString()}`);
-      if (response.success) {
+      if (response?.success && Array.isArray(response.data)) {
         // Transform backend data to frontend format
         const transformedData = response.data.map(event => ({
           id: event.id,
@@ -358,7 +358,7 @@ const AssessmentCalendar = () => {
       const response = await api.request(`/calendar/student-assessments/${studentId}`);
       console.log('📦 Assessment details response:', response);
       
-      if (response.success && response.data) {
+      if (response?.success && Array.isArray(response.data)) {
         const mapped = response.data.map(assessment => ({
           id: assessment.id || assessment.calendar_event_id,
           title: assessment.title || 'Assessment',

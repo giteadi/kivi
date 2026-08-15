@@ -1,5 +1,8 @@
 const express = require('express');
+const { authenticateToken } = require('../middleware/auth');
 const router = express.Router();
+
+router.use(authenticateToken);
 const AssessmentResultController = require('../controllers/assessmentResultController');
 
 const assessmentResultController = new AssessmentResultController();

@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { authenticateToken } = require('../middleware/auth');
+const { isPatchable, readCellEdits, patchWorkbook } = require('../utils/excelPatch');
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, '../uploads/forms');
@@ -41,6 +42,22 @@ const upload = multer({
 
 // Import database pool
 const { getDb } = require('../database');
+
+async function checkFormOwnership(req, res, next) {
+  try {
+    const query = 'SELECT created_by, client_id FROM forms WHERE id = ? AND deleted_at IS NULL';
+    const [rows] = await getDb().promise().query(query, [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ message: 'Form not found' });
+    if (rows[0].created_by !== req.user.id && rows[0].client_id !== req.user.id &&
+        req.user.role !== 'admin' && req.user.role !== 'superadmin') {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+    next();
+  } catch (e) {
+    console.error('Ownership check error:', e);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
 
 // FOLDER ROUTES (MUST BE BEFORE DYNAMIC :id ROUTES)
 // GET /api/forms/folders - Get all folders
@@ -221,10 +238,21 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
       const pythonPath = process.env.PYTHON_PATH || 'python3';
       const parserScript = path.join(__dirname, '../scripts/parse_excel.py');
       
-      const parsePromise = new Promise((resolve, reject) => {
+      const parsePromise = new Promise((resolve) => {
         const python = spawn(pythonPath, [parserScript, req.file.path]);
         let dataString = '';
         let errorString = '';
+        let settled = false;
+        const finish = (value) => {
+          if (settled) return;
+          settled = true;
+          resolve(value);
+        };
+
+        const killTimer = setTimeout(() => {
+          console.warn('Python parser timed out, killing process');
+          python.kill('SIGKILL');
+        }, 120000);
 
         python.stdout.on('data', (data) => {
           dataString += data.toString();
@@ -235,23 +263,24 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
         });
 
         python.on('close', (code) => {
+          clearTimeout(killTimer);
           if (code !== 0) {
             console.warn('Python parser warning:', errorString);
-            resolve(null); // Don't fail upload if parsing fails
-          } else {
-            try {
-              const parsed = JSON.parse(dataString);
-              resolve(parsed);
-            } catch (e) {
-              console.warn('Failed to parse Python output:', e);
-              resolve(null);
-            }
+            return finish(null); // Don't fail upload if parsing fails
+          }
+          try {
+            const parsed = JSON.parse(dataString);
+            finish(parsed);
+          } catch (e) {
+            console.warn('Failed to parse Python output:', e);
+            finish(null);
           }
         });
 
         python.on('error', (err) => {
+          clearTimeout(killTimer);
           console.warn('Python spawn error:', err);
-          resolve(null);
+          finish(null);
         });
       });
 
@@ -262,7 +291,12 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
           templateData = JSON.stringify({
             sheets: parsedData.sheets,
             sheetNames: parsedData.names,
-            row_heights: parsedData.row_heights || {}
+            row_heights: parsedData.row_heights || {},
+            // Kept so the editor knows which cells Excel owns and the download
+            // can re-apply edits without flattening the workbook.
+            formulas: parsedData.formulas || {},
+            merges: parsedData.merges || {},
+            cellEdits: {}
           });
         }
       }
@@ -303,7 +337,7 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
 });
 
 // GET /api/forms/:id/download - Download a form
-router.get('/:id/download', authenticateToken, async (req, res) => {
+router.get('/:id/download', authenticateToken, checkFormOwnership, async (req, res) => {
   try {
     console.log('[DEBUG] Download request for form ID:', req.params.id);
     
@@ -351,13 +385,34 @@ router.get('/:id/download', authenticateToken, async (req, res) => {
     res.setHeader('Content-Type', contentTypes[ext] || 'application/octet-stream');
     const encodedFilename = encodeURIComponent(form.name);
     res.setHeader('Content-Disposition', `inline; filename*=UTF-8''${encodedFilename}`);
-    
+
+    // Apply the user's edits onto the original workbook rather than serving a
+    // regenerated one, so formulas, charts, styles and merges stay intact.
+    // Anything that cannot be patched falls back to the untouched original.
+    let streamPath = filePath;
+    let isTemp = false;
+    const edits = isPatchable(filePath) ? readCellEdits(form.template_data) : null;
+    if (edits) {
+      const patched = await patchWorkbook(filePath, edits);
+      if (patched) {
+        streamPath = patched;
+        isTemp = true;
+      }
+    }
+
     console.log('[DEBUG] Streaming file to client...');
-    const fileStream = fs.createReadStream(filePath);
-    
+    const fileStream = fs.createReadStream(streamPath);
+
+    const discardTemp = () => {
+      if (isTemp) fs.unlink(streamPath, () => {});
+    };
+    res.on('close', discardTemp);
+    res.on('finish', discardTemp);
+
     // Handle stream errors
     fileStream.on('error', (err) => {
       console.error('[DEBUG] File stream error:', err);
+      discardTemp();
       if (!res.headersSent) {
         return res.status(500).json({ 
           message: 'Error reading file. The file may be corrupted or locked.' 
@@ -376,7 +431,7 @@ router.get('/:id/download', authenticateToken, async (req, res) => {
 });
 
 // PUT /api/forms/:id - Update form (name, type, template_data)
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticateToken, checkFormOwnership, async (req, res) => {
   try {
     const { name, type, template_data, folder_id } = req.body;
     
@@ -397,7 +452,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
 });
 
 // PUT /api/forms/:id/data - Update form data (for Excel/CSV editing)
-router.put('/:id/data', authenticateToken, async (req, res) => {
+router.put('/:id/data', authenticateToken, checkFormOwnership, async (req, res) => {
   try {
     const { sheetData } = req.body;
     
@@ -418,7 +473,7 @@ router.put('/:id/data', authenticateToken, async (req, res) => {
 });
 
 // GET /api/forms/:id/data - Get form data
-router.get('/:id/data', authenticateToken, async (req, res) => {
+router.get('/:id/data', authenticateToken, checkFormOwnership, async (req, res) => {
   try {
     const query = 'SELECT sheet_data FROM forms WHERE id = ? AND deleted_at IS NULL';
     const [forms] = await getDb().promise().query(query, [req.params.id]);
@@ -427,7 +482,15 @@ router.get('/:id/data', authenticateToken, async (req, res) => {
       return res.status(404).json({ message: 'Form not found' });
     }
 
-    const sheetData = forms[0].sheet_data ? JSON.parse(forms[0].sheet_data) : null;
+    let sheetData = null;
+    if (forms[0].sheet_data) {
+      try {
+        sheetData = JSON.parse(forms[0].sheet_data);
+      } catch (e) {
+        console.warn('Malformed sheet_data for form', req.params.id, e.message);
+        sheetData = null;
+      }
+    }
     res.json({ sheetData });
   } catch (error) {
     console.error('Get form data error:', error);
@@ -436,7 +499,7 @@ router.get('/:id/data', authenticateToken, async (req, res) => {
 });
 
 // DELETE /api/forms/:id - Delete a form (soft delete)
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', authenticateToken, checkFormOwnership, async (req, res) => {
   try {
     // Soft delete
     const query = 'UPDATE forms SET deleted_at = NOW() WHERE id = ?';

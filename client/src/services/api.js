@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://dashboard.iplanbymsl.in/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3005/api';
 
 class ApiService {
   constructor() {
@@ -28,7 +28,6 @@ class ApiService {
     // Re-add token in case options.headers overrode it
     if (token) config.headers['Authorization'] = `Bearer ${token}`;
 
-    const method = config.method || 'GET';
     const timeoutMs = options.timeoutMs ?? 15000;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -67,6 +66,38 @@ class ApiService {
         throw e;
       }
       throw error;
+    }
+  }
+
+  async downloadFile(endpoint, options = {}) {
+    const url = `${this.baseURL}${endpoint}`;
+    const token = localStorage.getItem('token');
+
+    const headers = { ...options.headers };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const controller = new AbortController();
+    const timeoutMs = 30000;
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        const e = new Error(`Download timed out after ${timeoutMs}ms`);
+        e.type = 'timeout_error';
+        throw e;
+      }
+      const e = new Error('Download failed');
+      e.type = 'network_error';
+      throw e;
     }
   }
 

@@ -42,6 +42,22 @@ const upload = multer({
 // Import database pool
 const { getDb } = require('../database');
 
+async function checkConerOwnership(req, res, next) {
+  try {
+    const query = 'SELECT created_by, client_id FROM coners WHERE id = ? AND deleted_at IS NULL';
+    const [rows] = await getDb().promise().query(query, [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ message: 'Coner not found' });
+    if (rows[0].created_by !== req.user.id && rows[0].client_id !== req.user.id &&
+        req.user.role !== 'admin' && req.user.role !== 'superadmin') {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+    next();
+  } catch (e) {
+    console.error('Ownership check error:', e);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
 // GET /api/coners - Get all coners
 router.get('/', authenticateToken, async (req, res) => {
   try {
@@ -95,10 +111,21 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
       const pythonPath = process.env.PYTHON_PATH || 'python3';
       const parserScript = path.join(__dirname, '../scripts/parse_excel.py');
       
-      const parsePromise = new Promise((resolve, reject) => {
+      const parsePromise = new Promise((resolve) => {
         const python = spawn(pythonPath, [parserScript, req.file.path]);
         let dataString = '';
         let errorString = '';
+        let settled = false;
+        const finish = (value) => {
+          if (settled) return;
+          settled = true;
+          resolve(value);
+        };
+
+        const killTimer = setTimeout(() => {
+          console.warn('Python parser timed out, killing process');
+          python.kill('SIGKILL');
+        }, 120000);
 
         python.stdout.on('data', (data) => {
           dataString += data.toString();
@@ -109,23 +136,24 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
         });
 
         python.on('close', (code) => {
+          clearTimeout(killTimer);
           if (code !== 0) {
             console.warn('Python parser warning:', errorString);
-            resolve(null); // Don't fail upload if parsing fails
-          } else {
-            try {
-              const parsed = JSON.parse(dataString);
-              resolve(parsed);
-            } catch (e) {
-              console.warn('Failed to parse Python output:', e);
-              resolve(null);
-            }
+            return finish(null); // Don't fail upload if parsing fails
+          }
+          try {
+            const parsed = JSON.parse(dataString);
+            finish(parsed);
+          } catch (e) {
+            console.warn('Failed to parse Python output:', e);
+            finish(null);
           }
         });
 
         python.on('error', (err) => {
+          clearTimeout(killTimer);
           console.warn('Python spawn error:', err);
-          resolve(null);
+          finish(null);
         });
       });
 
@@ -177,7 +205,7 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
 });
 
 // GET /api/coners/:id/download - Download a coner
-router.get('/:id/download', authenticateToken, async (req, res) => {
+router.get('/:id/download', authenticateToken, checkConerOwnership, async (req, res) => {
   try {
     const query = 'SELECT * FROM coners WHERE id = ? AND deleted_at IS NULL';
     const [coners] = await getDb().promise().query(query, [req.params.id]);
@@ -217,7 +245,7 @@ router.get('/:id/download', authenticateToken, async (req, res) => {
 });
 
 // PUT /api/coners/:id - Update coner (name, type, template_data)
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticateToken, checkConerOwnership, async (req, res) => {
   try {
     const { name, type, template_data, folder_id } = req.body;
     
@@ -238,7 +266,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
 });
 
 // PUT /api/coners/:id/data - Update coner data (for Excel/CSV editing)
-router.put('/:id/data', authenticateToken, async (req, res) => {
+router.put('/:id/data', authenticateToken, checkConerOwnership, async (req, res) => {
   try {
     const { sheetData } = req.body;
     
@@ -259,7 +287,7 @@ router.put('/:id/data', authenticateToken, async (req, res) => {
 });
 
 // GET /api/coners/:id/data - Get coner data
-router.get('/:id/data', authenticateToken, async (req, res) => {
+router.get('/:id/data', authenticateToken, checkConerOwnership, async (req, res) => {
   try {
     const query = 'SELECT sheet_data FROM coners WHERE id = ? AND deleted_at IS NULL';
     const [coners] = await getDb().promise().query(query, [req.params.id]);
@@ -268,7 +296,15 @@ router.get('/:id/data', authenticateToken, async (req, res) => {
       return res.status(404).json({ message: 'Coner not found' });
     }
 
-    const sheetData = coners[0].sheet_data ? JSON.parse(coners[0].sheet_data) : null;
+    let sheetData = null;
+    if (coners[0].sheet_data) {
+      try {
+        sheetData = JSON.parse(coners[0].sheet_data);
+      } catch (e) {
+        console.warn('Malformed sheet_data for coner', req.params.id, e.message);
+        sheetData = null;
+      }
+    }
     res.json({ sheetData });
   } catch (error) {
     console.error('Get coner data error:', error);
@@ -277,7 +313,7 @@ router.get('/:id/data', authenticateToken, async (req, res) => {
 });
 
 // DELETE /api/coners/:id - Delete a coner (soft delete)
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', authenticateToken, checkConerOwnership, async (req, res) => {
   try {
     // Soft delete
     const query = 'UPDATE coners SET deleted_at = NOW() WHERE id = ?';

@@ -1375,13 +1375,9 @@ export default function ConnersManagement() {
       // ❌ FALLBACK: Only download if no template_data (old files)
       console.warn("[DEBUG] ⚠️ No template_data found, falling back to file download");
 
-      const token = localStorage.getItem("token");
       console.log("[DEBUG] Downloading coner file for viewing...");
 
-      const response = await fetch(
-        `https://dashboard.iplanbymsl.in/api/coners/${form.id}/download`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.downloadFile(`/coners/${form.id}/download`);
 
       if (!response.ok) {
         console.error("[DEBUG] Download failed:", response.status);
@@ -1453,20 +1449,12 @@ export default function ConnersManagement() {
         parseFormData.append('file', blob, form.name);
         parseFormData.append('parse_only', 'true');
         
-        const apiUrl = `${import.meta.env.VITE_API_URL || "https://dashboard.iplanbymsl.in/api"}/templates/upload`;
-        console.log('[DEBUG] API URL:', apiUrl);
+        const parseResult = await api.request('/templates/upload', { method: 'POST', body: parseFormData });
+        console.log('[DEBUG] View - Parse result:', parseResult);
         
-        const parseResponse = await fetch(apiUrl, {
-          method: "POST", 
-          headers: { Authorization: `Bearer ${token}` }, 
-          body: parseFormData 
-        });
+        console.log('[DEBUG] View - Parse result success:', parseResult?.success);
         
-        console.log('[DEBUG] View - Parse response status:', parseResponse.status);
-        console.log('[DEBUG] View - Parse response ok:', parseResponse.ok);
-        
-        if (parseResponse.ok) {
-          const parseResult = await parseResponse.json();
+        if (parseResult?.data?.template_data?.sheets) {
           console.log('[DEBUG] View - Parse result success:', parseResult.success);
           console.log('[DEBUG] View - Has sheets:', !!parseResult.data?.template_data?.sheets);
           
@@ -1553,11 +1541,7 @@ export default function ConnersManagement() {
 
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(
-        `https://dashboard.iplanbymsl.in/api/coners/${form.id}/download`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.downloadFile(`/coners/${form.id}/download`);
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
 
       const blob = await response.blob();
@@ -1585,11 +1569,7 @@ export default function ConnersManagement() {
 
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(
-        `https://dashboard.iplanbymsl.in/api/coners/${form.id}/download`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.downloadFile(`/coners/${form.id}/download`);
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
 
       const blob = await response.blob();

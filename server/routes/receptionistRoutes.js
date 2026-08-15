@@ -1,5 +1,8 @@
 const express = require('express');
+const { authenticateToken } = require('../middleware/auth');
 const router = express.Router();
+
+router.use(authenticateToken);
 const ReceptionistController = require('../controllers/receptionistController');
 
 const receptionistController = new ReceptionistController();

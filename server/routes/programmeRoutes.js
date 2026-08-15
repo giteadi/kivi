@@ -1,7 +1,10 @@
 const express = require('express');
+const { authenticateToken } = require('../middleware/auth');
 const ProgrammeController = require('../controllers/programmeController');
 
 const router = express.Router();
+
+router.use(authenticateToken);
 const programmeController = new ProgrammeController();
 
 // GET /api/programmes - Get all programmes

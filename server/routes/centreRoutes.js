@@ -1,7 +1,10 @@
 const express = require('express');
+const { authenticateToken } = require('../middleware/auth');
 const CentreController = require('../controllers/centreController');
 
 const router = express.Router();
+
+router.use(authenticateToken);
 const centreController = new CentreController();
 
 // GET /api/centres - Get all centres

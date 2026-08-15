@@ -155,17 +155,14 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
     debounceTimer.current = setTimeout(() => setDebouncedSearch(value), 300);
   }, []);
 
-  useEffect(() => {
-    dispatch(fetchPatients());
-    fetchAssessmentPackages();
-  }, [dispatch]);
+  useEffect(() => () => clearTimeout(debounceTimer.current), []);
 
   // Fetch packages from API
-  const fetchAssessmentPackages = async () => {
+  const fetchAssessmentPackages = useCallback(async () => {
     try {
       setPackagesLoading(true);
       const response = await api.request('/assessment-packages');
-      if (response.success && response.data) {
+      if (response.success && Array.isArray(response.data)) {
         // Format packages to match existing structure
         const formattedPackages = response.data.map(pkg => ({
           id: pkg.id.toString(),
@@ -187,7 +184,12 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
     } finally {
       setPackagesLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    dispatch(fetchPatients());
+    fetchAssessmentPackages();
+  }, [dispatch, fetchAssessmentPackages]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -544,29 +546,18 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
   };
 
   // Export functions
-  const getApiUrl = () => {
-    return import.meta.env.VITE_API_URL || 'http://localhost:3005/api';
-  };
-
   const exportToExcel = async (selectedPatients = null) => {
     try {
       console.log('🔄 Excel Export started...');
       const studentIds = selectedPatients ? selectedPatients.map(p => p.id) : null;
-      const apiUrl = getApiUrl();
-      console.log('📤 API URL:', apiUrl);
       
-      const response = await fetch(`${apiUrl}/students/export`, {
+      const result = await api.request('/students/export', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           format: 'excel',
           studentIds: studentIds
         })
       });
-      
-      const result = await response.json();
       
       if (result.success) {
         const ws = XLSX.utils.json_to_sheet(result.data);
@@ -586,21 +577,14 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
     try {
       console.log('🔄 Word Export started...');
       const studentIds = selectedPatients ? selectedPatients.map(p => p.id) : null;
-      const apiUrl = getApiUrl();
-      console.log('📤 API URL:', apiUrl);
       
-      const response = await fetch(`${apiUrl}/students/export`, {
+      const result = await api.request('/students/export', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           format: 'word',
           studentIds: studentIds
         })
       });
-      
-      const result = await response.json();
       
       if (result.success) {
         const tableRows = result.data.map(patient => 
@@ -673,25 +657,14 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
     try {
       console.log('🔄 PDF Export started...');
       const studentIds = selectedPatients ? selectedPatients.map(p => p.id) : null;
-      const apiUrl = getApiUrl();
-      console.log('📤 API URL:', apiUrl);
       
-      const response = await fetch(`${apiUrl}/students/export`, {
+      const result = await api.request('/students/export', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           format: 'pdf',
           studentIds: studentIds
         })
       });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const result = await response.json();
       console.log('📥 Backend response:', result);
       
       if (result.success && result.data && result.data.length > 0) {
@@ -929,8 +902,6 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
 
     setIsSavingAssessment(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3005/api';
-      
       // Prepare items data (may be empty since response section removed)
       const items = Object.entries(assessmentItemResponses).map(([itemNum, response]) => ({
         itemNumber: parseInt(itemNum),
@@ -946,11 +917,8 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
       const completedItems = items.length;
       const completionPercentage = Math.round((completedItems / totalItems) * 100);
 
-      const response = await fetch(`${apiUrl}/assessment-results`, {
+      const result = await api.request('/assessment-results', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           assessmentId: parseInt(assessmentId),
           studentId: parseInt(selectedItems[0]),
@@ -960,8 +928,6 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
           maxScore: null
         })
       });
-
-      const result = await response.json();
 
       if (result.success) {
         const message = result.data.totalItems > 0 
@@ -1012,8 +978,6 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
 
     setIsSendingInvoice(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3005/api';
-      
       // Calculate proper package details
       const isPackage = !!selectedPackage;
       const itemsCount = isPackage ? 1 : (selectedAssessments.length || 1);
@@ -1046,11 +1010,8 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
         });
       }
       
-      const response = await fetch(`${apiUrl}/invoices/send-assessment`, {
+      const result = await api.request('/invoices/send-assessment', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           assessmentId: currentAssessment?.id || selectedPackage?.id || selectedAssessments[0] || 'package',
           studentId: selectedItems[0],
@@ -1067,8 +1028,6 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
           examiner: document.querySelector('select')?.value || 'To be assigned'
         })
       });
-
-      const result = await response.json();
 
       if (result.success) {
         toast.success('Invoice sent successfully to ' + email);
@@ -2603,8 +2562,6 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                     onSendInvoice={async (invoiceData) => {
                       setIsSendingInvoice(true);
                       try {
-                        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3005/api';
-                        
                         // Find selected package from assessmentPackages
                         const selectedPkg = assessmentPackages.find(p => 
                           selectedAssessments.includes(p.id)
@@ -2663,15 +2620,10 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                         
                         console.log('📧 Sending invoice payload:', payload);
                         
-                        const response = await fetch(`${apiUrl}/invoices/send-assessment`, {
+                        const result = await api.request('/invoices/send-assessment', {
                           method: 'POST',
-                          headers: {
-                            'Content-Type': 'application/json',
-                          },
                           body: JSON.stringify(payload)
                         });
-                        
-                        const result = await response.json();
                         console.log('Response:', result);
                         
                         if (result.success) {

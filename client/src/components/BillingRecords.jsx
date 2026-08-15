@@ -477,12 +477,7 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
     if (!selectedBill) return;
     setIsUpdating(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3005/api'}/invoices/${selectedBill.rawId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-        body: JSON.stringify({ status: editForm.status, amount: editForm.amount })
-      });
-      const result = await res.json();
+      const result = await api.request(`/invoices/${selectedBill.rawId}`, { method: 'PUT', body: JSON.stringify({ status: editForm.status, amount: editForm.amount }) });
       if (result.success) { toast.success('Invoice updated'); setShowEditModal(false); fetchBillingRecords(); }
       else toast.error(result.message || 'Failed to update');
     } catch { toast.error('Failed to update invoice'); }
@@ -495,11 +490,7 @@ const BillingRecords = ({ onViewBilling, onEditBilling, onDeleteBilling, onCreat
     if (!billToDelete) return;
     setIsDeleting(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3005/api'}/invoices/${billToDelete.rawId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      const result = await res.json();
+      const result = await api.request(`/invoices/${billToDelete.rawId}`, { method: 'DELETE' });
       if (result.success) { toast.success('Invoice deleted'); setShowDeleteConfirm(false); fetchBillingRecords(); }
       else toast.error(result.message || 'Failed to delete');
     } catch { toast.error('Failed to delete invoice'); }

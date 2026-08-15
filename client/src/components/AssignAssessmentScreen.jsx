@@ -78,7 +78,7 @@ const AssignAssessmentScreen = ({ examineeId: propExamineeId, examineeName: prop
   const fetchPackages = async () => {
     try {
       const response = await api.request('/assessment-packages');
-      if (response.success && response.data) {
+      if (response?.success && Array.isArray(response.data)) {
         const formattedPackages = response.data.map(pkg => ({
           id: pkg.id.toString(),
           dbId: pkg.id,
@@ -103,7 +103,7 @@ const AssignAssessmentScreen = ({ examineeId: propExamineeId, examineeName: prop
   const fetchIndividualAssessments = async () => {
     try {
       const response = await api.request('/individual-assessments');
-      if (response.success && response.data) {
+      if (response?.success && Array.isArray(response.data)) {
         const formattedAssessments = response.data.map(ass => ({
           id: ass.id.toString(),
           dbId: ass.id,

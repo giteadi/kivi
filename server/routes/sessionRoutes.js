@@ -1,7 +1,10 @@
 const express = require('express');
+const { authenticateToken } = require('../middleware/auth');
 const SessionController = require('../controllers/sessionController');
 
 const router = express.Router();
+
+router.use(authenticateToken);
 const sessionController = new SessionController();
 
 // GET /api/sessions - Get all sessions

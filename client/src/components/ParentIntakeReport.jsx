@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { FiDownload, FiFileText, FiPrinter, FiCopy, FiCheck } from 'react-icons/fi';
 
@@ -16,6 +16,11 @@ const ParentIntakeReport = ({
 }) => {
   const [isCopied, setIsCopied] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const copyTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    return () => clearTimeout(copyTimeoutRef.current);
+  }, []);
 
   // Calculate age from birthDate
   const calculateAge = (birthDate) => {
@@ -53,6 +58,7 @@ const ParentIntakeReport = ({
     link.href = url;
     link.download = `Parent_Intake_Form_${formData.firstName}_${formData.lastName}.doc`;
     link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 100);
   };
 
   // Export to PDF (print)
@@ -66,7 +72,8 @@ const ParentIntakeReport = ({
     const text = content.innerText;
     navigator.clipboard.writeText(text).then(() => {
       setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
+      clearTimeout(copyTimeoutRef.current);
+      copyTimeoutRef.current = setTimeout(() => setIsCopied(false), 2000);
     });
   };
 

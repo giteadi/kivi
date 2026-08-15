@@ -989,6 +989,29 @@ export default function FormsManagement() {
   // Formula cache for re-evaluation
   const formulaCacheRef = useRef({});
 
+  // Cells the user actually typed into, as { sheetName: { "r_c": value } }.
+  //
+  // The server replays exactly these onto the original .xlsx instead of
+  // rebuilding the workbook from the grid, which is what keeps formulas,
+  // charts, merges and cell formatting alive in the downloaded file. Sending
+  // the whole grid would flatten all of that, so only real edits go in here.
+  const cellEditsRef = useRef({});
+
+  const recordCellEdit = (sheetName, rowIdx, colIdx, value) => {
+    if (!sheetName) return;
+    const sheet = cellEditsRef.current[sheetName] || (cellEditsRef.current[sheetName] = {});
+    sheet[`${rowIdx}_${colIdx}`] = value;
+  };
+
+  /** Fold this session's edits into whatever was already saved on the form. */
+  const mergeCellEdits = (saved, incoming) => {
+    const merged = { ...(saved || {}) };
+    for (const [sheetName, cells] of Object.entries(incoming || {})) {
+      merged[sheetName] = { ...(merged[sheetName] || {}), ...cells };
+    }
+    return merged;
+  };
+
   function buildFormulaCache(sheetData) {
     const cache = {};
     sheetData.forEach((row, rIdx) => {
@@ -1039,96 +1062,173 @@ function reEvaluateFormulas(sheetData, cache) {
   return nextData;
 }
 
-// ✅ REPLACED: Native JS evaluator — supports +,-,*,/,SUM(),IF()
+/** 0-based column index → A, B, ... Z, AA, AB ... */
+function colToLetters(idx) {
+  let letters = "";
+  idx += 1;
+  while (idx > 0) {
+    const rem = (idx - 1) % 26;
+    letters = String.fromCharCode(65 + rem) + letters;
+    idx = Math.floor((idx - 1) / 26);
+  }
+  return letters;
+}
+
+/** A, B, ... Z, AA → 0-based column index. Single-char maths breaks past Z. */
+function lettersToCol(letters) {
+  let idx = 0;
+  for (const ch of letters.toUpperCase()) idx = idx * 26 + (ch.charCodeAt(0) - 64);
+  return idx - 1;
+}
+
+/** Excel worksheet functions, all tolerant of nested arrays from ranges. */
+const SHEET_FN = {
+  SUM: (...a) => SHEET_FN._nums(a).reduce((s, n) => s + n, 0),
+  AVERAGE: (...a) => {
+    const n = SHEET_FN._nums(a);
+    return n.length ? n.reduce((s, v) => s + v, 0) / n.length : 0;
+  },
+  MIN: (...a) => { const n = SHEET_FN._nums(a); return n.length ? Math.min(...n) : 0; },
+  MAX: (...a) => { const n = SHEET_FN._nums(a); return n.length ? Math.max(...n) : 0; },
+  COUNT: (...a) => SHEET_FN._nums(a).length,
+  COUNTA: (...a) => a.flat(Infinity).filter((v) => v !== "" && v != null).length,
+  ROUND: (v, d = 0) => Number(Math.round(Number(v) + "e" + d) + "e-" + d) || 0,
+  ROUNDUP: (v, d = 0) => Math.ceil(Number(v) * 10 ** d) / 10 ** d,
+  ROUNDDOWN: (v, d = 0) => Math.floor(Number(v) * 10 ** d) / 10 ** d,
+  ABS: (v) => Math.abs(Number(v)),
+  INT: (v) => Math.floor(Number(v)),
+  SQRT: (v) => Math.sqrt(Number(v)),
+  POWER: (v, p) => Number(v) ** Number(p),
+  AND: (...a) => a.flat(Infinity).every(Boolean),
+  OR: (...a) => a.flat(Infinity).some(Boolean),
+  NOT: (v) => !v,
+  CONCATENATE: (...a) => a.flat(Infinity).join(""),
+  TRIM: (v) => String(v ?? "").trim(),
+  UPPER: (v) => String(v ?? "").toUpperCase(),
+  LOWER: (v) => String(v ?? "").toLowerCase(),
+  LEN: (v) => String(v ?? "").length,
+  IFERROR: (v, fallback) => (v === null || v === undefined || Number.isNaN(v) ? fallback : v),
+  _nums: (args) =>
+    args.flat(Infinity)
+      .map((v) => (typeof v === "number" ? v : parseFloat(v)))
+      .filter((v) => typeof v === "number" && !Number.isNaN(v)),
+};
+
+const FN_NAMES = Object.keys(SHEET_FN).filter((k) => !k.startsWith("_"));
+
+// Only these characters may reach the evaluator. Every string literal has been
+// swapped for a \uE000-delimited placeholder by this point, so no user text is
+// covered by this test — anything else is a transform we emitted ourselves.
+const SAFE_EXPR = /^[\s\d.+\-*/%^()<>=!,:&|?[\]\uE000A-Za-z_]*$/;
+
+/**
+ * Evaluate a subset of the Excel formula language against a 2D grid.
+ *
+ * String literals are masked before the expression is upper-cased, because
+ * upper-casing the whole formula also mangles the text it returns — that is
+ * why band labels used to come back as "VERY POOR" instead of "Very Poor".
+ */
 function evalFormula(formula, grid) {
   if (!formula) return "";
-  let expr = formula.toString().trim();
-  if (expr.startsWith("=")) expr = expr.slice(1);
-  let e = expr.toUpperCase();
+  let e = formula.toString().trim();
+  if (e.startsWith("=")) e = e.slice(1);
 
-  const getCellValue = (ref) => {
-    const m = ref.match(/^([A-Z]+)(\d+)$/i);
+  // ── Mask literals so casing and cell-ref matching cannot touch them ──
+  const LIT_DELIM = "\uE000";
+  const literals = [];
+  const mask = (text) => `${LIT_DELIM}${literals.push(text) - 1}${LIT_DELIM}`;
+  e = e.replace(/"([^"]*)"/g, (_, text) => mask(text));
+  e = e.toUpperCase();
+
+  const cellValue = (ref) => {
+    const m = ref.match(/^\$?([A-Z]+)\$?(\d+)$/);
     if (!m) return 0;
-    const c = m[1].toUpperCase().charCodeAt(0) - 65;
-    const r = parseInt(m[2]) - 1;
-    const cell = grid[r]?.[c];
-    const raw = (cell && typeof cell === "object") ? (cell.raw ?? cell.value ?? "") : cell;
+    const cell = grid[parseInt(m[2], 10) - 1]?.[lettersToCol(m[1])];
+    const raw = cell && typeof cell === "object" ? (cell.raw ?? cell.value ?? "") : cell;
     if (raw === "" || raw === null || raw === undefined) return 0;
-    const val = parseFloat(String(raw));
-    return isNaN(val) ? 0 : val;
+    const num = parseFloat(String(raw));
+    // Text cells stay text so comparisons and & concatenation still work.
+    return Number.isNaN(num) || String(raw).trim() !== String(num) ? String(raw) : num;
   };
 
-  // Step 1: Resolve SUM() — compute actual numeric total inline
-  e = e.replace(/SUM\(([^)]+)\)/g, (_, inner) => {
-    let total = 0;
-    inner.split(",").forEach(part => {
-      part = part.trim();
-      const range = part.match(/^([A-Z]+)(\d+):([A-Z]+)(\d+)$/);
-      if (range) {
-        const c1 = range[1].charCodeAt(0) - 65, r1 = parseInt(range[2]) - 1;
-        const c2 = range[3].charCodeAt(0) - 65, r2 = parseInt(range[4]) - 1;
-        for (let r = Math.min(r1,r2); r <= Math.max(r1,r2); r++)
-          for (let c = Math.min(c1,c2); c <= Math.max(c1,c2); c++)
-            total += getCellValue(String.fromCharCode(c+65) + (r+1));
-      } else {
-        total += getCellValue(part);
-      }
-    });
-    return String(total);
+  const emit = (value) => (typeof value === "number" ? String(value) : mask(value));
+
+  // ── Ranges become array literals; SUM & friends flatten them ──
+  e = e.replace(/\$?([A-Z]+)\$?(\d+):\$?([A-Z]+)\$?(\d+)/g, (_, c1, r1, c2, r2) => {
+    const [ca, cb] = [lettersToCol(c1), lettersToCol(c2)].sort((x, y) => x - y);
+    const [ra, rb] = [+r1 - 1, +r2 - 1].sort((x, y) => x - y);
+    const cells = [];
+    for (let r = ra; r <= rb; r++) {
+      for (let c = ca; c <= cb; c++) cells.push(emit(cellValue(colToLetters(c) + (r + 1))));
+    }
+    return `[${cells.join(",")}]`;
   });
 
-  // Step 2: Replace all cell refs with their numeric values
-  // Use a function-based replace so each ref gets its own lookup
-  e = e.replace(/([A-Z]+)(\d+)/g, (match) => String(getCellValue(match)));
+  // ── Function names before single refs, or SUM( would look like a ref ──
+  e = e.replace(/\b([A-Z][A-Z0-9.]*)\s*\(/g, (match, name) =>
+    FN_NAMES.includes(name) ? `__fn.${name}(` : match
+  );
 
-  // Step 3: Strip quoted number strings "3" → 3
-  e = e.replace(/"(\d+(?:\.\d+)?)"/g, "$1");
+  // ── Remaining single cell references ──
+  e = e.replace(/(?<!\.)\$?\b([A-Z]{1,3})\$?(\d+)\b/g, (match) => emit(cellValue(match)));
 
-  // Step 4: Remove trailing commas before ) 
-  e = e.replace(/,\s*\)/g, ")");
+  // ── IF becomes a ternary so only the taken branch is evaluated ──
+  e = convertIFs(e, mask);
 
-  // Step 5: Convert nested IF(cond,t,f) → JS ternary char-by-char
-  function convertIFs(s) {
-    let out = "", i = 0;
-    while (i < s.length) {
-      if (s.slice(i, i+3) === "IF(") {
-        i += 3;
-        let depth = 0, args = [], cur = "";
-        while (i < s.length) {
-          const ch = s[i];
-          if (ch === "(") { depth++; cur += ch; }
-          else if (ch === ")") {
-            if (depth === 0) { args.push(cur.trim()); i++; break; }
-            depth--; cur += ch;
-          } else if (ch === "," && depth === 0) {
-            args.push(cur.trim()); cur = "";
-          } else { cur += ch; }
-          i++;
-        }
-        if (args.length >= 3)
-          out += `((${convertIFs(args[0])})?(${convertIFs(args[1])}):(${convertIFs(args[2])}))`;
-        else if (args.length === 2)
-          out += `((${convertIFs(args[0])})?(${convertIFs(args[1])}):(0))`;
-        else out += "0";
-      } else { out += s[i++]; }
-    }
-    return out;
-  }
-  e = convertIFs(e);
-
-  // Step 6: Excel <> → JS !==, bare = → ===
   e = e.replace(/<>/g, "!==");
   e = e.replace(/(?<![<>=!])=(?![>=])/g, "===");
+  e = e.replace(/&/g, "+");          // Excel concatenation
+  e = e.replace(/(\d)\s*\^\s*/g, "$1**");
+  e = e.replace(/,\s*\)/g, ")");     // trailing comma, e.g. IF(a,b,)
 
-  // Step 7: Evaluate
+  if (!SAFE_EXPR.test(e)) return 0;
+
+  // ── Restore literals as real JS strings ──
+  e = e.replace(new RegExp(`${LIT_DELIM}\\d+${LIT_DELIM}`, "g"), (m) => {
+    const i = m.replace(new RegExp(LIT_DELIM, "g"), "");
+    return JSON.stringify(literals[+i]);
+  });
+
   try {
-    const result = new Function(`return (${e})`)();
-    if (result === null || result === undefined) return 0;
+    const result = new Function("__fn", `return (${e})`)(SHEET_FN);
+    if (result === null || result === undefined) return "";
     if (typeof result === "boolean") return result ? 1 : 0;
-    if (typeof result === "string") { const n = parseFloat(result); return isNaN(n) ? result : n; }
-    if (!isFinite(result) || isNaN(result)) return 0;
+    if (typeof result === "string") return result;
+    if (!isFinite(result) || Number.isNaN(result)) return 0;
     return Number.isInteger(result) ? result : parseFloat(result.toFixed(4));
   } catch { return 0; }
+}
+
+/**
+ * Rewrite Excel's IF(cond, then, else) as a JS conditional expression.
+ * `mask` is used for the implicit empty result so no raw quote character ever
+ * reaches the expression, keeping the SAFE_EXPR guard strict.
+ */
+function convertIFs(s, mask) {
+  let out = "", i = 0;
+  while (i < s.length) {
+    if (s.slice(i, i + 3) === "IF(" && !/[A-Z0-9_.]/.test(s[i - 1] || "")) {
+      i += 3;
+      let depth = 0, args = [], cur = "";
+      while (i < s.length) {
+        const ch = s[i];
+        if (ch === "(") { depth++; cur += ch; }
+        else if (ch === ")") {
+          if (depth === 0) { args.push(cur.trim()); i++; break; }
+          depth--; cur += ch;
+        } else if (ch === "," && depth === 0) { args.push(cur.trim()); cur = ""; }
+        else { cur += ch; }
+        i++;
+      }
+      // A 2-arg IF with no else yields FALSE in Excel; blank reads better.
+      if (args.length >= 3)
+        out += `((${convertIFs(args[0], mask)})?(${convertIFs(args[1], mask)}):(${convertIFs(args[2], mask)}))`;
+      else if (args.length === 2)
+        out += `((${convertIFs(args[0], mask)})?(${convertIFs(args[1], mask)}):(${mask("")}))`;
+      else out += "0";
+    } else { out += s[i++]; }
+  }
+  return out;
 }
 
   // Extract header from HTML content (like TemplateManager)
@@ -1252,11 +1352,7 @@ function evalFormula(formula, grid) {
     // If no template_data, try to parse the file first (for Excel/Word files)
     console.log('[DEBUG] No template_data found, attempting to parse file...');
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(
-        `https://dashboard.iplanbymsl.in/api/forms/${form.id}/download`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.downloadFile(`/forms/${form.id}/download`);
       
       if (!response.ok) throw new Error(`Download failed: ${response.status}`);
       
@@ -1299,17 +1395,9 @@ function evalFormula(formula, grid) {
         parseFormData.append('file', blob, form.name);
         parseFormData.append('parse_only', 'true');
         
-        const parseResponse = await fetch(
-          `${import.meta.env.VITE_API_URL || "https://dashboard.iplanbymsl.in/api"}/templates/upload`,
-          {
-            method: "POST",
-            headers: { Authorization: `Bearer ${token}` },
-            body: parseFormData
-          }
-        );
+        const parseResult = await api.request('/templates/upload', { method: 'POST', body: parseFormData });
         
-        if (parseResponse.ok) {
-          const parseResult = await parseResponse.json();
+        if (parseResult?.data?.template_data?.sheets) {
           if (parseResult.data?.template_data?.sheets) {
             // Extract header from parsed Word document
             const sheets = parseResult.data.template_data.sheets;
@@ -1416,6 +1504,8 @@ function evalFormula(formula, grid) {
     console.log("[DEBUG] handleViewForm called for form:", form.name, "type:", form.type);
     setSelectedForm(form);
     setLoading(true);
+    // Start a clean edit log; anything saved earlier is merged back in on save.
+    cellEditsRef.current = {};
 
     try {
       // ✅ CRITICAL FIX: If template_data exists → use directly (NO FILE DOWNLOAD)
@@ -1424,7 +1514,14 @@ function evalFormula(formula, grid) {
 
         const sheets = form.template_data.sheets;
         const sheetNames = form.template_data.sheetNames || Object.keys(sheets);
-        const savedCaches = form.template_data?.formulaCaches || [];
+
+        // The Python parser records formulas per sheet name at upload time.
+        // Prefer those — they include shared-formula members, which the
+        // browser-side scan misses — and fall back to the older per-index caches.
+        const parsedFormulas = form.template_data?.formulas;
+        const savedCaches = parsedFormulas
+          ? sheetNames.map((name) => parsedFormulas[name] || {})
+          : (form.template_data?.formulaCaches || []);
 
         console.log("[DEBUG] Sheet names:", sheetNames);
         console.log("[DEBUG] First sheet data:", sheets[sheetNames[0]]);
@@ -1439,11 +1536,7 @@ function evalFormula(formula, grid) {
         if (!hasSavedFormulas && !hasRawFormulas && form.id) {
           console.log("[DEBUG] No formulas found in template_data, downloading original file...");
           try {
-            const token = localStorage.getItem("token");
-            const response = await fetch(
-              `https://dashboard.iplanbymsl.in/api/forms/${form.id}/download`,
-              { headers: { Authorization: `Bearer ${token}` } }
-            );
+            const response = await api.downloadFile(`/forms/${form.id}/download`);
             if (response.ok) {
               const blob = await response.blob();
               const arrayBuf = await blob.arrayBuffer();
@@ -1529,13 +1622,9 @@ function evalFormula(formula, grid) {
       // ❌ FALLBACK: Only download if no template_data (old files)
       console.warn("[DEBUG] ⚠️ No template_data found, falling back to file download");
 
-      const token = localStorage.getItem("token");
       console.log("[DEBUG] Downloading file for viewing...");
 
-      const response = await fetch(
-        `https://dashboard.iplanbymsl.in/api/forms/${form.id}/download`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.downloadFile(`/forms/${form.id}/download`);
 
       if (!response.ok) {
         console.error("[DEBUG] Download failed:", response.status);
@@ -1660,20 +1749,12 @@ function evalFormula(formula, grid) {
           parseFormData.append('file', blob, form.name);
           parseFormData.append('parse_only', 'true');
           
-          const apiUrl = `${import.meta.env.VITE_API_URL || "https://dashboard.iplanbymsl.in/api"}/templates/upload`;
-          console.log('[DEBUG] API URL:', apiUrl);
+          const parseResult = await api.request('/templates/upload', { method: 'POST', body: parseFormData });
+          console.log('[DEBUG] View - Parse result:', parseResult);
         
-        const parseResponse = await fetch(apiUrl, {
-          method: "POST", 
-          headers: { Authorization: `Bearer ${token}` }, 
-          body: parseFormData 
-        });
+        console.log('[DEBUG] View - Parse result success:', parseResult?.success);
         
-        console.log('[DEBUG] View - Parse response status:', parseResponse.status);
-        console.log('[DEBUG] View - Parse response ok:', parseResponse.ok);
-        
-        if (parseResponse.ok) {
-          const parseResult = await parseResponse.json();
+        if (parseResult?.data?.template_data?.sheets) {
           console.log('[DEBUG] View - Parse result success:', parseResult.success);
           console.log('[DEBUG] View - Has sheets:', !!parseResult.data?.template_data?.sheets);
           
@@ -1815,11 +1896,7 @@ function evalFormula(formula, grid) {
 
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(
-        `https://dashboard.iplanbymsl.in/api/forms/${form.id}/download`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.downloadFile(`/forms/${form.id}/download`);
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
 
       const blob = await response.blob();
@@ -1848,11 +1925,7 @@ function evalFormula(formula, grid) {
 
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(
-        `https://dashboard.iplanbymsl.in/api/forms/${form.id}/download`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.downloadFile(`/forms/${form.id}/download`);
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
 
       const blob = await response.blob();
@@ -1926,16 +1999,14 @@ function evalFormula(formula, grid) {
     // Agar yeh cell formula cell hai toh user edit nahi kar sakta
     const key = `${rowIdx}_${colIdx}`;
     if (formulaCacheRef.current[key]) return; // formula cell - readonly
-    
+
+    const clean = typeof value === 'number' && Number.isNaN(value) ? "" : value;
+    recordCellEdit(sheets[activeSheet]?.name, rowIdx, colIdx, clean);
+
     setSheetData(prev => {
       const next = prev.map(r => [...r]);
       if (!next[rowIdx]) next[rowIdx] = [];
-      // Prevent NaN from being stored - convert to empty string
-      if (typeof value === 'number' && Number.isNaN(value)) {
-        next[rowIdx][colIdx] = "";
-      } else {
-        next[rowIdx][colIdx] = value;
-      }
+      next[rowIdx][colIdx] = clean;
       // ✅ Cache explicitly pass karo
       return reEvaluateFormulas(next, formulaCacheRef.current);
     });
@@ -2124,10 +2195,15 @@ function evalFormula(formula, grid) {
       const sheetNames = sheets.map(s => s.name);
       
       // Build template_data object with formula caches
+      const previous = selectedForm.template_data || {};
       const templateData = {
+        ...previous,
         sheets: updatedSheets,
         sheetNames: sheetNames,
-        formulaCaches: sheets.map((s, idx) => idx === activeSheet ? formulaCacheRef.current : (s.formulaCache || {}))
+        formulaCaches: sheets.map((s, idx) => idx === activeSheet ? formulaCacheRef.current : (s.formulaCache || {})),
+        // Downloads replay these onto the original workbook, so accumulate
+        // across sessions rather than overwriting with just this visit's edits.
+        cellEdits: mergeCellEdits(previous.cellEdits, cellEditsRef.current)
       };
       
       // Update form with new template_data
