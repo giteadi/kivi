@@ -1596,10 +1596,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
                               className={`hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors cursor-pointer ${
                                 selectedItems.includes(patient.id) ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''
                               }`}
-                              onClick={() => {
-                                const fullPatient = transformedPatients.find(p => p.id === patient.id);
-                                setDrawerExaminee(fullPatient || patient);
-                              }}
+                              onClick={() => onViewPatient && onViewPatient(patient.id)}
                             >
                               <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                                 <button

@@ -17,6 +17,7 @@ import api from "../services/api";
 import ReportSheetViewer from "./ReportSheetViewer";
 import Sidebar from "./Sidebar";
 import ExportDropdown from "./ExportDropdown";
+import { buildExamineeTokens, fillTemplateSheets, pruneUnfilledSheets } from "../utils/reportTemplate";
 import {
   DndContext,
   closestCenter,
@@ -395,10 +396,11 @@ async function htmlToDocxElements(html) {
 }
 
 // ─── DOCX export ─────────────────────────────────────────────────────────────
-async function buildAndDownloadDocx(allData, sheetList, patientName, templateName) {
-  console.log("[DOCX Export] Starting export...", { allData, sheetList, patientName, templateName });
+async function buildAndDownloadDocx(rawData, sheetList, patientName, templateName) {
+  console.log("[DOCX Export] Starting export...", { rawData, sheetList, patientName, templateName });
   try {
     if (!sheetList || sheetList.length === 0) throw new Error("No sheets to export");
+    const allData = pruneUnfilledSheets(rawData);
     const sections = [];
     for (const name of sheetList) {
       const sheetData = allData[name] || [];
@@ -486,8 +488,9 @@ function buildAndDownloadXlsx(allData, sheetList, patientName, templateName) {
 }
 
 // ─── Export to PDF ────────────────────────────────────────────────────────────
-async function exportToPdf(allData, sheetNames, patientName, templateName, viewerRef = null) {
+async function exportToPdf(rawData, sheetNames, patientName, templateName, viewerRef = null) {
   try {
+    const allData = pruneUnfilledSheets(rawData);
     // Get HTML content from first sheet
     const firstSheet = sheetNames[0];
     const sheetData = allData[firstSheet];
@@ -730,6 +733,85 @@ function RenameModal({ template, onClose, onRename }) {
           <button style={css.btn("primary")} onClick={handleRename} disabled={saving}>
             <Icon d={icons.save} size={14} /> {saving ? "Saving…" : "Rename"}
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PATIENT SELECT MODAL
+// ══════════════════════════════════════════════════════════════════════════════
+function PatientSelectModal({ patients, template, generating, onClose, onSelect }) {
+  const [filter, setFilter] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    if (!q) return patients;
+    return patients.filter(p => {
+      const name = `${p.first_name || ""} ${p.last_name || ""}`.toLowerCase();
+      const id = String(p.student_id || p.id || "").toLowerCase();
+      return name.includes(q) || id.includes(q);
+    });
+  }, [patients, filter]);
+
+  return (
+    <div style={css.overlay} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={{ ...css.modal, maxWidth: 520, width: "90%", background: "#fff" }} className="rounded-xl">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Select Patient</h3>
+            <p style={{ margin: "4px 0 0", fontSize: 12, color: "#6b7280" }}>
+              Generate dynamic report for <strong>{template.name}</strong>
+            </p>
+          </div>
+          <button style={css.iconBtn} onClick={onClose}><Icon d={icons.x} size={16} /></button>
+        </div>
+
+        <input
+          style={{ ...css.input, border: "1px solid #D1D5DB", marginBottom: 12 }}
+          placeholder="Search by name or ID…"
+          value={filter}
+          onChange={e => setFilter(e.target.value)}
+          autoFocus
+        />
+
+        <div style={{ maxHeight: 320, overflowY: "auto", border: "1px solid #E5E7EB", borderRadius: 8 }}>
+          {filtered.length === 0 ? (
+            <div style={{ padding: 20, textAlign: "center", color: "#6b7280", fontSize: 13 }}>
+              {patients.length === 0 ? "No patients found." : "No matching patients."}
+            </div>
+          ) : (
+            filtered.map(p => (
+              <button
+                key={p.id}
+                disabled={generating}
+                onClick={() => onSelect(p)}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  width: "100%", padding: "12px 14px", border: "none", borderBottom: "1px solid #F3F4F6",
+                  background: "#fff", cursor: generating ? "not-allowed" : "pointer", textAlign: "left"
+                }}
+                className="hover:bg-gray-50"
+              >
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>
+                    {p.first_name || ""} {p.last_name || ""}
+                  </div>
+                  <div style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>
+                    ID: {p.student_id || p.id} · {p.gender || "-"} · {p.date_of_birth || "-"}
+                  </div>
+                </div>
+                <span style={{ fontSize: 13, color: generating ? "#9CA3AF" : "#2563EB", fontWeight: 500 }}>
+                  {generating ? "…" : "Select"}
+                </span>
+              </button>
+            ))
+          )}
+        </div>
+
+        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 16 }}>
+          <button style={css.btn("ghost")} onClick={onClose} disabled={generating}>Cancel</button>
         </div>
       </div>
     </div>
@@ -1079,6 +1161,12 @@ export default function TemplateManager() {
   const [activeTemplate, setActiveTemplate] = useState(null);
   const [reportPanel, setReportPanel]   = useState(null);
 
+  // Patient selection for dynamic report generation
+  const [patients, setPatients]     = useState([]);
+  const [patientSelectOpen, setPatientSelectOpen] = useState(false);
+  const [pendingTemplate, setPendingTemplate]     = useState(null);
+  const [generating, setGenerating] = useState(false);
+
   // FIX 3: Rename modal state
   const [renameTarget, setRenameTarget] = useState(null);
 
@@ -1110,7 +1198,21 @@ export default function TemplateManager() {
 
   const fileRef = useRef(null);
 
-  useEffect(() => { fetchTemplates(); }, []);
+  useEffect(() => {
+    fetchTemplates();
+    fetchPatients();
+  }, []);
+
+  const fetchPatients = async () => {
+    try {
+      const response = await api.getPatients();
+      const data = response?.data || response || [];
+      setPatients(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.warn("[Patients] fetch failed:", err);
+      setPatients([]);
+    }
+  };
 
   const fetchTemplates = async () => {
     setLoading(true); setError(null);
@@ -1215,60 +1317,85 @@ export default function TemplateManager() {
     return fullName;
   };
 
-  // FIX 1: openCreateReport — use robust DOM-based header extraction
+  // Open patient selector for dynamic report generation
   const openCreateReport = (tpl) => {
-    const reportSheets = {};
-    const reportSheetNames = [];
+    setPendingTemplate(tpl);
+    setPatientSelectOpen(true);
+  };
 
-    // ✅ Detect format from template
-    const isExcel = tpl.sheetNames?.some(name => {
-      const d = tpl.sheets[name];
-      return d && d[0]?.[0] !== "__html__";
-    });
+  // Generate dynamic report from template + patient data
+  const handleGenerateReport = async (patientId, patientName) => {
+    if (!pendingTemplate) return;
+    setGenerating(true);
+    try {
+      const result = await api.generateReportFromTemplate(pendingTemplate.id, patientId);
+      if (!result.success) throw new Error(result.message || "Report generation failed");
 
-    tpl.sheetNames.forEach(sheetName => {
-      const sheetData = tpl.sheets[sheetName];
-      if (!sheetData) return;
+      const report = result.report || result.data || {};
+      let reportSheets = {};
+      let reportSheetNames = [];
 
-      let clonedData;
-      try { clonedData = structuredClone(sheetData); }
-      catch { clonedData = JSON.parse(JSON.stringify(sheetData)); }
-
-      if (clonedData[0]?.[0] === "__html__") {
-        // Word/HTML template → header extract karo
-        const html = clonedData[0][1] || "";
-        const headerHtml = extractHeaderHtml(html);
-        clonedData = [["__html__", headerHtml + "<p><br></p>"]];
+      if (report.sheets && report.sheetNames) {
+        reportSheets = report.sheets;
+        reportSheetNames = report.sheetNames;
+      } else if (report.sheets) {
+        reportSheets = report.sheets;
+        reportSheetNames = Object.keys(reportSheets);
+      } else if (typeof report === "string" || report.html) {
+        const html = typeof report === "string" ? report : report.html;
+        reportSheets = { "Report": [["__html__", html]] };
+        reportSheetNames = ["Report"];
       } else {
-        // ✅ Excel template → rows clear karo but structure rakho
-        const rowCount = clonedData.length;
-        const colCount = Math.max(...clonedData.map(r => r?.length || 0));
-        // Header row rakho (row 0), baaki clear karo
-        clonedData = clonedData.map((row, idx) => {
-          if (idx === 0) return [...row]; // header row as-is
-          return Array(colCount).fill(""); // data rows blank
+        // Fallback: copy the full template HTML as-is (not just header)
+        pendingTemplate.sheetNames.forEach(sheetName => {
+          const sheetData = pendingTemplate.sheets[sheetName];
+          if (!sheetData) return;
+          let clonedData;
+          try { clonedData = structuredClone(sheetData); }
+          catch { clonedData = JSON.parse(JSON.stringify(sheetData)); }
+          reportSheets[sheetName] = clonedData;
+          reportSheetNames.push(sheetName);
         });
       }
 
-      reportSheets[sheetName] = clonedData;
-      reportSheetNames.push(sheetName);
-    });
+      if (reportSheetNames.length === 0) {
+        reportSheets["Report"] = [["__html__", "<p><br></p>"]];
+        reportSheetNames.push("Report");
+      }
 
-    if (reportSheetNames.length === 0) {
-      const fallbackName = "Report";
-      reportSheets[fallbackName] = [["__html__", "<p><br></p>"]];
-      reportSheetNames.push(fallbackName);
+      // Fill {{TOKEN}} placeholders with the examinee's saved details and drop
+      // the rows/sections that were never filled in.
+      try {
+        const patientRes = await api.getPatient(patientId);
+        const student = patientRes?.data || patientRes;
+        if (student) reportSheets = fillTemplateSheets(reportSheets, buildExamineeTokens(student));
+      } catch (err) {
+        console.warn("[GenerateReport] could not auto-fill examinee data:", err.message);
+      }
+
+      const isExcel = reportSheetNames.some(name => {
+        const d = reportSheets[name];
+        return d && d[0]?.[0] !== "__html__";
+      });
+
+      setReportPanel({
+        templateName: pendingTemplate.name,
+        allSheets: reportSheetNames,
+        allData: reportSheets,
+        patientName: patientName || "",
+        isExcel,
+        rowHeights: pendingTemplate.rowHeights || {},
+      });
+      setPanel("report");
+      setPatientSelectOpen(false);
+      setPendingTemplate(null);
+      toast.success("Dynamic report generated!");
+    } catch (err) {
+      console.error("[GenerateReport] failed:", err);
+      toast.error("Report generation failed: " + err.message);
+    } finally {
+      setGenerating(false);
     }
-
-    setReportPanel({
-      templateName: tpl.name,
-      allSheets: reportSheetNames,
-      allData: reportSheets,
-      patientName: "",
-      isExcel, // ✅ Format track karo
-      rowHeights: tpl.rowHeights || {}, // ✅ Row heights pass karo
-    });
-    setPanel("report");
   };
 
   // FIX 2: saveReport — name now correctly includes patient name
@@ -1703,6 +1830,17 @@ export default function TemplateManager() {
           templates={selected}
           onClose={() => setShowMergeModal(false)}
           onMerge={handleMerge}
+        />
+      )}
+
+      {/* ── PATIENT SELECT MODAL ── */}
+      {patientSelectOpen && pendingTemplate && (
+        <PatientSelectModal
+          patients={patients}
+          template={pendingTemplate}
+          generating={generating}
+          onClose={() => { setPatientSelectOpen(false); setPendingTemplate(null); }}
+          onSelect={(p) => handleGenerateReport(p.id, `${p.first_name || ""} ${p.last_name || ""}`.trim())}
         />
       )}
     </div>

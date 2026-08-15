@@ -494,11 +494,11 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   };
 
   useEffect(() => {
-    if (examineeId) {
+    if (examineeId && !currentPatient) {
       dispatch(fetchPatient(examineeId));
       dispatch(fetchAssessments(examineeId));
     }
-  }, [dispatch, examineeId]);
+  }, [dispatch, examineeId, currentPatient]);
 
   // Populate form data when currentPatient loads
   useEffect(() => {
@@ -7163,6 +7163,7 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
 
                 {activeTab === 'report' && (
                   <ExamineeReportTab
+                    currentPatient={currentPatient}
                     formData={formData}
                     evaluationData={evaluationData}
                     diagnosisData={diagnosisData}

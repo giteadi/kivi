@@ -1,12 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import * as apiService from '@/services/api';
+import api from '@/services/api';
 
 export const fetchServices = createAsyncThunk(
   'services/fetchServices',
   async (filters = {}, { rejectWithValue }) => {
     try {
       const queryParams = new URLSearchParams(filters);
-      const response = await apiService.get(`/programmes?${queryParams}`);
+      const response = await api.get(`/programmes?${queryParams}`);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch services');

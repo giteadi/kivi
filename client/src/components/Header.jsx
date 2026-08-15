@@ -1,14 +1,12 @@
 import { motion } from 'framer-motion';
-import { FiBell, FiChevronDown, FiMenu, FiLogOut, FiUser, FiMoon, FiSun } from 'react-icons/fi';
+import { FiBell, FiChevronDown, FiMenu, FiLogOut, FiUser } from 'react-icons/fi';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../store/slices/authSlice';
-import { useTheme } from '../contexts/ThemeContext';
 import { useState, useEffect, useRef } from 'react';
 
 const Header = ({ onMenuClick, onBackClick, showBackButton = false }) => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  const { darkMode, toggleDarkMode } = useTheme();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -66,22 +64,6 @@ const Header = ({ onMenuClick, onBackClick, showBackButton = false }) => {
 
       {/* Right side - Controls */}
       <div className="flex items-center space-x-2 lg:space-x-4">
-        {/* Theme Toggle */}
-        <motion.button
-          type="button"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={toggleDarkMode}
-          className="p-2 rounded-full bg-gray-100 dark:bg-[#2c2c2e] hover:bg-gray-200 dark:hover:bg-[#3a3a3c] border border-gray-200 dark:border-gray-700 transition-colors flex items-center justify-center"
-          title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-        >
-          {darkMode ? (
-            <FiSun className="w-5 h-5 text-yellow-400" />
-          ) : (
-            <FiMoon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-          )}
-        </motion.button>
-
         {/* Notifications */}
         <motion.button
           whileHover={{ scale: 1.05 }}

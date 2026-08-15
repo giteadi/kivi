@@ -1,0 +1,360 @@
+/* A4 clinical report — screen preview and print share one set of metrics so
+   html2canvas / react-to-print exports match the on-screen page exactly. */
+
+.report {
+  --page-width: 210mm;
+  --page-height: 297mm;
+  --page-pad-x: 16mm;
+  --page-pad-y: 14mm;
+  --rule: 1px solid #000;
+  --ink: #000;
+  --shade: #ebebeb;
+
+  font-family: "Times New Roman", Times, serif;
+  font-size: 10.5pt;
+  line-height: 1.35;
+  color: var(--ink);
+  background: #fff;
+}
+
+.report * {
+  box-sizing: border-box;
+}
+
+/* ── page ─────────────────────────────────────────────────────────────── */
+.report-page {
+  position: relative;
+  width: var(--page-width);
+  min-height: var(--page-height);
+  padding: var(--page-pad-y) var(--page-pad-x) 18mm;
+  margin: 0 auto;
+  background: #fff;
+  break-after: page;
+  page-break-after: always;
+}
+
+.report-page:last-child {
+  break-after: auto;
+  page-break-after: auto;
+}
+
+.report-page__body {
+  padding-bottom: 6mm;
+}
+
+/* Off-screen sheet used to measure block heights before pagination. */
+.report-measure {
+  position: absolute;
+  top: 0;
+  left: -20000px;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* The first block on a sheet must not push itself down with a top margin. */
+.report-page__body > .report-block:first-child .report-h1 {
+  margin-top: 0;
+}
+
+/* ── masthead ─────────────────────────────────────────────────────────── */
+.report-masthead {
+  text-align: center;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 3mm;
+  margin-bottom: 4mm;
+}
+
+.report-masthead__title {
+  font-size: 15pt;
+  font-weight: 700;
+  letter-spacing: 0.4pt;
+  text-transform: uppercase;
+  margin: 0 0 1.5mm;
+}
+
+.report-masthead__subtitle,
+.report-masthead__meta {
+  font-size: 9.5pt;
+  margin: 0;
+}
+
+.report-masthead__meta {
+  margin-top: 1mm;
+}
+
+.report-runhead {
+  display: flex;
+  justify-content: space-between;
+  font-size: 8.5pt;
+  border-bottom: var(--rule);
+  padding-bottom: 1.5mm;
+  margin-bottom: 4mm;
+}
+
+.report-confidential {
+  border: var(--rule);
+  background: var(--shade);
+  text-align: center;
+  font-size: 9pt;
+  font-weight: 700;
+  padding: 2mm 3mm;
+  margin-bottom: 4mm;
+}
+
+/* ── headings & text ──────────────────────────────────────────────────── */
+.report-h1 {
+  font-size: 11.5pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3pt;
+  border-bottom: var(--rule);
+  padding-bottom: 1mm;
+  margin: 5mm 0 2.5mm;
+}
+
+.report-h2 {
+  font-size: 10.5pt;
+  font-weight: 700;
+  margin: 3.5mm 0 1.5mm;
+}
+
+.report-p {
+  margin: 0 0 2mm;
+  text-align: justify;
+}
+
+/* Tailwind's preflight strips list markers, so restore them explicitly. */
+.report-list,
+.report-reco__body {
+  list-style: disc outside;
+}
+
+.report-list {
+  margin: 0 0 2mm;
+  padding-left: 6mm;
+}
+
+.report-list li {
+  margin-bottom: 0.8mm;
+}
+
+.report-note {
+  font-size: 9pt;
+  margin: 1.5mm 0 2mm;
+}
+
+/* ── tables ───────────────────────────────────────────────────────────── */
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 3mm;
+  font-size: 10pt;
+  table-layout: fixed;
+}
+
+.report-table th,
+.report-table td {
+  border: var(--rule);
+  padding: 1.4mm 2mm;
+  text-align: left;
+  vertical-align: top;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.report-table thead th {
+  background: var(--shade);
+  font-weight: 700;
+}
+
+.report-table .is-label {
+  font-weight: 700;
+  background: #f7f7f7;
+}
+
+.report-table .is-center {
+  text-align: center;
+}
+
+.report-table .is-total td,
+.report-table .is-total th {
+  font-weight: 700;
+  background: var(--shade);
+}
+
+.report-callout {
+  border: var(--rule);
+  padding: 2.5mm 3mm;
+  margin: 0 0 3mm;
+}
+
+.report-callout--center {
+  text-align: center;
+}
+
+.report-callout__title {
+  font-size: 9pt;
+  font-weight: 700;
+  letter-spacing: 0.5pt;
+  text-transform: uppercase;
+  margin: 0 0 1mm;
+}
+
+.report-callout__value {
+  font-size: 12pt;
+  font-weight: 700;
+  margin: 0;
+}
+
+.report-callout__statement {
+  font-weight: 700;
+  text-align: center;
+  margin: 0;
+}
+
+.report-table td .report-p:last-child {
+  margin-bottom: 0;
+}
+
+/* Recommendation blocks — banner row + bulleted body, matching the source doc */
+.report-reco {
+  border: var(--rule);
+  margin-bottom: 3mm;
+}
+
+.report-reco__head {
+  background: var(--shade);
+  border-bottom: var(--rule);
+  font-weight: 700;
+  font-size: 9.5pt;
+  letter-spacing: 0.3pt;
+  text-transform: uppercase;
+  padding: 1.6mm 3mm;
+}
+
+.report-reco__body {
+  margin: 0;
+  padding: 2mm 3mm 2mm 8mm;
+}
+
+.report-reco__body li {
+  margin-bottom: 1mm;
+}
+
+/* ── signature & footer ───────────────────────────────────────────────── */
+.report-signature {
+  margin-top: 4mm;
+}
+
+.report-signature__cell {
+  height: 18mm;
+  vertical-align: bottom;
+}
+
+.report-disclaimer {
+  border: var(--rule);
+  padding: 2.5mm 3mm;
+  font-size: 8.5pt;
+  font-style: italic;
+  text-align: justify;
+}
+
+.report-disclaimer__title {
+  font-style: normal;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 1.5mm;
+}
+
+.report-footer {
+  position: absolute;
+  left: var(--page-pad-x);
+  right: var(--page-pad-x);
+  bottom: 8mm;
+  display: flex;
+  justify-content: space-between;
+  border-top: var(--rule);
+  padding-top: 1.5mm;
+  font-size: 8pt;
+}
+
+/* ── keep-together rules ──────────────────────────────────────────────── */
+.report-table,
+.report-callout,
+.report-reco,
+.report-disclaimer {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.report-table tr,
+.report-list li,
+.report-reco__body li {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.report-h1,
+.report-h2 {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+/* ── screen-only preview chrome (never printed / captured) ────────────── */
+@media screen {
+  .report--preview {
+    background: #f1f3f5;
+    padding: 24px 0;
+  }
+
+  .report--preview .report-page {
+    outline: 1px solid #d0d4d9;
+    margin-bottom: 24px;
+  }
+
+  .report--preview .report-page:last-child {
+    margin-bottom: 0;
+  }
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  /* `printing-report` is set on <body> only while the report is being printed,
+     so these rules never leak into other screens of the app. */
+  body.printing-report * {
+    visibility: hidden;
+  }
+
+  body.printing-report .report,
+  body.printing-report .report * {
+    visibility: visible;
+  }
+
+  body.printing-report .report {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .report--preview {
+    background: none;
+    padding: 0;
+  }
+
+  .report-page {
+    outline: none;
+    margin: 0;
+  }
+
+  .report-no-print {
+    display: none !important;
+  }
+}
