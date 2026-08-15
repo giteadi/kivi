@@ -142,7 +142,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
       }, */
       { id: 'patients', label: 'Examinees', icon: FiUser, section: 'USERS' },
       { id: 'doctors', label: 'Therapists', icon: FiUserCheck, section: 'USERS' },
-    { id: 'template-manager', label: 'Assessment Templates', icon: FiFileText, section: 'USERS' },
+    { id: 'template-manager', label: 'Report Templates', icon: FiFileText, section: 'USERS' },
     { id: 'forms', label: 'Forms', icon: FiUpload, section: 'USERS' },
     { id: 'conners', label: 'Conners', icon: FiActivity, section: 'USERS' },
     // { id: 'receptionists', label: 'Staff', icon: FiUser, section: 'USERS' }, // Temporarily disabled for future use
