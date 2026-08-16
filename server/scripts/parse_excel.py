@@ -401,19 +401,228 @@ def load_shared_strings(zf):
     except:
         return []
 
+# ─── STYLE / THEME / COLOR HELPERS ───────────────────────────────────────────
+# Default Excel 2003 palette (first 64 indexed colours).
+_DEFAULT_INDEXED = [
+    '000000', 'FFFFFF', 'FF0000', '00FF00', '0000FF', 'FFFF00', 'FF00FF', '00FFFF',
+    '000000', 'FFFFFF', 'FF0000', '00FF00', '0000FF', 'FFFF00', 'FF00FF', '00FFFF',
+    '800000', '008000', '000080', '808000', '800080', '008080', 'C0C0C0', '808080',
+    '9999FF', '993366', 'FFFFCC', 'CCFFFF', '660066', 'FF8080', '0066CC', 'CCCCFF',
+    '000080', 'FF00FF', 'FFFF00', '00FFFF', '800080', '800000', '008080', '0000FF',
+    '00CCFF', 'CCFFFF', 'CCFFCC', 'FFFF99', '99CCFF', 'FF99CC', 'CC99FF', 'FFCC99',
+    '3366FF', '33CCCC', '99CC00', 'FFCC00', 'FF9900', 'FF6600', '666699', '969696',
+    '003366', '339966', '003300', '333300', '993300', '993366', '333399', '333333',
+    'FFFFFF', 'FFFFFF', 'FFFFFF', 'FFFFFF', 'FFFFFF', 'FFFFFF', 'FFFFFF', 'FFFFFF',
+    'FFFFFF', 'FFFFFF', 'FFFFFF', 'FFFFFF', 'FFFFFF', 'FFFFFF', 'FFFFFF', 'FFFFFF',
+]
+
+def _hex_rgb(color_str):
+    if not color_str:
+        return None
+    s = color_str.strip('#')
+    if len(s) >= 6:
+        return '#' + s[-6:].upper()
+    if len(s) == 3:
+        return '#' + ''.join(c * 2 for c in s).upper()
+    return None
+
+def _load_theme_colors(zf):
+    theme = {}
+    try:
+        all_files = set(zf.namelist())
+        for fn in all_files:
+            if not re.match(r'xl/theme/theme\d+\.xml$', fn):
+                continue
+            root = safe_xml_parse(zf.read(fn))
+            if root is None:
+                continue
+            ns_a = 'http://schemas.openxmlformats.org/drawingml/2006/main'
+            scheme = root.find(f'.//{{{ns_a}}}clrScheme')
+            if scheme is None:
+                continue
+            idx = 0
+            for clr in scheme:
+                tag = clr.tag.split('}')[-1] if '}' in clr.tag else clr.tag
+                val = None
+                for child in clr:
+                    child_tag = child.tag.split('}')[-1] if '}' in child.tag else child.tag
+                    if child_tag == 'srgbClr':
+                        val = child.attrib.get('val')
+                    elif child_tag == 'sysClr':
+                        val = child.attrib.get('lastClr') or child.attrib.get('val')
+                if val:
+                    theme[idx] = _hex_rgb(val)
+                idx += 1
+    except Exception as e:
+        log(f"Theme load error: {e}")
+    return theme
+
+def _resolve_color(color_el, theme_colors, indexed_colors):
+    if color_el is None:
+        return None
+    rgb = color_el.attrib.get('rgb')
+    if rgb:
+        return _hex_rgb(rgb)
+    indexed = color_el.attrib.get('indexed')
+    if indexed:
+        try:
+            return '#' + (indexed_colors.get(int(indexed), _DEFAULT_INDEXED[int(indexed) % 64])).upper()
+        except Exception:
+            pass
+    theme = color_el.attrib.get('theme')
+    if theme:
+        try:
+            return theme_colors.get(int(theme))
+        except Exception:
+            pass
+    return None
+
+def _parse_fonts(root, ns, theme_colors, indexed_colors):
+    fonts = []
+    for fnt in root.findall(f'.//{{{ns}}}fonts/{{{ns}}}font'):
+        out = {}
+        sz = fnt.find(f'{{{ns}}}sz')
+        if sz is not None:
+            out['size'] = float(sz.attrib.get('val', 11))
+        name = fnt.find(f'{{{ns}}}name')
+        if name is not None:
+            out['name'] = name.attrib.get('val', 'Calibri')
+        out['bold'] = fnt.find(f'{{{ns}}}b') is not None
+        out['italic'] = fnt.find(f'{{{ns}}}i') is not None
+        out['strikethrough'] = fnt.find(f'{{{ns}}}strike') is not None
+        u = fnt.find(f'{{{ns}}}u')
+        out['underline'] = u is not None and u.attrib.get('val') != 'none'
+        color = fnt.find(f'{{{ns}}}color')
+        if color is not None:
+            out['color'] = _resolve_color(color, theme_colors, indexed_colors)
+        fonts.append(out)
+    return fonts
+
+def _parse_fills(root, ns, theme_colors, indexed_colors):
+    fills = []
+    for fl in root.findall(f'.//{{{ns}}}fills/{{{ns}}}fill'):
+        pattern = fl.find(f'{{{ns}}}patternFill')
+        out = {}
+        if pattern is not None:
+            out['pattern'] = pattern.attrib.get('patternType', 'none')
+            fg = pattern.find(f'{{{ns}}}fgColor')
+            if fg is not None:
+                out['color'] = _resolve_color(fg, theme_colors, indexed_colors)
+        fills.append(out)
+    return fills
+
+def _parse_borders(root, ns, theme_colors, indexed_colors):
+    borders = []
+    for br in root.findall(f'.//{{{ns}}}borders/{{{ns}}}border'):
+        out = {}
+        for side in ['left', 'right', 'top', 'bottom']:
+            el = br.find(f'{{{ns}}}{side}')
+            if el is not None:
+                style = el.attrib.get('style', 'none')
+                color = None
+                color_el = el.find(f'{{{ns}}}color')
+                if color_el is not None:
+                    color = _resolve_color(color_el, theme_colors, indexed_colors)
+                out[side] = {'style': style, 'color': color}
+        borders.append(out)
+    return borders
+
+def _style_to_css(font, fill, border, alignment, num_fmt_id):
+    css = {}
+    if font:
+        if font.get('name'):
+            css['fontFamily'] = font['name']
+        if 'size' in font:
+            css['fontSize'] = f"{font['size']}pt"
+        if font.get('bold'):
+            css['fontWeight'] = 'bold'
+        if font.get('italic'):
+            css['fontStyle'] = 'italic'
+        dec = []
+        if font.get('underline'):
+            dec.append('underline')
+        if font.get('strikethrough'):
+            dec.append('line-through')
+        if dec:
+            css['textDecoration'] = ' '.join(dec)
+        if font.get('color'):
+            css['color'] = font['color']
+    if fill and fill.get('color') and fill.get('pattern', 'none') in ('solid', 'gray125'):
+        css['backgroundColor'] = fill['color']
+    if border:
+        width_map = {'thin': '1px', 'medium': '2px', 'thick': '3px',
+                     'dashed': '1px', 'dotted': '1px', 'double': '3px',
+                     'hair': '0.5px', 'mediumDashed': '2px', 'dashDot': '1px',
+                     'mediumDashDot': '2px', 'dashDotDot': '1px', 'mediumDashDotDot': '2px',
+                     'slantDashDot': '1px'}
+        for side in ['top', 'right', 'bottom', 'left']:
+            side_info = border.get(side)
+            if not side_info or side_info.get('style') == 'none':
+                continue
+            w = width_map.get(side_info['style'], '1px')
+            c = side_info.get('color') or '#000000'
+            css[f'border{side.capitalize()}'] = f'{w} solid {c}'
+    if alignment is not None:
+        h = alignment.attrib.get('horizontal')
+        if h in ('left', 'right', 'center', 'justify'):
+            css['textAlign'] = h
+        v = alignment.attrib.get('vertical')
+        if v in ('top', 'center', 'bottom'):
+            # CSS vertical-align names differ slightly for 'center' → 'middle'
+            css['verticalAlign'] = 'middle' if v == 'center' else v
+        if alignment.attrib.get('wrapText') == '1':
+            css['whiteSpace'] = 'pre-wrap'
+            css['wordBreak'] = 'break-word'
+        else:
+            css['whiteSpace'] = 'nowrap'
+    return css
+
 def load_styles(zf):
     try:
         root = safe_xml_parse(zf.read('xl/styles.xml'))
         if root is None:
-            return [], {}
+            return [], {}, []
         ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+        theme_colors = _load_theme_colors(zf)
+        indexed_colors = {}
+        # Some documents also store a custom indexedColors list.
+        for ic in root.findall(f'.//{{{ns}}}indexedColors/{{{ns}}}rgbColor'):
+            idx = len(indexed_colors)
+            val = ic.attrib.get('rgb')
+            if val:
+                indexed_colors[idx] = _hex_rgb(val).lstrip('#')
+
         num_fmts = {int(nf.attrib.get('numFmtId', 0)): nf.attrib.get('formatCode', '')
                     for nf in root.findall(f'.//{{{ns}}}numFmt')}
-        fmt_ids = [int(xf.attrib.get('numFmtId', 0))
-                   for xf in root.findall(f'.//{{{ns}}}cellXfs/{{{ns}}}xf')]
-        return fmt_ids, num_fmts
-    except:
-        return [], {}
+
+        fonts = _parse_fonts(root, ns, theme_colors, indexed_colors)
+        fills = _parse_fills(root, ns, theme_colors, indexed_colors)
+        borders = _parse_borders(root, ns, theme_colors, indexed_colors)
+
+        styles = []
+        for xf in root.findall(f'.//{{{ns}}}cellXfs/{{{ns}}}xf'):
+            num_fmt_id = int(xf.attrib.get('numFmtId', 0))
+            font_id = int(xf.attrib.get('fontId', 0))
+            fill_id = int(xf.attrib.get('fillId', 0))
+            border_id = int(xf.attrib.get('borderId', 0))
+            apply_font = xf.attrib.get('applyFont') == '1'
+            apply_fill = xf.attrib.get('applyFill') == '1'
+            apply_border = xf.attrib.get('applyBorder') == '1'
+            apply_alignment = xf.attrib.get('applyAlignment') == '1'
+
+            font = fonts[font_id] if apply_font and font_id < len(fonts) else None
+            fill = fills[fill_id] if apply_fill and fill_id < len(fills) else None
+            border = borders[border_id] if apply_border and border_id < len(borders) else None
+            alignment = xf.find(f'{{{ns}}}alignment') if apply_alignment else None
+
+            css = _style_to_css(font, fill, border, alignment, num_fmt_id)
+            styles.append({'numFmtId': num_fmt_id, 'css': css})
+
+        fmt_ids = [s['numFmtId'] for s in styles]
+        return fmt_ids, num_fmts, styles
+    except Exception as e:
+        log(f"Styles error: {e}")
+        return [], {}, []
 
 def is_date_fmt(fmt_id, num_fmts):
     builtin = set(range(14, 18)) | {22} | set(range(27, 37)) | set(range(45, 48)) | set(range(50, 59))
@@ -481,11 +690,31 @@ def shift_refs(formula, d_row, d_col):
 
     return _REF_RE.sub(move, formula)
 
-def parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts):
+def parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts, styles=None):
     ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
     root = safe_xml_parse(ws_bytes)
     if root is None:
-        return {}, 0, 0, {}, {}, []
+        return {}, 0, 0, {}, {}, [], {}, {}
+    styles = styles or []
+
+    # ── Column widths ────────────────────────────────────
+    # Excel stores width in "characters"; ~7px per character is the standard
+    # approximation Excel itself uses for the default Calibri 11 font.
+    col_widths = {}
+    for col_el in root.findall(f'.//{{{ns}}}col'):
+        try:
+            cmin = int(col_el.attrib.get('min', 0)) - 1
+            cmax = int(col_el.attrib.get('max', 0)) - 1
+            width = float(col_el.attrib.get('width', 0))
+            hidden = col_el.attrib.get('hidden') in ('1', 'true')
+        except (TypeError, ValueError):
+            continue
+        if cmin < 0 or width <= 0:
+            continue
+        px = 0 if hidden else max(24, min(600, round(width * 7)))
+        # Guard against files that declare a span over the whole sheet.
+        for c in range(cmin, min(cmax, cmin + 1024) + 1):
+            col_widths[c] = px
 
     # ── Parse merged cells first ─────────────────────────
     merge_map = {}  # (r, c) → (top_r, top_c) for every non-top-left cell in a merge
@@ -505,6 +734,7 @@ def parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts):
                 merge_map[(r, c)] = (sr, sc)
 
     grid = {}
+    cell_styles = {}  # (r, c) → css dict
     formulas = {}  # 'r_c' → '=FORMULA' so edits never overwrite a live formula
     shared_masters = {}  # si → (formula_text, row, col) for shared-formula groups
     max_r = max_c = 0
@@ -533,6 +763,10 @@ def parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts):
             fmt   = fmt_ids[sidx] if sidx < len(fmt_ids) else 0
             v_el  = c_el.find(f'{{{ns}}}v')
             raw   = None
+
+            # Capture the cell's visual style for the frontend grid.
+            if sidx < len(styles) and (styles[sidx] or {}).get('css'):
+                cell_styles[f'{r}_{c}'] = styles[sidx]['css']
 
             # Record the formula but still display Excel's cached <v> result,
             # so the grid shows exactly what Excel last computed.
@@ -568,14 +802,15 @@ def parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts):
             if val:
                 grid[(r, c)] = val
 
-    # ── Fill merged child cells with top-left value ──────
-    for (r, c), (tr, tc) in merge_map.items():
+    # ── Merged children stay empty ───────────────────────
+    # The UI spans the top-left cell across the block, so copying the value
+    # into every child would render the same text once per column.
+    for (r, c) in merge_map:
         max_r = max(max_r, r)
         max_c = max(max_c, c)
-        if (tr, tc) in grid:
-            grid[(r, c)] = grid[(tr, tc)]
+        grid.pop((r, c), None)
 
-    return grid, max_r, max_c, row_heights, formulas, merges
+    return grid, max_r, max_c, row_heights, formulas, merges, col_widths, cell_styles
 
 def get_sheet_embeddings(zf):
     result = {}
@@ -586,7 +821,7 @@ def get_sheet_embeddings(zf):
         all_files = set(zf.namelist())
         wb_root = safe_xml_parse(zf.read('xl/workbook.xml'))
         wb_rels  = safe_xml_parse(zf.read('xl/_rels/workbook.xml.rels'))
-        if not wb_root or not wb_rels:
+        if wb_root is None or wb_rels is None:
             return {}
 
         rid_to_path = {}
@@ -626,12 +861,12 @@ def get_sheet_embeddings(zf):
 # ─── MAIN XLSX PARSER ────────────────────────────────────────────────────────
 def parse_xlsx(file_path):
     sheets, sheet_names, sheet_row_heights = {}, [], {}  # ← NEW: sheet_row_heights dict
-    sheet_formulas, sheet_merges = {}, {}
+    sheet_formulas, sheet_merges, sheet_col_widths, sheet_cell_styles = {}, {}, {}, {}
     try:
         with zipfile.ZipFile(file_path, 'r') as zf:
             all_files = set(zf.namelist())
             shared    = load_shared_strings(zf)
-            fmt_ids, num_fmts = load_styles(zf)
+            fmt_ids, num_fmts, styles = load_styles(zf)
             sheet_embed_map   = get_sheet_embeddings(zf)
 
             ns_main = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
@@ -640,7 +875,7 @@ def parse_xlsx(file_path):
 
             wb_root = safe_xml_parse(zf.read('xl/workbook.xml'))
             wb_rels  = safe_xml_parse(zf.read('xl/_rels/workbook.xml.rels'))
-            if not wb_root or not wb_rels:
+            if wb_root is None or wb_rels is None:
                 return {'ok': False, 'error': 'Cannot parse workbook'}
 
             rid_to_path = {}
@@ -663,16 +898,18 @@ def parse_xlsx(file_path):
 
                 # Regular cells
                 cell_grid, max_r, max_c, row_heights = {}, 0, 0, {}  # ← NEW: row_heights
-                formulas, merges = {}, []
+                formulas, merges, col_widths, cell_styles = {}, [], {}, {}
                 if ws_path in all_files:
                     try:
                         ws_bytes = zf.read(ws_path)
-                        cell_grid, max_r, max_c, row_heights, formulas, merges = parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts)
+                        cell_grid, max_r, max_c, row_heights, formulas, merges, col_widths, cell_styles = parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts, styles)
                     except Exception as e:
                         log(f"  Cell error: {e}")
 
                 sheet_formulas[name] = formulas
                 sheet_merges[name] = merges
+                sheet_col_widths[name] = col_widths
+                sheet_cell_styles[name] = cell_styles
 
                 non_empty = sum(1 for v in cell_grid.values() if str(v).strip())
 
@@ -704,6 +941,9 @@ def parse_xlsx(file_path):
                         combined_html = '\n'.join(all_html_parts)
                         sheets[name] = [['__html__', combined_html]]
                         sheet_row_heights[name] = {}  # HTML mode mein row heights nahi chahiye
+                        sheet_merges[name] = []
+                        sheet_col_widths[name] = {}
+                        sheet_cell_styles[name] = {}
                         log(f"  → HTML mode: {len(combined_html)} chars total")
                         continue  # Next sheet pe jao, cell grid ignore karo
 
@@ -746,6 +986,7 @@ def parse_xlsx(file_path):
 
                 sheets[name] = rows
                 sheet_row_heights[name] = row_heights
+                sheet_cell_styles[name] = cell_styles
                 total = sum(1 for row in rows for v in row if str(v).strip())
                 log(f"  → Grid mode: {len(rows)} rows, {total} cells")
 
@@ -763,6 +1004,8 @@ def parse_xlsx(file_path):
         'row_heights': sheet_row_heights,  # ← NEW: return row heights
         'formulas': sheet_formulas,        # per sheet: 'r_c' → '=FORMULA'
         'merges': sheet_merges,            # per sheet: [[r1, c1, r2, c2], ...]
+        'col_widths': sheet_col_widths,    # per sheet: {col_index: width_px}
+        'cell_styles': sheet_cell_styles,  # per sheet: {'r_c': css_dict}
         'meta': {'total_cells': total}
     }
 

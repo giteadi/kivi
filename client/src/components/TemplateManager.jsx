@@ -15,6 +15,7 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import api from "../services/api";
 import ReportSheetViewer from "./ReportSheetViewer";
+import UniverSpreadsheet from "./UniverSpreadsheet";
 import Sidebar from "./Sidebar";
 import ExportDropdown from "./ExportDropdown";
 import { buildExamineeTokens, fillTemplateSheets, pruneUnfilledSheets } from "../utils/reportTemplate";
@@ -833,6 +834,9 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
   const [showBackConfirm, setShowBackConfirm] = useState(false);
 
   const viewerRef = useRef(null);
+  // Univer engine toggle — Excel files only, Word/DOCX (__html__) remains untouched
+  const currentSheetIsExcel = reportData?.[activeSheet]?.[0]?.[0] !== "__html__";
+  const [useUniverTemplate, setUseUniverTemplate] = useState(currentSheetIsExcel);
 
   const addNewSheet = () => {
     const name = newSheetName.trim() || `Sheet ${sheetList.length + 1}`;
@@ -931,6 +935,9 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
 
       {/* Conditional rendering based on format */}
       {reportData[activeSheet]?.[0]?.[0] === "__html__" ? (
+        // ════════════════════════════════════════════════════════════
+        // 🟢 WORD / DOCX / HTML MODE — NO CHANGES, ReportSheetViewer only
+        // ════════════════════════════════════════════════════════════
         <ReportSheetViewer
           ref={viewerRef}
           key={activeSheet}
@@ -940,8 +947,26 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
           reportMode={true}
           onDataChange={newData => setReportData(prev => ({ ...prev, [activeSheet]: newData }))}
         />
+      ) : useUniverTemplate ? (
+        // ════════════════════════════════════════════════════════════
+        // 🔵 EXCEL + UNIVER ENGINE — Excel UI + 500+ formulas + Formula Bar
+        // ════════════════════════════════════════════════════════════
+        <div style={{ padding: '0 16px 16px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <UniverSpreadsheet
+            key={`tmpl-edit-univer-${activeSheet}`}
+            initialData={reportData[activeSheet] || []}
+            height="calc(100vh - 220px)"
+            onDataChange={(snapshot, data2D) => {
+              if (Array.isArray(data2D) && data2D.length > 0) {
+                setReportData(prev => ({ ...prev, [activeSheet]: data2D }));
+              }
+            }}
+          />
+        </div>
       ) : (
-        // ✅ Excel grid render karo with rowHeights
+        // ════════════════════════════════════════════════════════════
+        // 🟡 EXCEL + CLASSIC ENGINE (old ReportSheetViewer) — fallback
+        // ════════════════════════════════════════════════════════════
         <ReportSheetViewer
           ref={viewerRef}
           key={activeSheet}
@@ -951,6 +976,35 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
           reportMode={true}
           onDataChange={newData => setReportData(prev => ({ ...prev, [activeSheet]: newData }))}
         />
+      )}
+
+      {/* Engine selector toolbar strip — only for Excel sheets */}
+      {reportData[activeSheet]?.[0]?.[0] !== "__html__" && (
+        <div style={{
+          padding: '8px 16px',
+          background: '#F1F5F9',
+          borderTop: '1px solid #E5E7EB',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          flexShrink: 0,
+        }}>
+          <label style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13 }}>
+            <span style={{ color: "#6B7280", fontWeight: 500 }}>Spreadsheet Engine:</span>
+            <select
+              value={useUniverTemplate ? "univer" : "classic"}
+              onChange={(e) => setUseUniverTemplate(e.target.value === "univer")}
+              style={{
+                border: "1px solid #D1D5DB", borderRadius: 6, padding: "4px 10px",
+                fontSize: 12, background: useUniverTemplate ? "#EFF6FF" : "#fff",
+                color: useUniverTemplate ? "#1D4ED8" : "#111827", outline: "none",
+              }}
+            >
+              <option value="univer">Univer (Excel UI + Formulas) ⭐</option>
+              <option value="classic">Classic (Simple Grid)</option>
+            </select>
+          </label>
+        </div>
       )}
 
       {showNewSheetModal && (
@@ -994,11 +1048,21 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
   }, []);
 
   const [localSheets, setLocalSheets] = useState(() => cloneSheets(template.sheets));
+  // Univer engine toggle — Excel files only, DOCX (__html__) remains untouched
+  const currentSheetData = localSheets[currentSheet];
+  const currentSheetIsExcel = currentSheetData?.[0]?.[0] !== "__html__";
+  const [useUniverView, setUseUniverView] = useState(currentSheetIsExcel);
 
   useEffect(() => {
     setActiveSheetIdx(0);
     setLocalSheets(cloneSheets(template.sheets));
   }, [template.id, cloneSheets, template.sheets]);
+
+  useEffect(() => {
+    // When user switches sheets, reset engine choice based on that sheet's format
+    const newSheetIsExcel = (localSheets[currentSheet]?.[0]?.[0] !== "__html__");
+    setUseUniverView(newSheetIsExcel);
+  }, [currentSheet, localSheets]);
 
   return (
     <div style={css.panel}>

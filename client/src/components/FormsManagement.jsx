@@ -10,6 +10,7 @@ import html2canvas from "html2canvas";
 import api from "../services/api";
 import Sidebar from "./Sidebar";
 import ReportSheetViewer from "./ReportSheetViewer";
+import UniverSpreadsheet from "./UniverSpreadsheet";
 
 // Folder icons
 const folderIcons = {
@@ -731,8 +732,16 @@ export default function FormsManagement() {
   const [sheetData, setSheetData] = useState([]);
   const [activeSheet, setActiveSheet] = useState(0);
   const [sheets, setSheets] = useState([]);
+  // Layout the Python parser recovered from the .xlsx, keyed by sheet name, so
+  // the grid can mirror Excel's merges/widths instead of a flat table.
+  const [sheetMeta, setSheetMeta] = useState({ row_heights: {}, col_widths: {}, merges: {} });
   const fileInputRef = useRef(null);
   const viewerRef = useRef(null); // ✅ Add viewerRef for PDF export
+
+  // Univer engine toggle — Excel files ONLY. Word/DOCX (__html__) remains untouched.
+  const [useUniverExcel, setUseUniverExcel] = useState(true);
+  // Univer ref for extracting data on save/export
+  const univerRef = useRef(null);
 
   const [showNewDocModal, setShowNewDocModal] = useState(false);
 
@@ -1510,6 +1519,13 @@ function convertIFs(s, mask) {
 
         const sheets = form.template_data.sheets;
         const sheetNames = form.template_data.sheetNames || Object.keys(sheets);
+
+        setSheetMeta({
+          row_heights: form.template_data.row_heights || {},
+          col_widths: form.template_data.col_widths || {},
+          merges: form.template_data.merges || {},
+          cell_styles: form.template_data.cell_styles || {},
+        });
 
         // The Python parser records formulas per sheet name at upload time.
         // Prefer those — they include shared-formula members, which the
@@ -2354,11 +2370,37 @@ function convertIFs(s, mask) {
             <button style={css.iconBtn} onClick={() => handleDeleteRow(sheetData.length - 1)} title="Delete last row">
               <Icon d={icons.trash} />
             </button>
+
+            {/* Univer Engine Toggle — ONLY for Excel files (skip Word/DOCX __html__) */}
+            {sheetData[0]?.[0] !== "__html__" && (
+              <label style={{
+                display: "inline-flex", alignItems: "center", gap: 8, marginLeft: 12,
+                padding: "5px 12px", borderRadius: 8, border: "1px solid #E5E7EB",
+                background: "#fff", cursor: "pointer", fontSize: 13, userSelect: "none",
+              }} title="Excel formula engine - Univer = full Excel UI + 500+ formulas">
+                <span style={{ color: "#6B7280" }}>Engine:</span>
+                <select
+                  value={useUniverExcel ? "univer" : "classic"}
+                  onChange={(e) => setUseUniverExcel(e.target.value === "univer")}
+                  style={{
+                    border: "1px solid #D1D5DB", borderRadius: 6, padding: "3px 8px",
+                    fontSize: 12, background: useUniverExcel ? "#EFF6FF" : "#fff",
+                    color: useUniverExcel ? "#1D4ED8" : "#111827", outline: "none",
+                  }}
+                >
+                  <option value="univer">Univer (Excel UI + Formulas) ⭐</option>
+                  <option value="classic">Classic (Simple Grid)</option>
+                </select>
+              </label>
+            )}
           </div>
 
-          {/* Sheet Editor */}
+          {/* Sheet Editor — WORD/HTML → ReportSheetViewer, EXCEL → Univer OR Classic */}
           <div style={{ flex: 1, overflow: "auto", padding: 0, background: "#F9FAFB", minHeight: 0, display: "flex", flexDirection: "column" }}>
             {sheetData[0]?.[0] === "__html__" ? (
+              // ════════════════════════════════════════════════════════════
+              // 🟢 WORD / DOCX / HTML MODE — NO CHANGES, ReportSheetViewer only
+              // ════════════════════════════════════════════════════════════
               <ReportSheetViewer
                 key={`html-${activeSheet}`}
                 ref={viewerRef}
@@ -2367,33 +2409,62 @@ function convertIFs(s, mask) {
                 onDataChange={(newData) => {
                   console.log('[DEBUG] HTML mode data changed');
                   setSheetData(newData);
-                  // ✅ HTML mode mein bhi sheets array update karo
                   setSheets(prev => {
                     const copy = [...prev];
-                    copy[activeSheet] = {
-                      ...copy[activeSheet],
-                      data: newData
-                    };
+                    copy[activeSheet] = { ...copy[activeSheet], data: newData };
                     return copy;
                   });
                 }}
               />
+            ) : useUniverExcel ? (
+              // ════════════════════════════════════════════════════════════
+              // 🔵 EXCEL + UNIVER ENGINE — Drop-in Excel replacement
+              // ════════════════════════════════════════════════════════════
+              <div ref={univerRef} style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                <UniverSpreadsheet
+                  key={`univer-${activeSheet}-${selectedForm?.id || 'new'}`}
+                  initialData={sheetData}
+                  height="calc(100vh - 220px)"
+                  onDataChange={(snapshot, data2D) => {
+                    console.log('[DEBUG] Univer Excel data changed');
+                    // Sync computed 2D array back into state so Save/Export still work
+                    if (Array.isArray(data2D) && data2D.length > 0) {
+                      setSheetData(data2D);
+                      setSheets(prev => {
+                        const copy = [...prev];
+                        copy[activeSheet] = {
+                          ...copy[activeSheet],
+                          data: data2D,
+                          formulaCache: copy[activeSheet]?.formulaCache || {},
+                        };
+                        return copy;
+                      });
+                    }
+                  }}
+                />
+              </div>
             ) : (
+              // ════════════════════════════════════════════════════════════
+              // 🟡 EXCEL + CLASSIC ENGINE (old ReportSheetViewer) — fallback
+              // ════════════════════════════════════════════════════════════
               <ReportSheetViewer
                 key={`excel-${activeSheet}`}
                 data={sheetData}
                 formulaCache={formulaCacheRef.current}
+                rowHeights={sheetMeta.row_heights?.[sheets[activeSheet]?.name] || {}}
+                colWidths={sheetMeta.col_widths?.[sheets[activeSheet]?.name] || {}}
+                merges={sheetMeta.merges?.[sheets[activeSheet]?.name] || []}
+                cellStyles={sheetMeta.cell_styles?.[sheets[activeSheet]?.name] || {}}
                 readOnly={false}
                 onDataChange={(newData) => {
-                  console.log('[DEBUG] Excel mode data changed');
+                  console.log('[DEBUG] Excel mode (classic) data changed');
                   setSheetData(newData);
-                  // Also update the sheets array to keep in sync
                   setSheets(prev => {
                     const copy = [...prev];
                     copy[activeSheet] = {
                       ...copy[activeSheet],
                       data: newData,
-                      formulaCache: formulaCacheRef.current
+                      formulaCache: formulaCacheRef.current,
                     };
                     return copy;
                   });
@@ -2781,6 +2852,9 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
   const [showBackConfirm, setShowBackConfirm] = useState(false);
 
   const viewerRef = useRef(null);
+  // Univer for Excel format reports
+  const currentSheetIsExcel = reportData?.[activeSheet]?.[0]?.[0] !== "__html__";
+  const useUniverReport = reportPanel.format === 'excel' ? currentSheetIsExcel : false;
 
   const addNewSheet = () => {
     const name = newSheetName.trim() || `Sheet ${sheetList.length + 1}`;
@@ -2905,14 +2979,30 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
         >+</button>
       </div>
 
-      <ReportSheetViewer
-        ref={viewerRef}
-        key={activeSheet}
-        data={reportData[activeSheet] || [["__html__", "<p><br></p>"]]}
-        readOnly={false}
-        reportMode={true}
-        onDataChange={newData => setReportData(prev => ({ ...prev, [activeSheet]: newData }))}
-      />
+      {/* Editor — WORD/DOCX → ReportSheetViewer, EXCEL → Univer */}
+      {useUniverReport ? (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          <UniverSpreadsheet
+            key={`report-univer-${activeSheet}`}
+            initialData={reportData[activeSheet] || []}
+            height="calc(100vh - 160px)"
+            onDataChange={(snapshot, data2D) => {
+              if (Array.isArray(data2D) && data2D.length > 0) {
+                setReportData(prev => ({ ...prev, [activeSheet]: data2D }));
+              }
+            }}
+          />
+        </div>
+      ) : (
+        <ReportSheetViewer
+          ref={viewerRef}
+          key={activeSheet}
+          data={reportData[activeSheet] || [["__html__", "<p><br></p>"]]}
+          readOnly={false}
+          reportMode={true}
+          onDataChange={newData => setReportData(prev => ({ ...prev, [activeSheet]: newData }))}
+        />
+      )}
 
       {/* New Sheet Modal */}
       {showNewSheetModal && (

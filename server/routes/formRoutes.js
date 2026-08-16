@@ -296,6 +296,8 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
             // can re-apply edits without flattening the workbook.
             formulas: parsedData.formulas || {},
             merges: parsedData.merges || {},
+            col_widths: parsedData.col_widths || {},
+            cell_styles: parsedData.cell_styles || {},
             cellEdits: {}
           });
         }

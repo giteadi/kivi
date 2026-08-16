@@ -3,7 +3,7 @@
 // Fixed: stale closure on notify — doc ref stored in useRef
 // NEW: Excel grid mode with formula support
 
-import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle, useState } from "react";
+import { useEffect, useRef, useCallback, useMemo, forwardRef, useImperativeHandle, useState } from "react";
 
 // ─── Convert 2D array → HTML ──────────────────────────────────────────────────
 function arrayToHtml(data) {
@@ -276,23 +276,168 @@ function buildDoc(bodyHtml) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// EXCEL GRID COMPONENT (with formulas + row heights)
+// EXCEL GRID COMPONENT (formulas + merges + column widths + resizing)
 // ══════════════════════════════════════════════════════════════════════════════
-function ExcelGrid({ data, formulaCache: externalFormulaCache, rowHeights, readOnly, onDataChange }) {
+const DEFAULT_COL_W = 110;
+const DEFAULT_ROW_H = 28;
+const ROW_HEADER_W = 46;
+
+// 0-based column index → A, B, … Z, AA, AB …
+function colLabel(idx) {
+  let out = "";
+  let n = idx + 1;
+  while (n > 0) {
+    const rem = (n - 1) % 26;
+    out = String.fromCharCode(65 + rem) + out;
+    n = Math.floor((n - 1) / 26);
+  }
+  return out;
+}
+
+// Props that belong on the <td> vs the inner display element.
+const TD_PROPS = new Set(["backgroundColor", "borderTop", "borderRight", "borderBottom", "borderLeft", "verticalAlign"]);
+function splitCellStyle(raw = {}) {
+  const td = {};
+  const inner = {};
+  for (const [k, v] of Object.entries(raw)) {
+    if (TD_PROPS.has(k)) td[k] = v;
+    else inner[k] = v;
+  }
+  return [td, inner];
+}
+
+// Editable cell that grows to fit its content, the way Excel auto-fits a
+// wrapped row instead of hiding the overflow.
+function AutoCell({ value, style, onChange }) {
+  const ref = useRef(null);
+
+  const fit = () => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  };
+
+  useEffect(fit, [value, style?.fontSize, style?.minHeight]);
+
+  return (
+    <textarea
+      ref={ref}
+      value={value}
+      title={value}
+      onChange={(e) => { onChange(e.target.value); fit(); }}
+      onInput={fit}
+      style={{
+        display: "block",
+        width: "100%",
+        border: "none",
+        outline: "none",
+        background: "transparent",
+        resize: "none",
+        overflow: "hidden",
+        fontFamily: "inherit",
+        ...style,
+      }}
+    />
+  );
+}
+
+function ExcelGrid({
+  data,
+  formulaCache: externalFormulaCache,
+  rowHeights,
+  colWidths,
+  merges,
+  cellStyles,
+  readOnly,
+  onDataChange,
+}) {
   const [sheetData, setSheetData] = useState(data || []);
   const formulaCacheRef = useRef({});
+
+  const colCount = useMemo(
+    () => Math.max(1, ...(sheetData || []).map(r => (r || []).length)),
+    [sheetData]
+  );
+
+  // Excel stores row height in points and column width in characters; the
+  // parser already converts widths to px, heights stay in points.
+  const [colW, setColW] = useState({});
+  const [rowH, setRowH] = useState({});
+  const resizeRef = useRef(null);
+
+  useEffect(() => {
+    setColW(colWidths && typeof colWidths === "object" ? { ...colWidths } : {});
+  }, [colWidths]);
+
+  useEffect(() => {
+    if (!rowHeights || typeof rowHeights !== "object") { setRowH({}); return; }
+    const px = {};
+    for (const [k, pts] of Object.entries(rowHeights)) {
+      const v = Number(pts);
+      if (v > 0) px[k] = Math.round(v * 1.33);
+    }
+    setRowH(px);
+  }, [rowHeights]);
+
+  const getColW = (c) => colW[c] ?? colW[String(c)] ?? DEFAULT_COL_W;
+  const getRowH = (r) => rowH[r] ?? rowH[String(r)] ?? null;
+
+  // Merges live in state so inserting/deleting rows and columns can shift them
+  // the way Excel does, instead of leaving the spans pointing at stale indices.
+  const [mergeList, setMergeList] = useState([]);
+  useEffect(() => {
+    setMergeList(Array.isArray(merges) ? merges.map(m => [...m]) : []);
+  }, [merges]);
+
+  const [styleMap, setStyleMap] = useState({});
+  useEffect(() => {
+    setStyleMap(cellStyles && typeof cellStyles === "object" ? { ...cellStyles } : {});
+  }, [cellStyles]);
+
+  // ── Merge lookup ───────────────────────────────────────────────────────────
+  // anchors: "r_c" → { rowSpan, colSpan }; covered: cells swallowed by a merge
+  // and therefore skipped entirely while rendering.
+  const { anchors, covered } = useMemo(() => {
+    const a = {};
+    const cov = new Set();
+    for (const m of mergeList) {
+      if (!Array.isArray(m) || m.length < 4) continue;
+      const [r1, c1, r2, c2] = m.map(Number);
+      if ([r1, c1, r2, c2].some(Number.isNaN)) continue;
+      const rowSpan = r2 - r1 + 1;
+      const colSpan = c2 - c1 + 1;
+      if (rowSpan < 1 || colSpan < 1 || (rowSpan === 1 && colSpan === 1)) continue;
+      a[`${r1}_${c1}`] = { rowSpan, colSpan };
+      for (let r = r1; r <= r2; r++) {
+        for (let c = c1; c <= c2; c++) {
+          if (r !== r1 || c !== c1) cov.add(`${r}_${c}`);
+        }
+      }
+    }
+    return { anchors: a, covered: cov };
+  }, [mergeList]);
 
   // Build formula cache on mount (use external cache if provided)
   useEffect(() => {
     formulaCacheRef.current = externalFormulaCache || buildFormulaCache(data || []);
-    console.log('[DEBUG] ExcelGrid mount - formulaCache:', formulaCacheRef.current);
-    console.log('[DEBUG] ExcelGrid mount - rowHeights:', rowHeights);
-    // Initial formula evaluation
-    const evaluated = reEvaluateFormulas(data || [], formulaCacheRef.current);
-    setSheetData(evaluated);
+    setSheetData(reEvaluateFormulas(data || [], formulaCacheRef.current));
   }, []);
 
-  // Update data when prop changes
+  // Accept data pushed down from the parent (the Add Row / Add Column toolbar),
+  // but ignore the echo of what this grid itself just emitted so typing is not
+  // clobbered mid-edit.
+  const emittedRef = useRef(null);
+  useEffect(() => {
+    if (!data || data === emittedRef.current) return;
+    setSheetData(prev => (data === prev ? prev : reEvaluateFormulas(data, formulaCacheRef.current)));
+  }, [data]);
+
+  const emit = (next) => {
+    emittedRef.current = next;
+    if (onDataChange) setTimeout(() => onDataChange(next), 0);
+  };
+
   // Only sync cache when it changes externally (not data)
   useEffect(() => {
     if (externalFormulaCache && Object.keys(externalFormulaCache).length > 0) {
@@ -301,161 +446,351 @@ function ExcelGrid({ data, formulaCache: externalFormulaCache, rowHeights, readO
   }, [externalFormulaCache]);
 
   const handleCellChange = (rowIdx, colIdx, value) => {
-    console.log('[DEBUG] ExcelGrid handleCellChange:', { rowIdx, colIdx, value, type: typeof value });
     if (readOnly) return;
-    
-    // Formula cells are readonly
-    const key = `${rowIdx}_${colIdx}`;
-    if (formulaCacheRef.current[key]) {
-      console.log('[DEBUG] Cell is formula cell, readonly:', key);
-      return;
-    }
+    if (formulaCacheRef.current[`${rowIdx}_${colIdx}`]) return; // formula cell
 
     setSheetData(prev => {
-      const next = prev.map(r => [...r]);
-      if (!next[rowIdx]) next[rowIdx] = [];
-      // Safe numeric input handling
+      const next = prev.map(r => [...(r || [])]);
+      while (next.length <= rowIdx) next.push([]);
       next[rowIdx][colIdx] = value === "" ? "" : isNaN(value) ? value : Number(value);
-      console.log('[DEBUG] Updated cell:', { rowIdx, colIdx, newValue: next[rowIdx][colIdx], type: typeof next[rowIdx][colIdx] });
-      
-      // Re-evaluate formulas
+
       const recalculated = reEvaluateFormulas(next, formulaCacheRef.current);
-      console.log('[DEBUG] Recalculated data sample:', recalculated.slice(0, 5));
-      
-      // Notify parent with delay to avoid React lifecycle error
-      if (onDataChange) {
-        setTimeout(() => onDataChange(recalculated), 0);
-      }
-      
+      emit(recalculated);
       return recalculated;
     });
+  };
+
+  // ── Drag-to-resize ─────────────────────────────────────────────────────────
+  useEffect(() => {
+    const onMove = (e) => {
+      const st = resizeRef.current;
+      if (!st) return;
+      if (st.kind === "col") {
+        const w = Math.max(40, st.start + (e.clientX - st.origin));
+        setColW(prev => ({ ...prev, [st.index]: w }));
+      } else {
+        const h = Math.max(20, st.start + (e.clientY - st.origin));
+        setRowH(prev => ({ ...prev, [st.index]: h }));
+      }
+    };
+    const onUp = () => {
+      if (!resizeRef.current) return;
+      resizeRef.current = null;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, []);
+
+  const startResize = (kind, index, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    resizeRef.current = {
+      kind,
+      index,
+      origin: kind === "col" ? e.clientX : e.clientY,
+      start: kind === "col" ? getColW(index) : (getRowH(index) ?? DEFAULT_ROW_H),
+    };
+    document.body.style.cursor = kind === "col" ? "col-resize" : "row-resize";
+    document.body.style.userSelect = "none";
+  };
+
+  // ── Row / column structure operations ──────────────────────────────────────
+  const [ctxMenu, setCtxMenu] = useState(null); // { kind, index, x, y }
+
+  useEffect(() => {
+    if (!ctxMenu) return;
+    const close = () => setCtxMenu(null);
+    window.addEventListener("click", close);
+    window.addEventListener("scroll", close, true);
+    return () => {
+      window.removeEventListener("click", close);
+      window.removeEventListener("scroll", close, true);
+    };
+  }, [ctxMenu]);
+
+  // Re-key an "r_c" map after rows/columns move, dropping anything deleted.
+  const shiftKeyedMap = (map, kind, at, delta) => {
+    const out = {};
+    for (const [k, v] of Object.entries(map || {})) {
+      const [rs, cs] = k.split("_");
+      let r = Number(rs);
+      let c = Number(cs);
+      if (Number.isNaN(r) || Number.isNaN(c)) continue;
+      const pos = kind === "row" ? r : c;
+      if (delta < 0 && pos === at) continue; // lived on the deleted line
+      if (pos >= at) {
+        if (kind === "row") r += delta;
+        else c += delta;
+      }
+      out[`${r}_${c}`] = v;
+    }
+    return out;
+  };
+
+  const shiftSizeMap = (map, at, delta) => {
+    const out = {};
+    for (const [k, v] of Object.entries(map || {})) {
+      let i = Number(k);
+      if (Number.isNaN(i)) continue;
+      if (delta < 0 && i === at) continue;
+      if (i >= at) i += delta;
+      out[i] = v;
+    }
+    return out;
+  };
+
+  const shiftMerges = (list, kind, at, delta) => {
+    const out = [];
+    for (const m of list) {
+      let [r1, c1, r2, c2] = m.map(Number);
+      if (kind === "row") {
+        if (delta < 0 && r1 === at && r2 === at) continue; // merge vanished
+        if (r1 >= at) r1 += delta;
+        if (r2 >= at) r2 += delta;
+      } else {
+        if (delta < 0 && c1 === at && c2 === at) continue;
+        if (c1 >= at) c1 += delta;
+        if (c2 >= at) c2 += delta;
+      }
+      if (r2 >= r1 && c2 >= c1) out.push([r1, c1, r2, c2]);
+    }
+    return out;
+  };
+
+  const applyStructureChange = (kind, at, delta) => {
+    setSheetData(prev => {
+      let next = prev.map(r => [...(r || [])]);
+      if (kind === "row") {
+        if (delta > 0) next.splice(at, 0, Array.from({ length: colCount }, () => ""));
+        else next.splice(at, 1);
+        if (next.length === 0) next = [Array.from({ length: colCount }, () => "")];
+      } else {
+        next = next.map(r => {
+          const row = [...r];
+          while (row.length < colCount) row.push("");
+          if (delta > 0) row.splice(at, 0, "");
+          else row.splice(at, 1);
+          return row;
+        });
+      }
+      formulaCacheRef.current = shiftKeyedMap(formulaCacheRef.current, kind, at, delta);
+      const recalculated = reEvaluateFormulas(next, formulaCacheRef.current);
+      emit(recalculated);
+      return recalculated;
+    });
+
+    setStyleMap(prev => shiftKeyedMap(prev, kind, at, delta));
+    setMergeList(prev => shiftMerges(prev, kind, at, delta));
+    if (kind === "row") setRowH(prev => shiftSizeMap(prev, at, delta));
+    else setColW(prev => shiftSizeMap(prev, at, delta));
+    setCtxMenu(null);
+  };
+
+  const openCtx = (kind, index, e) => {
+    if (readOnly) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setCtxMenu({ kind, index, x: e.clientX, y: e.clientY });
   };
 
   if (!sheetData || sheetData.length === 0) {
     return <div style={{ padding: 40, textAlign: "center", color: "#666" }}>Empty sheet</div>;
   }
 
-  const headerRow = sheetData[0] || [];
-  const dataRows = sheetData.slice(1);
-
-  // ✅ Helper: Get row height in pixels (Excel stores in points, 1 point ≈ 1.33px)
-  const getRowHeight = (rowIdx) => {
-    if (!rowHeights || typeof rowHeights !== 'object') return null;
-    const heightInPoints = rowHeights[rowIdx];
-    if (!heightInPoints || isNaN(heightInPoints)) return null;
-    // Convert points to pixels (1 point = 1.33 pixels approximately)
-    return Math.round(heightInPoints * 1.33);
-  };
+  const totalWidth = ROW_HEADER_W + Array.from({ length: colCount }, (_, c) => getColW(c)).reduce((a, b) => a + b, 0);
 
   return (
-    <div style={{ flex: 1, overflow: "auto", background: "#F9FAFB", padding: 16 }}>
-      <table style={{ borderCollapse: "collapse", width: "100%", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
+    <div style={{ flex: 1, overflow: "auto", background: "#F9FAFB", padding: 16, position: "relative" }}>
+      {ctxMenu && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            position: "fixed", left: ctxMenu.x, top: ctxMenu.y, zIndex: 50,
+            minWidth: 190, background: "#fff", borderRadius: 8,
+            border: "1px solid #E5E7EB", boxShadow: "0 6px 20px rgba(0,0,0,0.16)",
+            padding: 4, fontSize: 12,
+          }}
+        >
+          {(ctxMenu.kind === "row"
+            ? [
+                ["Insert row above", () => applyStructureChange("row", ctxMenu.index, 1)],
+                ["Insert row below", () => applyStructureChange("row", ctxMenu.index + 1, 1)],
+                ["Delete row", () => applyStructureChange("row", ctxMenu.index, -1)],
+              ]
+            : [
+                ["Insert column left", () => applyStructureChange("col", ctxMenu.index, 1)],
+                ["Insert column right", () => applyStructureChange("col", ctxMenu.index + 1, 1)],
+                ["Delete column", () => applyStructureChange("col", ctxMenu.index, -1)],
+              ]
+          ).map(([label, fn]) => (
+            <button
+              key={label}
+              onClick={fn}
+              style={{
+                display: "block", width: "100%", textAlign: "left",
+                padding: "7px 10px", border: "none", background: "transparent",
+                cursor: "pointer", borderRadius: 5,
+                color: label.startsWith("Delete") ? "#DC2626" : "#374151",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#F3F4F6")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <table
+        style={{
+          borderCollapse: "collapse",
+          tableLayout: "fixed",
+          width: totalWidth,
+          background: "#fff",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+        }}
+      >
+        <colgroup>
+          <col style={{ width: ROW_HEADER_W }} />
+          {Array.from({ length: colCount }, (_, c) => (
+            <col key={c} style={{ width: getColW(c) }} />
+          ))}
+        </colgroup>
+
+        {/* Column letters — matches Excel so users can orient themselves */}
         <thead>
-          <tr style={{ height: getRowHeight(0) || 'auto' }}>
-            <th style={{ border: "1px solid #E5E7EB", padding: "8px", background: "#F3F4F6", width: 40 }}>#</th>
-            {headerRow.map((cell, cIdx) => (
-              <th key={cIdx} style={{ 
-                border: "1px solid #E5E7EB", 
-                padding: "8px 10px", 
-                background: "#F3F4F6",
-                fontSize: 13,
-                fontWeight: 600,
-                color: "#374151",
-                minWidth: 100
-              }}>
-                {readOnly ? (
-                  <span>{cell ?? ""}</span>
-                ) : (
-                  <input
-                    value={cell ?? ""}
-                    onChange={(e) => handleCellChange(0, cIdx, e.target.value)}
-                    style={{ 
-                      width: "100%", 
-                      border: "none", 
-                      background: "transparent",
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: "#374151",
-                      outline: "none"
+          <tr>
+            <th
+              style={{
+                border: "1px solid #E5E7EB", background: "#F3F4F6",
+                position: "sticky", top: 0, zIndex: 3, height: 26,
+              }}
+            />
+            {Array.from({ length: colCount }, (_, c) => (
+              <th
+                key={c}
+                onContextMenu={(e) => openCtx("col", c, e)}
+                title={readOnly ? "" : "Right-click to insert or delete a column"}
+                style={{
+                  border: "1px solid #E5E7EB", background: "#F3F4F6",
+                  fontSize: 11, fontWeight: 600, color: "#6B7280",
+                  position: "sticky", top: 0, zIndex: 3, height: 26,
+                  padding: 0, textAlign: "center", overflow: "hidden",
+                }}
+              >
+                <div style={{ position: "relative", padding: "4px 0" }}>
+                  {colLabel(c)}
+                  <span
+                    onMouseDown={(e) => startResize("col", c, e)}
+                    title="Drag to resize column"
+                    style={{
+                      position: "absolute", top: -4, right: -3, width: 6, height: 26,
+                      cursor: "col-resize", zIndex: 4,
                     }}
                   />
-                )}
+                </div>
               </th>
             ))}
           </tr>
         </thead>
+
         <tbody>
-          {dataRows.map((row, rIdx) => {
-            const actualRowIdx = rIdx + 1; // Excel row index (0-based in data, but header is row 0)
-            const rowHeight = getRowHeight(actualRowIdx);
-            
+          {sheetData.map((row, rIdx) => {
+            const h = getRowH(rIdx);
             return (
-              <tr 
-                key={rIdx} 
-                style={{ 
-                  background: rIdx % 2 === 0 ? "#fff" : "#F9FAFB",
-                  height: rowHeight || 'auto'
-                }}
-              >
-                <td style={{ 
-                  border: "1px solid #E5E7EB", 
-                  padding: "6px 8px", 
-                  textAlign: "center",
-                  fontSize: 12,
-                  color: "#9CA3AF",
-                  background: "#F3F4F6"
-                }}>{actualRowIdx}</td>
-                {Array.from({ length: headerRow.length }).map((_, cIdx) => {
-                  const key = `${actualRowIdx}_${cIdx}`;
+              <tr key={rIdx}>
+                <td
+                  onContextMenu={(e) => openCtx("row", rIdx, e)}
+                  title={readOnly ? "" : "Right-click to insert or delete a row"}
+                  style={{
+                    border: "1px solid #E5E7EB", background: "#F3F4F6",
+                    fontSize: 11, color: "#9CA3AF", textAlign: "center",
+                    position: "sticky", left: 0, zIndex: 2, padding: 0,
+                    overflow: "hidden", verticalAlign: "top",
+                  }}
+                >
+                  <div style={{ position: "relative", padding: "4px 0" }}>
+                    {rIdx + 1}
+                    <span
+                      onMouseDown={(e) => startResize("row", rIdx, e)}
+                      title="Drag to resize row"
+                      style={{
+                        position: "absolute", left: 0, right: 0, bottom: -4, height: 6,
+                        cursor: "row-resize", zIndex: 4,
+                      }}
+                    />
+                  </div>
+                </td>
+
+                {Array.from({ length: colCount }, (_, cIdx) => {
+                  const key = `${rIdx}_${cIdx}`;
+                  if (covered.has(key)) return null; // swallowed by a merge
+
+                  const span = anchors[key];
                   const isFormula = !!formulaCacheRef.current[key];
-                  const rawValue = row?.[cIdx];
-                  // Handle NaN, Infinity, null, undefined - convert to safe string
-                  const safeValue = (rawValue === null || rawValue === undefined || Number.isNaN(rawValue) || rawValue === Infinity || rawValue === -Infinity) ? "" : String(rawValue);
-                  
+                  const raw = row?.[cIdx];
+                  const safeValue =
+                    raw === null || raw === undefined || Number.isNaN(raw) ||
+                    raw === Infinity || raw === -Infinity
+                      ? ""
+                      : String(raw);
+
+                  const [tdCss, innerCss] = splitCellStyle(styleMap[key] || {});
+                  const tdStyle = {
+                    borderTop: "1px solid #E5E7EB",
+                    borderRight: "1px solid #E5E7EB",
+                    borderBottom: "1px solid #E5E7EB",
+                    borderLeft: "1px solid #E5E7EB",
+                    padding: 0,
+                    background: isFormula
+                      ? "#FFF9C4"
+                      : (tdCss.backgroundColor || (span ? "#FAFAFA" : "transparent")),
+                    verticalAlign: "top",
+                    ...tdCss,
+                  };
+
+                  // Row height is a floor, never a ceiling: Excel auto-fits
+                  // wrapped text and clipping it is what made cells unreadable.
+                  const innerStyle = {
+                    padding: "5px 8px",
+                    fontSize: 12,
+                    lineHeight: 1.45,
+                    color: isFormula ? "#856404" : "#374151",
+                    fontWeight: isFormula ? 600 : 400,
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                    ...innerCss,
+                    minHeight: span ? undefined : (h ?? DEFAULT_ROW_H),
+                    boxSizing: "border-box",
+                  };
+
                   return (
-                    <td key={cIdx} style={{ 
-                      border: "1px solid #E5E7EB", 
-                      padding: 0,
-                      background: isFormula ? "#FFF9C4" : "transparent",
-                      verticalAlign: "top"
-                    }}>
+                    <td
+                      key={cIdx}
+                      rowSpan={span?.rowSpan}
+                      colSpan={span?.colSpan}
+                      style={tdStyle}
+                    >
                       {readOnly || isFormula ? (
-                        <div style={{ 
-                          padding: "7px 10px", 
-                          fontSize: 13,
-                          color: isFormula ? "#856404" : "#374151",
-                          fontWeight: isFormula ? 600 : 400,
-                          minHeight: 20,
-                          height: "100%",
-                          display: "flex",
-                          alignItems: "flex-start"
-                        }} title={isFormula ? `Formula: ${formulaCacheRef.current[key]}` : ""}>
+                        <div
+                          title={isFormula ? `Formula: ${formulaCacheRef.current[key]}` : safeValue}
+                          style={innerStyle}
+                        >
                           {safeValue}
                         </div>
                       ) : (
-                        <textarea
+                        <AutoCell
                           value={safeValue}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            // Safe numeric input handling
-                            const parsed = val === "" ? "" : isNaN(val) ? val : Number(val);
-                            handleCellChange(actualRowIdx, cIdx, parsed);
-                          }}
-                          style={{ 
-                            width: "100%", 
-                            padding: "7px 10px", 
-                            border: "none", 
-                            outline: "none",
-                            fontSize: 13,
-                            background: "transparent",
-                            color: "#374151",
-                            resize: "none",
-                            height: rowHeight ? `${rowHeight}px` : "auto",
-                            minHeight: 20,
-                            fontFamily: "inherit",
-                            lineHeight: "1.5"
-                          }}
-                          rows={1}
+                          style={innerStyle}
+                          onChange={(val) =>
+                            handleCellChange(rIdx, cIdx, val === "" ? "" : isNaN(val) ? val : Number(val))
+                          }
                         />
                       )}
                     </td>
@@ -475,6 +810,9 @@ const ReportSheetViewer = forwardRef(function ReportSheetViewer({
   data,
   formulaCache,
   rowHeights,
+  colWidths,
+  merges,
+  cellStyles,
   readOnly = false,
   onDataChange,
   onCreateReport,
@@ -783,6 +1121,9 @@ const ReportSheetViewer = forwardRef(function ReportSheetViewer({
           data={data} 
           formulaCache={formulaCache}
           rowHeights={rowHeights}
+          colWidths={colWidths}
+          merges={merges}
+          cellStyles={cellStyles}
           readOnly={readOnly} 
           onDataChange={onDataChange}
         />

@@ -15,6 +15,8 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@reduxjs/toolkit": "^2.11.2",
     "@tanstack/react-table": "^8.21.3",
+    "@univerjs/preset-sheets-core": "^0.25.1",
+    "@univerjs/presets": "^0.25.1",
     "axios": "^1.13.6",
     "docx": "^9.6.1",
     "framer-motion": "^12.34.4",
@@ -32,6 +34,8 @@
     "react-router-dom": "^7.14.0",
     "react-window": "^1.8.10",
     "recharts": "^3.8.1",
+    "rxjs": "^7.8.2",
+    "univer-file-import": "^1.2.3",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
