@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { authenticateToken } = require('../middleware/auth');
+const { isPatchable, readCellEdits, patchWorkbook } = require('../utils/excelPatch');
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, '../uploads/coners');
@@ -164,7 +165,12 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
           templateData = JSON.stringify({
             sheets: parsedData.sheets,
             sheetNames: parsedData.names,
-            row_heights: parsedData.row_heights || {}
+            row_heights: parsedData.row_heights || {},
+            formulas: parsedData.formulas || {},
+            merges: parsedData.merges || {},
+            col_widths: parsedData.col_widths || {},
+            cell_styles: parsedData.cell_styles || {},
+            cellEdits: {}
           });
         }
       }
@@ -207,18 +213,34 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
 // GET /api/coners/:id/download - Download a coner
 router.get('/:id/download', authenticateToken, checkConerOwnership, async (req, res) => {
   try {
+    console.log('[DEBUG] Download request for coner ID:', req.params.id);
+    
     const query = 'SELECT * FROM coners WHERE id = ? AND deleted_at IS NULL';
     const [coners] = await getDb().promise().query(query, [req.params.id]);
     
     if (coners.length === 0) {
+      console.error('[DEBUG] Coner not found in database:', req.params.id);
       return res.status(404).json({ message: 'Coner not found' });
     }
 
     const coner = coners[0];
+    console.log('[DEBUG] Coner found:', { id: coner.id, name: coner.name, file_path: coner.file_path });
+    
+    if (!coner.file_path) {
+      console.error('[DEBUG] No file_path for coner:', coner.id);
+      return res.status(400).json({ 
+        message: 'No file attached to this coner. This may be a generated report without a physical file.' 
+      });
+    }
+    
     const filePath = path.join(uploadsDir, coner.file_path);
+    console.log('[DEBUG] Full file path:', filePath);
     
     if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ message: 'File not found on server' });
+      console.error('[DEBUG] File not found on disk:', filePath);
+      return res.status(404).json({ 
+        message: 'File not found on server. The file may have been deleted or moved.' 
+      });
     }
 
     // Set appropriate content type
@@ -235,12 +257,48 @@ router.get('/:id/download', authenticateToken, checkConerOwnership, async (req, 
     res.setHeader('Content-Type', contentTypes[ext] || 'application/octet-stream');
     const encodedFilename = encodeURIComponent(coner.name);
     res.setHeader('Content-Disposition', `inline; filename*=UTF-8''${encodedFilename}`);
+
+    // Apply the user's edits onto the original workbook rather than serving a
+    // regenerated one, so formulas, charts, styles and merges stay intact.
+    // Anything that cannot be patched falls back to the untouched original.
+    let streamPath = filePath;
+    let isTemp = false;
+    const edits = isPatchable(filePath) ? readCellEdits(coner.template_data) : null;
+    if (edits) {
+      const patched = await patchWorkbook(filePath, edits);
+      if (patched) {
+        streamPath = patched;
+        isTemp = true;
+      }
+    }
+
+    console.log('[DEBUG] Streaming file to client...');
+    const fileStream = fs.createReadStream(streamPath);
+
+    const discardTemp = () => {
+      if (isTemp) fs.unlink(streamPath, () => {});
+    };
+    res.on('close', discardTemp);
+    res.on('finish', discardTemp);
+
+    // Handle stream errors
+    fileStream.on('error', (err) => {
+      console.error('[DEBUG] File stream error:', err);
+      discardTemp();
+      if (!res.headersSent) {
+        return res.status(500).json({ 
+          message: 'Error reading file. The file may be corrupted or locked.' 
+        });
+      }
+    });
     
-    const fileStream = fs.createReadStream(filePath);
     fileStream.pipe(res);
   } catch (error) {
-    console.error('Download coner error:', error);
-    res.status(500).json({ message: 'Failed to download coner' });
+    console.error('[DEBUG] Download coner error:', error);
+    console.error('[DEBUG] Error stack:', error.stack);
+    if (!res.headersSent) {
+      res.status(500).json({ message: 'Failed to download coner: ' + error.message });
+    }
   }
 });
 

@@ -388,13 +388,23 @@ class TemplateController {
 
         console.log(`✅ PARSE ONLY SUCCESS: Returning parsed data without creating template`);
 
+        const isDocx = ext === '.docx';
         return res.status(200).json({
           success: true,
           data: {
-            template_data: {
+            template_data: isDocx ? {
               sheets: parsedData.sheets,
               sheetNames: parsedData.names,
               row_heights: parsedData.row_heights || {}
+            } : {
+              sheets: parsedData.sheets,
+              sheetNames: parsedData.names,
+              row_heights: parsedData.row_heights || {},
+              formulas: parsedData.formulas || {},
+              merges: parsedData.merges || {},
+              col_widths: parsedData.col_widths || {},
+              cell_styles: parsedData.cell_styles || {},
+              cellEdits: {}
             }
           },
           message: 'File parsed successfully'
@@ -402,14 +412,24 @@ class TemplateController {
       }
 
       // Create template data
+      const isDocx = ext === '.docx';
       const templateData = {
         name: fileName.replace(/\.(xlsx?|csv|docx)$/i, ""),
         type: "import",
         description: `${parsedData.names.length} sheet(s) • ${fileName}`,
-        template_data: {
+        template_data: isDocx ? {
           sheets: parsedData.sheets,
           sheetNames: parsedData.names,
-          row_heights: parsedData.row_heights || {}  // ← ADD: row_heights from parser
+          row_heights: parsedData.row_heights || {}
+        } : {
+          sheets: parsedData.sheets,
+          sheetNames: parsedData.names,
+          row_heights: parsedData.row_heights || {},
+          formulas: parsedData.formulas || {},
+          merges: parsedData.merges || {},
+          col_widths: parsedData.col_widths || {},
+          cell_styles: parsedData.cell_styles || {},
+          cellEdits: {}
         },
         excel_filename: fileName
       };
