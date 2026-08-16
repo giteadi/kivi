@@ -434,16 +434,35 @@ router.get('/:id/download', authenticateToken, checkFormOwnership, async (req, r
 router.put('/:id', authenticateToken, checkFormOwnership, async (req, res) => {
   try {
     const { name, type, template_data, folder_id } = req.body;
-    
-    const query = `
-      UPDATE forms 
-      SET name = ?, type = ?, template_data = ?, folder_id = ?, updated_at = NOW()
-      WHERE id = ? AND deleted_at IS NULL
-    `;
-    
-    const templateDataStr = template_data ? JSON.stringify(template_data) : null;
-    await getDb().promise().query(query, [name, type, templateDataStr, folder_id || null, req.params.id]);
-    
+    const fields = [];
+    const values = [];
+
+    if (typeof name !== 'undefined') {
+      fields.push('name = ?');
+      values.push(name);
+    }
+    if (typeof type !== 'undefined') {
+      fields.push('type = ?');
+      values.push(type);
+    }
+    if (typeof template_data !== 'undefined') {
+      fields.push('template_data = ?');
+      values.push(template_data ? JSON.stringify(template_data) : null);
+    }
+    if ('folder_id' in req.body) {
+      fields.push('folder_id = ?');
+      values.push(folder_id || null);
+    }
+
+    if (fields.length === 0) {
+      return res.status(400).json({ message: 'No fields provided to update' });
+    }
+
+    fields.push('updated_at = NOW()');
+    const query = `UPDATE forms SET ${fields.join(', ')} WHERE id = ? AND deleted_at IS NULL`;
+    values.push(req.params.id);
+    await getDb().promise().query(query, values);
+
     res.json({ message: 'Form updated successfully' });
   } catch (error) {
     console.error('Update form error:', error);

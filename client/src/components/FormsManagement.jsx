@@ -65,7 +65,7 @@ const icons = {
 
 const css = {
   root:     { fontFamily: "system-ui,-apple-system,sans-serif", minHeight: "100vh", display: "flex" },
-  main:     { flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh", overflow: "auto", marginLeft: "256px", paddingLeft: "24px" },
+  main:     { flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh", overflow: "auto" },
   header:   { padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, position: "sticky", top: 0, zIndex: 20 },
   h1:       { margin: 0, fontSize: 19, fontWeight: 700, letterSpacing: "-0.3px" },
   subtitle: { margin: 0, fontSize: 12 },
@@ -82,7 +82,7 @@ const css = {
   iconBtn:   { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 6, border: "1px solid", background: "transparent", cursor: "pointer" },
   toolbar:   { padding: "10px 24px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", background: "#fff", zIndex: 5, position: "relative", borderBottom: "1px solid #E5E7EB" },
   content:   { padding: 24, display: "flex", gap: 24 },
-  folderTree: { width: 280, minWidth: 280, borderRadius: 12, overflow: "hidden", display: "flex", flexDirection: "column" },
+  folderTree: { borderRadius: 12, overflow: "hidden", display: "flex", flexDirection: "column" },
   folderTreeHeader: { padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" },
   folderTreeTitle: { margin: 0, fontSize: 14, fontWeight: 600 },
   folderTreeContent: { padding: "8px 0", overflow: "auto", flex: 1 },
@@ -685,11 +685,7 @@ function RenameModal({ form, onClose, onRename }) {
     
     setSaving(true);
     try {
-      await api.put(`/forms/${form.id}`, {
-        name: trimmed,
-        type: form.type,
-        template_data: form.template_data,
-      });
+      await api.put(`/forms/${form.id}`, { name: trimmed });
       onRename(form.id, trimmed);
       onClose();
     } catch (err) {
@@ -2413,7 +2409,7 @@ function convertIFs(s, mask) {
   return (
     <div style={css.root} className="bg-gray-100 dark:bg-[#0f0f10] text-gray-900 dark:text-white transition-colors duration-300">
       <Sidebar />
-      <main style={css.main} className="bg-gray-100 dark:bg-[#0f0f10] transition-colors duration-300">
+      <main style={css.main} className="bg-gray-100 dark:bg-[#0f0f10] transition-colors duration-300 pl-4 lg:pl-6 ml-0 lg:ml-64">
         {/* Header */}
         <div style={css.header} className="bg-white dark:bg-[#1c1c1e] border-b border-gray-200 dark:border-gray-800 transition-colors duration-300">
           <div>
@@ -2455,9 +2451,9 @@ function convertIFs(s, mask) {
         </div>
 
         {/* Content with Folder Tree */}
-        <div style={css.content}>
+        <div style={css.content} className="flex-col lg:flex-row">
           {/* Folder Tree Sidebar */}
-          <div style={css.folderTree} className="bg-white dark:bg-[#1c1c1e] border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300">
+          <div style={css.folderTree} className="bg-white dark:bg-[#1c1c1e] border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300 w-full lg:w-[280px] lg:min-w-[280px]">
             <div style={css.folderTreeHeader} className="border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
               <h3 style={css.folderTreeTitle} className="text-gray-900 dark:text-white">Folders</h3>
               <button
@@ -2567,7 +2563,7 @@ function convertIFs(s, mask) {
             {/* Forms Grid */}
             {loading ? (
               /* Skeleton loader — 6 placeholder cards */
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div key={i} className="bg-white dark:bg-[#1c1c1e] rounded-xl border border-gray-200 dark:border-gray-700 p-4 animate-pulse">
                     <div className="flex items-start gap-3">
@@ -2607,18 +2603,14 @@ function convertIFs(s, mask) {
                 </div>
               </div>
           ) : (
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-              gap: 16
-            }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredForms.map(form => (
                 <div
                   key={form.id}
                   onClick={() => handleViewForm(form)}
-                  className="bg-white dark:bg-[#1c1c1e] rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden cursor-pointer transition-all hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md transition-colors duration-300"
+                  className="bg-white dark:bg-[#1c1c1e] rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer transition-all hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md transition-colors duration-300 min-h-[140px] flex flex-col relative group"
                 >
-                  <div className="p-4 flex items-start gap-3">
+                  <div className="p-4 flex items-start gap-3 flex-1">
                     <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
                       <Icon d={icons.file} size={20} />
                     </div>
@@ -2660,7 +2652,7 @@ function convertIFs(s, mask) {
                         </button>
                         {openMenuId === form.id && (
                           <div
-                            className="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-[#2c2c2e] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-30"
+                            className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-[#2c2c2e] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <button
