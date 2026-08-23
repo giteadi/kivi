@@ -50,7 +50,8 @@ export default function UniverSpreadsheet({
     mountDiv.id = mountId;
     mountDiv.style.width = '100%';
     mountDiv.style.height = '100%';
-    mountDiv.style.minHeight = '400px';
+    // The wrapper enforces any minimum height; a floor here would overflow it.
+    mountDiv.style.minHeight = '0';
     mountDiv.style.overflow = 'hidden';
     mountDiv.style.position = 'relative';
     wrapper.appendChild(mountDiv);
@@ -305,8 +306,16 @@ export default function UniverSpreadsheet({
     }
   };
 
+  // height="100%" means the parent already reserves the space, so drop the card
+  // chrome and let the sheet sit flush against the panel edges.
+  const embedded = height === '100%';
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height, width, border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden', background: '#fff' }}>
+    <div style={{
+      display: 'flex', flexDirection: 'column', height, width, background: '#fff',
+      overflow: 'hidden', minHeight: 0,
+      ...(embedded ? {} : { border: '1px solid #e5e7eb', borderRadius: 8 }),
+    }}>
       <div style={{ display: 'flex', gap: 8, padding: '8px 12px', borderBottom: '1px solid #e5e7eb', background: '#f9fafb', alignItems: 'center', flexWrap: 'wrap' }}>
         <button
           onClick={handleImportClick}
@@ -392,7 +401,9 @@ export default function UniverSpreadsheet({
           flex: 1,
           width: '100%',
           overflow: 'hidden',
-          minHeight: 400,
+          // Embedded mode must be free to shrink, otherwise the 400px floor
+          // pushes the grid past the panel and reveals the page behind it.
+          minHeight: embedded ? 0 : 400,
           position: 'relative',
         }}
       >

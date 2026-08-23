@@ -10,6 +10,8 @@ import html2canvas from "html2canvas";
 import api from "../services/api";
 import Sidebar from "./Sidebar";
 import ReportSheetViewer from "./ReportSheetViewer";
+import UniverSpreadsheet from "./UniverSpreadsheet";
+import { createSheetFromFormulas, countSheetFormulas, isExcelGrid } from "../utils/sheetFormulas";
 
 // Folder icons
 const folderIcons = {
@@ -107,7 +109,7 @@ const css = {
   breadcrumbSeparator: { color: "#D1D5DB" },
   card: (sel) => ({ background: "#fff", borderRadius: 12, border: sel ? "2px solid #3B82F6" : "1px solid #E5E7EB", boxShadow: sel ? "0 0 0 3px rgba(59,130,246,0.1)" : "0 1px 3px rgba(0,0,0,0.06)", overflow: "hidden", cursor: "pointer", transition: "all 0.15s" }),
   cardIcon:  { width: 36, height: 36, background: "#EFF6FF", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#2563EB" },
-  panel:     { position: "fixed", inset: 0, background: "#fff", zIndex: 50, display: "flex", flexDirection: "column" },
+  panel:     { position: "fixed", inset: 0, background: "#fff", zIndex: 50, display: "flex", flexDirection: "column", overflow: "hidden" },
   panelHeader: { background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, flexShrink: 0, zIndex: 10, position: "relative" },
   sheetTabs: { background: "#F1F5F9", borderBottom: "1px solid #E5E7EB", padding: "6px 14px", display: "flex", alignItems: "center", gap: 6, overflowX: "auto", flexShrink: 0, zIndex: 5, position: "relative" },
   tab: (a) => ({ padding: "5px 14px", borderRadius: 6, fontSize: 12, fontWeight: 500, cursor: "pointer", border: "1px solid", background: a ? "#2563EB" : "#fff", color: a ? "#fff" : "#374151", borderColor: a ? "#2563EB" : "#D1D5DB", whiteSpace: "nowrap", flexShrink: 0 }),
@@ -709,7 +711,14 @@ export default function ConnersManagement() {
   const [sheetData, setSheetData] = useState([]);
   const [activeSheet, setActiveSheet] = useState(0);
   const [sheets, setSheets] = useState([]);
+  const [sheetMeta, setSheetMeta] = useState({ row_heights: {}, col_widths: {}, merges: {}, cell_styles: {} });
   const fileInputRef = useRef(null);
+  const viewerRef = useRef(null);
+
+  // Univer engine toggle — Excel files ONLY. Word/DOCX (__html__) remains untouched.
+  const [useUniverExcel, setUseUniverExcel] = useState(true);
+  // Univer ref for extracting data on save/export
+  const univerRef = useRef(null);
 
   const [showNewDocModal, setShowNewDocModal] = useState(false);
 
@@ -747,6 +756,18 @@ export default function ConnersManagement() {
           formList = res.data;
         }
       }
+
+      // Parse template_data JSON strings to objects
+      formList = formList.map(form => {
+        if (form.template_data && typeof form.template_data === 'string') {
+          try {
+            form.template_data = JSON.parse(form.template_data);
+          } catch (e) {
+            console.warn('Failed to parse template_data for coner:', form.id, e);
+          }
+        }
+        return form;
+      });
 
       setForms(formList);
     } catch (e) {
@@ -940,21 +961,10 @@ export default function ConnersManagement() {
     return cache;
   }
 
+  // Clear grid but keep formulas — shares the "new sheet with formulas" logic in
+  // utils/sheetFormulas so both paths behave identically.
   function makeClearedGridKeepFormulas(grid, formulaCache) {
-    const rowCount = grid?.length || 0;
-    const colCount = Math.max(0, ...(grid || []).map(r => r?.length || 0));
-    const cleared = Array.from({ length: rowCount }, () => Array.from({ length: colCount }, () => ""));
-
-    Object.keys(formulaCache || {}).forEach((key) => {
-      const [rStr, cStr] = key.split('_');
-      const r = Number(rStr);
-      const c = Number(cStr);
-      if (!Number.isNaN(r) && !Number.isNaN(c) && cleared[r]) {
-        cleared[r][c] = formulaCache[key];
-      }
-    });
-
-    return cleared;
+    return createSheetFromFormulas(grid, formulaCache) || [];
   }
 
   function buildXlsxBlobFromSheets(sheetDefs) {
@@ -1355,15 +1365,25 @@ export default function ConnersManagement() {
 
         console.log("[DEBUG] Sheet names:", sheetNames);
 
+        // Apply saved layout metadata so columns/merges render like the original Excel
+        setSheetMeta({
+          row_heights: form.template_data.row_heights || {},
+          col_widths: form.template_data.col_widths || {},
+          merges: form.template_data.merges || {},
+          cell_styles: form.template_data.cell_styles || {},
+        });
+
         // Convert to sheet objects
         const loadedSheets = sheetNames.map((name) => ({
           name,
           data: sheets[name] || [],
-          formulaCache: {},
+          formulaCache: buildFormulaCache(sheets[name] || []),
         }));
 
+        formulaCacheRef.current = loadedSheets[0]?.formulaCache || {};
+
         setSheets(loadedSheets);
-        setSheetData(sheets[sheetNames[0]] || []);
+        setSheetData(loadedSheets[0]?.data || []);
         setActiveSheet(0);
         setShowViewer(true);
         setLoading(false);
@@ -1865,137 +1885,100 @@ export default function ConnersManagement() {
             <button style={css.iconBtn} onClick={() => handleDeleteRow(sheetData.length - 1)} title="Delete last row">
               <Icon d={icons.trash} />
             </button>
+
+            {/* Univer Engine Toggle — ONLY for Excel files (skip Word/DOCX __html__) */}
+            {sheetData[0]?.[0] !== "__html__" && (
+              <label style={{
+                display: "inline-flex", alignItems: "center", gap: 8, marginLeft: 12,
+                padding: "5px 12px", borderRadius: 8, border: "1px solid #E5E7EB",
+                background: "#fff", cursor: "pointer", fontSize: 13, userSelect: "none",
+              }} title="Excel formula engine - Univer = full Excel UI + 500+ formulas">
+                <span style={{ color: "#6B7280" }}>Engine:</span>
+                <select
+                  value={useUniverExcel ? "univer" : "classic"}
+                  onChange={(e) => setUseUniverExcel(e.target.value === "univer")}
+                  style={{
+                    border: "1px solid #D1D5DB", borderRadius: 6, padding: "3px 8px",
+                    fontSize: 12, background: useUniverExcel ? "#EFF6FF" : "#fff",
+                    color: useUniverExcel ? "#1D4ED8" : "#111827", outline: "none",
+                  }}
+                >
+                  <option value="univer">Univer (Excel UI + Formulas) ⭐</option>
+                  <option value="classic">Classic (Simple Grid)</option>
+                </select>
+              </label>
+            )}
           </div>
 
-          {/* Sheet Editor */}
-          <div style={{ flex: 1, overflow: "auto", padding: 0, background: "#F9FAFB" }}>
+          {/* Sheet Editor — WORD/HTML → ReportSheetViewer, EXCEL → Univer OR Classic */}
+          <div style={{ flex: 1, overflow: "auto", padding: 0, background: "#F9FAFB", minHeight: 0, display: "flex", flexDirection: "column" }}>
             {sheetData[0]?.[0] === "__html__" ? (
+              // 🟢 WORD / DOCX / HTML MODE — NO CHANGES, ReportSheetViewer only
               <ReportSheetViewer
+                key={`html-${activeSheet}`}
+                ref={viewerRef}
                 data={sheetData}
                 readOnly={false}
-                onDataChange={(newData) => setSheetData(newData)}
+                onDataChange={(newData) => {
+                  console.log('[DEBUG] HTML mode data changed');
+                  setSheetData(newData);
+                  setSheets(prev => {
+                    const copy = [...prev];
+                    copy[activeSheet] = { ...copy[activeSheet], data: newData };
+                    return copy;
+                  });
+                }}
               />
-            ) : (
-              <div style={{ overflow: "auto", borderRadius: 8, border: "1px solid #E5E7EB", background: "#fff" }}>
-                <table style={{ borderCollapse: "collapse", width: "max-content", minWidth: "100%" }}>
-                  <thead>
-                    <tr style={{ background: "#F3F4F6", position: "sticky", top: 0, zIndex: 2 }}>
-                      {/* Row number header */}
-                      <th style={{ 
-                        border: "1px solid #E5E7EB", padding: "8px 6px", 
-                        fontSize: 12, color: "#9CA3AF", width: 40, minWidth: 40,
-                        textAlign: "center", fontWeight: 500
-                      }}>#</th>
-                      {(sheetData[0] || []).map((cell, cIdx) => (
-                        <th key={cIdx} style={{ 
-                          border: "1px solid #E5E7EB", padding: 0,
-                          minWidth: 120, maxWidth: 240,
-                          position: "relative"
-                        }}>
-                          <div style={{ display: "flex", alignItems: "center" }}>
-                            <input
-                              value={cell ?? ""}
-                              onChange={(e) => handleCellChange(0, cIdx, e.target.value)}
-                              style={{ 
-                                flex: 1,
-                                padding: "8px 10px", 
-                                border: "none", 
-                                outline: "none",
-                                fontSize: 13,
-                                background: "transparent",
-                                fontWeight: 700,
-                                color: "#1F2937",
-                                width: "100%",
-                                minWidth: 100,
-                              }}
-                            />
-                            <button 
-                              style={{ 
-                                flexShrink: 0, padding: "4px 6px",
-                                background: "transparent", border: "none",
-                                cursor: "pointer", color: "#DC2626", fontSize: 14,
-                                opacity: 0.5,
-                              }}
-                              onClick={() => handleDeleteCol(cIdx)}
-                              title="Delete column"
-                            >×</button>
-                          </div>
-                        </th>
-                      ))}
-                      {/* Add column placeholder */}
-                      <th style={{ border: "1px solid #E5E7EB", width: 40, minWidth: 40 }} />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sheetData.slice(1).map((row, rIdx) => (
-                      <tr key={rIdx} style={{ background: rIdx % 2 === 0 ? "#fff" : "#F9FAFB" }}>
-                        {/* Row number */}
-                        <td style={{ 
-                          border: "1px solid #E5E7EB", padding: "4px 6px",
-                          fontSize: 12, color: "#9CA3AF", textAlign: "center",
-                          background: "#F9FAFB", userSelect: "none"
-                        }}>{rIdx + 1}</td>
-                        {/* Pad row to match header column count */}
-                        {Array.from({ length: sheetData[0]?.length || 0 }).map((_, cIdx) => (
-                          <td key={cIdx} style={{ border: "1px solid #E5E7EB", padding: 0 }}>
-                            {(() => {
-                              const key = `${rIdx + 1}_${cIdx}`;
-                              const isFormula = !!formulaCacheRef.current[key];
-                              const rawValue = row[cIdx];
-                              // Safe string conversion to prevent NaN warning
-                              const safeValue = (rawValue === null || rawValue === undefined || Number.isNaN(rawValue) || rawValue === Infinity || rawValue === -Infinity) ? "" : String(rawValue);
-                              return (
-                                <input
-                                  value={safeValue}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    // Column B (index 1) should be numeric for formulas
-                                    // Validate: only allow numeric input, reject alphabets
-                                    if (cIdx === 1 && val !== "") {
-                                      const num = Number(val);
-                                      if (Number.isNaN(num)) {
-                                        return; // Reject non-numeric input
-                                      }
-                                      handleCellChange(rIdx + 1, cIdx, num);
-                                    } else {
-                                      handleCellChange(rIdx + 1, cIdx, val);
-                                    }
-                                  }}
-                                  readOnly={isFormula}
-                                  title={isFormula ? `Formula: ${formulaCacheRef.current[key]}` : ""}
-                                  style={{ 
-                                    width: "100%", 
-                                    padding: "7px 10px", 
-                                    border: "none", 
-                                    outline: "none",
-                                    fontSize: 13,
-                                    background: isFormula ? "#FFF9C4" : "transparent", // yellow = formula
-                                    color: isFormula ? "#856404" : "#374151",
-                                    cursor: isFormula ? "default" : "text",
-                                    fontWeight: isFormula ? 600 : 400,
-                                  }}
-                                />
-                              );
-                            })()}
-                          </td>
-                        ))}
-                        {/* Delete row button */}
-                        <td style={{ border: "1px solid #E5E7EB", padding: "0 4px", textAlign: "center" }}>
-                          <button 
-                            style={{ 
-                              background: "transparent", border: "none",
-                              cursor: "pointer", color: "#DC2626", fontSize: 16,
-                              opacity: 0.4, padding: "2px 4px"
-                            }}
-                            onClick={() => handleDeleteRow(rIdx + 1)}
-                            title="Delete row"
-                          >×</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            ) : useUniverExcel ? (
+              // 🔵 EXCEL + UNIVER ENGINE — Drop-in Excel replacement
+              <div ref={univerRef} style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                <UniverSpreadsheet
+                  key={`univer-${activeSheet}-${selectedForm?.id || 'new'}`}
+                  initialData={sheetData}
+                  height="100%"
+                  onDataChange={(snapshot, data2D) => {
+                    console.log('[DEBUG] Univer Excel data changed');
+                    // Sync computed 2D array back into state so Save/Export still work
+                    if (Array.isArray(data2D) && data2D.length > 0) {
+                      setSheetData(data2D);
+                      setSheets(prev => {
+                        const copy = [...prev];
+                        copy[activeSheet] = {
+                          ...copy[activeSheet],
+                          data: data2D,
+                          formulaCache: copy[activeSheet]?.formulaCache || {},
+                        };
+                        return copy;
+                      });
+                    }
+                  }}
+                />
               </div>
+            ) : (
+              // 🟡 EXCEL + CLASSIC ENGINE (old ReportSheetViewer) — fallback
+              <ReportSheetViewer
+                key={`excel-${activeSheet}`}
+                data={sheetData}
+                formulaCache={formulaCacheRef.current}
+                rowHeights={sheetMeta.row_heights?.[sheets[activeSheet]?.name] || {}}
+                colWidths={sheetMeta.col_widths?.[sheets[activeSheet]?.name] || {}}
+                merges={sheetMeta.merges?.[sheets[activeSheet]?.name] || []}
+                cellStyles={sheetMeta.cell_styles?.[sheets[activeSheet]?.name] || {}}
+                readOnly={false}
+                onDataChange={(newData) => {
+                  console.log('[DEBUG] Excel mode (classic) data changed');
+                  setSheetData(newData);
+                  setSheets(prev => {
+                    const copy = [...prev];
+                    copy[activeSheet] = {
+                      ...copy[activeSheet],
+                      data: newData,
+                      formulaCache: formulaCacheRef.current,
+                    };
+                    return copy;
+                  });
+                }}
+              />
             )}
           </div>
         </div>
@@ -2340,17 +2323,43 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
   const [sheetList, setSheetList] = useState(allSheets);
   const [showNewSheetModal, setShowNewSheetModal] = useState(false);
   const [newSheetName, setNewSheetName] = useState("");
+  // A new sheet inherits the open sheet's formulas by default so the user does
+  // not have to retype them; unticking gives a plain empty sheet.
+  const [copyFormulasToNewSheet, setCopyFormulasToNewSheet] = useState(true);
 
   const viewerRef = useRef(null);
+  const isDocxSheet = reportData?.[activeSheet]?.[0]?.[0] === "__html__";
+  const [useUniverReport, setUseUniverReport] = useState(!isDocxSheet);
+
+  useEffect(() => {
+    const isDocx = reportData?.[activeSheet]?.[0]?.[0] === "__html__";
+    setUseUniverReport(!isDocx);
+  }, [activeSheet, reportData]);
+
+  const currentSheetFormulaCount = countSheetFormulas(reportData?.[activeSheet]);
 
   const addNewSheet = () => {
     const name = newSheetName.trim() || `Sheet ${sheetList.length + 1}`;
     if (sheetList.includes(name)) { toast.error("Sheet name already exists!"); return; }
-    setReportData(prev => ({ ...prev, [name]: [["__html__", "<p><br></p>"]] }));
+
+    // Carry the open sheet's formula skeleton across; fall back to a blank Word
+    // sheet when the open sheet is a DOCX/HTML one (it has no formulas).
+    const inherited = copyFormulasToNewSheet
+      ? createSheetFromFormulas(reportData?.[activeSheet])
+      : null;
+
+    setReportData(prev => ({
+      ...prev,
+      [name]: inherited || [["__html__", "<p><br></p>"]],
+    }));
     setSheetList(prev => [...prev, name]);
     setActiveSheet(name);
     setShowNewSheetModal(false);
     setNewSheetName("");
+
+    if (inherited && currentSheetFormulaCount > 0) {
+      toast.success(`"${name}" created with ${currentSheetFormulaCount} formula(s) copied`);
+    }
   };
 
   const patientIcon = "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z";
@@ -2474,14 +2483,41 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
         >+</button>
       </div>
 
-      <ReportSheetViewer
-        ref={viewerRef}
-        key={activeSheet}
-        data={reportData[activeSheet] || [["__html__", "<p><br></p>"]]}
-        readOnly={false}
-        reportMode={true}
-        onDataChange={newData => setReportData(prev => ({ ...prev, [activeSheet]: newData }))}
-      />
+      {isDocxSheet ? (
+        // 🟢 DOCX / HTML → only ReportSheetViewer
+        <ReportSheetViewer
+          ref={viewerRef}
+          key={`html-${activeSheet}`}
+          data={reportData[activeSheet] || [["__html__", "<p><br></p>"]]}
+          readOnly={false}
+          reportMode={true}
+          onDataChange={newData => setReportData(prev => ({ ...prev, [activeSheet]: newData }))}
+        />
+      ) : useUniverReport ? (
+        // 🔵 EXCEL → Univer full Excel software-like UI
+        <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          <UniverSpreadsheet
+            key={`report-univer-coner-${activeSheet}`}
+            initialData={reportData[activeSheet] || []}
+            height="100%"
+            onDataChange={(snapshot, data2D) => {
+              if (Array.isArray(data2D) && data2D.length > 0) {
+                setReportData(prev => ({ ...prev, [activeSheet]: data2D }));
+              }
+            }}
+          />
+        </div>
+      ) : (
+        // 🟡 EXCEL + CLASSIC — fallback if user manually switches
+        <ReportSheetViewer
+          ref={viewerRef}
+          key={`excel-${activeSheet}`}
+          data={reportData[activeSheet] || []}
+          readOnly={false}
+          reportMode={true}
+          onDataChange={newData => setReportData(prev => ({ ...prev, [activeSheet]: newData }))}
+        />
+      )}
 
       {/* New Sheet Modal */}
       {showNewSheetModal && (
@@ -2501,6 +2537,29 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
               autoFocus
               onKeyDown={e => { if (e.key === "Enter") addNewSheet(); if (e.key === "Escape") setShowNewSheetModal(false); }}
             />
+
+            {isExcelGrid(reportData?.[activeSheet]) && (
+              <label style={{
+                display: "flex", alignItems: "flex-start", gap: 8, marginTop: 14,
+                fontSize: 13, cursor: "pointer", userSelect: "none",
+              }}>
+                <input
+                  type="checkbox"
+                  checked={copyFormulasToNewSheet}
+                  onChange={e => setCopyFormulasToNewSheet(e.target.checked)}
+                  style={{ marginTop: 2, accentColor: "#2563EB" }}
+                />
+                <span>
+                  Copy formulas from “{activeSheet}”
+                  <span style={{ display: "block", fontSize: 12, color: "#6B7280", marginTop: 2 }}>
+                    {currentSheetFormulaCount > 0
+                      ? `${currentSheetFormulaCount} formula(s) will be reused — values stay empty.`
+                      : "This sheet has no formulas; layout will be reused."}
+                  </span>
+                </span>
+              </label>
+            )}
+
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 16 }}>
               <button style={css.btn("ghost")} onClick={() => setShowNewSheetModal(false)}>Cancel</button>
               <button style={css.btn("primary")} onClick={addNewSheet}>

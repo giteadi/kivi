@@ -19,6 +19,7 @@ import UniverSpreadsheet from "./UniverSpreadsheet";
 import Sidebar from "./Sidebar";
 import ExportDropdown from "./ExportDropdown";
 import { buildExamineeTokens, fillTemplateSheets, pruneUnfilledSheets } from "../utils/reportTemplate";
+import { createSheetFromFormulas, countSheetFormulas, isExcelGrid } from "../utils/sheetFormulas";
 import {
   DndContext,
   closestCenter,
@@ -85,9 +86,9 @@ const css = {
   content:   { padding: 24 },
   card: (sel) => ({ borderRadius: 12, border: sel ? "2px solid #3B82F6" : "1px solid", overflow: "hidden", cursor: "pointer", transition: "all 0.15s" }),
   cardIcon:  { width: 36, height: 36, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  panel:     { position: "fixed", inset: 0, zIndex: 50, display: "flex", flexDirection: "column" },
-  panelHeader: { padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, flexShrink: 0, background: "#fff", zIndex: 10, position: "relative" },
-  sheetTabs: { borderBottom: "1px solid", padding: "6px 14px", display: "flex", alignItems: "center", gap: 6, overflowX: "auto", flexShrink: 0, background: "#fff", zIndex: 5, position: "relative" },
+  panel:     { position: "fixed", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", background: "#fff", overflow: "hidden" },
+  panelHeader: { padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, flexShrink: 0, background: "#fff", borderBottom: "1px solid #E5E7EB", zIndex: 10, position: "relative" },
+  sheetTabs: { borderBottom: "1px solid #E5E7EB", padding: "6px 14px", display: "flex", alignItems: "center", gap: 6, overflowX: "auto", flexShrink: 0, background: "#F9FAFB", zIndex: 5, position: "relative" },
   tab: (a) => ({ padding: "5px 14px", borderRadius: 6, fontSize: 12, fontWeight: 500, cursor: "pointer", border: "1px solid", whiteSpace: "nowrap", flexShrink: 0 }),
   modal:     { borderRadius: 14, padding: 28, maxWidth: 500, width: "90%", margin: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.15)" },
   overlay:   { position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 40, display: "flex", alignItems: "center", justifyContent: "center" },
@@ -823,7 +824,7 @@ function PatientSelectModal({ patients, template, generating, onClose, onSelect 
 // REPORT EDIT PANEL
 // ══════════════════════════════════════════════════════════════════════════════
 function ReportEditPanel({ reportPanel, onBack, onSave }) {
-  const { templateName, allSheets, allData, patientName: initPatient, rowHeights } = reportPanel;
+  const { templateName, allSheets, allData, patientName: initPatient, rowHeights, colWidths: initColWidths, merges: initMerges, cellStyles: initCellStyles } = reportPanel;
 
   const [activeSheet, setActiveSheet]     = useState(allSheets[0]);
   const [reportData, setReportData]       = useState(allData);
@@ -831,21 +832,51 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
   const [sheetList, setSheetList]         = useState(allSheets);
   const [showNewSheetModal, setShowNewSheetModal] = useState(false);
   const [newSheetName, setNewSheetName]   = useState("");
+  // A new sheet inherits the open sheet's formulas by default so the user does
+  // not have to retype them; unticking gives a plain empty sheet.
+  const [copyFormulasToNewSheet, setCopyFormulasToNewSheet] = useState(true);
   const [showBackConfirm, setShowBackConfirm] = useState(false);
+  const colWidths = initColWidths || {};
+  const merges = initMerges || {};
+  const cellStyles = initCellStyles || {};
 
   const viewerRef = useRef(null);
-  // Univer engine toggle — Excel files only, Word/DOCX (__html__) remains untouched
-  const currentSheetIsExcel = reportData?.[activeSheet]?.[0]?.[0] !== "__html__";
-  const [useUniverTemplate, setUseUniverTemplate] = useState(currentSheetIsExcel);
+  // ALWAYS default Univer ON (Excel software-like UI) — only DOCX/HTML sheets get ReportViewer.
+  // This eliminates the layout-shift "UI is changing" user complaint.
+  const currentIsDocx = reportData?.[activeSheet]?.[0]?.[0] === "__html__";
+  const [useUniverTemplate, setUseUniverTemplate] = useState(!currentIsDocx);
+
+  // Sheet switch → only flip engine if new sheet is DOCX (to Viewer).
+  // Excel sheets stay on Univer → no UI flicker.
+  useEffect(() => {
+    const isDocx = reportData?.[activeSheet]?.[0]?.[0] === "__html__";
+    setUseUniverTemplate(!isDocx);
+  }, [activeSheet, reportData]);
+
+  const currentSheetFormulaCount = countSheetFormulas(reportData?.[activeSheet]);
 
   const addNewSheet = () => {
     const name = newSheetName.trim() || `Sheet ${sheetList.length + 1}`;
     if (sheetList.includes(name)) { toast.error("Sheet name already exists!"); return; }
-    setReportData(prev => ({ ...prev, [name]: [["__html__", "<p><br></p>"]] }));
+
+    // Carry the open sheet's formula skeleton across; fall back to a blank Word
+    // sheet when the open sheet is a DOCX/HTML one (it has no formulas).
+    const inherited = copyFormulasToNewSheet
+      ? createSheetFromFormulas(reportData?.[activeSheet])
+      : null;
+
+    setReportData(prev => ({
+      ...prev,
+      [name]: inherited || [["__html__", "<p><br></p>"]],
+    }));
     setSheetList(prev => [...prev, name]);
     setActiveSheet(name);
     setShowNewSheetModal(false);
     setNewSheetName("");
+
+    if (inherited && currentSheetFormulaCount > 0) {
+      toast.success(`"${name}" created with ${currentSheetFormulaCount} formula(s) copied`);
+    }
   };
 
   return (
@@ -887,6 +918,24 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
         <span style={{ color: "#6EE7B7", fontSize: 12, marginLeft: 4 }}>— {templateName}</span>
 
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
+          {reportData[activeSheet]?.[0]?.[0] !== "__html__" && (
+            <>
+              <select
+                value={useUniverTemplate ? "univer" : "classic"}
+                onChange={(e) => setUseUniverTemplate(e.target.value === "univer")}
+                title="Spreadsheet engine"
+                style={{
+                  border: "1px solid #059669", borderRadius: 8, padding: "7px 10px",
+                  fontSize: 12, fontWeight: 500, background: "#065F46",
+                  color: "#D1FAE5", outline: "none", cursor: "pointer",
+                }}
+              >
+                <option value="univer">Univer (Excel UI + Formulas)</option>
+                <option value="classic">Classic (Simple Grid)</option>
+              </select>
+              <span style={{ width: 1, height: 24, background: "#065F46" }} />
+            </>
+          )}
           <ExportDropdown
             ghost={true}
             onExportDocx={() => buildAndDownloadDocx(reportData, [activeSheet], reportPatient, activeSheet)}
@@ -933,79 +982,56 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
         >+</button>
       </div>
 
-      {/* Conditional rendering based on format */}
-      {reportData[activeSheet]?.[0]?.[0] === "__html__" ? (
-        // ════════════════════════════════════════════════════════════
-        // 🟢 WORD / DOCX / HTML MODE — NO CHANGES, ReportSheetViewer only
-        // ════════════════════════════════════════════════════════════
-        <ReportSheetViewer
-          ref={viewerRef}
-          key={activeSheet}
-          data={reportData[activeSheet] || [["__html__", "<p><br></p>"]]}
-          rowHeights={rowHeights?.[activeSheet] || {}}
-          readOnly={false}
-          reportMode={true}
-          onDataChange={newData => setReportData(prev => ({ ...prev, [activeSheet]: newData }))}
-        />
-      ) : useUniverTemplate ? (
-        // ════════════════════════════════════════════════════════════
-        // 🔵 EXCEL + UNIVER ENGINE — Excel UI + 500+ formulas + Formula Bar
-        // ════════════════════════════════════════════════════════════
-        <div style={{ padding: '0 16px 16px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      {/* Editor fills every remaining pixel so no dead space exposes the sidebar */}
+      <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        {reportData[activeSheet]?.[0]?.[0] === "__html__" ? (
+          // ════════════════════════════════════════════════════════════
+          // 🟢 WORD / DOCX / HTML MODE — NO CHANGES, ReportSheetViewer only
+          // ════════════════════════════════════════════════════════════
+          <ReportSheetViewer
+            ref={viewerRef}
+            key={activeSheet}
+            data={reportData[activeSheet] || [["__html__", "<p><br></p>"]]}
+            rowHeights={rowHeights?.[activeSheet] || {}}
+            colWidths={colWidths?.[activeSheet] || {}}
+            merges={merges?.[activeSheet] || []}
+            cellStyles={cellStyles?.[activeSheet] || {}}
+            readOnly={false}
+            reportMode={true}
+            onDataChange={newData => setReportData(prev => ({ ...prev, [activeSheet]: newData }))}
+          />
+        ) : useUniverTemplate ? (
+          // ════════════════════════════════════════════════════════════
+          // 🔵 EXCEL + UNIVER ENGINE — Excel UI + 500+ formulas + Formula Bar
+          // ════════════════════════════════════════════════════════════
           <UniverSpreadsheet
             key={`tmpl-edit-univer-${activeSheet}`}
             initialData={reportData[activeSheet] || []}
-            height="calc(100vh - 220px)"
+            height="100%"
             onDataChange={(snapshot, data2D) => {
               if (Array.isArray(data2D) && data2D.length > 0) {
                 setReportData(prev => ({ ...prev, [activeSheet]: data2D }));
               }
             }}
           />
-        </div>
-      ) : (
-        // ════════════════════════════════════════════════════════════
-        // 🟡 EXCEL + CLASSIC ENGINE (old ReportSheetViewer) — fallback
-        // ════════════════════════════════════════════════════════════
-        <ReportSheetViewer
-          ref={viewerRef}
-          key={activeSheet}
-          data={reportData[activeSheet] || []}
-          rowHeights={rowHeights?.[activeSheet] || {}}
-          readOnly={false}
-          reportMode={true}
-          onDataChange={newData => setReportData(prev => ({ ...prev, [activeSheet]: newData }))}
-        />
-      )}
-
-      {/* Engine selector toolbar strip — only for Excel sheets */}
-      {reportData[activeSheet]?.[0]?.[0] !== "__html__" && (
-        <div style={{
-          padding: '8px 16px',
-          background: '#F1F5F9',
-          borderTop: '1px solid #E5E7EB',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          flexShrink: 0,
-        }}>
-          <label style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13 }}>
-            <span style={{ color: "#6B7280", fontWeight: 500 }}>Spreadsheet Engine:</span>
-            <select
-              value={useUniverTemplate ? "univer" : "classic"}
-              onChange={(e) => setUseUniverTemplate(e.target.value === "univer")}
-              style={{
-                border: "1px solid #D1D5DB", borderRadius: 6, padding: "4px 10px",
-                fontSize: 12, background: useUniverTemplate ? "#EFF6FF" : "#fff",
-                color: useUniverTemplate ? "#1D4ED8" : "#111827", outline: "none",
-              }}
-            >
-              <option value="univer">Univer (Excel UI + Formulas) ⭐</option>
-              <option value="classic">Classic (Simple Grid)</option>
-            </select>
-          </label>
-        </div>
-      )}
+        ) : (
+          // ════════════════════════════════════════════════════════════
+          // 🟡 EXCEL + CLASSIC ENGINE (old ReportSheetViewer) — fallback
+          // ════════════════════════════════════════════════════════════
+          <ReportSheetViewer
+            ref={viewerRef}
+            key={activeSheet}
+            data={reportData[activeSheet] || []}
+            rowHeights={rowHeights?.[activeSheet] || {}}
+            colWidths={colWidths?.[activeSheet] || {}}
+            merges={merges?.[activeSheet] || []}
+            cellStyles={cellStyles?.[activeSheet] || {}}
+            readOnly={false}
+            reportMode={true}
+            onDataChange={newData => setReportData(prev => ({ ...prev, [activeSheet]: newData }))}
+          />
+        )}
+      </div>
 
       {showNewSheetModal && (
         <div style={css.overlay}>
@@ -1022,6 +1048,29 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
               autoFocus
               onKeyDown={e => { if (e.key === "Enter") addNewSheet(); if (e.key === "Escape") setShowNewSheetModal(false); }}
             />
+
+            {isExcelGrid(reportData?.[activeSheet]) && (
+              <label style={{
+                display: "flex", alignItems: "flex-start", gap: 8, marginTop: 14,
+                fontSize: 13, cursor: "pointer", userSelect: "none",
+              }}>
+                <input
+                  type="checkbox"
+                  checked={copyFormulasToNewSheet}
+                  onChange={e => setCopyFormulasToNewSheet(e.target.checked)}
+                  style={{ marginTop: 2, accentColor: "#2563EB" }}
+                />
+                <span>
+                  Copy formulas from “{activeSheet}”
+                  <span style={{ display: "block", fontSize: 12, color: "#6B7280", marginTop: 2 }}>
+                    {currentSheetFormulaCount > 0
+                      ? `${currentSheetFormulaCount} formula(s) will be reused — values stay empty.`
+                      : "This sheet has no formulas; layout will be reused."}
+                  </span>
+                </span>
+              </label>
+            )}
+
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 16 }}>
               <button style={css.btn("ghost")} onClick={() => setShowNewSheetModal(false)}>Cancel</button>
               <button style={css.btn("primary")} onClick={addNewSheet}><Icon d={icons.plus} size={14} /> Create Sheet</button>
@@ -1040,7 +1089,7 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
   const [activeSheetIdx, setActiveSheetIdx] = useState(0);
   const sheetNames = template.sheetNames || [];
   const currentSheet = sheetNames[activeSheetIdx] || sheetNames[0];
-  const viewerRef = useRef(null); // ✅ Add viewerRef
+  const viewerRef = useRef(null);
 
   const cloneSheets = useCallback((s) => {
     if (!s) return {};
@@ -1048,21 +1097,74 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
   }, []);
 
   const [localSheets, setLocalSheets] = useState(() => cloneSheets(template.sheets));
-  // Univer engine toggle — Excel files only, DOCX (__html__) remains untouched
+
   const currentSheetData = localSheets[currentSheet];
-  const currentSheetIsExcel = currentSheetData?.[0]?.[0] !== "__html__";
-  const [useUniverView, setUseUniverView] = useState(currentSheetIsExcel);
+  const isDocxSheet = currentSheetData?.[0]?.[0] === "__html__";
+  // ALWAYS default Univer ON (Excel software-like UI), then switch to classic/DOCX
+  // viewer only when it is a Word/HTML sheet. No auto-switching away from Univer.
+  const [useUniverView, setUseUniverView] = useState(!isDocxSheet);
+
+  const addRow = () => {
+    setLocalSheets(prev => {
+      const next = cloneSheets(prev);
+      const sheet = next[currentSheet] || [];
+      const cols = sheet[0]?.length || 26;
+      sheet.push(new Array(cols).fill(""));
+      next[currentSheet] = sheet;
+      return next;
+    });
+  };
+  const addCol = () => {
+    setLocalSheets(prev => {
+      const next = cloneSheets(prev);
+      const sheet = next[currentSheet] || [];
+      if (!sheet.length) sheet.push([""]);
+      for (let r = 0; r < sheet.length; r++) {
+        (sheet[r] ||= []).push("");
+      }
+      next[currentSheet] = sheet;
+      return next;
+    });
+  };
+  const deleteLastRow = () => {
+    setLocalSheets(prev => {
+      const next = cloneSheets(prev);
+      const sheet = next[currentSheet] || [];
+      if (sheet.length <= 1) return prev;
+      sheet.pop();
+      next[currentSheet] = sheet;
+      return next;
+    });
+  };
 
   useEffect(() => {
     setActiveSheetIdx(0);
     setLocalSheets(cloneSheets(template.sheets));
   }, [template.id, cloneSheets, template.sheets]);
 
+  // On sheet switch — only switch engine if the new sheet is DOCX/HTML (to Viewer).
+  // Never auto-flip Excel sheet to Classic — that causes UI shift user complained about.
   useEffect(() => {
-    // When user switches sheets, reset engine choice based on that sheet's format
-    const newSheetIsExcel = (localSheets[currentSheet]?.[0]?.[0] !== "__html__");
-    setUseUniverView(newSheetIsExcel);
+    const newIsDocx = (localSheets[currentSheet]?.[0]?.[0] === "__html__");
+    if (newIsDocx) {
+      setUseUniverView(false); // DOCX → only ReportSheetViewer works
+    } else {
+      setUseUniverView(true);  // Excel → always Univer (software-like UI)
+    }
   }, [currentSheet, localSheets]);
+
+  const exportCurrentXlsx = () => {
+    const wb = XLSX.utils.book_new();
+    const d = localSheets[currentSheet] || [];
+    let rows;
+    if (d[0]?.[0] === "__html__") {
+      const div = document.createElement("div");
+      div.innerHTML = d[0][1] || "";
+      rows = [[div.innerText || ""]];
+    } else { rows = d; }
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), currentSheet.substring(0, 31));
+    XLSX.writeFile(wb, `${template.name}_${currentSheet}.xlsx`);
+  };
 
   return (
     <div style={css.panel}>
@@ -1072,13 +1174,38 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
         <span style={{ fontWeight: 600, fontSize: 15 }}>{template.name}</span>
         <span style={{ ...css.badge("blue"), marginLeft: 4 }}>{template.type}</span>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
+          {!isDocxSheet && (
+            <>
+              <select
+                value={useUniverView ? "univer" : "classic"}
+                onChange={(e) => setUseUniverView(e.target.value === "univer")}
+                title="Spreadsheet engine"
+                style={{
+                  border: "1px solid #D1D5DB", borderRadius: 8, padding: "7px 10px",
+                  fontSize: 12, fontWeight: 500, background: useUniverView ? "#EFF6FF" : "#fff",
+                  color: useUniverView ? "#1D4ED8" : "#374151", outline: "none", cursor: "pointer",
+                }}
+              >
+                <option value="univer">Univer (Excel UI + Formulas)</option>
+                <option value="classic">Classic (Simple Grid)</option>
+              </select>
+              <span style={{ width: 1, height: 24, background: "#E5E7EB" }} />
+            </>
+          )}
           <button
             style={css.btn("primary")}
             onClick={async () => {
               try {
                 await api.updateTemplate(template.id, {
                   name: template.name, type: template.type || "import", description: template.desc,
-                  template_data: { sheets: localSheets, sheetNames: template.sheetNames, row_heights: template.rowHeights || {} }
+                  template_data: {
+                    sheets: localSheets,
+                    sheetNames: template.sheetNames,
+                    row_heights: template.rowHeights || {},
+                    col_widths: template.col_widths || {},
+                    merges: template.merges || {},
+                    cell_styles: template.cell_styles || {},
+                  }
                 });
                 onTemplateUpdated?.(template.id, localSheets);
                 toast.success("Template saved successfully!");
@@ -1090,18 +1217,7 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
           <span style={{ width: 1, height: 24, background: "#E5E7EB" }} />
           <ExportDropdown
             onExportDocx={() => buildAndDownloadDocx(localSheets, [currentSheet], template.name, currentSheet)}
-            onExportXlsx={() => {
-              const wb = XLSX.utils.book_new();
-              const d = localSheets[currentSheet] || [];
-              let rows;
-              if (d[0]?.[0] === "__html__") {
-                const div = document.createElement("div");
-                div.innerHTML = d[0][1] || "";
-                rows = [[div.innerText || ""]];
-              } else { rows = d; }
-              XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), currentSheet.substring(0, 31));
-              XLSX.writeFile(wb, `${template.name}_${currentSheet}.xlsx`);
-            }}
+            onExportXlsx={exportCurrentXlsx}
             onExportPdf={() => exportToPdf(localSheets, [currentSheet], template.name, currentSheet, viewerRef)}
           />
           <button style={css.btn("green")} onClick={() => onCreateReport(template)}>
@@ -1116,15 +1232,65 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
         ))}
       </div>
 
-      <ReportSheetViewer
-        ref={viewerRef}
-        key={currentSheet}
-        data={localSheets[currentSheet] || [["__html__", "<p><br></p>"]]}
-        rowHeights={template.rowHeights?.[currentSheet] || {}}
-        readOnly={false}
-        onDataChange={(newData) => setLocalSheets(prev => ({ ...prev, [currentSheet]: newData }))}
-        onCreateReport={() => onCreateReport(template)}
-      />
+      {/* Row/column tools — only the Classic grid needs them; Univer has its own ribbon */}
+      {!isDocxSheet && !useUniverView && (
+        <div style={{ ...css.toolbar, alignItems: "center" }}>
+          <button style={css.btn("ghost")} onClick={addRow}>
+            <Icon d={icons.plus} /> Add Row
+          </button>
+          <button style={css.btn("ghost")} onClick={addCol}>
+            <Icon d={icons.plus} /> Add Column
+          </button>
+          <button style={css.iconBtn} onClick={deleteLastRow} title="Delete last row">
+            <Icon d={icons.trash} />
+          </button>
+        </div>
+      )}
+
+      {/* Editor fills every remaining pixel so no dead space exposes the sidebar */}
+      <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        {isDocxSheet ? (
+          // 🟢 DOCX / HTML → only ReportSheetViewer (no Univer for Word)
+          <ReportSheetViewer
+            ref={viewerRef}
+            key={`html-${currentSheet}`}
+            data={localSheets[currentSheet] || [["__html__", "<p><br></p>"]]}
+            rowHeights={template.rowHeights?.[currentSheet] || {}}
+            colWidths={template.col_widths?.[currentSheet] || {}}
+            merges={template.merges?.[currentSheet] || []}
+            cellStyles={template.cell_styles?.[currentSheet] || {}}
+            readOnly={false}
+            onDataChange={(newData) => setLocalSheets(prev => ({ ...prev, [currentSheet]: newData }))}
+            onCreateReport={() => onCreateReport(template)}
+          />
+        ) : useUniverView ? (
+          // 🔵 EXCEL + UNIVER ENGINE — full Excel software-like UI (no UI shift)
+          <UniverSpreadsheet
+            key={`view-univer-${template.id}-${currentSheet}`}
+            initialData={localSheets[currentSheet] || []}
+            height="100%"
+            onDataChange={(snapshot, data2D) => {
+              if (Array.isArray(data2D) && data2D.length > 0) {
+                setLocalSheets(prev => ({ ...prev, [currentSheet]: data2D }));
+              }
+            }}
+          />
+        ) : (
+          // 🟡 EXCEL + CLASSIC ENGINE — fallback only if user manually selects classic
+          <ReportSheetViewer
+            ref={viewerRef}
+            key={`excel-${currentSheet}`}
+            data={localSheets[currentSheet] || []}
+            rowHeights={template.rowHeights?.[currentSheet] || {}}
+            colWidths={template.col_widths?.[currentSheet] || {}}
+            merges={template.merges?.[currentSheet] || []}
+            cellStyles={template.cell_styles?.[currentSheet] || {}}
+            readOnly={false}
+            onDataChange={(newData) => setLocalSheets(prev => ({ ...prev, [currentSheet]: newData }))}
+            onCreateReport={() => onCreateReport(template)}
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -1297,6 +1463,9 @@ export default function TemplateManager() {
             desc:       t.description || `${t.name} template`,
             sheets, sheetNames,
             rowHeights: parsedData?.row_heights || {},
+            col_widths: parsedData?.col_widths || {},
+            merges:     parsedData?.merges     || {},
+            cell_styles: parsedData?.cell_styles || {},
             createdAt:  t.created_at || new Date().toISOString(),
           };
         });
@@ -1445,6 +1614,9 @@ export default function TemplateManager() {
         patientName: patientName || "",
         isExcel,
         rowHeights: pendingTemplate.rowHeights || {},
+        colWidths: pendingTemplate.col_widths || {},
+        merges: pendingTemplate.merges || {},
+        cellStyles: pendingTemplate.cell_styles || {},
       });
       setPanel("report");
       setPatientSelectOpen(false);

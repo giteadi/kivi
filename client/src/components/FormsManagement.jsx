@@ -11,6 +11,7 @@ import api from "../services/api";
 import Sidebar from "./Sidebar";
 import ReportSheetViewer from "./ReportSheetViewer";
 import UniverSpreadsheet from "./UniverSpreadsheet";
+import { createSheetFromFormulas, countSheetFormulas, isExcelGrid } from "../utils/sheetFormulas";
 
 // Folder icons
 const folderIcons = {
@@ -105,7 +106,7 @@ const css = {
   breadcrumbSeparator: {},
   card: (sel) => ({ borderRadius: 12, overflow: "hidden", cursor: "pointer", transition: "all 0.15s" }),
   cardIcon:  { width: 36, height: 36, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  panel:     { position: "fixed", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", height: "100vh" },
+  panel:     { position: "fixed", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", height: "100vh", background: "#fff", overflow: "hidden" },
   panelHeader: { padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, flexShrink: 0, background: "#fff", zIndex: 10, position: "relative" },
   sheetTabs: { borderBottom: "1px solid", padding: "6px 14px", display: "flex", alignItems: "center", gap: 6, overflowX: "auto", flexShrink: 0, background: "#fff", zIndex: 5, position: "relative" },
   tab: (a) => ({ padding: "5px 14px", borderRadius: 6, fontSize: 12, fontWeight: 500, cursor: "pointer", border: "1px solid", whiteSpace: "nowrap", flexShrink: 0 }),
@@ -2044,21 +2045,10 @@ function convertIFs(s, mask) {
     setSheetData(prev => prev.map(row => row.filter((_, i) => i !== idx)));
   };
 
-  // Helper: clear grid but keep formulas
+  // Helper: clear grid but keep formulas — shares the "new sheet with formulas"
+  // logic in utils/sheetFormulas so both paths behave identically.
   function makeClearedGridKeepFormulas(grid, formulaCache) {
-    const rowCount = grid?.length || 0;
-    const colCount = Math.max(0, ...(grid || []).map(r => r?.length || 0));
-    const cleared = Array.from({ length: rowCount }, () => Array.from({ length: colCount }, () => ""));
-
-    Object.keys(formulaCache || {}).forEach((key) => {
-      const [rStr, cStr] = key.split('_');
-      const r = Number(rStr);
-      const c = Number(cStr);
-      if (!Number.isNaN(r) && !Number.isNaN(c) && cleared[r]) {
-        cleared[r][c] = formulaCache[key];
-      }
-    });
-    return cleared;
+    return createSheetFromFormulas(grid, formulaCache) || [];
   }
 
   // Helper: build XLSX blob from sheets
@@ -2420,11 +2410,11 @@ function convertIFs(s, mask) {
               // ════════════════════════════════════════════════════════════
               // 🔵 EXCEL + UNIVER ENGINE — Drop-in Excel replacement
               // ════════════════════════════════════════════════════════════
-              <div ref={univerRef} style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+              <div ref={univerRef} style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
                 <UniverSpreadsheet
                   key={`univer-${activeSheet}-${selectedForm?.id || 'new'}`}
                   initialData={sheetData}
-                  height="calc(100vh - 220px)"
+                  height="100%"
                   onDataChange={(snapshot, data2D) => {
                     console.log('[DEBUG] Univer Excel data changed');
                     // Sync computed 2D array back into state so Save/Export still work
@@ -2849,6 +2839,9 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
   const [sheetList, setSheetList] = useState(allSheets);
   const [showNewSheetModal, setShowNewSheetModal] = useState(false);
   const [newSheetName, setNewSheetName] = useState("");
+  // A new sheet inherits the open sheet's formulas by default so the user does
+  // not have to retype them; unticking gives a plain empty sheet.
+  const [copyFormulasToNewSheet, setCopyFormulasToNewSheet] = useState(true);
   const [showBackConfirm, setShowBackConfirm] = useState(false);
 
   const viewerRef = useRef(null);
@@ -2856,14 +2849,30 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
   const currentSheetIsExcel = reportData?.[activeSheet]?.[0]?.[0] !== "__html__";
   const useUniverReport = reportPanel.format === 'excel' ? currentSheetIsExcel : false;
 
+  const currentSheetFormulaCount = countSheetFormulas(reportData?.[activeSheet]);
+
   const addNewSheet = () => {
     const name = newSheetName.trim() || `Sheet ${sheetList.length + 1}`;
     if (sheetList.includes(name)) { toast.error("Sheet name already exists!"); return; }
-    setReportData(prev => ({ ...prev, [name]: [["__html__", "<p><br></p>"]] }));
+
+    // Carry the open sheet's formula skeleton across; fall back to a blank Word
+    // sheet when the open sheet is a DOCX/HTML one (it has no formulas).
+    const inherited = copyFormulasToNewSheet
+      ? createSheetFromFormulas(reportData?.[activeSheet])
+      : null;
+
+    setReportData(prev => ({
+      ...prev,
+      [name]: inherited || [["__html__", "<p><br></p>"]],
+    }));
     setSheetList(prev => [...prev, name]);
     setActiveSheet(name);
     setShowNewSheetModal(false);
     setNewSheetName("");
+
+    if (inherited && currentSheetFormulaCount > 0) {
+      toast.success(`"${name}" created with ${currentSheetFormulaCount} formula(s) copied`);
+    }
   };
 
   const patientIcon = "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z";
@@ -2981,11 +2990,11 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
 
       {/* Editor — WORD/DOCX → ReportSheetViewer, EXCEL → Univer */}
       {useUniverReport ? (
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
           <UniverSpreadsheet
             key={`report-univer-${activeSheet}`}
             initialData={reportData[activeSheet] || []}
-            height="calc(100vh - 160px)"
+            height="100%"
             onDataChange={(snapshot, data2D) => {
               if (Array.isArray(data2D) && data2D.length > 0) {
                 setReportData(prev => ({ ...prev, [activeSheet]: data2D }));
@@ -3022,6 +3031,29 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
               autoFocus
               onKeyDown={e => { if (e.key === "Enter") addNewSheet(); if (e.key === "Escape") setShowNewSheetModal(false); }}
             />
+
+            {isExcelGrid(reportData?.[activeSheet]) && (
+              <label style={{
+                display: "flex", alignItems: "flex-start", gap: 8, marginTop: 14,
+                fontSize: 13, cursor: "pointer", userSelect: "none",
+              }}>
+                <input
+                  type="checkbox"
+                  checked={copyFormulasToNewSheet}
+                  onChange={e => setCopyFormulasToNewSheet(e.target.checked)}
+                  style={{ marginTop: 2, accentColor: "#2563EB" }}
+                />
+                <span>
+                  Copy formulas from “{activeSheet}”
+                  <span style={{ display: "block", fontSize: 12, color: "#6B7280", marginTop: 2 }}>
+                    {currentSheetFormulaCount > 0
+                      ? `${currentSheetFormulaCount} formula(s) will be reused — values stay empty.`
+                      : "This sheet has no formulas; layout will be reused."}
+                  </span>
+                </span>
+              </label>
+            )}
+
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 16 }}>
               <button style={css.btn("ghost")} onClick={() => setShowNewSheetModal(false)}>Cancel</button>
               <button style={css.btn("primary")} onClick={addNewSheet}>
