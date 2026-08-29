@@ -1111,13 +1111,11 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
   const [useUniverView, setUseUniverView] = useState(!isDocxSheet);
   const [initialFile, setInitialFile] = useState(null);
 
-  // Fetch original .xlsx if template metadata is missing, so Univer renders exact formatting
+  // Fetch the original .xlsx for Excel templates so Univer renders the file exactly
   useEffect(() => {
     setInitialFile(null);
     const isExcel = (template.type === 'import' || template.type === 'excel') && template.excel_filename?.match(/\.(xlsx|xls)$/i);
-    const hasMeta = (template.merges && Object.keys(template.merges).length > 0) ||
-                    (template.cell_styles && Object.keys(template.cell_styles).length > 0);
-    if (!isExcel || hasMeta || isDocxSheet) return;
+    if (!isExcel || isDocxSheet) return;
 
     let cancelled = false;
     (async () => {
@@ -1131,7 +1129,7 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
       }
     })();
     return () => { cancelled = true; };
-  }, [template.id, template.excel_filename, template.merges, template.cell_styles, isDocxSheet]);
+  }, [template.id, template.excel_filename, isDocxSheet]);
 
   const addRow = () => {
     setLocalSheets(prev => {
@@ -1504,6 +1502,7 @@ export default function TemplateManager() {
             col_widths: parsedData?.col_widths || {},
             merges:     parsedData?.merges     || {},
             cell_styles: parsedData?.cell_styles || {},
+            excel_filename: t.excel_filename || null,
             createdAt:  t.created_at || new Date().toISOString(),
           };
         });
