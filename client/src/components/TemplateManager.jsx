@@ -1295,18 +1295,21 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
           // 🔵 EXCEL + UNIVER ENGINE — full Excel software-like UI (no UI shift)
           <UniverSpreadsheet
             key={`view-univer-${template.id}-${currentSheet}-${initialFile?.name || 'fallback'}`}
-            initialData={localSheets[currentSheet] || []}
+            allSheets={template.sheetNames?.map(name => ({
+              name,
+              data: template.sheets?.[name] || [],
+              formulaCache: template.formulas?.[name] || {},
+              rowHeights: template.rowHeights?.[name] || {},
+              colWidths: template.col_widths?.[name] || {},
+              merges: template.merges?.[name] || [],
+              cellStyles: template.cell_styles?.[name] || {},
+            }))}
             initialFile={initialFile}
             sheetName={currentSheet}
-            formulaCache={template.formulas?.[currentSheet] || {}}
-            rowHeights={template.rowHeights?.[currentSheet] || {}}
-            colWidths={template.col_widths?.[currentSheet] || {}}
-            merges={template.merges?.[currentSheet] || []}
-            cellStyles={template.cell_styles?.[currentSheet] || {}}
             height="100%"
-            onDataChange={(snapshot, data2D) => {
-              if (Array.isArray(data2D) && data2D.length > 0) {
-                setLocalSheets(prev => ({ ...prev, [currentSheet]: data2D }));
+            onDataChange={(snapshot, data2D, activeName) => {
+              if (Array.isArray(data2D) && data2D.length > 0 && activeName) {
+                setLocalSheets(prev => ({ ...prev, [activeName]: data2D }));
               }
             }}
           />

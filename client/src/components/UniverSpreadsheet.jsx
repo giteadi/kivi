@@ -162,6 +162,7 @@ function buildStyledSheet(name, data, formulaCache, rowHeights, colWidths, merge
 
 export default function UniverSpreadsheet({
   initialData,
+  allSheets,
   initialFile,
   sheetName = 'Sheet1',
   formulaCache,
@@ -239,7 +240,26 @@ export default function UniverSpreadsheet({
         univerAPIRef.current = univerAPI;
 
         const loadFrom2D = () => {
-          if (initialData && Array.isArray(initialData) && initialData.length > 0) {
+          if (allSheets && Array.isArray(allSheets) && allSheets.length > 0) {
+            // Put the requested sheet first so it becomes the active tab in Univer.
+            const ordered = allSheets.find(s => s.name === sheetName)
+              ? [
+                  allSheets.find(s => s.name === sheetName),
+                  ...allSheets.filter(s => s.name !== sheetName),
+                ]
+              : allSheets;
+            const built = ordered.map(s => buildStyledSheet(
+              s.name,
+              s.data,
+              s.formulaCache,
+              s.rowHeights,
+              s.colWidths,
+              s.merges,
+              s.cellStyles
+            ));
+            const workbookData = getWorkbookDataBySheets(built, 'Workbook');
+            univerAPI.createWorkbook(workbookData);
+          } else if (initialData && Array.isArray(initialData) && initialData.length > 0) {
             const sheet = buildStyledSheet(
               sheetName,
               initialData,
@@ -256,7 +276,10 @@ export default function UniverSpreadsheet({
           }
         };
 
-        if (initialData && Array.isArray(initialData) && initialData.length > 0) {
+        if (allSheets && Array.isArray(allSheets) && allSheets.length > 0) {
+          // Render the full workbook with all sheets so Univer's native tab bar works.
+          loadFrom2D();
+        } else if (initialData && Array.isArray(initialData) && initialData.length > 0) {
           // Prefer parsed 2D data + server-preserved merges/col widths over raw xlsx re-import
           // so the rendered grid matches the original structure and narrow columns don't get clipped.
           loadFrom2D();
@@ -281,7 +304,13 @@ export default function UniverSpreadsheet({
           clearTimeout(changeTimerRef.current);
           changeTimerRef.current = setTimeout(() => {
             if (!onDataChangeRef.current) return;
-            onDataChangeRef.current(getData(), get2DArray());
+            try {
+              const active = univerAPI.getActiveSheet();
+              const activeName = active?.getName?.() || sheetName;
+              onDataChangeRef.current(getData(), get2DArray(), activeName);
+            } catch (_) {
+              onDataChangeRef.current(getData(), get2DArray(), sheetName);
+            }
           }, 150);
         };
         try {
@@ -342,12 +371,12 @@ export default function UniverSpreadsheet({
     }
   }, []);
 
-  const get2DArray = useCallback((sheetIndex = 0) => {
+  const get2DArray = useCallback(() => {
     if (!univerAPIRef.current) return [];
     try {
       const workbook = univerAPIRef.current.getActiveWorkbook();
       if (!workbook) return [];
-      const sheet = workbook.getSheetByIndex(sheetIndex);
+      const sheet = workbook.getActiveSheet();
       if (!sheet) return [];
       const range = sheet.getRange();
       const values = range.getValue();
@@ -442,7 +471,13 @@ export default function UniverSpreadsheet({
 
       if (onDataChange) {
         const snapshot = getData();
-        onDataChange(snapshot, get2DArray());
+        try {
+          const active = univerAPI.getActiveSheet();
+          const activeName = active?.getName?.() || sheetName;
+          onDataChange(snapshot, get2DArray(), activeName);
+        } catch (_) {
+          onDataChange(snapshot, get2DArray(), sheetName);
+        }
       }
     } catch (err) {
       console.error('Import error:', err);
