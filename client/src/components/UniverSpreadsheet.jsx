@@ -186,20 +186,38 @@ export default function UniverSpreadsheet({
         univerRef.current = univer;
         univerAPIRef.current = univerAPI;
 
-        if (initialData && Array.isArray(initialData) && initialData.length > 0) {
-          const sheet = buildStyledSheet(
-            sheetName,
-            initialData,
-            formulaCache,
-            rowHeights,
-            colWidths,
-            merges,
-            cellStyles
-          );
-          const workbookData = getWorkbookDataBySheets([sheet], 'Workbook');
-          univerAPI.createWorkbook(workbookData);
+        const loadFrom2D = () => {
+          if (initialData && Array.isArray(initialData) && initialData.length > 0) {
+            const sheet = buildStyledSheet(
+              sheetName,
+              initialData,
+              formulaCache,
+              rowHeights,
+              colWidths,
+              merges,
+              cellStyles
+            );
+            const workbookData = getWorkbookDataBySheets([sheet], 'Workbook');
+            univerAPI.createWorkbook(workbookData);
+          } else {
+            univerAPI.createWorkbook({});
+          }
+        };
+
+        if (initialFile) {
+          try {
+            const { workbookData } = await importFile(initialFile, { includeImages: true });
+            if (workbookData) {
+              univerAPI.createWorkbook(workbookData);
+            } else {
+              loadFrom2D();
+            }
+          } catch (err) {
+            console.warn('[Univer] Initial file import failed, falling back to 2D data:', err);
+            loadFrom2D();
+          }
         } else {
-          univerAPI.createWorkbook({});
+          loadFrom2D();
         }
 
         const emitChange = () => {

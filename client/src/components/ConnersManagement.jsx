@@ -712,6 +712,7 @@ export default function ConnersManagement() {
   const [activeSheet, setActiveSheet] = useState(0);
   const [sheets, setSheets] = useState([]);
   const [sheetMeta, setSheetMeta] = useState({ row_heights: {}, col_widths: {}, merges: {}, cell_styles: {} });
+  const [initialExcelFile, setInitialExcelFile] = useState(null);
   const fileInputRef = useRef(null);
   const viewerRef = useRef(null);
 
@@ -1358,6 +1359,7 @@ export default function ConnersManagement() {
   const handleViewForm = async (form) => {
     console.log("[DEBUG] handleViewForm called for coner:", form.name, "type:", form.type);
     setSelectedForm(form);
+    setInitialExcelFile(null);
     setLoading(true);
 
     try {
@@ -1392,6 +1394,25 @@ export default function ConnersManagement() {
         setSheets(loadedSheets);
         setSheetData(loadedSheets[0]?.data || []);
         setActiveSheet(0);
+
+        // If parsed metadata is missing, load the original xlsx directly in Univer for exact rendering
+        let initialExcel = null;
+        const hasStyles = form.template_data?.cell_styles && Object.keys(form.template_data.cell_styles).length > 0;
+        const hasMerges = form.template_data?.merges && Object.keys(form.template_data.merges).length > 0;
+        const isExcel = form.type === 'excel' || (form.name || '').match(/\.(xlsx|xls)$/i);
+        if (!hasStyles && !hasMerges && isExcel) {
+          try {
+            const response = await api.downloadFile(`/coners/${form.id}/download`);
+            if (response.ok) {
+              const blob = await response.blob();
+              initialExcel = new File([blob], form.name || 'file.xlsx', { type: blob.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            }
+          } catch (e) {
+            console.warn('[DEBUG] Failed to download original coner for Univer:', e);
+          }
+        }
+        setInitialExcelFile(initialExcel);
+
         setShowViewer(true);
         setLoading(false);
 
@@ -1467,6 +1488,7 @@ export default function ConnersManagement() {
         setSheets(evaluatedSheets);
         setSheetData(evaluatedSheets[0]?.data || []);
         setActiveSheet(0);
+        setInitialExcelFile(new File([blob], form.name || 'file.xlsx', { type: blob.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
       } else if (['doc', 'docx'].includes(ext)) {
         console.log('[DEBUG] Processing Word document for viewing...');
         console.log('[DEBUG] Calling /api/templates/upload for Word parsing...');
@@ -1957,6 +1979,7 @@ export default function ConnersManagement() {
                 <UniverSpreadsheet
                   key={`univer-${activeSheet}-${selectedForm?.id || 'new'}`}
                   initialData={sheetData}
+                  initialFile={initialExcelFile}
                   sheetName={sheets[activeSheet]?.name || 'Sheet1'}
                   formulaCache={sheets[activeSheet]?.formulaCache || formulaCacheRef.current}
                   rowHeights={sheetMeta.row_heights?.[sheets[activeSheet]?.name] || {}}
