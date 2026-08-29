@@ -1351,6 +1351,11 @@ function convertIFs(s, mask) {
         allData: reportSheets,
         patientName: "",
         format: format, // 🔥 Track original format based on DATA
+        formulas: form.template_data.formulas || {},
+        rowHeights: form.template_data.row_heights || {},
+        colWidths: form.template_data.col_widths || {},
+        merges: form.template_data.merges || {},
+        cellStyles: form.template_data.cell_styles || {},
       });
       return;
     }
@@ -2414,6 +2419,12 @@ function convertIFs(s, mask) {
                 <UniverSpreadsheet
                   key={`univer-${activeSheet}-${selectedForm?.id || 'new'}`}
                   initialData={sheetData}
+                  sheetName={sheets[activeSheet]?.name || 'Sheet1'}
+                  formulaCache={sheets[activeSheet]?.formulaCache || formulaCacheRef.current}
+                  rowHeights={sheetMeta.row_heights?.[sheets[activeSheet]?.name] || {}}
+                  colWidths={sheetMeta.col_widths?.[sheets[activeSheet]?.name] || {}}
+                  merges={sheetMeta.merges?.[sheets[activeSheet]?.name] || []}
+                  cellStyles={sheetMeta.cell_styles?.[sheets[activeSheet]?.name] || {}}
                   height="100%"
                   onDataChange={(snapshot, data2D) => {
                     console.log('[DEBUG] Univer Excel data changed');
@@ -2425,7 +2436,10 @@ function convertIFs(s, mask) {
                         copy[activeSheet] = {
                           ...copy[activeSheet],
                           data: data2D,
-                          formulaCache: copy[activeSheet]?.formulaCache || {},
+                          formulaCache: {
+                            ...(copy[activeSheet]?.formulaCache || {}),
+                            ...buildFormulaCache(data2D),
+                          },
                         };
                         return copy;
                       });
@@ -2831,7 +2845,10 @@ function convertIFs(s, mask) {
 // REPORT EDIT PANEL (like TemplateManager's ReportEditPanel)
 // ══════════════════════════════════════════════════════════════════════════════
 function ReportEditPanel({ reportPanel, onBack, onSave }) {
-  const { templateName, allSheets, allData, patientName: initPatient } = reportPanel;
+  const {
+    templateName, allSheets, allData, patientName: initPatient,
+    formulas = {}, rowHeights = {}, colWidths = {}, merges = {}, cellStyles = {},
+  } = reportPanel;
 
   const [activeSheet, setActiveSheet] = useState(allSheets[0]);
   const [reportData, setReportData] = useState(allData);
@@ -2994,6 +3011,12 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
           <UniverSpreadsheet
             key={`report-univer-${activeSheet}`}
             initialData={reportData[activeSheet] || []}
+            sheetName={activeSheet}
+            formulaCache={formulas[activeSheet] || {}}
+            rowHeights={rowHeights[activeSheet] || {}}
+            colWidths={colWidths[activeSheet] || {}}
+            merges={merges[activeSheet] || []}
+            cellStyles={cellStyles[activeSheet] || {}}
             height="100%"
             onDataChange={(snapshot, data2D) => {
               if (Array.isArray(data2D) && data2D.length > 0) {

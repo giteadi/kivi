@@ -19,8 +19,104 @@ import toast from 'react-hot-toast';
 
 let univerInstanceCounter = 0;
 
+const HORIZONTAL_ALIGN = { left: 1, center: 2, right: 3, justify: 4 };
+const VERTICAL_ALIGN = { top: 1, middle: 2, bottom: 3 };
+
+function borderStyleFromCss(value) {
+  const width = parseFloat(value) || 1;
+  return width >= 3 ? 13 : width >= 2 ? 8 : 1;
+}
+
+function cssStyleToUniver(css = {}) {
+  const style = {};
+  if (css.fontFamily) style.ff = css.fontFamily;
+  if (css.fontSize) style.fs = parseFloat(css.fontSize) || 11;
+  if (css.fontWeight === 'bold' || Number(css.fontWeight) >= 600) style.bl = 1;
+  if (css.fontStyle === 'italic') style.it = 1;
+  if (css.textDecoration?.includes('underline')) style.ul = { s: 1 };
+  if (css.textDecoration?.includes('line-through')) style.st = { s: 1 };
+  if (css.color) style.cl = { rgb: css.color };
+  if (css.backgroundColor) style.bg = { rgb: css.backgroundColor };
+  if (css.textAlign && HORIZONTAL_ALIGN[css.textAlign]) style.ht = HORIZONTAL_ALIGN[css.textAlign];
+  if (css.verticalAlign && VERTICAL_ALIGN[css.verticalAlign]) style.vt = VERTICAL_ALIGN[css.verticalAlign];
+  if (css.whiteSpace === 'pre-wrap') style.tb = 3;
+  if (css.whiteSpace === 'nowrap') style.tb = 1;
+
+  const borders = {};
+  const sides = { borderTop: 't', borderRight: 'r', borderBottom: 'b', borderLeft: 'l' };
+  for (const [cssKey, univerKey] of Object.entries(sides)) {
+    const value = css[cssKey];
+    if (!value) continue;
+    const color = value.match(/#[0-9a-f]{6}/i)?.[0] || '#000000';
+    borders[univerKey] = { s: borderStyleFromCss(value), cl: { rgb: color } };
+  }
+  if (Object.keys(borders).length) style.bd = borders;
+  return style;
+}
+
+function buildStyledSheet(name, data, formulaCache, rowHeights, colWidths, merges, cellStyles) {
+  const sheet = buildSheetFrom2DArray(name || 'Sheet1', data || []);
+  const formulas = { ...(formulaCache || {}) };
+
+  (data || []).forEach((row, rowIdx) => {
+    (row || []).forEach((value, colIdx) => {
+      if (typeof value === 'string' && value.startsWith('=')) {
+        formulas[`${rowIdx}_${colIdx}`] = value;
+      }
+    });
+  });
+
+  for (const [key, formula] of Object.entries(formulas)) {
+    const [rowIdx, colIdx] = key.split('_').map(Number);
+    if (Number.isNaN(rowIdx) || Number.isNaN(colIdx)) continue;
+    sheet.cellData[rowIdx] ||= {};
+    sheet.cellData[rowIdx][colIdx] ||= {};
+    sheet.cellData[rowIdx][colIdx].f = formula.startsWith('=') ? formula : `=${formula}`;
+    if (typeof sheet.cellData[rowIdx][colIdx].v === 'string' && sheet.cellData[rowIdx][colIdx].v.startsWith('=')) {
+      delete sheet.cellData[rowIdx][colIdx].v;
+      delete sheet.cellData[rowIdx][colIdx].t;
+    }
+  }
+
+  sheet.rowData = {};
+  for (const [rowIdx, points] of Object.entries(rowHeights || {})) {
+    const height = Number(points);
+    if (height > 0) sheet.rowData[rowIdx] = { h: Math.round(height * 1.33) };
+  }
+
+  sheet.columnData = {};
+  for (const [colIdx, pixels] of Object.entries(colWidths || {})) {
+    const width = Number(pixels);
+    if (width >= 0) sheet.columnData[colIdx] = width === 0 ? { hd: 1 } : { w: width };
+  }
+
+  sheet.mergeData = (merges || []).map(([startRow, startColumn, endRow, endColumn]) => ({
+    startRow: Number(startRow),
+    startColumn: Number(startColumn),
+    endRow: Number(endRow),
+    endColumn: Number(endColumn),
+  }));
+
+  for (const [key, css] of Object.entries(cellStyles || {})) {
+    const [rowIdx, colIdx] = key.split('_').map(Number);
+    if (Number.isNaN(rowIdx) || Number.isNaN(colIdx)) continue;
+    sheet.cellData[rowIdx] ||= {};
+    sheet.cellData[rowIdx][colIdx] ||= {};
+    sheet.cellData[rowIdx][colIdx].s = cssStyleToUniver(css);
+  }
+
+  return sheet;
+}
+
 export default function UniverSpreadsheet({
   initialData,
+  initialFile,
+  sheetName = 'Sheet1',
+  formulaCache,
+  rowHeights,
+  colWidths,
+  merges,
+  cellStyles,
   onDataChange,
   readOnly = false,
   height = '600px',
@@ -33,6 +129,10 @@ export default function UniverSpreadsheet({
   const mountPointRef = useRef(null);
   const univerRef = useRef(null);
   const univerAPIRef = useRef(null);
+  const eventDisposablesRef = useRef([]);
+  const changeTimerRef = useRef(null);
+  const onDataChangeRef = useRef(onDataChange);
+  onDataChangeRef.current = onDataChange;
   const [isReady, setIsReady] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -59,7 +159,7 @@ export default function UniverSpreadsheet({
 
     let cancelled = false;
 
-    const boot = () => {
+    const boot = async () => {
       try {
         const { univer, univerAPI } = createUniver({
           locale: LocaleType.EN_US,
@@ -87,11 +187,34 @@ export default function UniverSpreadsheet({
         univerAPIRef.current = univerAPI;
 
         if (initialData && Array.isArray(initialData) && initialData.length > 0) {
-          const sheet = buildSheetFrom2DArray('Sheet1', initialData);
+          const sheet = buildStyledSheet(
+            sheetName,
+            initialData,
+            formulaCache,
+            rowHeights,
+            colWidths,
+            merges,
+            cellStyles
+          );
           const workbookData = getWorkbookDataBySheets([sheet], 'Workbook');
           univerAPI.createWorkbook(workbookData);
         } else {
           univerAPI.createWorkbook({});
+        }
+
+        const emitChange = () => {
+          clearTimeout(changeTimerRef.current);
+          changeTimerRef.current = setTimeout(() => {
+            if (!onDataChangeRef.current) return;
+            onDataChangeRef.current(getData(), get2DArray());
+          }, 150);
+        };
+        try {
+          const editDisposable = univerAPI.addEvent(univerAPI.Event.SheetEditEnded, emitChange);
+          const pasteDisposable = univerAPI.addEvent(univerAPI.Event.ClipboardPasted, emitChange);
+          eventDisposablesRef.current = [editDisposable, pasteDisposable].filter(Boolean);
+        } catch (err) {
+          console.warn('[Univer] Change subscription unavailable:', err.message);
         }
 
         setIsReady(true);
@@ -107,6 +230,11 @@ export default function UniverSpreadsheet({
     return () => {
       cancelled = true;
       cancelAnimationFrame(raf);
+      clearTimeout(changeTimerRef.current);
+      eventDisposablesRef.current.forEach(disposable => {
+        try { disposable.dispose(); } catch (_) { /* noop */ }
+      });
+      eventDisposablesRef.current = [];
 
       // ── Cleanup order matters to avoid React removeChild errors ──
       // 1. Tell Univer to dispose first (it removes its own internal nodes cleanly).
@@ -148,10 +276,14 @@ export default function UniverSpreadsheet({
       if (!sheet) return [];
       const range = sheet.getRange();
       const values = range.getValue();
+      const formulas = range.getFormulas?.() || [];
       if (Array.isArray(values)) {
-        return values.map(row => Array.isArray(row) ? row : [row]);
+        return values.map((row, rowIdx) => {
+          const cells = Array.isArray(row) ? row : [row];
+          return cells.map((value, colIdx) => formulas[rowIdx]?.[colIdx] || value);
+        });
       }
-      return [[values]];
+      return [[formulas[0]?.[0] || values]];
     } catch (e) {
       console.error('Get 2D array error:', e);
       return [];

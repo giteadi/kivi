@@ -824,7 +824,7 @@ function PatientSelectModal({ patients, template, generating, onClose, onSelect 
 // REPORT EDIT PANEL
 // ══════════════════════════════════════════════════════════════════════════════
 function ReportEditPanel({ reportPanel, onBack, onSave }) {
-  const { templateName, allSheets, allData, patientName: initPatient, rowHeights, colWidths: initColWidths, merges: initMerges, cellStyles: initCellStyles } = reportPanel;
+  const { templateName, allSheets, allData, patientName: initPatient, rowHeights, formulas = {}, colWidths: initColWidths, merges: initMerges, cellStyles: initCellStyles } = reportPanel;
 
   const [activeSheet, setActiveSheet]     = useState(allSheets[0]);
   const [reportData, setReportData]       = useState(allData);
@@ -1007,6 +1007,12 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
           <UniverSpreadsheet
             key={`tmpl-edit-univer-${activeSheet}`}
             initialData={reportData[activeSheet] || []}
+            sheetName={activeSheet}
+            formulaCache={formulas[activeSheet] || {}}
+            rowHeights={rowHeights?.[activeSheet] || {}}
+            colWidths={colWidths?.[activeSheet] || {}}
+            merges={merges?.[activeSheet] || []}
+            cellStyles={cellStyles?.[activeSheet] || {}}
             height="100%"
             onDataChange={(snapshot, data2D) => {
               if (Array.isArray(data2D) && data2D.length > 0) {
@@ -1202,6 +1208,7 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
                     sheets: localSheets,
                     sheetNames: template.sheetNames,
                     row_heights: template.rowHeights || {},
+                    formulas: template.formulas || {},
                     col_widths: template.col_widths || {},
                     merges: template.merges || {},
                     cell_styles: template.cell_styles || {},
@@ -1268,6 +1275,12 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
           <UniverSpreadsheet
             key={`view-univer-${template.id}-${currentSheet}`}
             initialData={localSheets[currentSheet] || []}
+            sheetName={currentSheet}
+            formulaCache={template.formulas?.[currentSheet] || {}}
+            rowHeights={template.rowHeights?.[currentSheet] || {}}
+            colWidths={template.col_widths?.[currentSheet] || {}}
+            merges={template.merges?.[currentSheet] || []}
+            cellStyles={template.cell_styles?.[currentSheet] || {}}
             height="100%"
             onDataChange={(snapshot, data2D) => {
               if (Array.isArray(data2D) && data2D.length > 0) {
@@ -1463,6 +1476,7 @@ export default function TemplateManager() {
             desc:       t.description || `${t.name} template`,
             sheets, sheetNames,
             rowHeights: parsedData?.row_heights || {},
+            formulas:   parsedData?.formulas || {},
             col_widths: parsedData?.col_widths || {},
             merges:     parsedData?.merges     || {},
             cell_styles: parsedData?.cell_styles || {},
@@ -1614,6 +1628,7 @@ export default function TemplateManager() {
         patientName: patientName || "",
         isExcel,
         rowHeights: pendingTemplate.rowHeights || {},
+        formulas: pendingTemplate.formulas || {},
         colWidths: pendingTemplate.col_widths || {},
         merges: pendingTemplate.merges || {},
         cellStyles: pendingTemplate.cell_styles || {},

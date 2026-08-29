@@ -1291,6 +1291,11 @@ export default function ConnersManagement() {
         allData: reportSheets,
         patientName: "",
         format: detectFormat(form.name), // 🔥 Track original format
+        formulas: form.template_data.formulas || {},
+        rowHeights: form.template_data.row_heights || {},
+        colWidths: form.template_data.col_widths || {},
+        merges: form.template_data.merges || {},
+        cellStyles: form.template_data.cell_styles || {},
       });
       return;
     }
@@ -1374,10 +1379,12 @@ export default function ConnersManagement() {
         });
 
         // Convert to sheet objects
-        const loadedSheets = sheetNames.map((name) => ({
+        const parsedFormulas = form.template_data.formulas || {};
+        const savedFormulaCaches = form.template_data.formulaCaches || [];
+        const loadedSheets = sheetNames.map((name, index) => ({
           name,
           data: sheets[name] || [],
-          formulaCache: buildFormulaCache(sheets[name] || []),
+          formulaCache: parsedFormulas[name] || savedFormulaCaches[index] || buildFormulaCache(sheets[name] || []),
         }));
 
         formulaCacheRef.current = loadedSheets[0]?.formulaCache || {};
@@ -1717,9 +1724,24 @@ export default function ConnersManagement() {
       const sheetNames = sheets.map(s => s.name);
       
       // Build template_data object
+      const previous = selectedForm.template_data || {};
+      const formulas = { ...(previous.formulas || {}) };
+      sheets.forEach((sheet, idx) => {
+        const data = idx === activeSheet ? sheetData : sheet.data;
+        formulas[sheet.name] = {
+          ...(sheet.formulaCache || {}),
+          ...buildFormulaCache(data || []),
+        };
+      });
       const templateData = {
+        ...previous,
         sheets: updatedSheets,
-        sheetNames: sheetNames
+        sheetNames: sheetNames,
+        formulas,
+        row_heights: previous.row_heights || sheetMeta.row_heights || {},
+        col_widths: previous.col_widths || sheetMeta.col_widths || {},
+        merges: previous.merges || sheetMeta.merges || {},
+        cell_styles: previous.cell_styles || sheetMeta.cell_styles || {},
       };
       
       // Update form with new template_data
@@ -1935,6 +1957,12 @@ export default function ConnersManagement() {
                 <UniverSpreadsheet
                   key={`univer-${activeSheet}-${selectedForm?.id || 'new'}`}
                   initialData={sheetData}
+                  sheetName={sheets[activeSheet]?.name || 'Sheet1'}
+                  formulaCache={sheets[activeSheet]?.formulaCache || formulaCacheRef.current}
+                  rowHeights={sheetMeta.row_heights?.[sheets[activeSheet]?.name] || {}}
+                  colWidths={sheetMeta.col_widths?.[sheets[activeSheet]?.name] || {}}
+                  merges={sheetMeta.merges?.[sheets[activeSheet]?.name] || []}
+                  cellStyles={sheetMeta.cell_styles?.[sheets[activeSheet]?.name] || {}}
                   height="100%"
                   onDataChange={(snapshot, data2D) => {
                     console.log('[DEBUG] Univer Excel data changed');
@@ -1946,7 +1974,10 @@ export default function ConnersManagement() {
                         copy[activeSheet] = {
                           ...copy[activeSheet],
                           data: data2D,
-                          formulaCache: copy[activeSheet]?.formulaCache || {},
+                          formulaCache: {
+                            ...(copy[activeSheet]?.formulaCache || {}),
+                            ...buildFormulaCache(data2D),
+                          },
                         };
                         return copy;
                       });
@@ -2315,7 +2346,10 @@ export default function ConnersManagement() {
 // REPORT EDIT PANEL (like TemplateManager's ReportEditPanel)
 // ══════════════════════════════════════════════════════════════════════════════
 function ReportEditPanel({ reportPanel, onBack, onSave }) {
-  const { templateName, allSheets, allData, patientName: initPatient } = reportPanel;
+  const {
+    templateName, allSheets, allData, patientName: initPatient,
+    formulas = {}, rowHeights = {}, colWidths = {}, merges = {}, cellStyles = {},
+  } = reportPanel;
 
   const [activeSheet, setActiveSheet] = useState(allSheets[0]);
   const [reportData, setReportData] = useState(allData);
@@ -2499,6 +2533,12 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
           <UniverSpreadsheet
             key={`report-univer-coner-${activeSheet}`}
             initialData={reportData[activeSheet] || []}
+            sheetName={activeSheet}
+            formulaCache={formulas[activeSheet] || {}}
+            rowHeights={rowHeights[activeSheet] || {}}
+            colWidths={colWidths[activeSheet] || {}}
+            merges={merges[activeSheet] || []}
+            cellStyles={cellStyles[activeSheet] || {}}
             height="100%"
             onDataChange={(snapshot, data2D) => {
               if (Array.isArray(data2D) && data2D.length > 0) {
