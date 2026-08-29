@@ -47,6 +47,9 @@ router.post('/:id/generate-report', templateController.generateReportFromTemplat
 // GET /api/templates/:id
 router.get('/:id', templateController.getTemplate.bind(templateController));
 
+// GET /api/templates/:id/download - Download original uploaded file
+router.get('/:id/download', templateController.downloadTemplate.bind(templateController));
+
 // PUT /api/templates/:id
 router.put('/:id', templateController.updateTemplate.bind(templateController));
 

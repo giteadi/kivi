@@ -1109,6 +1109,29 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
   // ALWAYS default Univer ON (Excel software-like UI), then switch to classic/DOCX
   // viewer only when it is a Word/HTML sheet. No auto-switching away from Univer.
   const [useUniverView, setUseUniverView] = useState(!isDocxSheet);
+  const [initialFile, setInitialFile] = useState(null);
+
+  // Fetch original .xlsx if template metadata is missing, so Univer renders exact formatting
+  useEffect(() => {
+    setInitialFile(null);
+    const isExcel = (template.type === 'import' || template.type === 'excel') && template.excel_filename?.match(/\.(xlsx|xls)$/i);
+    const hasMeta = (template.merges && Object.keys(template.merges).length > 0) ||
+                    (template.cell_styles && Object.keys(template.cell_styles).length > 0);
+    if (!isExcel || hasMeta || isDocxSheet) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await api.downloadFile(`/templates/${template.id}/download`);
+        if (cancelled || !response.ok) return;
+        const blob = await response.blob();
+        if (!cancelled) setInitialFile(new File([blob], template.excel_filename, { type: blob.type }));
+      } catch (e) {
+        console.warn('[DEBUG] Failed to load original template file:', e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [template.id, template.excel_filename, template.merges, template.cell_styles, isDocxSheet]);
 
   const addRow = () => {
     setLocalSheets(prev => {
@@ -1273,8 +1296,9 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
         ) : useUniverView ? (
           // 🔵 EXCEL + UNIVER ENGINE — full Excel software-like UI (no UI shift)
           <UniverSpreadsheet
-            key={`view-univer-${template.id}-${currentSheet}`}
+            key={`view-univer-${template.id}-${currentSheet}-${initialFile?.name || 'fallback'}`}
             initialData={localSheets[currentSheet] || []}
+            initialFile={initialFile}
             sheetName={currentSheet}
             formulaCache={template.formulas?.[currentSheet] || {}}
             rowHeights={template.rowHeights?.[currentSheet] || {}}

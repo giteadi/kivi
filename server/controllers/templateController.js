@@ -325,6 +325,9 @@ class TemplateController {
       console.log('📤 UPLOAD EXCEL: File path:', filePath);
       console.log('📤 UPLOAD EXCEL: File extension:', ext);
 
+      const templatesDir = path.join(__dirname, '..', 'uploads', 'templates');
+      if (!fs.existsSync(templatesDir)) fs.mkdirSync(templatesDir, { recursive: true });
+
       let parsedData;
 
       // ── DOCX → Mammoth se convert karo (Python bypass) ──
@@ -436,11 +439,15 @@ class TemplateController {
 
       // Save to database
       const templateId = await this.templateModel.createTemplate(templateData);
-      
-      // Cleanup temp file
-      fs.unlink(filePath, (err) => {
-        if (err) console.error('Failed to delete temp file:', err);
-      });
+
+      // Persist original file for later exact rendering
+      const destPath = path.join(templatesDir, `${templateId}${ext}`);
+      try {
+        fs.renameSync(filePath, destPath);
+        console.log('✅ TEMPLATE: Original file persisted to', destPath);
+      } catch (err) {
+        console.error('❌ TEMPLATE: Failed to persist original file:', err);
+      }
 
       console.log(`✅ UPLOAD EXCEL SUCCESS: Template created with ID: ${templateId}`);
 
@@ -551,6 +558,45 @@ class TemplateController {
         success: false,
         message: 'Internal server error'
       });
+    }
+  }
+
+  // Download original uploaded xlsx for exact Univer rendering
+  async downloadTemplate(req, res) {
+    try {
+      const templateId = req.params.id;
+      const template = await this.templateModel.getTemplateById(templateId);
+
+      if (!template) {
+        return res.status(404).json({ message: 'Template not found' });
+      }
+
+      if (!template.excel_filename) {
+        return res.status(400).json({ message: 'No original file attached to this template' });
+      }
+
+      const templatesDir = path.join(__dirname, '..', 'uploads', 'templates');
+      const ext = path.extname(template.excel_filename).toLowerCase();
+      const filePath = path.join(templatesDir, `${templateId}${ext}`);
+
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ message: 'Original file not found on server' });
+      }
+
+      const contentTypes = {
+        '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        '.xls': 'application/vnd.ms-excel',
+        '.csv': 'text/csv',
+      };
+
+      res.setHeader('Content-Type', contentTypes[ext] || 'application/octet-stream');
+      const encodedFilename = encodeURIComponent(template.excel_filename);
+      res.setHeader('Content-Disposition', `inline; filename*=UTF-8''${encodedFilename}`);
+
+      fs.createReadStream(filePath).pipe(res);
+    } catch (error) {
+      console.error('❌ TEMPLATE DOWNLOAD ERROR:', error);
+      res.status(500).json({ message: 'Failed to download template: ' + error.message });
     }
   }
 }
