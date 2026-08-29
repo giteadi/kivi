@@ -17,7 +17,7 @@ class TemplateController {
       
       console.log('🐍 PYTHON: Executing command:', cmd);
       
-      exec(cmd, { timeout: 30000 }, (error, stdout, stderr) => {
+      exec(cmd, { timeout: 30000, maxBuffer: 1024 * 1024 * 50 }, (error, stdout, stderr) => {
         if (error) {
           console.error('❌ PYTHON ERROR:', error);
           console.error('❌ PYTHON STDERR:', stderr);
