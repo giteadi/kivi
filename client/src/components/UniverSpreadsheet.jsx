@@ -276,15 +276,8 @@ export default function UniverSpreadsheet({
           }
         };
 
-        if (allSheets && Array.isArray(allSheets) && allSheets.length > 0) {
-          // Render the full workbook with all sheets so Univer's native tab bar works.
-          loadFrom2D();
-        } else if (initialData && Array.isArray(initialData) && initialData.length > 0) {
-          // Prefer parsed 2D data + server-preserved merges/col widths over raw xlsx re-import
-          // so the rendered grid matches the original structure and narrow columns don't get clipped.
-          loadFrom2D();
-        } else if (initialFile) {
-          // Raw file fallback (e.g. for image-heavy files) only when no parsed data
+        if (initialFile) {
+          // Always prefer the original .xlsx file so Univer renders real formatting, merges and colors.
           try {
             const { workbookData } = await importFile(initialFile, { includeImages: true });
             if (workbookData) {
@@ -296,6 +289,12 @@ export default function UniverSpreadsheet({
             console.warn('[Univer] Initial file import failed, falling back to 2D data:', err);
             loadFrom2D();
           }
+        } else if (allSheets && Array.isArray(allSheets) && allSheets.length > 0) {
+          // Render the full workbook with all sheets so Univer's native tab bar works.
+          loadFrom2D();
+        } else if (initialData && Array.isArray(initialData) && initialData.length > 0) {
+          // Fallback to parsed 2D data.
+          loadFrom2D();
         } else {
           loadFrom2D();
         }
