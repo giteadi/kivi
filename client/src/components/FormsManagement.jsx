@@ -736,6 +736,7 @@ export default function FormsManagement() {
   // Layout the Python parser recovered from the .xlsx, keyed by sheet name, so
   // the grid can mirror Excel's merges/widths instead of a flat table.
   const [sheetMeta, setSheetMeta] = useState({ row_heights: {}, col_widths: {}, merges: {} });
+  const [initialExcelFile, setInitialExcelFile] = useState(null);
   const fileInputRef = useRef(null);
   const viewerRef = useRef(null); // ✅ Add viewerRef for PDF export
 
@@ -1514,6 +1515,7 @@ function convertIFs(s, mask) {
   const handleViewForm = async (form) => {
     console.log("[DEBUG] handleViewForm called for form:", form.name, "type:", form.type);
     setSelectedForm(form);
+    setInitialExcelFile(null);
     setLoading(true);
     // Start a clean edit log; anything saved earlier is merged back in on save.
     cellEditsRef.current = {};
@@ -1532,6 +1534,24 @@ function convertIFs(s, mask) {
           merges: form.template_data.merges || {},
           cell_styles: form.template_data.cell_styles || {},
         });
+
+        // If parsed metadata is missing, load the original xlsx directly in Univer for exact rendering
+        let initialExcel = null;
+        const hasStyles = form.template_data?.cell_styles && Object.keys(form.template_data.cell_styles).length > 0;
+        const hasMerges = form.template_data?.merges && Object.keys(form.template_data.merges).length > 0;
+        const isExcel = form.type === 'excel' || (form.name || '').match(/\.(xlsx|xls)$/i);
+        if (!hasStyles && !hasMerges && isExcel) {
+          try {
+            const response = await api.downloadFile(`/forms/${form.id}/download`);
+            if (response.ok) {
+              const blob = await response.blob();
+              initialExcel = new File([blob], form.name || 'file.xlsx', { type: blob.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            }
+          } catch (e) {
+            console.warn('[DEBUG] Failed to download original form for Univer:', e);
+          }
+        }
+        setInitialExcelFile(initialExcel);
 
         // The Python parser records formulas per sheet name at upload time.
         // Prefer those — they include shared-formula members, which the
@@ -1709,6 +1729,7 @@ function convertIFs(s, mask) {
         setSheets(evaluatedSheets);
         setSheetData(evaluatedSheets[0]?.data || []);
         setActiveSheet(0);
+        setInitialExcelFile(new File([blob], form.name || 'file.xlsx', { type: blob.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
       } else if (['doc', 'docx'].includes(ext)) {
         console.log('[DEBUG] Processing Word document for viewing...');
         
@@ -2419,6 +2440,7 @@ function convertIFs(s, mask) {
                 <UniverSpreadsheet
                   key={`univer-${activeSheet}-${selectedForm?.id || 'new'}`}
                   initialData={sheetData}
+                  initialFile={initialExcelFile}
                   sheetName={sheets[activeSheet]?.name || 'Sheet1'}
                   formulaCache={sheets[activeSheet]?.formulaCache || formulaCacheRef.current}
                   rowHeights={sheetMeta.row_heights?.[sheets[activeSheet]?.name] || {}}
