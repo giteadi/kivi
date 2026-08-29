@@ -97,12 +97,21 @@ function buildStyledSheet(name, data, formulaCache, rowHeights, colWidths, merge
     endColumn: Number(endColumn),
   }));
 
+  const wrapRows = new Set();
   for (const [key, css] of Object.entries(cellStyles || {})) {
     const [rowIdx, colIdx] = key.split('_').map(Number);
     if (Number.isNaN(rowIdx) || Number.isNaN(colIdx)) continue;
     sheet.cellData[rowIdx] ||= {};
     sheet.cellData[rowIdx][colIdx] ||= {};
     sheet.cellData[rowIdx][colIdx].s = cssStyleToUniver(css);
+    if (css.whiteSpace === 'pre-wrap') wrapRows.add(rowIdx);
+  }
+
+  // Auto-height for rows that contain wrapped text so multi-line content is visible
+  for (const rowIdx of wrapRows) {
+    sheet.rowData ||= {};
+    sheet.rowData[rowIdx] ||= {};
+    if (!sheet.rowData[rowIdx].h) sheet.rowData[rowIdx].ia = 1;
   }
 
   return sheet;

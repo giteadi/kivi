@@ -694,8 +694,18 @@ def parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts, styles=None):
     ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
     root = safe_xml_parse(ws_bytes)
     if root is None:
-        return {}, 0, 0, {}, {}, [], {}, {}
+        return {}, 0, 0, {}, {}, [], {}, {}, set(), None, None
     styles = styles or []
+
+    # ── Default sheet dimensions ─────────────────────────
+    default_row_height = None
+    default_col_width = None
+    for fmt in root.findall(f'.//{{{ns}}}sheetFormatPr'):
+        try:
+            default_row_height = float(fmt.attrib.get('defaultRowHeight', 0)) or None
+            default_col_width = float(fmt.attrib.get('defaultColWidth', 0)) or None
+        except (TypeError, ValueError):
+            pass
 
     # ── Column widths ────────────────────────────────────
     # Excel stores width in "characters"; ~7px per character is the standard
@@ -739,6 +749,7 @@ def parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts, styles=None):
     shared_masters = {}  # si → (formula_text, row, col) for shared-formula groups
     max_r = max_c = 0
     row_heights = {}  # ← NEW: {row_index: height_in_points}
+    wrap_rows = set()  # ← NEW: row indexes that contain wrapText cells
 
     for row_el in root.findall(f'.//{{{ns}}}row'):
         # ── NEW: Read row height ──
@@ -767,6 +778,8 @@ def parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts, styles=None):
             # Capture the cell's visual style for the frontend grid.
             if sidx < len(styles) and (styles[sidx] or {}).get('css'):
                 cell_styles[f'{r}_{c}'] = styles[sidx]['css']
+                if styles[sidx]['css'].get('whiteSpace') == 'pre-wrap':
+                    wrap_rows.add(r)
 
             # Record the formula but still display Excel's cached <v> result,
             # so the grid shows exactly what Excel last computed.
@@ -810,7 +823,7 @@ def parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts, styles=None):
         max_c = max(max_c, c)
         grid.pop((r, c), None)
 
-    return grid, max_r, max_c, row_heights, formulas, merges, col_widths, cell_styles
+    return grid, max_r, max_c, row_heights, formulas, merges, col_widths, cell_styles, wrap_rows, default_row_height, default_col_width
 
 def get_sheet_embeddings(zf):
     result = {}
@@ -862,6 +875,7 @@ def get_sheet_embeddings(zf):
 def parse_xlsx(file_path):
     sheets, sheet_names, sheet_row_heights = {}, [], {}  # ← NEW: sheet_row_heights dict
     sheet_formulas, sheet_merges, sheet_col_widths, sheet_cell_styles = {}, {}, {}, {}
+    sheet_wrap_rows, sheet_default_row_heights, sheet_default_col_widths = {}, {}, {}
     try:
         with zipfile.ZipFile(file_path, 'r') as zf:
             all_files = set(zf.namelist())
@@ -899,10 +913,11 @@ def parse_xlsx(file_path):
                 # Regular cells
                 cell_grid, max_r, max_c, row_heights = {}, 0, 0, {}  # ← NEW: row_heights
                 formulas, merges, col_widths, cell_styles = {}, [], {}, {}
+                wrap_rows, default_row_height, default_col_width = set(), None, None
                 if ws_path in all_files:
                     try:
                         ws_bytes = zf.read(ws_path)
-                        cell_grid, max_r, max_c, row_heights, formulas, merges, col_widths, cell_styles = parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts, styles)
+                        cell_grid, max_r, max_c, row_heights, formulas, merges, col_widths, cell_styles, wrap_rows, default_row_height, default_col_width = parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts, styles)
                     except Exception as e:
                         log(f"  Cell error: {e}")
 
@@ -910,6 +925,9 @@ def parse_xlsx(file_path):
                 sheet_merges[name] = merges
                 sheet_col_widths[name] = col_widths
                 sheet_cell_styles[name] = cell_styles
+                sheet_wrap_rows[name] = sorted(wrap_rows)
+                sheet_default_row_heights[name] = default_row_height
+                sheet_default_col_widths[name] = default_col_width
 
                 non_empty = sum(1 for v in cell_grid.values() if str(v).strip())
 
@@ -1006,6 +1024,9 @@ def parse_xlsx(file_path):
         'merges': sheet_merges,            # per sheet: [[r1, c1, r2, c2], ...]
         'col_widths': sheet_col_widths,    # per sheet: {col_index: width_px}
         'cell_styles': sheet_cell_styles,  # per sheet: {'r_c': css_dict}
+        'wrap_rows': sheet_wrap_rows,      # per sheet: row indexes with wrapText
+        'default_row_heights': sheet_default_row_heights,  # per sheet: float or None
+        'default_col_widths': sheet_default_col_widths,    # per sheet: float or None
         'meta': {'total_cells': total}
     }
 
@@ -1032,7 +1053,20 @@ def parse_xls(file_path):
                 rows.pop()
             sheets[name] = rows or [['']]
         wb.release_resources()
-        return {'ok': True, 'sheets': sheets, 'names': names}
+        return {
+            'ok': True,
+            'sheets': sheets,
+            'names': names,
+            'row_heights': {},
+            'formulas': {},
+            'merges': {},
+            'col_widths': {},
+            'cell_styles': {},
+            'wrap_rows': {},
+            'default_row_heights': {},
+            'default_col_widths': {},
+            'meta': {}
+        }
     except ImportError:
         return {'ok': False, 'error': 'xlrd not installed'}
     except Exception as e:
@@ -1430,6 +1464,13 @@ def parse_docx_to_html(file_path):
                 'sheets': {sheet_name: [['__html__', html]]},
                 'names': [sheet_name],
                 'row_heights': {},
+                'formulas': {},
+                'merges': {},
+                'col_widths': {},
+                'cell_styles': {},
+                'wrap_rows': {},
+                'default_row_heights': {},
+                'default_col_widths': {},
                 'meta': {'format': 'docx', 'has_images': bool(media_cache)}
             }
 
@@ -1452,7 +1493,20 @@ def parse_csv(file_path):
             break
         except UnicodeDecodeError:
             continue
-    return {'ok': True, 'sheets': {'Sheet1': rows or [['']]}, 'names': ['Sheet1']}
+    return {
+        'ok': True,
+        'sheets': {'Sheet1': rows or [['']]},
+        'names': ['Sheet1'],
+        'row_heights': {},
+        'formulas': {},
+        'merges': {},
+        'col_widths': {},
+        'cell_styles': {},
+        'wrap_rows': {},
+        'default_row_heights': {},
+        'default_col_widths': {},
+        'meta': {}
+    }
 
 def parse_excel(file_path):
     signal.signal(signal.SIGALRM, timeout_handler)
