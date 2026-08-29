@@ -815,13 +815,11 @@ def parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts, styles=None):
             if val:
                 grid[(r, c)] = val
 
-    # ── Merged children stay empty ───────────────────────
-    # The UI spans the top-left cell across the block, so copying the value
-    # into every child would render the same text once per column.
+    # ── Merged cells: keep the original data, do NOT flatten child values.
+    # The UI (Univer/ReportSheetViewer) decides how to render merges itself.
     for (r, c) in merge_map:
         max_r = max(max_r, r)
         max_c = max(max_c, c)
-        grid.pop((r, c), None)
 
     return grid, max_r, max_c, row_heights, formulas, merges, col_widths, cell_styles, wrap_rows, default_row_height, default_col_width
 
