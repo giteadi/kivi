@@ -81,13 +81,13 @@ function buildStyledSheet(name, data, formulaCache, rowHeights, colWidths, merge
   sheet.rowData = {};
   for (const [rowIdx, points] of Object.entries(rowHeights || {})) {
     const height = Number(points);
-    if (height > 0) sheet.rowData[rowIdx] = { h: Math.round(height * 1.33) };
+    if (height > 0) sheet.rowData[Number(rowIdx)] = { h: Math.round(height * 1.33) };
   }
 
   sheet.columnData = {};
   for (const [colIdx, pixels] of Object.entries(colWidths || {})) {
     const width = Number(pixels);
-    if (width >= 0) sheet.columnData[colIdx] = width === 0 ? { hd: 1 } : { w: width };
+    if (width >= 0) sheet.columnData[Number(colIdx)] = width === 0 ? { hd: 1 } : { w: width };
   }
 
   sheet.mergeData = (merges || []).map(([startRow, startColumn, endRow, endColumn]) => ({
