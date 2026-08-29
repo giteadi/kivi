@@ -84,18 +84,61 @@ function buildStyledSheet(name, data, formulaCache, rowHeights, colWidths, merge
     if (height > 0) sheet.rowData[Number(rowIdx)] = { h: Math.round(height * 1.33) };
   }
 
-  sheet.columnData = {};
-  for (const [colIdx, pixels] of Object.entries(colWidths || {})) {
-    const width = Number(pixels);
-    if (width >= 0) sheet.columnData[Number(colIdx)] = width === 0 ? { hd: 1 } : { w: width };
+  // Compute content-aware minimum widths so narrow columns (e.g. "Yes - 1", "No - 2") don't get clipped
+  const contentMaxLens = [];
+  const maxCols = Math.max(...(data || []).map(r => (r || []).length), 0);
+  for (let c = 0; c < maxCols; c++) {
+    let maxLen = 0;
+    (data || []).forEach(row => {
+      const v = row[c];
+      if (v != null && v !== '') {
+        maxLen = Math.max(maxLen, String(v).trim().length);
+      }
+    });
+    contentMaxLens[c] = maxLen;
   }
 
-  sheet.mergeData = (merges || []).map(([startRow, startColumn, endRow, endColumn]) => ({
-    startRow: Number(startRow),
-    startColumn: Number(startColumn),
-    endRow: Number(endRow),
-    endColumn: Number(endColumn),
-  }));
+  sheet.columnData = {};
+  for (let colIdx = 0; colIdx < maxCols; colIdx++) {
+    const parsed = (colWidths || {})[colIdx];
+    const minW = Math.max(60, contentMaxLens[colIdx] * 7 + 16);  // ~7px per char + padding
+    let width = Number(parsed);
+    if (Number.isNaN(width) || width < 0) {
+      width = minW;
+    } else if (width === 0) {
+      // Keep hidden only if the column is genuinely empty; otherwise reveal it to avoid clipped data
+      if (contentMaxLens[colIdx] > 0) {
+        width = minW;
+      } else {
+        sheet.columnData[Number(colIdx)] = { hd: 1 };
+        continue;
+      }
+    } else if (width < minW) {
+      width = minW;
+    }
+    sheet.columnData[Number(colIdx)] = { w: width };
+  }
+
+  // Only apply merges where child cells are actually empty. If parse_excel.py
+  // already flattened merged values (e.g. "0 - 6 months" duplicated down the Age
+  // column), applying a merge would hide those duplicated values in Univer.
+  sheet.mergeData = (merges || [])
+    .filter(([startRow, startColumn, endRow, endColumn]) => {
+      for (let r = startRow; r <= endRow; r++) {
+        for (let c = startColumn; c <= endColumn; c++) {
+          if (r === startRow && c === startColumn) continue;
+          const v = data?.[r]?.[c];
+          if (v !== undefined && v !== null && v !== '') return false;
+        }
+      }
+      return true;
+    })
+    .map(([startRow, startColumn, endRow, endColumn]) => ({
+      startRow: Number(startRow),
+      startColumn: Number(startColumn),
+      endRow: Number(endRow),
+      endColumn: Number(endColumn),
+    }));
 
   const wrapRows = new Set();
   for (const [key, css] of Object.entries(cellStyles || {})) {
@@ -213,7 +256,12 @@ export default function UniverSpreadsheet({
           }
         };
 
-        if (initialFile) {
+        if (initialData && Array.isArray(initialData) && initialData.length > 0) {
+          // Prefer parsed 2D data + server-preserved merges/col widths over raw xlsx re-import
+          // so the rendered grid matches the original structure and narrow columns don't get clipped.
+          loadFrom2D();
+        } else if (initialFile) {
+          // Raw file fallback (e.g. for image-heavy files) only when no parsed data
           try {
             const { workbookData } = await importFile(initialFile, { includeImages: true });
             if (workbookData) {
