@@ -440,9 +440,9 @@ def _load_theme_colors(zf):
             scheme = root.find(f'.//{{{ns_a}}}clrScheme')
             if scheme is None:
                 continue
+            raw = {}  # document order: dk1, lt1, dk2, lt2, accent1-6, hlink, folHlink
             idx = 0
             for clr in scheme:
-                tag = clr.tag.split('}')[-1] if '}' in clr.tag else clr.tag
                 val = None
                 for child in clr:
                     child_tag = child.tag.split('}')[-1] if '}' in child.tag else child.tag
@@ -451,8 +451,19 @@ def _load_theme_colors(zf):
                     elif child_tag == 'sysClr':
                         val = child.attrib.get('lastClr') or child.attrib.get('val')
                 if val:
-                    theme[idx] = _hex_rgb(val)
+                    raw[idx] = _hex_rgb(val)
                 idx += 1
+
+            # Excel's cell-level theme="N" indices are NOT the raw scheme
+            # document order — dk1/lt1 and dk2/lt2 are swapped by convention.
+            # theme="0"→lt1, theme="1"→dk1, theme="2"→lt2, theme="3"→dk2,
+            # theme="4..9"→accent1-6, theme="10"→hlink, theme="11"→folHlink.
+            theme[0] = raw.get(1)   # lt1
+            theme[1] = raw.get(0)   # dk1
+            theme[2] = raw.get(3)   # lt2
+            theme[3] = raw.get(2)   # dk2
+            for i in range(4, 12):
+                theme[i] = raw.get(i)
     except Exception as e:
         log(f"Theme load error: {e}")
     return theme
