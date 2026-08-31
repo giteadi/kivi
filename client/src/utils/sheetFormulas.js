@@ -83,6 +83,31 @@ export function createSheetFromFormulas(sourceGrid, formulas) {
   return sheet;
 }
 
+/**
+ * Build a working copy of `sourceGrid`: every value is carried over AND the
+ * formula text is restored into its cell, so the copy recalculates like the
+ * original instead of freezing the source's computed numbers.
+ *
+ * Use this for "duplicate this sheet"; use createSheetFromFormulas when the
+ * user wants the formula skeleton with no data.
+ */
+export function createSheetCopyWithFormulas(sourceGrid, formulas) {
+  if (!isExcelGrid(sourceGrid)) return null;
+
+  const copy = sourceGrid.map(row => [...(row || [])]);
+  const source = formulas && Object.keys(formulas).length > 0
+    ? formulas
+    : extractSheetFormulas(sourceGrid);
+
+  for (const [key, formula] of Object.entries(source)) {
+    const [rowIdx, colIdx] = key.split("_").map(Number);
+    if (Number.isNaN(rowIdx) || Number.isNaN(colIdx)) continue;
+    if (copy[rowIdx]) copy[rowIdx][colIdx] = formula;
+  }
+
+  return copy;
+}
+
 /** How many formulas a grid carries — handy for user-facing messages. */
 export function countSheetFormulas(grid) {
   return Object.keys(extractSheetFormulas(grid)).length;

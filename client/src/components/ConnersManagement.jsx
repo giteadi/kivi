@@ -11,7 +11,7 @@ import api from "../services/api";
 import Sidebar from "./Sidebar";
 import ReportSheetViewer from "./ReportSheetViewer";
 import UniverSpreadsheet from "./UniverSpreadsheet";
-import { createSheetFromFormulas, countSheetFormulas, isExcelGrid } from "../utils/sheetFormulas";
+import { createSheetFromFormulas, createSheetCopyWithFormulas, countSheetFormulas, isExcelGrid } from "../utils/sheetFormulas";
 
 // Folder icons
 const folderIcons = {
@@ -722,6 +722,8 @@ export default function ConnersManagement() {
   const univerRef = useRef(null);
 
   const [showNewDocModal, setShowNewDocModal] = useState(false);
+  // Fullscreen viewer — hides the panel chrome so the sheet owns the whole window.
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Report panel state (like TemplateManager)
   const [reportPanel, setReportPanel] = useState(null);
@@ -962,12 +964,6 @@ export default function ConnersManagement() {
     return cache;
   }
 
-  // Clear grid but keep formulas — shares the "new sheet with formulas" logic in
-  // utils/sheetFormulas so both paths behave identically.
-  function makeClearedGridKeepFormulas(grid, formulaCache) {
-    return createSheetFromFormulas(grid, formulaCache) || [];
-  }
-
   function buildXlsxBlobFromSheets(sheetDefs) {
     const wb = XLSX.utils.book_new();
 
@@ -1011,8 +1007,11 @@ export default function ConnersManagement() {
     try {
       const outSheets = sheets.map((s) => {
         if (mode === 'with_formulas') {
-          const cleared = makeClearedGridKeepFormulas(s.data, s.formulaCache || buildFormulaCache(s.data));
-          return { ...s, data: cleared };
+          // Working copy: keep the source data AND its formulas so the new sheet
+          // opens ready to use instead of as an empty formula skeleton.
+          const formulaCache = s.formulaCache || buildFormulaCache(s.data);
+          const copied = createSheetCopyWithFormulas(s.data, formulaCache);
+          return { ...s, data: copied || s.data, formulaCache };
         }
         const rowCount = s.data?.length || 0;
         const colCount = Math.max(0, ...(s.data || []).map(r => r?.length || 0));
@@ -1827,6 +1826,16 @@ export default function ConnersManagement() {
     toast.success("Downloaded successfully!");
   };
 
+  // Escape leaves fullscreen so the user is never trapped without the header.
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setIsFullscreen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isFullscreen]);
+
   // ─── Render ───────────────────────────────────────────────────────────────────
   if (showViewer) {
     return (
@@ -1834,7 +1843,7 @@ export default function ConnersManagement() {
         <Sidebar />
         <div style={css.panel}>
           {/* Header */}
-          <div style={css.panelHeader}>
+          {!isFullscreen && <div style={css.panelHeader}>
             <button style={css.btn("ghost")} onClick={() => setShowViewer(false)}>
               <Icon d={icons.back} /> Back
             </button>
@@ -1842,6 +1851,9 @@ export default function ConnersManagement() {
             <div style={{ display: "flex", gap: 8 }}>
               <button style={css.btn("green")} onClick={handleSaveChanges}>
                 <Icon d={icons.save} /> Save
+              </button>
+              <button style={css.btn("ghost")} onClick={() => setIsFullscreen(true)}>
+                Full Window
               </button>
               <button style={css.btn("ghost")} onClick={() => setShowNewDocModal(true)}>
                 New Document
@@ -1857,7 +1869,20 @@ export default function ConnersManagement() {
                 <option value="pdf">PDF (.pdf)</option>
               </select>
             </div>
-          </div>
+          </div>}
+
+          {isFullscreen && (
+            <button
+              style={{
+                ...css.btn("ghost"),
+                position: "absolute", top: 8, right: 12, zIndex: 60,
+                background: "rgba(255,255,255,0.92)", boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
+              }}
+              onClick={() => setIsFullscreen(false)}
+            >
+              Exit Full Window
+            </button>
+          )}
 
           {showNewDocModal && (
             <div style={css.overlay} onClick={() => setShowNewDocModal(false)}>
@@ -1866,7 +1891,7 @@ export default function ConnersManagement() {
                 {selectedForm?.type === 'excel' || selectedForm?.name?.match(/\.(xlsx|xls|csv)$/i) ? (
                   <>
                     <p style={{ margin: "0 0 20px", fontSize: 13, color: "#6B7280" }}>
-                      Choose how to create the new sheet.
+                      "New Sheet" starts empty. "New Sheet with Formula" copies this sheet's data along with its formulas.
                     </p>
                     <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
                       <button style={css.btn("ghost")} onClick={() => setShowNewDocModal(false)}>
@@ -1900,7 +1925,7 @@ export default function ConnersManagement() {
           )}
 
           {/* Sheet Tabs */}
-          {sheets.length > 1 && (
+          {sheets.length > 1 && !(useUniverExcel && sheetData[0]?.[0] !== "__html__") && (
             <div style={css.sheetTabs}>
               {sheets.map((s, i) => (
                 <div 
@@ -1919,7 +1944,7 @@ export default function ConnersManagement() {
           )}
 
           {/* Toolbar */}
-          <div style={css.toolbar}>
+          {!(useUniverExcel && sheetData[0]?.[0] !== "__html__") && <div style={css.toolbar}>
             <button style={css.btn("ghost")} onClick={handleAddRow}>
               <Icon d={icons.plus} /> Add Row
             </button>
@@ -1952,7 +1977,7 @@ export default function ConnersManagement() {
                 </select>
               </label>
             )}
-          </div>
+          </div>}
 
           {/* Sheet Editor — WORD/HTML → ReportSheetViewer, EXCEL → Univer OR Classic */}
           <div style={{ flex: 1, overflow: "auto", padding: 0, background: "#F9FAFB", minHeight: 0, display: "flex", flexDirection: "column" }}>
@@ -1979,6 +2004,15 @@ export default function ConnersManagement() {
                 <UniverSpreadsheet
                   key={`univer-${activeSheet}-${selectedForm?.id || 'new'}`}
                   initialData={sheetData}
+                  allSheets={sheets.map(sheet => ({
+                    name: sheet.name,
+                    data: sheet.data || [],
+                    formulaCache: sheet.formulaCache || {},
+                    rowHeights: sheetMeta.row_heights?.[sheet.name] || {},
+                    colWidths: sheetMeta.col_widths?.[sheet.name] || {},
+                    merges: sheetMeta.merges?.[sheet.name] || [],
+                    cellStyles: sheetMeta.cell_styles?.[sheet.name] || {},
+                  }))}
                   initialFile={initialExcelFile}
                   sheetName={sheets[activeSheet]?.name || 'Sheet1'}
                   formulaCache={sheets[activeSheet]?.formulaCache || formulaCacheRef.current}
@@ -1987,18 +2021,20 @@ export default function ConnersManagement() {
                   merges={sheetMeta.merges?.[sheets[activeSheet]?.name] || []}
                   cellStyles={sheetMeta.cell_styles?.[sheets[activeSheet]?.name] || {}}
                   height="100%"
-                  onDataChange={(snapshot, data2D) => {
+                  showActionBar={false}
+                  onDataChange={(snapshot, data2D, activeName) => {
                     console.log('[DEBUG] Univer Excel data changed');
                     // Sync computed 2D array back into state so Save/Export still work
                     if (Array.isArray(data2D) && data2D.length > 0) {
                       setSheetData(data2D);
                       setSheets(prev => {
                         const copy = [...prev];
-                        copy[activeSheet] = {
-                          ...copy[activeSheet],
+                        const changedIndex = Math.max(0, copy.findIndex(sheet => sheet.name === activeName));
+                        copy[changedIndex] = {
+                          ...copy[changedIndex],
                           data: data2D,
                           formulaCache: {
-                            ...(copy[activeSheet]?.formulaCache || {}),
+                            ...(copy[changedIndex]?.formulaCache || {}),
                             ...buildFormulaCache(data2D),
                           },
                         };

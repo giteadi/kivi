@@ -19,7 +19,7 @@ import UniverSpreadsheet from "./UniverSpreadsheet";
 import Sidebar from "./Sidebar";
 import ExportDropdown from "./ExportDropdown";
 import { buildExamineeTokens, fillTemplateSheets, pruneUnfilledSheets } from "../utils/reportTemplate";
-import { createSheetFromFormulas, countSheetFormulas, isExcelGrid } from "../utils/sheetFormulas";
+import { createSheetCopyWithFormulas, countSheetFormulas, isExcelGrid } from "../utils/sheetFormulas";
 import {
   DndContext,
   closestCenter,
@@ -836,6 +836,7 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
   // not have to retype them; unticking gives a plain empty sheet.
   const [copyFormulasToNewSheet, setCopyFormulasToNewSheet] = useState(true);
   const [showBackConfirm, setShowBackConfirm] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const colWidths = initColWidths || {};
   const merges = initMerges || {};
   const cellStyles = initCellStyles || {};
@@ -853,16 +854,26 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
     setUseUniverTemplate(!isDocx);
   }, [activeSheet, reportData]);
 
+  // Escape leaves fullscreen so the user is never trapped without the header.
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setIsFullscreen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isFullscreen]);
+
   const currentSheetFormulaCount = countSheetFormulas(reportData?.[activeSheet]);
 
   const addNewSheet = () => {
     const name = newSheetName.trim() || `Sheet ${sheetList.length + 1}`;
     if (sheetList.includes(name)) { toast.error("Sheet name already exists!"); return; }
 
-    // Carry the open sheet's formula skeleton across; fall back to a blank Word
+    // Duplicate the open sheet's data and formulas; fall back to a blank Word
     // sheet when the open sheet is a DOCX/HTML one (it has no formulas).
     const inherited = copyFormulasToNewSheet
-      ? createSheetFromFormulas(reportData?.[activeSheet])
+      ? createSheetCopyWithFormulas(reportData?.[activeSheet], formulas?.[activeSheet])
       : null;
 
     setReportData(prev => ({
@@ -874,8 +885,8 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
     setShowNewSheetModal(false);
     setNewSheetName("");
 
-    if (inherited && currentSheetFormulaCount > 0) {
-      toast.success(`"${name}" created with ${currentSheetFormulaCount} formula(s) copied`);
+    if (inherited) {
+      toast.success(`"${name}" created as a copy of "${activeSheet}"`);
     }
   };
 
@@ -893,7 +904,19 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
           </div>
         </div>
       )}
-      <div style={{ ...css.panelHeader, background: "#064E3B", borderColor: "#065F46" }}>
+      {isFullscreen && (
+        <button
+          style={{
+            ...css.btn("ghost"),
+            position: "absolute", top: 8, right: 12, zIndex: 60,
+            background: "rgba(255,255,255,0.92)", boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
+          }}
+          onClick={() => setIsFullscreen(false)}
+        >
+          Exit Full Window
+        </button>
+      )}
+      {!isFullscreen && <div style={{ ...css.panelHeader, background: "#064E3B", borderColor: "#065F46" }}>
         <button
           style={{ ...css.btn("ghost"), color: "#D1FAE5", borderColor: "#065F46" }}
           onClick={() => setShowBackConfirm(true)}
@@ -962,9 +985,16 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
           }}>
             <Icon d={icons.save} size={14} /> Save Report
           </button>
+          <button
+            style={{ ...css.btn("ghost"), color: "#D1FAE5", borderColor: "#065F46" }}
+            onClick={() => setIsFullscreen(true)}
+          >
+            Full Window
+          </button>
         </div>
-      </div>
+      </div>}
 
+      {/* Sheet tabs — kept in every mode because this is where sheets are added */}
       <div style={{ ...css.sheetTabs, background: "#F0FDF4", borderColor: "#BBF7D0" }}>
         {sheetList.map(name => (
           <button
@@ -1014,6 +1044,8 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
             merges={merges?.[activeSheet] || []}
             cellStyles={cellStyles?.[activeSheet] || {}}
             height="100%"
+            showActionBar={false}
+            showSheetTabs={false}
             onDataChange={(snapshot, data2D) => {
               if (Array.isArray(data2D) && data2D.length > 0) {
                 setReportData(prev => ({ ...prev, [activeSheet]: data2D }));
@@ -1067,11 +1099,11 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
                   style={{ marginTop: 2, accentColor: "#2563EB" }}
                 />
                 <span>
-                  Copy formulas from “{activeSheet}”
+                  Copy data and formulas from “{activeSheet}”
                   <span style={{ display: "block", fontSize: 12, color: "#6B7280", marginTop: 2 }}>
                     {currentSheetFormulaCount > 0
-                      ? `${currentSheetFormulaCount} formula(s) will be reused — values stay empty.`
-                      : "This sheet has no formulas; layout will be reused."}
+                      ? `Data plus ${currentSheetFormulaCount} formula(s) will be copied.`
+                      : "This sheet has no formulas; data and layout will be copied."}
                   </span>
                 </span>
               </label>
@@ -1110,6 +1142,18 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
   // viewer only when it is a Word/HTML sheet. No auto-switching away from Univer.
   const [useUniverView, setUseUniverView] = useState(!isDocxSheet);
   const [initialFile, setInitialFile] = useState(null);
+  // Fullscreen viewer — hides the panel chrome so the sheet owns the whole window.
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Escape leaves fullscreen so the user is never trapped without the header.
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setIsFullscreen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isFullscreen]);
 
   // Fetch the original .xlsx for Excel templates so Univer renders the file exactly
   useEffect(() => {
@@ -1193,9 +1237,25 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
     XLSX.writeFile(wb, `${template.name}_${currentSheet}.xlsx`);
   };
 
+  // In Univer mode the engine supplies its own ribbon and sheet tabs, so the
+  // page-level tabs/toolbar/action bar would only duplicate them.
+  const univerOwnsChrome = useUniverView && !isDocxSheet;
+
   return (
     <div style={css.panel}>
-      <div style={css.panelHeader}>
+      {isFullscreen && (
+        <button
+          style={{
+            ...css.btn("ghost"),
+            position: "absolute", top: 8, right: 12, zIndex: 60,
+            background: "rgba(255,255,255,0.92)", boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
+          }}
+          onClick={() => setIsFullscreen(false)}
+        >
+          Exit Full Window
+        </button>
+      )}
+      {!isFullscreen && <div style={css.panelHeader}>
         <button style={css.btn("ghost")} onClick={onBack}><Icon d={icons.back} size={15} /> Back</button>
         <span style={{ width: 1, height: 24, background: "#E5E7EB" }} />
         <span style={{ fontWeight: 600, fontSize: 15 }}>{template.name}</span>
@@ -1251,14 +1311,19 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
           <button style={css.btn("green")} onClick={() => onCreateReport(template)}>
             <Icon d={icons.patient} size={14} /> New Report
           </button>
+          <button style={css.btn("ghost")} onClick={() => setIsFullscreen(true)}>
+            Full Window
+          </button>
         </div>
-      </div>
+      </div>}
 
-      <div style={css.sheetTabs}>
-        {sheetNames.map((name, i) => (
-          <button key={name} style={css.tab(i === activeSheetIdx)} onClick={() => setActiveSheetIdx(i)}>{name}</button>
-        ))}
-      </div>
+      {!univerOwnsChrome && (
+        <div style={css.sheetTabs}>
+          {sheetNames.map((name, i) => (
+            <button key={name} style={css.tab(i === activeSheetIdx)} onClick={() => setActiveSheetIdx(i)}>{name}</button>
+          ))}
+        </div>
+      )}
 
       {/* Row/column tools — only the Classic grid needs them; Univer has its own ribbon */}
       {!isDocxSheet && !useUniverView && (
@@ -1295,9 +1360,9 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
           // 🔵 EXCEL + UNIVER ENGINE — full Excel software-like UI (no UI shift)
           <UniverSpreadsheet
             key={`view-univer-${template.id}-${currentSheet}-${initialFile?.name || 'fallback'}`}
-            allSheets={template.sheetNames?.map(name => ({
+            allSheets={sheetNames.map(name => ({
               name,
-              data: template.sheets?.[name] || [],
+              data: localSheets[name] || [],
               formulaCache: template.formulas?.[name] || {},
               rowHeights: template.rowHeights?.[name] || {},
               colWidths: template.col_widths?.[name] || {},
@@ -1307,6 +1372,7 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
             initialFile={initialFile}
             sheetName={currentSheet}
             height="100%"
+            showActionBar={false}
             onDataChange={(snapshot, data2D, activeName) => {
               if (Array.isArray(data2D) && data2D.length > 0 && activeName) {
                 setLocalSheets(prev => ({ ...prev, [activeName]: data2D }));

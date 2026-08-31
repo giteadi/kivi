@@ -177,6 +177,7 @@ export default function UniverSpreadsheet({
   showToolbar = true,
   showFormulaBar = true,
   showSheetTabs = true,
+  showActionBar = true,
 }) {
   const wrapperRef = useRef(null);
   const mountPointRef = useRef(null);
@@ -217,16 +218,35 @@ export default function UniverSpreadsheet({
         const { univer, univerAPI } = createUniver({
           locale: LocaleType.EN_US,
           locales: {
-            [LocaleType.EN_US]: mergeLocales([UniverPresetSheetsCoreEnUS]),
+            // Fallback strings so any alert that still fires shows readable text
+            // instead of a raw key like "sheets-ui.info.forceStringInfo".
+            [LocaleType.EN_US]: mergeLocales([
+              UniverPresetSheetsCoreEnUS,
+              {
+                'sheets-ui': {
+                  info: { error: 'Notice', forceStringInfo: 'Number stored as text' },
+                },
+                'sheets-numfmt-ui': {
+                  info: { error: 'Notice', forceStringInfo: 'Number stored as text' },
+                },
+              },
+            ]),
           },
           presets: [
             UniverSheetsCorePreset({
               container: mountDiv,
-              layout: {
-                header: showToolbar,
-                formulaBar: showFormulaBar,
-                sheetTabs: showSheetTabs,
+              header: showToolbar,
+              formulaBar: showFormulaBar,
+              footer: showSheetTabs,
+              // Imported sheets legitimately store digits as text (e.g. "1", "0"
+              // score columns). Suppress Univer's "number stored as text" popup
+              // and the green corner marks it adds to every such cell.
+              sheets: {
+                disableForceStringAlert: true,
+                disableForceStringMark: true,
               },
+              disableTextFormatAlert: true,
+              disableTextFormatMark: true,
             }),
           ],
         });
@@ -303,13 +323,7 @@ export default function UniverSpreadsheet({
           clearTimeout(changeTimerRef.current);
           changeTimerRef.current = setTimeout(() => {
             if (!onDataChangeRef.current) return;
-            try {
-              const active = univerAPI.getActiveSheet();
-              const activeName = active?.getName?.() || sheetName;
-              onDataChangeRef.current(getData(), get2DArray(), activeName);
-            } catch (_) {
-              onDataChangeRef.current(getData(), get2DArray(), sheetName);
-            }
+            onDataChangeRef.current(getData(), get2DArray(), getActiveSheetName());
           }, 150);
         };
         try {
@@ -369,6 +383,17 @@ export default function UniverSpreadsheet({
       return null;
     }
   }, []);
+
+  // Which tab the user is currently on — callers need it to write edits back to
+  // the right sheet now that the whole workbook is loaded at once.
+  const getActiveSheetName = useCallback(() => {
+    try {
+      const workbook = univerAPIRef.current?.getActiveWorkbook();
+      return workbook?.getActiveSheet?.()?.getName?.() || sheetName;
+    } catch (_) {
+      return sheetName;
+    }
+  }, [sheetName]);
 
   const get2DArray = useCallback(() => {
     if (!univerAPIRef.current) return [];
@@ -470,13 +495,7 @@ export default function UniverSpreadsheet({
 
       if (onDataChange) {
         const snapshot = getData();
-        try {
-          const active = univerAPI.getActiveSheet();
-          const activeName = active?.getName?.() || sheetName;
-          onDataChange(snapshot, get2DArray(), activeName);
-        } catch (_) {
-          onDataChange(snapshot, get2DArray(), sheetName);
-        }
+        onDataChange(snapshot, get2DArray(), getActiveSheetName());
       }
     } catch (err) {
       console.error('Import error:', err);
@@ -557,7 +576,7 @@ export default function UniverSpreadsheet({
       overflow: 'hidden', minHeight: 0,
       ...(embedded ? {} : { border: '1px solid #e5e7eb', borderRadius: 8 }),
     }}>
-      <div style={{ display: 'flex', gap: 8, padding: '8px 12px', borderBottom: '1px solid #e5e7eb', background: '#f9fafb', alignItems: 'center', flexWrap: 'wrap' }}>
+      {showActionBar && <div style={{ display: 'flex', gap: 8, padding: '8px 12px', borderBottom: '1px solid #e5e7eb', background: '#f9fafb', alignItems: 'center', flexWrap: 'wrap' }}>
         <button
           onClick={handleImportClick}
           disabled={!isReady || readOnly}
@@ -625,7 +644,7 @@ export default function UniverSpreadsheet({
         {!isReady && (
           <span style={{ fontSize: 12, color: '#6b7280' }}>Loading spreadsheet engine...</span>
         )}
-      </div>
+      </div>}
 
       <input
         ref={fileInputRef}
