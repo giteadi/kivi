@@ -11,7 +11,7 @@ import api from "../services/api";
 import Sidebar from "./Sidebar";
 import ReportSheetViewer from "./ReportSheetViewer";
 import UniverSpreadsheet from "./UniverSpreadsheet";
-import { createSheetFromFormulas, createSheetCopyWithFormulas, countSheetFormulas, isExcelGrid } from "../utils/sheetFormulas";
+import { createSheetFromFormulas, createSheetCopyWithFormulas, countSheetFormulas, extractSheetFormulas, isExcelGrid } from "../utils/sheetFormulas";
 
 // Folder icons
 const folderIcons = {
@@ -969,17 +969,24 @@ export default function ConnersManagement() {
 
     sheetDefs.forEach((s) => {
       const ws = XLSX.utils.aoa_to_sheet(s.data || []);
-      const formulaCache = s.formulaCache || {};
-      Object.keys(formulaCache).forEach((key) => {
+      const fromData = extractSheetFormulas(s.data || []);
+      const formulaMap = { ...fromData, ...(s.formulaCache || {}) };
+      Object.keys(formulaMap).forEach((key) => {
         const [rStr, cStr] = key.split('_');
         const r = Number(rStr);
         const c = Number(cStr);
         if (Number.isNaN(r) || Number.isNaN(c)) return;
         const addr = XLSX.utils.encode_cell({ r, c });
-        const rawFormula = String(formulaCache[key] || "");
+        const rawFormula = String(formulaMap[key] || "");
+        if (!rawFormula) return;
         const f = rawFormula.startsWith('=') ? rawFormula.slice(1) : rawFormula;
-        ws[addr] = ws[addr] || { t: 'n', v: 0 };
-        ws[addr].f = f;
+        const cell = ws[addr];
+        const isFormulaText = cell && cell.t === 's' && typeof cell.v === 'string' && cell.v.startsWith('=');
+        if (isFormulaText || !cell) {
+          ws[addr] = { f };
+        } else {
+          cell.f = f;
+        }
       });
 
       XLSX.utils.book_append_sheet(wb, ws, s.name || 'Sheet1');

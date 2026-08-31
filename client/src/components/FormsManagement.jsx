@@ -11,7 +11,7 @@ import api from "../services/api";
 import Sidebar from "./Sidebar";
 import ReportSheetViewer from "./ReportSheetViewer";
 import UniverSpreadsheet from "./UniverSpreadsheet";
-import { createSheetCopyWithFormulas, countSheetFormulas, isExcelGrid } from "../utils/sheetFormulas";
+import { createSheetCopyWithFormulas, countSheetFormulas, extractSheetFormulas, isExcelGrid } from "../utils/sheetFormulas";
 
 // Folder icons
 const folderIcons = {
@@ -667,6 +667,25 @@ function sheetDataToXlsxBlob(sheetData) {
     : sheetData;
   
   const ws = XLSX.utils.aoa_to_sheet(plainRows);
+  const formulas = extractSheetFormulas(plainRows);
+  Object.keys(formulas).forEach((key) => {
+    const [rStr, cStr] = key.split('_');
+    const r = Number(rStr);
+    const c = Number(cStr);
+    if (Number.isNaN(r) || Number.isNaN(c)) return;
+    const addr = XLSX.utils.encode_cell({ r, c });
+    const rawFormula = String(formulas[key] || "");
+    if (!rawFormula) return;
+    const f = rawFormula.startsWith('=') ? rawFormula.slice(1) : rawFormula;
+    const cell = ws[addr];
+    const isFormulaText = cell && cell.t === 's' && typeof cell.v === 'string' && cell.v.startsWith('=');
+    if (isFormulaText || !cell) {
+      ws[addr] = { f };
+    } else {
+      cell.f = f;
+    }
+  });
+
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
   const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
