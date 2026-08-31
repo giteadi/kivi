@@ -80,6 +80,7 @@ const FormsManagement          = lazy(() => import('./components/FormsManagement
 const ConnersManagement        = lazy(() => import('./components/ConnersManagement'));
 const ExamineesManagement      = lazy(() => import('./components/ExamineesManagement'));
 const PackageManagement        = lazy(() => import('./components/PackageManagement'));
+const Packages                 = lazy(() => import('./components/Packages'));
 const AssessmentToolsManagement = lazy(() => import('./components/AssessmentToolsManagement'));
 const AssignAssessmentScreen   = lazy(() => import('./components/AssignAssessmentScreen'));
 const AssessmentList           = lazy(() => import('./components/AssessmentList'));
@@ -159,6 +160,7 @@ function App() {
       '/assessment-calendar': 'assessment-calendar',
       '/taxes': 'taxes',
       '/billing': 'billing-records',
+      '/packages/financial': 'financial-packages',
       '/admin/queries': 'queries',
       '/admin/center-visibility': 'center-visibility',
       '/groups': 'groups',
@@ -323,6 +325,7 @@ function App() {
       'assessment-calendar': '/assessment-calendar',
       'taxes': '/taxes',
       'billing-records': '/billing',
+      'financial-packages': '/packages/financial',
       'queries': '/admin/queries',
       'center-visibility': '/admin/center-visibility',
       'groups': '/groups',
@@ -1586,6 +1589,9 @@ setActiveItem('doctors');
       case 'billing-records':
         return <BillingRecords onViewBilling={(id) => toast(`View billing ${id}`, { icon: '👁️' })} onEditBilling={(id) => toast(`Edit billing ${id}`, { icon: '✏️' })} onDeleteBilling={(id) => toast(`Delete billing ${id}`, { icon: '🗑️' })} onCreateNewBilling={() => toast('Create new billing functionality', { icon: '🔧' })} />;
       
+      case 'financial-packages':
+        return <Packages />;
+      
       case 'admin-sessions':
         return <AdminSessionsList />;
       
@@ -1676,6 +1682,11 @@ setActiveItem('doctors');
             <Route path="/packages" element={
               currentView === 'packages' ? (
                 <PackageManagement onBack={() => { setActiveItem('patients'); setCurrentView('patients'); navigate('/examinees'); }} />
+              ) : renderContent()
+            } />
+            <Route path="/packages/financial" element={
+              currentView === 'financial-packages' ? (
+                <Packages />
               ) : renderContent()
             } />
             <Route path="/assessment-tools" element={
