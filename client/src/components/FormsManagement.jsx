@@ -2130,6 +2130,7 @@ function convertIFs(s, mask) {
     
     // Ask Univer which tab is actually active (React activeSheet may be stale if user clicked a native Univer tab)
     const activeNameFromUniver = univerSpreadsheetRef.current?.getActiveSheetName?.();
+    const univer2D = univerSpreadsheetRef.current?.get2DArray?.();
     const activeName = activeNameFromUniver || sheets[activeSheet]?.name;
     let currentSheetIndex = sheets.findIndex(s => s.name === activeName);
     if (currentSheetIndex < 0) currentSheetIndex = activeSheet;
@@ -2138,8 +2139,8 @@ function convertIFs(s, mask) {
     // Keep React state in sync with Univer's active tab
     if (currentSheetIndex !== activeSheet) setActiveSheet(currentSheetIndex);
 
-    // 🔥 Detect file type from CURRENT SHEET DATA (not extension)
-    const currentSheetData = currentSheet.data || [];
+    // Use live data from Univer if available (it reflects the actual active tab + any edits)
+    const currentSheetData = (Array.isArray(univer2D) && univer2D.length > 0) ? univer2D : (currentSheet.data || []);
     const isWord = currentSheetData?.[0]?.[0] === "__html__";
     const isExcel = !isWord;
     const fileName = isExcel ? `${nameRaw.trim()}.xlsx` : `${nameRaw.trim()}.docx`;
@@ -2153,7 +2154,7 @@ function convertIFs(s, mask) {
       if (isExcel) {
         // Create Excel file - preserve formulas if mode is 'with_formulas'
         let sheetData;
-        const formulaCache = currentSheet.formulaCache || formulaCacheRef.current || {};
+        const formulaCache = buildFormulaCache(currentSheetData);
         if (mode === 'with_formulas') {
           // Working copy: keep the source data AND its formulas so the new sheet
           // opens ready to use instead of as an empty formula skeleton.

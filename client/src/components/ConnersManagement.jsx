@@ -1015,6 +1015,7 @@ export default function ConnersManagement() {
     try {
       // Ask Univer which tab is actually active (React activeSheet may be stale if user clicked a native Univer tab)
       const activeNameFromUniver = univerSpreadsheetRef.current?.getActiveSheetName?.();
+      const univer2D = univerSpreadsheetRef.current?.get2DArray?.();
       const activeName = activeNameFromUniver || sheets[activeSheet]?.name;
       let currentSheetIndex = sheets.findIndex(s => s.name === activeName);
       if (currentSheetIndex < 0) currentSheetIndex = activeSheet;
@@ -1023,18 +1024,21 @@ export default function ConnersManagement() {
       // Keep React state in sync with Univer's active tab
       if (currentSheetIndex !== activeSheet) setActiveSheet(currentSheetIndex);
 
+      // Use live data from Univer if available (it reflects the actual active tab + any edits)
+      const liveData = (Array.isArray(univer2D) && univer2D.length > 0) ? univer2D : currentSheet.data;
+
       let outSheets;
       if (mode === 'with_formulas') {
         // Working copy: keep the source data AND its formulas so the new sheet
         // opens ready to use instead of as an empty formula skeleton.
-        const formulaCache = currentSheet.formulaCache || buildFormulaCache(currentSheet.data);
-        const copied = createSheetCopyWithFormulas(currentSheet.data, formulaCache);
-        outSheets = [{ ...currentSheet, data: copied || currentSheet.data, formulaCache }];
+        const formulaCache = buildFormulaCache(liveData);
+        const copied = createSheetCopyWithFormulas(liveData, formulaCache);
+        outSheets = [{ ...currentSheet, name: activeName || currentSheet.name, data: copied || liveData, formulaCache }];
       } else {
-        const rowCount = currentSheet.data?.length || 0;
-        const colCount = Math.max(0, ...(currentSheet.data || []).map(r => r?.length || 0));
+        const rowCount = liveData?.length || 0;
+        const colCount = Math.max(0, ...(liveData || []).map(r => r?.length || 0));
         const blank = Array.from({ length: rowCount }, () => Array.from({ length: colCount }, () => ""));
-        outSheets = [{ ...currentSheet, data: blank, formulaCache: {} }];
+        outSheets = [{ ...currentSheet, name: activeName || currentSheet.name, data: blank, formulaCache: {} }];
       }
 
       const blob = buildXlsxBlobFromSheets(outSheets);
