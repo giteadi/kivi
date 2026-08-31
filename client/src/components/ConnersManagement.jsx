@@ -1012,19 +1012,22 @@ export default function ConnersManagement() {
 
     setLoading(true);
     try {
-      const outSheets = sheets.map((s) => {
-        if (mode === 'with_formulas') {
-          // Working copy: keep the source data AND its formulas so the new sheet
-          // opens ready to use instead of as an empty formula skeleton.
-          const formulaCache = s.formulaCache || buildFormulaCache(s.data);
-          const copied = createSheetCopyWithFormulas(s.data, formulaCache);
-          return { ...s, data: copied || s.data, formulaCache };
-        }
-        const rowCount = s.data?.length || 0;
-        const colCount = Math.max(0, ...(s.data || []).map(r => r?.length || 0));
+      const currentSheet = sheets[activeSheet];
+      if (!currentSheet) throw new Error('No active sheet selected');
+
+      let outSheets;
+      if (mode === 'with_formulas') {
+        // Working copy: keep the source data AND its formulas so the new sheet
+        // opens ready to use instead of as an empty formula skeleton.
+        const formulaCache = currentSheet.formulaCache || buildFormulaCache(currentSheet.data);
+        const copied = createSheetCopyWithFormulas(currentSheet.data, formulaCache);
+        outSheets = [{ ...currentSheet, data: copied || currentSheet.data, formulaCache }];
+      } else {
+        const rowCount = currentSheet.data?.length || 0;
+        const colCount = Math.max(0, ...(currentSheet.data || []).map(r => r?.length || 0));
         const blank = Array.from({ length: rowCount }, () => Array.from({ length: colCount }, () => ""));
-        return { ...s, data: blank, formulaCache: {} };
-      });
+        outSheets = [{ ...currentSheet, data: blank, formulaCache: {} }];
+      }
 
       const blob = buildXlsxBlobFromSheets(outSheets);
       const formData = new FormData();
