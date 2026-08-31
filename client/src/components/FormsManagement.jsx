@@ -2226,7 +2226,7 @@ function convertIFs(s, mask) {
         type: selectedForm.type,
         template_data: templateData,
         folder_id: selectedForm.folder_id
-      });
+      }, { timeoutMs: 60000 });
       
       // Update local state
       setSelectedForm(prev => ({
