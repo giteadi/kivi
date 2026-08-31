@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { createUniver, LocaleType, mergeLocales } from '@univerjs/presets';
 import { UniverSheetsCorePreset } from '@univerjs/preset-sheets-core';
 import UniverPresetSheetsCoreEnUS from '@univerjs/preset-sheets-core/locales/en-US';
@@ -160,7 +160,7 @@ function buildStyledSheet(name, data, formulaCache, rowHeights, colWidths, merge
   return sheet;
 }
 
-export default function UniverSpreadsheet({
+const UniverSpreadsheet = forwardRef(function UniverSpreadsheet({
   initialData,
   allSheets,
   initialFile,
@@ -178,7 +178,7 @@ export default function UniverSpreadsheet({
   showFormulaBar = true,
   showSheetTabs = true,
   showActionBar = true,
-}) {
+}, ref) {
   const wrapperRef = useRef(null);
   const mountPointRef = useRef(null);
   const univerRef = useRef(null);
@@ -417,6 +417,12 @@ export default function UniverSpreadsheet({
       return [];
     }
   }, []);
+
+  useImperativeHandle(ref, () => ({
+    getActiveSheetName,
+    getData,
+    get2DArray,
+  }), [getActiveSheetName, getData, get2DArray]);
 
   const loadData = useCallback((data2D, sheetName = 'Sheet1') => {
     if (!univerAPIRef.current) return;
@@ -688,6 +694,6 @@ export default function UniverSpreadsheet({
       </div>
     </div>
   );
-}
+});
 
-export { UniverSpreadsheet };
+export default UniverSpreadsheet;

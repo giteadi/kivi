@@ -720,6 +720,7 @@ export default function ConnersManagement() {
   const [useUniverExcel, setUseUniverExcel] = useState(true);
   // Univer ref for extracting data on save/export
   const univerRef = useRef(null);
+  const univerSpreadsheetRef = useRef(null);
 
   const [showNewDocModal, setShowNewDocModal] = useState(false);
   // Fullscreen viewer — hides the panel chrome so the sheet owns the whole window.
@@ -1012,8 +1013,15 @@ export default function ConnersManagement() {
 
     setLoading(true);
     try {
-      const currentSheet = sheets[activeSheet];
+      // Ask Univer which tab is actually active (React activeSheet may be stale if user clicked a native Univer tab)
+      const activeNameFromUniver = univerSpreadsheetRef.current?.getActiveSheetName?.();
+      const activeName = activeNameFromUniver || sheets[activeSheet]?.name;
+      let currentSheetIndex = sheets.findIndex(s => s.name === activeName);
+      if (currentSheetIndex < 0) currentSheetIndex = activeSheet;
+      const currentSheet = sheets[currentSheetIndex];
       if (!currentSheet) throw new Error('No active sheet selected');
+      // Keep React state in sync with Univer's active tab
+      if (currentSheetIndex !== activeSheet) setActiveSheet(currentSheetIndex);
 
       let outSheets;
       if (mode === 'with_formulas') {
@@ -2012,6 +2020,7 @@ export default function ConnersManagement() {
               // 🔵 EXCEL + UNIVER ENGINE — Drop-in Excel replacement
               <div ref={univerRef} style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
                 <UniverSpreadsheet
+                  ref={univerSpreadsheetRef}
                   key={`univer-${activeSheet}-${selectedForm?.id || 'new'}`}
                   initialData={sheetData}
                   allSheets={sheets.map(sheet => ({

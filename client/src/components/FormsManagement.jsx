@@ -660,7 +660,7 @@ async function exportSheetToPdf(sheetData, fileName, viewerRef) {
 }
 
 // Helper: Convert sheet data to xlsx Blob (for upload)
-function sheetDataToXlsxBlob(sheetData) {
+function sheetDataToXlsxBlob(sheetData, sheetName = 'Sheet1') {
   if (!sheetData?.length) return null;
   const plainRows = sheetData[0]?.[0] === "__html__" 
     ? [[htmlToPlainText(sheetData[0][1])]] 
@@ -687,7 +687,7 @@ function sheetDataToXlsxBlob(sheetData) {
   });
 
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+  XLSX.utils.book_append_sheet(wb, ws, sheetName.substring(0, 31));
   const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
   return new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 }
@@ -763,6 +763,7 @@ export default function FormsManagement() {
   const [useUniverExcel, setUseUniverExcel] = useState(true);
   // Univer ref for extracting data on save/export
   const univerRef = useRef(null);
+  const univerSpreadsheetRef = useRef(null);
 
   const [showNewDocModal, setShowNewDocModal] = useState(false);
   // Fullscreen viewer — hides the panel chrome so the sheet owns the whole window.
@@ -2127,8 +2128,18 @@ function convertIFs(s, mask) {
     const nameRaw = prompt('Enter patient name:', defaultName);
     if (!nameRaw?.trim()) return;
     
+    // Ask Univer which tab is actually active (React activeSheet may be stale if user clicked a native Univer tab)
+    const activeNameFromUniver = univerSpreadsheetRef.current?.getActiveSheetName?.();
+    const activeName = activeNameFromUniver || sheets[activeSheet]?.name;
+    let currentSheetIndex = sheets.findIndex(s => s.name === activeName);
+    if (currentSheetIndex < 0) currentSheetIndex = activeSheet;
+    const currentSheet = sheets[currentSheetIndex];
+    if (!currentSheet) return;
+    // Keep React state in sync with Univer's active tab
+    if (currentSheetIndex !== activeSheet) setActiveSheet(currentSheetIndex);
+
     // 🔥 Detect file type from CURRENT SHEET DATA (not extension)
-    const currentSheetData = sheets[activeSheet]?.data || [];
+    const currentSheetData = currentSheet.data || [];
     const isWord = currentSheetData?.[0]?.[0] === "__html__";
     const isExcel = !isWord;
     const fileName = isExcel ? `${nameRaw.trim()}.xlsx` : `${nameRaw.trim()}.docx`;
@@ -2142,7 +2153,7 @@ function convertIFs(s, mask) {
       if (isExcel) {
         // Create Excel file - preserve formulas if mode is 'with_formulas'
         let sheetData;
-        const formulaCache = formulaCacheRef.current;
+        const formulaCache = currentSheet.formulaCache || formulaCacheRef.current || {};
         if (mode === 'with_formulas') {
           // Working copy: keep the source data AND its formulas so the new sheet
           // opens ready to use instead of as an empty formula skeleton.
@@ -2156,14 +2167,14 @@ function convertIFs(s, mask) {
             ...Array(20).fill(null).map(() => Array(colCount).fill(""))
           ];
         }
-        blob = sheetDataToXlsxBlob(sheetData);
+        blob = sheetDataToXlsxBlob(sheetData, sheetName);
         if (!blob) {
           throw new Error("Failed to create Excel blob");
         }
         templateData = {
           sheetNames: [sheetName],
           sheets: { [sheetName]: sheetData },
-          formulaCaches: [formulaCacheRef.current] // Save formula cache for Excel
+          formulaCaches: [formulaCache] // Save formula cache for Excel
         };
       } else {
         // Create DOCX with header for Word/HTML files
@@ -2472,6 +2483,7 @@ function convertIFs(s, mask) {
               // ════════════════════════════════════════════════════════════
               <div ref={univerRef} style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
                 <UniverSpreadsheet
+                  ref={univerSpreadsheetRef}
                   key={`univer-${activeSheet}-${selectedForm?.id || 'new'}`}
                   initialData={sheetData}
                   allSheets={sheets.map(sheet => ({
