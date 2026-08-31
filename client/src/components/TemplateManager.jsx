@@ -869,12 +869,14 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
   const addNewSheet = () => {
     const name = newSheetName.trim() || `Sheet ${sheetList.length + 1}`;
     if (sheetList.includes(name)) { toast.error("Sheet name already exists!"); return; }
+    console.log('[DEBUG] TM addNewSheet:', { activeSheet, sourceLength: reportData?.[activeSheet]?.length, formulaKeys: Object.keys(formulas?.[activeSheet] || {}).length });
 
     // Duplicate the open sheet's data and formulas; fall back to a blank Word
     // sheet when the open sheet is a DOCX/HTML one (it has no formulas).
     const inherited = copyFormulasToNewSheet
       ? createSheetCopyWithFormulas(reportData?.[activeSheet], formulas?.[activeSheet])
       : null;
+    console.log('[DEBUG] TM addNewSheet inherited:', { inheritedLength: inherited?.length });
 
     setReportData(prev => ({
       ...prev,
@@ -1046,9 +1048,10 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
             height="100%"
             showActionBar={false}
             showSheetTabs={false}
-            onDataChange={(snapshot, data2D) => {
+            onDataChange={(snapshot, data2D, activeName) => {
+              console.log('[DEBUG] TM reportEdit onDataChange:', { activeName, activeSheet, data2DLength: data2D?.length });
               if (Array.isArray(data2D) && data2D.length > 0) {
-                setReportData(prev => ({ ...prev, [activeSheet]: data2D }));
+                setReportData(prev => ({ ...prev, [activeName || activeSheet]: data2D }));
               }
             }}
           />

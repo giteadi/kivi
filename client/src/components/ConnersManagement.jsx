@@ -1016,16 +1016,19 @@ export default function ConnersManagement() {
       // Ask Univer which tab is actually active (React activeSheet may be stale if user clicked a native Univer tab)
       const activeNameFromUniver = univerSpreadsheetRef.current?.getActiveSheetName?.();
       const univer2D = univerSpreadsheetRef.current?.get2DArray?.();
+      console.log('[DEBUG] Conners create raw:', { activeNameFromUniver, univer2DLength: univer2D?.length, activeSheet, reactSheetName: sheets[activeSheet]?.name });
       const activeName = activeNameFromUniver || sheets[activeSheet]?.name;
       let currentSheetIndex = sheets.findIndex(s => s.name === activeName);
       if (currentSheetIndex < 0) currentSheetIndex = activeSheet;
       const currentSheet = sheets[currentSheetIndex];
+      console.log('[DEBUG] Conners create resolved:', { activeName, currentSheetIndex, currentSheetName: currentSheet?.name });
       if (!currentSheet) throw new Error('No active sheet selected');
       // Keep React state in sync with Univer's active tab
       if (currentSheetIndex !== activeSheet) setActiveSheet(currentSheetIndex);
 
       // Use live data from Univer if available (it reflects the actual active tab + any edits)
       const liveData = (Array.isArray(univer2D) && univer2D.length > 0) ? univer2D : currentSheet.data;
+      console.log('[DEBUG] Conners create liveData:', { liveDataLength: liveData?.length, mode });
 
       let outSheets;
       if (mode === 'with_formulas') {
@@ -1041,6 +1044,7 @@ export default function ConnersManagement() {
         outSheets = [{ ...currentSheet, name: activeName || currentSheet.name, data: blank, formulaCache: {} }];
       }
 
+      console.log('[DEBUG] Conners create outSheets:', { name: outSheets[0]?.name, dataLength: outSheets[0]?.data?.length });
       const blob = buildXlsxBlobFromSheets(outSheets);
       const formData = new FormData();
       formData.append('file', blob, fileName);
@@ -2461,12 +2465,14 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
   const addNewSheet = () => {
     const name = newSheetName.trim() || `Sheet ${sheetList.length + 1}`;
     if (sheetList.includes(name)) { toast.error("Sheet name already exists!"); return; }
+    console.log('[DEBUG] Conners addNewSheet:', { activeSheet, sourceLength: reportData?.[activeSheet]?.length, formulaCount: currentSheetFormulaCount });
 
     // Carry the open sheet's formula skeleton across; fall back to a blank Word
     // sheet when the open sheet is a DOCX/HTML one (it has no formulas).
     const inherited = copyFormulasToNewSheet
       ? createSheetFromFormulas(reportData?.[activeSheet])
       : null;
+    console.log('[DEBUG] Conners addNewSheet inherited:', { inheritedLength: inherited?.length });
 
     setReportData(prev => ({
       ...prev,
@@ -2626,9 +2632,10 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
             merges={merges[activeSheet] || []}
             cellStyles={cellStyles[activeSheet] || {}}
             height="100%"
-            onDataChange={(snapshot, data2D) => {
+            onDataChange={(snapshot, data2D, activeName) => {
+              console.log('[DEBUG] Conners reportEdit onDataChange:', { activeName, activeSheet, data2DLength: data2D?.length });
               if (Array.isArray(data2D) && data2D.length > 0) {
-                setReportData(prev => ({ ...prev, [activeSheet]: data2D }));
+                setReportData(prev => ({ ...prev, [activeName || activeSheet]: data2D }));
               }
             }}
           />

@@ -259,6 +259,28 @@ const UniverSpreadsheet = forwardRef(function UniverSpreadsheet({
         univerRef.current = univer;
         univerAPIRef.current = univerAPI;
 
+        const activateTargetSheet = (targetName) => {
+          if (!targetName) return;
+          try {
+            const workbook = univerAPIRef.current?.getActiveWorkbook();
+            if (!workbook) { console.log('[DEBUG] activateTargetSheet: no workbook'); return; }
+            const sheets = workbook.getSheets?.();
+            const sheet = workbook.getSheetByName?.(targetName)
+              || sheets?.find(s => (s.getSheetName?.() || s.getName?.()) === targetName);
+            if (sheet) {
+              workbook.setActiveSheet(sheet);
+              const activeSheet = workbook.getActiveSheet?.();
+              const active = activeSheet?.getSheetName?.() || activeSheet?.getName?.() || '???';
+              console.log('[DEBUG] activateTargetSheet:', targetName, 'active after set:', active);
+            } else {
+              const available = sheets?.map(s => s.getSheetName?.() || s.getName?.()).filter(Boolean) || [];
+              console.log('[DEBUG] activateTargetSheet: sheet not found', targetName, 'available:', available);
+            }
+          } catch (e) {
+            console.warn('[Univer] setActiveSheet failed:', e.message);
+          }
+        };
+
         const loadFrom2D = () => {
           if (allSheets && Array.isArray(allSheets) && allSheets.length > 0) {
             // Put the requested sheet first so it becomes the active tab in Univer.
@@ -279,6 +301,7 @@ const UniverSpreadsheet = forwardRef(function UniverSpreadsheet({
             ));
             const workbookData = getWorkbookDataBySheets(built, 'Workbook');
             univerAPI.createWorkbook(workbookData);
+            activateTargetSheet(sheetName);
           } else if (initialData && Array.isArray(initialData) && initialData.length > 0) {
             const sheet = buildStyledSheet(
               sheetName,
@@ -291,6 +314,7 @@ const UniverSpreadsheet = forwardRef(function UniverSpreadsheet({
             );
             const workbookData = getWorkbookDataBySheets([sheet], 'Workbook');
             univerAPI.createWorkbook(workbookData);
+            activateTargetSheet(sheetName);
           } else {
             univerAPI.createWorkbook({});
           }
@@ -302,6 +326,7 @@ const UniverSpreadsheet = forwardRef(function UniverSpreadsheet({
             const { workbookData } = await importFile(initialFile, { includeImages: true });
             if (workbookData) {
               univerAPI.createWorkbook(workbookData);
+              activateTargetSheet(sheetName);
             } else {
               loadFrom2D();
             }
@@ -393,8 +418,12 @@ const UniverSpreadsheet = forwardRef(function UniverSpreadsheet({
   const getActiveSheetName = useCallback(() => {
     try {
       const workbook = univerAPIRef.current?.getActiveWorkbook();
-      return workbook?.getActiveSheet?.()?.getName?.() || sheetName;
-    } catch (_) {
+      const sheet = workbook?.getActiveSheet?.();
+      const name = sheet?.getSheetName?.() || sheet?.getName?.();
+      console.log('[DEBUG] getActiveSheetName:', name, 'fallback:', sheetName);
+      return name || sheetName;
+    } catch (e) {
+      console.log('[DEBUG] getActiveSheetName error:', e.message, 'fallback:', sheetName);
       return sheetName;
     }
   }, [sheetName]);
@@ -406,9 +435,13 @@ const UniverSpreadsheet = forwardRef(function UniverSpreadsheet({
       if (!workbook) return [];
       const sheet = workbook.getActiveSheet();
       if (!sheet) return [];
-      const range = sheet.getRange();
-      const values = range.getValue();
+      const sheetName = sheet.getSheetName?.() || sheet.getName?.() || '???';
+      console.log('[DEBUG] get2DArray sheet:', sheetName);
+      const range = sheet.getDataRange?.() || sheet.getRange(0, 0, 1, 1);
+      if (!range) { console.log('[DEBUG] get2DArray: no range'); return []; }
+      const values = range.getValues?.() || [];
       const formulas = range.getFormulas?.() || [];
+      console.log('[DEBUG] get2DArray values rows:', values.length, 'formulas rows:', formulas.length);
       if (Array.isArray(values)) {
         return values.map((row, rowIdx) => {
           const cells = Array.isArray(row) ? row : [row];

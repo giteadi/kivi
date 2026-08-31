@@ -2131,16 +2131,19 @@ function convertIFs(s, mask) {
     // Ask Univer which tab is actually active (React activeSheet may be stale if user clicked a native Univer tab)
     const activeNameFromUniver = univerSpreadsheetRef.current?.getActiveSheetName?.();
     const univer2D = univerSpreadsheetRef.current?.get2DArray?.();
+    console.log('[DEBUG] Forms create raw:', { activeNameFromUniver, univer2DLength: univer2D?.length, activeSheet, reactSheetName: sheets[activeSheet]?.name });
     const activeName = activeNameFromUniver || sheets[activeSheet]?.name;
     let currentSheetIndex = sheets.findIndex(s => s.name === activeName);
     if (currentSheetIndex < 0) currentSheetIndex = activeSheet;
     const currentSheet = sheets[currentSheetIndex];
+    console.log('[DEBUG] Forms create resolved:', { activeName, currentSheetIndex, currentSheetName: currentSheet?.name });
     if (!currentSheet) return;
     // Keep React state in sync with Univer's active tab
     if (currentSheetIndex !== activeSheet) setActiveSheet(currentSheetIndex);
 
     // Use live data from Univer if available (it reflects the actual active tab + any edits)
     const currentSheetData = (Array.isArray(univer2D) && univer2D.length > 0) ? univer2D : (currentSheet.data || []);
+    console.log('[DEBUG] Forms create currentSheetData:', { currentSheetDataLength: currentSheetData?.length, mode });
     const isWord = currentSheetData?.[0]?.[0] === "__html__";
     const isExcel = !isWord;
     const fileName = isExcel ? `${nameRaw.trim()}.xlsx` : `${nameRaw.trim()}.docx`;
@@ -2168,6 +2171,7 @@ function convertIFs(s, mask) {
             ...Array(20).fill(null).map(() => Array(colCount).fill(""))
           ];
         }
+        console.log('[DEBUG] Forms create output:', { sheetName, sheetDataLength: sheetData?.length });
         blob = sheetDataToXlsxBlob(sheetData, sheetName);
         if (!blob) {
           throw new Error("Failed to create Excel blob");
@@ -2965,12 +2969,14 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
   const addNewSheet = () => {
     const name = newSheetName.trim() || `Sheet ${sheetList.length + 1}`;
     if (sheetList.includes(name)) { toast.error("Sheet name already exists!"); return; }
+    console.log('[DEBUG] Forms addNewSheet:', { activeSheet, sourceLength: reportData?.[activeSheet]?.length, formulaKeys: Object.keys(formulas?.[activeSheet] || {}).length });
 
     // Duplicate the open sheet's data and formulas; fall back to a blank Word
     // sheet when the open sheet is a DOCX/HTML one (it has no formulas).
     const inherited = copyFormulasToNewSheet
       ? createSheetCopyWithFormulas(reportData?.[activeSheet], formulas?.[activeSheet])
       : null;
+    console.log('[DEBUG] Forms addNewSheet inherited:', { inheritedLength: inherited?.length });
 
     setReportData(prev => ({
       ...prev,
@@ -3132,9 +3138,10 @@ function ReportEditPanel({ reportPanel, onBack, onSave }) {
             height="100%"
             showActionBar={false}
             showSheetTabs={false}
-            onDataChange={(snapshot, data2D) => {
+            onDataChange={(snapshot, data2D, activeName) => {
+              console.log('[DEBUG] Forms reportEdit onDataChange:', { activeName, activeSheet, data2DLength: data2D?.length });
               if (Array.isArray(data2D) && data2D.length > 0) {
-                setReportData(prev => ({ ...prev, [activeSheet]: data2D }));
+                setReportData(prev => ({ ...prev, [activeName || activeSheet]: data2D }));
               }
             }}
           />
