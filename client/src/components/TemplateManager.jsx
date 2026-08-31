@@ -1376,6 +1376,8 @@ function ViewPanel({ template, onBack, onCreateReport, onTemplateUpdated }) {
             onDataChange={(snapshot, data2D, activeName) => {
               if (Array.isArray(data2D) && data2D.length > 0 && activeName) {
                 setLocalSheets(prev => ({ ...prev, [activeName]: data2D }));
+                // 🔑 Keep React currentSheet in sync with Univer's active tab
+                if (sheetNames.includes(activeName)) setCurrentSheet(activeName);
               }
             }}
           />

@@ -329,7 +329,11 @@ const UniverSpreadsheet = forwardRef(function UniverSpreadsheet({
         try {
           const editDisposable = univerAPI.addEvent(univerAPI.Event.SheetEditEnded, emitChange);
           const pasteDisposable = univerAPI.addEvent(univerAPI.Event.ClipboardPasted, emitChange);
-          eventDisposablesRef.current = [editDisposable, pasteDisposable].filter(Boolean);
+          // 🔑 When user clicks a native Univer sheet tab, fire emitChange so
+          //    the parent's React state (activeSheet / sheetData) stays in sync
+          //    with whatever tab is now visible in Univer.
+          const tabDisposable = univerAPI.addEvent(univerAPI.Event.ActiveSheetChanged, emitChange);
+          eventDisposablesRef.current = [editDisposable, pasteDisposable, tabDisposable].filter(Boolean);
         } catch (err) {
           console.warn('[Univer] Change subscription unavailable:', err.message);
         }

@@ -2506,21 +2506,25 @@ function convertIFs(s, mask) {
                   height="100%"
                   showActionBar={false}
                   onDataChange={(snapshot, data2D, activeName) => {
-                    console.log('[DEBUG] Univer Excel data changed');
+                    console.log('[DEBUG] Univer Excel data changed', activeName);
                     // Sync computed 2D array back into state so Save/Export still work
                     if (Array.isArray(data2D) && data2D.length > 0) {
                       setSheetData(data2D);
                       setSheets(prev => {
                         const copy = [...prev];
-                        const changedIndex = Math.max(0, copy.findIndex(sheet => sheet.name === activeName));
-                        copy[changedIndex] = {
-                          ...copy[changedIndex],
-                          data: data2D,
-                          formulaCache: {
-                            ...(copy[changedIndex]?.formulaCache || {}),
-                            ...buildFormulaCache(data2D),
-                          },
-                        };
+                        const changedIndex = copy.findIndex(sheet => sheet.name === activeName);
+                        if (changedIndex >= 0) {
+                          // 🔑 Keep React activeSheet in sync with Univer's active tab
+                          setActiveSheet(changedIndex);
+                          copy[changedIndex] = {
+                            ...copy[changedIndex],
+                            data: data2D,
+                            formulaCache: {
+                              ...(copy[changedIndex]?.formulaCache || {}),
+                              ...buildFormulaCache(data2D),
+                            },
+                          };
+                        }
                         return copy;
                       });
                     }
