@@ -983,7 +983,7 @@ export default function ConnersManagement() {
         const cell = ws[addr];
         const isFormulaText = cell && cell.t === 's' && typeof cell.v === 'string' && cell.v.startsWith('=');
         if (isFormulaText || !cell) {
-          ws[addr] = { f };
+          ws[addr] = { t: 'n', v: 0, f };
         } else {
           cell.f = f;
         }
