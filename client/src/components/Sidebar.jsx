@@ -46,6 +46,7 @@ const routeMapping = {
   'taxes': '/taxes',
   'billing-records': '/billing',
   'financial-packages': '/packages/financial',
+  'invoices': '/invoices',
   'queries': '/admin/queries',
   'center-visibility': '/admin/center-visibility',
   'groups': '/groups',
@@ -153,6 +154,7 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
     // { id: 'doctor-revenue', label: 'Therapist Revenue', icon: FiDollarSign, section: 'FINANCIAL' }, // Temporarily disabled 
     { id: 'billing-records', label: 'Billing Records', icon: FiCreditCard, section: 'FINANCIAL' },
     { id: 'financial-packages', label: 'Packages', icon: FiPackage, section: 'FINANCIAL' },
+    { id: 'invoices', label: 'Invoice', icon: FiFileText, section: 'FINANCIAL' },
     { id: 'queries', label: 'Queries', icon: FiMessageSquare, section: 'ADMIN' },
     { id: 'center-visibility', label: 'Center Visibility', icon: FiShield, section: 'ADMIN' },
   ];

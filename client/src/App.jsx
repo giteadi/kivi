@@ -81,6 +81,7 @@ const ConnersManagement        = lazy(() => import('./components/ConnersManageme
 const ExamineesManagement      = lazy(() => import('./components/ExamineesManagement'));
 const PackageManagement        = lazy(() => import('./components/PackageManagement'));
 const Packages                 = lazy(() => import('./components/Packages'));
+const Invoices                 = lazy(() => import('./components/Invoices'));
 const AssessmentToolsManagement = lazy(() => import('./components/AssessmentToolsManagement'));
 const AssignAssessmentScreen   = lazy(() => import('./components/AssignAssessmentScreen'));
 const AssessmentList           = lazy(() => import('./components/AssessmentList'));
@@ -161,6 +162,7 @@ function App() {
       '/taxes': 'taxes',
       '/billing': 'billing-records',
       '/packages/financial': 'financial-packages',
+      '/invoices': 'invoices',
       '/admin/queries': 'queries',
       '/admin/center-visibility': 'center-visibility',
       '/groups': 'groups',
@@ -326,6 +328,7 @@ function App() {
       'taxes': '/taxes',
       'billing-records': '/billing',
       'financial-packages': '/packages/financial',
+      'invoices': '/invoices',
       'queries': '/admin/queries',
       'center-visibility': '/admin/center-visibility',
       'groups': '/groups',
@@ -1592,6 +1595,9 @@ setActiveItem('doctors');
       case 'financial-packages':
         return <Packages />;
       
+      case 'invoices':
+        return <Invoices />;
+      
       case 'admin-sessions':
         return <AdminSessionsList />;
       
@@ -1687,6 +1693,11 @@ setActiveItem('doctors');
             <Route path="/packages/financial" element={
               currentView === 'financial-packages' ? (
                 <Packages />
+              ) : renderContent()
+            } />
+            <Route path="/invoices" element={
+              currentView === 'invoices' ? (
+                <Invoices />
               ) : renderContent()
             } />
             <Route path="/assessment-tools" element={

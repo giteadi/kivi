@@ -8,52 +8,28 @@ import {
   FiX,
   FiSave,
   FiDownload,
-  FiDollarSign
+  FiChevronLeft
 } from 'react-icons/fi';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 import toast from 'react-hot-toast';
+import {
+  openPackagePrintWindow,
+  formatPrice
+} from '../utils/invoice';
 
 const STORAGE_KEY = 'kivi_packages';
 
-// Invoice-style header — edit these values to match your organisation
-const ORG = {
-  name: 'MindSaid Learning Centre',
-  tagline: 'Learning This Ability',
-  addressLines: [
-    'D-207, Crystal Plaza,',
-    'Opp. Infinity Mall, Link Road, Andheri (W),',
-    'Mumbai, Maharashtra 400053',
-    'India'
-  ],
-  contact: 'Mobile: +91 8928186952',
-  website: 'www.mindsaidlearning.com'
-};
-
-const formatPrice = (price) => {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0
-  }).format(price || 0);
-};
-
-const formatPriceRaw = (price) => {
-  return Number(price || 0).toLocaleString('en-IN', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-};
+const emptyForm = () => ({
+  name: '',
+  tools: [{ name: '', price: '' }]
+});
 
 const Packages = () => {
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    tools: [{ name: '', price: '' }]
-  });
+  const [viewingPackage, setViewingPackage] = useState(null);
+  const [formData, setFormData] = useState(emptyForm());
 
   useEffect(() => {
     try {
@@ -74,23 +50,25 @@ const Packages = () => {
     }
   }, [packages]);
 
-  const computedTotal = useMemo(() => {
-    return formData.tools.reduce((sum, tool) => {
-      return sum + (parseFloat(tool.price) || 0);
-    }, 0);
-  }, [formData.tools]);
+  const computedTotal = useMemo(
+    () => formData.tools.reduce((sum, t) => sum + (parseFloat(t.price) || 0), 0),
+    [formData.tools]
+  );
 
   const openAdd = () => {
     setEditingId(null);
-    setFormData({ name: '', tools: [{ name: '', price: '' }] });
+    setFormData(emptyForm());
     setShowModal(true);
   };
 
   const openEdit = (pkg) => {
     setEditingId(pkg.id);
     setFormData({
-      name: pkg.name,
-      tools: pkg.tools.map(t => ({ name: t.name, price: String(t.price) }))
+      name: pkg.name || '',
+      tools: (pkg.tools || []).map(t => ({
+        name: t.name,
+        price: String(t.price)
+      }))
     });
     setShowModal(true);
   };
@@ -98,31 +76,28 @@ const Packages = () => {
   const closeModal = () => {
     setShowModal(false);
     setEditingId(null);
-    setFormData({ name: '', tools: [{ name: '', price: '' }] });
+    setFormData(emptyForm());
   };
 
-  const addTool = () => {
+  const addTool = () =>
     setFormData(prev => ({
       ...prev,
       tools: [...prev.tools, { name: '', price: '' }]
     }));
-  };
 
-  const removeTool = (index) => {
+  const removeTool = (index) =>
     setFormData(prev => ({
       ...prev,
       tools: prev.tools.filter((_, i) => i !== index)
     }));
-  };
 
-  const updateTool = (index, field, value) => {
+  const updateTool = (index, field, value) =>
     setFormData(prev => ({
       ...prev,
       tools: prev.tools.map((tool, i) =>
         i === index ? { ...tool, [field]: value } : tool
       )
     }));
-  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -135,7 +110,6 @@ const Packages = () => {
     const validTools = formData.tools.filter(
       t => t.name.trim() && parseFloat(t.price) > 0
     );
-
     if (validTools.length === 0) {
       toast.error('Add at least one valid tool with a price');
       return;
@@ -146,14 +120,14 @@ const Packages = () => {
       price: parseFloat(t.price)
     }));
 
-    const total = sanitizedTools.reduce((sum, t) => sum + t.price, 0);
+    const total = sanitizedTools.reduce((s, t) => s + t.price, 0);
     const now = new Date().toISOString();
 
     if (editingId) {
       setPackages(prev =>
         prev.map(pkg =>
           pkg.id === editingId
-            ? { ...pkg, name: formData.name.trim(), tools: sanitizedTools, total, updatedAt: now }
+            ? { ...pkg, name: formData.name.trim(), tools: sanitizedTools, total, subtotal: total, balanceDue: total, updatedAt: now }
             : pkg
         )
       );
@@ -166,6 +140,8 @@ const Packages = () => {
           name: formData.name.trim(),
           tools: sanitizedTools,
           total,
+          subtotal: total,
+          balanceDue: total,
           createdAt: now,
           updatedAt: now
         }
@@ -182,93 +158,13 @@ const Packages = () => {
     toast.success('Package deleted');
   };
 
-  const downloadPDF = (pkg) => {
-    const doc = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const rightEdge = pageWidth - 14;
-
-    // Organisation details left
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(90, 90, 90);
-    let y = 38;
-    ORG.addressLines.forEach((line) => {
-      doc.text(line, 14, y);
-      y += 5;
-    });
-    doc.text(ORG.contact, 14, y);
-    y += 5;
-    doc.text(ORG.website, 14, y);
-
-    // Title right
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(28);
-    doc.setTextColor(0, 0, 0);
-    doc.text('PACKAGE', rightEdge, 32, { align: 'right' });
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(90, 90, 90);
-    doc.text('Quotation', rightEdge, 39, { align: 'right' });
-
-    // Package meta
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.setTextColor(60, 60, 60);
-    doc.text(`Package: ${pkg.name}`, 14, 74);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Date: ${new Date(pkg.createdAt).toLocaleDateString('en-IN')}`, 14, 80);
-
-    // Amount Due box
-    const boxY = 68;
-    const boxW = 80;
-    const boxX = rightEdge - boxW;
-    doc.setFillColor(240, 248, 255);
-    doc.rect(boxX, boxY, boxW, 22, 'F');
-    doc.setDrawColor(200, 220, 240);
-    doc.rect(boxX, boxY, boxW, 22, 'S');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.setTextColor(90, 90, 90);
-    doc.text('Amount Due (INR):', boxX + 5, boxY + 9);
-    doc.setFontSize(14);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Rs. ${formatPriceRaw(pkg.total)}`, boxX + 5, boxY + 19);
-
-    // Items table
-    const body = pkg.tools.map((tool) => [
-      tool.name,
-      '1',
-      `Rs. ${formatPriceRaw(tool.price)}`,
-      `Rs. ${formatPriceRaw(tool.price)}`
-    ]);
-
-    doc.autoTable({
-      startY: 90,
-      head: [['Items', 'Quantity', 'Price', 'Amount']],
-      body,
-      foot: [['', '', 'Amount (INR):', `Rs. ${formatPriceRaw(pkg.total)}`]],
-      theme: 'grid',
-      headStyles: { fillColor: [59, 130, 246], textColor: [255, 255, 255], fontStyle: 'bold' },
-      footStyles: { fontStyle: 'bold', fillColor: [240, 253, 244], textColor: [0, 0, 0] },
-      columnStyles: {
-        0: { cellWidth: 80 },
-        1: { halign: 'center' },
-        2: { halign: 'right' },
-        3: { halign: 'right' }
-      },
-      styles: { fontSize: 10 }
-    });
-
-    // Footer
-    const finalY = doc.lastAutoTable.finalY + 12;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(120, 120, 120);
-    doc.text('Powered by Kivi', pageWidth / 2, finalY, { align: 'center' });
-
-    const cleanName = pkg.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
-    doc.save(`${cleanName}_package.pdf`);
-    toast.success('PDF downloaded');
+  const downloadPDF = async (pkg) => {
+    const ok = await openPackagePrintWindow(pkg);
+    if (ok) {
+      toast.success('Package opened — save as PDF from the print dialog');
+    } else {
+      toast.error('Popup blocked — allow popups to download');
+    }
   };
 
   return (
@@ -277,7 +173,7 @@ const Packages = () => {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 space-y-4 lg:space-y-0">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Packages</h1>
-            <p className="text-gray-600">Create tool packages with auto-calculated pricing</p>
+            <p className="text-gray-600">Package templates — tools + costing (use them when creating invoices)</p>
           </div>
 
           <motion.button
@@ -302,81 +198,87 @@ const Packages = () => {
             <p className="text-gray-500">No packages found. Create one to get started.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {packages.map((pkg) => (
               <motion.div
                 key={pkg.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-xl shadow-sm border hover:shadow-md transition-shadow"
+                onClick={() => setViewingPackage(pkg)}
+                className="bg-white rounded-xl shadow-sm border hover:shadow-md transition-shadow overflow-hidden cursor-pointer"
               >
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Package</p>
-                      <h3 className="text-lg font-bold text-gray-800">{pkg.name}</h3>
-                      <p className="text-xs text-gray-500">
-                        {new Date(pkg.createdAt).toLocaleDateString('en-IN')}
+                <div className="px-5 pt-5 pb-3 border-b">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Package Template</p>
+                      <h3 className="text-base font-bold text-gray-800">{pkg.name}</h3>
+                      <p className="text-[11px] text-gray-400">
+                        {pkg.tools?.length || 0} tool{(pkg.tools?.length || 0) !== 1 ? 's' : ''}
+                        {pkg.createdAt ? ` · ${new Date(pkg.createdAt).toLocaleDateString('en-IN')}` : ''}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Amount Due</p>
-                      <div className="text-2xl font-bold text-gray-800">{formatPrice(pkg.total)}</div>
+                      <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Total</p>
+                      <div className="text-xl font-bold text-gray-900">{formatPrice(pkg.total)}</div>
                     </div>
                   </div>
+                </div>
 
-                  <div className="overflow-x-auto border rounded-lg">
-                    <table className="w-full text-sm">
-                      <thead className="bg-blue-500 text-white">
-                        <tr>
-                          <th className="text-left px-3 py-2 font-semibold">Items</th>
-                          <th className="text-center px-3 py-2 font-semibold w-16">Qty</th>
-                          <th className="text-right px-3 py-2 font-semibold w-24">Price</th>
-                          <th className="text-right px-3 py-2 font-semibold w-24">Amount</th>
+                <div className="px-5 py-3">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="bg-sky-500 text-white">
+                        <th className="text-left px-2 py-1.5 font-semibold rounded-tl">Items</th>
+                        <th className="text-right px-2 py-1.5 font-semibold w-24 rounded-tr">Price</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(pkg.tools || []).slice(0, 4).map((tool, idx) => (
+                        <tr key={idx} className="border-b border-gray-100">
+                          <td className="px-2 py-1.5 font-medium text-gray-800">{tool.name}</td>
+                          <td className="px-2 py-1.5 text-right text-gray-800">{formatPrice(tool.price)}</td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {pkg.tools.map((tool, idx) => (
-                          <tr key={idx} className="border-b last:border-b-0">
-                            <td className="px-3 py-2 text-gray-700">{tool.name}</td>
-                            <td className="px-3 py-2 text-center text-gray-600">1</td>
-                            <td className="px-3 py-2 text-right text-gray-600">{formatPrice(tool.price)}</td>
-                            <td className="px-3 py-2 text-right font-medium text-gray-800">{formatPrice(tool.price)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                      <tfoot className="bg-green-50">
+                      ))}
+                      {(pkg.tools?.length || 0) > 4 && (
                         <tr>
-                          <td className="px-3 py-2 font-bold text-gray-700" colSpan="3">Amount (INR)</td>
-                          <td className="px-3 py-2 text-right font-bold text-green-600">{formatPrice(pkg.total)}</td>
+                          <td colSpan="2" className="px-2 py-1 text-[10px] text-gray-400">
+                            +{pkg.tools.length - 4} more
+                          </td>
                         </tr>
-                      </tfoot>
-                    </table>
-                  </div>
+                      )}
+                    </tbody>
+                    <tfoot>
+                      <tr className="bg-green-50">
+                        <td className="px-2 py-1.5 font-bold text-gray-700">Total</td>
+                        <td className="px-2 py-1.5 text-right font-bold text-green-700">{formatPrice(pkg.total)}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
 
-                  <div className="flex items-center justify-end space-x-1 mt-4">
-                    <button
-                      onClick={() => openEdit(pkg)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Edit"
-                    >
-                      <FiEdit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(pkg.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Delete"
-                    >
-                      <FiTrash2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => downloadPDF(pkg)}
-                      className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                      title="Download PDF"
-                    >
-                      <FiDownload className="w-4 h-4" />
-                    </button>
-                  </div>
+                <div className="px-5 pb-4 flex items-center justify-end space-x-1" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => openEdit(pkg)}
+                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Edit"
+                  >
+                    <FiEdit2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(pkg.id)}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Delete"
+                  >
+                    <FiTrash2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => downloadPDF(pkg)}
+                    className="flex items-center space-x-1 px-3 py-1.5 text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors text-xs font-medium"
+                    title="Download PDF"
+                  >
+                    <FiDownload className="w-3.5 h-3.5" />
+                    <span>PDF</span>
+                  </button>
                 </div>
               </motion.div>
             ))}
@@ -384,6 +286,122 @@ const Packages = () => {
         )}
       </div>
 
+      {/* Package detail screen — opens on card click */}
+      <AnimatePresence>
+        {viewingPackage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-gray-50 z-50 overflow-y-auto"
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-sky-500 to-blue-600 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setViewingPackage(null)}
+                  className="text-white/80 hover:text-white flex items-center gap-2"
+                >
+                  <FiChevronLeft className="w-5 h-5" />
+                  <span className="text-sm">Back</span>
+                </button>
+                <div className="h-6 w-px bg-white/30" />
+                <div className="flex items-center gap-2">
+                  <FiPackage className="w-5 h-5 text-white" />
+                  <h2 className="text-lg font-bold text-white">Package Details</h2>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => { setViewingPackage(null); openEdit(viewingPackage); }}
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-medium flex items-center gap-2"
+                >
+                  <FiEdit2 className="w-4 h-4" />
+                  Edit
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirm('Are you sure you want to delete this package?')) {
+                      setPackages(prev => prev.filter(p => p.id !== viewingPackage.id));
+                      toast.success('Package deleted');
+                      setViewingPackage(null);
+                    }
+                  }}
+                  className="px-4 py-2 bg-white/10 hover:bg-red-500/30 text-white rounded-lg text-sm font-medium flex items-center gap-2"
+                >
+                  <FiTrash2 className="w-4 h-4" />
+                  Delete
+                </button>
+                <button
+                  onClick={() => downloadPDF(viewingPackage)}
+                  className="px-4 py-2 bg-white text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-50 flex items-center gap-2"
+                >
+                  <FiDownload className="w-4 h-4" />
+                  Download PDF
+                </button>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="max-w-5xl mx-auto p-6 space-y-6">
+              {/* Summary card */}
+              <div className="bg-white rounded-xl shadow-sm border p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-sky-100 rounded-xl flex items-center justify-center">
+                    <FiPackage className="w-7 h-7 text-sky-600" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-800">{viewingPackage.name}</h1>
+                    <p className="text-sm text-gray-500">
+                      {viewingPackage.tools?.length || 0} tool{(viewingPackage.tools?.length || 0) !== 1 ? 's' : ''}
+                      {viewingPackage.createdAt ? ` · Created ${new Date(viewingPackage.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}` : ''}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-left sm:text-right">
+                  <p className="text-xs font-bold tracking-widest text-gray-400 uppercase">Total Price</p>
+                  <p className="text-3xl font-bold text-green-600">{formatPrice(viewingPackage.total)}</p>
+                </div>
+              </div>
+
+              {/* Tools table */}
+              <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+                <div className="px-6 py-4 border-b">
+                  <h3 className="font-bold text-gray-800">Tools / Services Included</h3>
+                </div>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-sky-500 text-white">
+                      <th className="text-left px-6 py-3 font-semibold w-12">#</th>
+                      <th className="text-left px-6 py-3 font-semibold">Tool / Service</th>
+                      <th className="text-right px-6 py-3 font-semibold w-40">Price</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(viewingPackage.tools || []).map((tool, idx) => (
+                      <tr key={idx} className="border-b border-gray-100 last:border-b-0">
+                        <td className="px-6 py-3.5 text-gray-400">{idx + 1}</td>
+                        <td className="px-6 py-3.5 font-medium text-gray-800">{tool.name}</td>
+                        <td className="px-6 py-3.5 text-right font-medium text-gray-800">{formatPrice(tool.price)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="bg-green-50">
+                      <td colSpan="2" className="px-6 py-4 font-bold text-gray-700">Total Package Price</td>
+                      <td className="px-6 py-4 text-right font-bold text-green-700 text-lg">
+                        {formatPrice(viewingPackage.total)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Add / Edit package modal */}
       <AnimatePresence>
         {showModal && (
           <motion.div
@@ -398,38 +416,33 @@ const Packages = () => {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+              className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
             >
               <div className="p-6 border-b flex items-center justify-between sticky top-0 bg-white z-10">
                 <h3 className="text-xl font-bold text-gray-800 flex items-center space-x-2">
                   <FiPackage className="w-5 h-5" />
-                  <span>{editingId ? 'Edit Package' : 'Add New Package'}</span>
+                  <span>{editingId ? 'Edit Package' : 'New Package'}</span>
                 </h3>
-                <button
-                  onClick={closeModal}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
+                <button onClick={closeModal} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                   <FiX className="w-5 h-5" />
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <form onSubmit={handleSubmit} className="p-6 space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Package Name *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Package Name *</label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="e.g., Comprehensive Assessment"
+                    placeholder="e.g., Psycho-educational Testing"
                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-gray-700">Tools *</label>
+                    <label className="block text-sm font-semibold text-gray-800">TOOLS / SERVICES *</label>
                     <button
                       type="button"
                       onClick={addTool}
@@ -440,39 +453,41 @@ const Packages = () => {
                     </button>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="hidden md:grid grid-cols-12 gap-2 bg-sky-500 text-white text-xs font-semibold px-3 py-2">
+                      <div className="col-span-8">Tool / Service</div>
+                      <div className="col-span-3 text-right">Price (₹)</div>
+                      <div className="col-span-1"></div>
+                    </div>
                     {formData.tools.map((tool, index) => (
-                      <div key={index} className="flex items-center space-x-2">
+                      <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-2 px-3 py-2 border-b last:border-b-0 bg-white">
                         <input
                           type="text"
                           value={tool.name}
                           onChange={(e) => updateTool(index, 'name', e.target.value)}
                           placeholder="Tool name"
-                          className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="md:col-span-8 px-2 py-1.5 border rounded focus:ring-1 focus:ring-blue-500"
                         />
-                        <div className="relative w-36">
-                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">
-                            <FiDollarSign className="w-4 h-4" />
-                          </span>
-                          <input
-                            type="number"
-                            value={tool.price}
-                            onChange={(e) => updateTool(index, 'price', e.target.value)}
-                            placeholder="Price"
-                            min="0"
-                            step="0.01"
-                            className="w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          />
+                        <input
+                          type="number"
+                          value={tool.price}
+                          onChange={(e) => updateTool(index, 'price', e.target.value)}
+                          placeholder="0"
+                          min="0"
+                          step="0.01"
+                          className="md:col-span-3 px-2 py-1.5 border rounded text-right focus:ring-1 focus:ring-blue-500"
+                        />
+                        <div className="md:col-span-1 flex items-center justify-end">
+                          {formData.tools.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeTool(index)}
+                              className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                            >
+                              <FiTrash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
-                        {formData.tools.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeTool(index)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          >
-                            <FiTrash2 className="w-4 h-4" />
-                          </button>
-                        )}
                       </div>
                     ))}
                   </div>
@@ -483,7 +498,7 @@ const Packages = () => {
                   <span className="text-2xl font-bold text-green-600">{formatPrice(computedTotal)}</span>
                 </div>
 
-                <div className="flex space-x-3 pt-4">
+                <div className="flex space-x-3 pt-2">
                   <button
                     type="button"
                     onClick={closeModal}

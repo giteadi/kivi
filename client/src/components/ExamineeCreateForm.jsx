@@ -9,6 +9,7 @@ import {
   FiCalendar,
   FiMapPin,
   FiChevronDown,
+  FiChevronRight,
   FiInfo,
   FiCheckCircle,
   FiPhone,
@@ -17,6 +18,7 @@ import {
   FiAlertTriangle
 } from 'react-icons/fi';
 import { useSelector, useDispatch } from 'react-redux';
+import toast from 'react-hot-toast';
 import api from '../services/api';
 import { fetchPatients } from '../store/slices/patientSlice';
 import Sidebar from './Sidebar';
@@ -30,6 +32,7 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
   const [activeTab, setActiveTab] = useState('demographics');
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [savedExamineeId, setSavedExamineeId] = useState(null);
   const [errors, setErrors] = useState({});
   const [age, setAge] = useState({ years: 0, months: 0 });
   const [isDirty, setIsDirty] = useState(false);
@@ -1309,10 +1312,12 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async ({ moveToNext = false } = {}) => {
+    const effectiveId = examineeId || savedExamineeId;
+    const effectiveEdit = isEditMode || !!savedExamineeId;
     console.log('💾 CREATE/UPDATE EXAMINEE - Starting Submit Process');
-    console.log('📍 Mode:', isEditMode ? 'EDIT' : 'CREATE');
-    console.log('📍 Examinee ID:', examineeId);
+    console.log('📍 Mode:', effectiveEdit ? 'EDIT' : 'CREATE');
+    console.log('📍 Examinee ID:', effectiveId);
     
     if (!validateForm()) {
       console.log('❌ Validation Failed');
@@ -1383,11 +1388,11 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
       console.log('  - historyData:', JSON.stringify(apiData.historyData).length, 'bytes');
 
       let response;
-      if (isEditMode && examineeId) {
+      if (effectiveEdit && effectiveId) {
         // Update existing examinee
         console.log('🔧 Method: PUT (Update)');
-        console.log('🌐 API Endpoint:', `/students/${examineeId}`);
-        response = await api.request(`/students/${examineeId}`, {
+        console.log('🌐 API Endpoint:', `/students/${effectiveId}`);
+        response = await api.request(`/students/${effectiveId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(apiData)
@@ -1412,15 +1417,33 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
         // Refresh the patients list
         dispatch(fetchPatients());
         setIsDirty(false);
-        onSave && onSave(result.data);
+
+        // After first create, remember the ID so further saves UPDATE instead of creating duplicates
+        const newId = result.data?.id || result.data?._id;
+        if (!effectiveId && newId) {
+          setSavedExamineeId(newId);
+        }
+
+        if (moveToNext) {
+          toast.success(effectiveEdit ? 'Changes saved' : 'Examinee saved');
+          const idx = tabs.findIndex(t => t.id === activeTab);
+          if (idx >= 0 && idx < tabs.length - 1) {
+            setActiveTab(tabs[idx + 1].id);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        } else {
+          onSave && onSave(result.data);
+        }
       } else {
         console.error('❌ Submit Failed:', result.message);
-        setErrors({ submit: result.message || `Failed to ${isEditMode ? 'update' : 'create'} examinee` });
+        toast.error(result.message || `Failed to ${effectiveEdit ? 'update' : 'create'} examinee`);
+        setErrors({ submit: result.message || `Failed to ${effectiveEdit ? 'update' : 'create'} examinee` });
       }
     } catch (error) {
-      console.error(`❌ Submit Error (${isEditMode ? 'update' : 'create'}):`, error);
+      console.error(`❌ Submit Error (${effectiveEdit ? 'update' : 'create'}):`, error);
       console.error('❌ Error Stack:', error.stack);
-      setErrors({ submit: `An error occurred while ${isEditMode ? 'updating' : 'creating'} the examinee` });
+      toast.error(`An error occurred while ${effectiveEdit ? 'updating' : 'creating'} the examinee`);
+      setErrors({ submit: `An error occurred while ${effectiveEdit ? 'updating' : 'creating'} the examinee` });
     } finally {
       setIsSaving(false);
       console.log('💾 Submit Process Complete');
@@ -1473,6 +1496,9 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
     { id: 'history', label: 'History' },
     { id: 'documents', label: 'Documents' }
   ];
+
+  const currentTabIndex = tabs.findIndex(t => t.id === activeTab);
+  const isLastTab = currentTabIndex === tabs.length - 1;
 
   const inputClass = (field) => `
     w-full px-3 py-2 border rounded-lg text-sm transition-all duration-200
@@ -6646,6 +6672,44 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
                 </div>
               )}
             </AnimatePresence>
+          </div>
+
+          {/* Footer Navigation — save progress and move between tabs */}
+          <div className="px-6 py-4 border-t bg-gray-50/50 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => {
+                if (currentTabIndex > 0) {
+                  setActiveTab(tabs[currentTabIndex - 1].id);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }}
+              disabled={currentTabIndex <= 0}
+              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-all text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <FiArrowLeft className="w-4 h-4" />
+              <span>Previous</span>
+            </button>
+
+            <span className="text-xs text-gray-400">
+              Step {currentTabIndex + 1} of {tabs.length} — {tabs[currentTabIndex]?.label}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => handleSubmit({ moveToNext: !isLastTab })}
+              disabled={isSaving}
+              className="flex items-center space-x-2 px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-sm text-sm font-medium disabled:opacity-50"
+            >
+              <span>
+                {isSaving
+                  ? 'Saving...'
+                  : isLastTab
+                    ? (isEditMode || savedExamineeId ? 'Update & Finish' : 'Save & Finish')
+                    : 'Save & Next'}
+              </span>
+              {!isLastTab && <FiChevronRight className="w-4 h-4" />}
+            </button>
           </div>
 
           {/* Footer Error Message */}
