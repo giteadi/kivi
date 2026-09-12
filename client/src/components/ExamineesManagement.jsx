@@ -985,7 +985,7 @@ const ExamineesManagement = ({ onViewPatient, onEditPatient, onDeletePatient, on
       const totalPrice = isPackage ? selectedPackage.price : (itemsCount * ASSESSMENT_PRICE);
       
       // Get student info from first selected item
-      const firstStudent = items.find(i => selectedItems.includes(i.id)) || items[0];
+      const firstStudent = transformedPatients.find(i => selectedItems.includes(i.id)) || transformedPatients[0];
       
       // Build items array for detailed invoice
       let invoiceItems = [];

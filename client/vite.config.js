@@ -7,6 +7,11 @@ const env = loadEnv('', process.cwd(), '')
 
 export default defineConfig({
   plugins: [react()],
+
+  // Strip debug logging from production builds (dev keeps console output)
+  esbuild: {
+    pure: ['console.log', 'console.debug', 'console.info', 'console.warn']
+  },
   
   resolve: {
     alias: {

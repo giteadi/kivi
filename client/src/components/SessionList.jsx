@@ -21,7 +21,7 @@ import {
   FiBell,
   FiGrid
 } from 'react-icons/fi';
-import { fetchPlans } from '../store/slices/plansSlice';
+import { fetchSessions, deleteSession } from '../store/slices/sessionSlice';
 import SessionCreateForm from './SessionCreateForm';
 import SessionEditForm from './SessionEditForm';
 import SessionCalendar from './SessionCalendar';
@@ -30,24 +30,20 @@ import { useSidebar } from '../App';
 import toast from 'react-hot-toast';
 
 const SessionList = ({ onViewEncounter }) => {
-  console.log('🔍 SessionList: Component initialized');
 
   const dispatch = useDispatch();
-  const { plans, loading, error } = useSelector((state) => state.plans);
+  const { sessions: sessionsData, loading, error } = useSelector((state) => state.sessions);
   const sidebarContext = useSidebar() || {};
   const { sidebarCollapsed = false } = sidebarContext;
 
-  // Map plans to sessions for consistent naming
-  const sessions = plans || [];
+  const sessions = sessionsData || [];
 
-  console.log('🔍 SessionList: Redux state - plans:', plans?.length || 0, 'loading:', loading, 'error:', error);
-  
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [selectedSession, setSelectedSession] = useState(null);
   const [viewMode, setViewMode] = useState('card'); // card, table, or calendar
   const [currentPage, setCurrentPage] = useState(1);
-  const [plansPerPage] = useState(12);
+  const [sessionsPerPage] = useState(12);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     status: '',
@@ -63,13 +59,13 @@ const SessionList = ({ onViewEncounter }) => {
   const pollingInterval = useRef(null);
 
   useEffect(() => {
-    console.log('🔍 SessionList: useEffect triggered - fetching plans');
-    dispatch(fetchPlans());
-    
+    console.log('🔍 SessionList: useEffect triggered - fetching sessions');
+    dispatch(fetchSessions());
+
     // Set up polling for real-time updates
     pollingInterval.current = setInterval(() => {
-      console.log('🔍 SessionList: Polling - fetching updated plans');
-      dispatch(fetchPlans());
+      console.log('🔍 SessionList: Polling - fetching updated sessions');
+      dispatch(fetchSessions());
     }, 10000); // Poll every 10 seconds
     
     return () => {
@@ -82,19 +78,19 @@ const SessionList = ({ onViewEncounter }) => {
 
   // Detect new plans
   useEffect(() => {
-    console.log('🔍 SessionList: Plans updated, checking for new plans. Previous count:', previousSessionsCount.current, 'Current count:', plans.length);
+    console.log('🔍 SessionList: Sessions updated, checking for new sessions. Previous count:', previousSessionsCount.current, 'Current count:', sessions.length);
 
     let timeoutId;
-    if (plans.length > previousSessionsCount.current && previousSessionsCount.current > 0) {
-      const latestPlan = plans[0]; // Assuming newest plan is first
-      console.log('🔍 SessionList: New plan detected:', latestPlan);
-      setNewSessions(prev => new Set(prev).add(latestPlan.id));
+    if (sessions.length > previousSessionsCount.current && previousSessionsCount.current > 0) {
+      const latestSession = sessions[0]; // Assuming newest session is first
+      console.log('🔍 SessionList: New session detected:', latestSession);
+      setNewSessions(prev => new Set(prev).add(latestSession.id));
       setShowNotification(true);
       timeoutId = setTimeout(() => setShowNotification(false), 5000);
     }
-    previousSessionsCount.current = plans.length;
+    previousSessionsCount.current = sessions.length;
     return () => clearTimeout(timeoutId);
-  }, [plans]);
+  }, [sessions]);
 
   // Helper function to get client name
   const getClientName = (session) => {
@@ -156,31 +152,15 @@ const SessionList = ({ onViewEncounter }) => {
     const matchesDateFrom = filters.date_from === '' || new Date(session.session_date) >= new Date(filters.date_from);
     const matchesDateTo = filters.date_to === '' || new Date(session.session_date) <= new Date(filters.date_to);
 
-    const matches = matchesSearch && matchesStatus && matchesCentre && matchesTherapist && matchesDateFrom && matchesDateTo;
-
-    if (!matches) {
-      console.log('🔍 SessionList: Session filtered out:', session.id, {
-        matchesSearch,
-        matchesStatus,
-        matchesCentre,
-        matchesTherapist,
-        matchesDateFrom,
-        matchesDateTo
-      });
-    }
-
-    return matches;
+    return matchesSearch && matchesStatus && matchesCentre && matchesTherapist && matchesDateFrom && matchesDateTo;
   });
 
-  console.log('🔍 SessionList: Filtered sessions count:', filteredSessions.length, 'out of', sessions.length);
 
   // Pagination
   const indexOfLastSession = currentPage * sessionsPerPage;
   const indexOfFirstSession = indexOfLastSession - sessionsPerPage;
   const currentSessions = filteredSessions.slice(indexOfFirstSession, indexOfLastSession);
   const totalPages = Math.ceil(filteredSessions.length / sessionsPerPage);
-
-  console.log('🔍 SessionList: Pagination - currentPage:', currentPage, 'totalPages:', totalPages, 'currentSessions:', currentSessions.length);
 
   const handleCreateSession = async (sessionData) => {
     console.log('🔍 SessionList: handleCreateSession called with data:', sessionData);

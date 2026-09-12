@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { FiSearch, FiFilter, FiDownload, FiUser, FiMail, FiDollarSign, FiRefreshCw } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import { useToast } from './Toast';
+import api from '../services/api';
 
 const DoctorRevenue = () => {
   const toast = useToast();

@@ -1101,22 +1101,6 @@ export default function ConnersManagement() {
     return nextData;
   }
 
-  // Evaluate IF formulas in Excel data
-  function evaluateIfFormulas(sheetData) {
-    return sheetData.map((row, rIdx) => 
-      row.map((cell, cIdx) => {
-        if (typeof cell === 'string' && cell.startsWith('=')) {
-          try {
-            return evalSimpleIF(cell, sheetData);
-          } catch {
-            return cell;
-          }
-        }
-        return cell;
-      })
-    );
-  }
-
   function evalFormula(formula, grid) {
     if (!formula) return "";
     let expr = formula.toString().trim();
@@ -1552,10 +1536,8 @@ export default function ConnersManagement() {
             setSheetData([["__html__", "<p>Document parse nahi hua.</p>"]]);
           }
         } else {
-          const errorText = await parseResponse.text();
-          console.error('[DEBUG] View - Parse FAILED! Status:', parseResponse.status);
-          console.error('[DEBUG] View - Error response body:', errorText);
-          setSheetData([["__html__", "<p>Document load nahi hua. Error: " + parseResponse.status + "</p>"]]);
+          console.error('[DEBUG] View - Parse FAILED!', parseResult);
+          setSheetData([["__html__", "<p>Document load nahi hua.</p>"]]);
         }
         setSheets([{ name: "Document", data: [] }]);
         console.log('[DEBUG] Word document processing complete');

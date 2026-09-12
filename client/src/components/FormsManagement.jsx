@@ -1839,17 +1839,12 @@ function convertIFs(s, mask) {
             setSheetData([["__html__", "<p>Document parse nahi hua.</p>"]]);
           }
         } else {
-          const errorText = await parseResponse.text();
-          console.error('[DEBUG] View - Parse FAILED! Status:', parseResponse.status);
-          console.error('[DEBUG] View - Error response body:', errorText);
-          
+          console.error('[DEBUG] View - Parse FAILED!', parseResult);
+
           // Parse error message from response
           let errorMsg = "Unknown error";
-          try {
-            const errorJson = JSON.parse(errorText);
-            errorMsg = errorJson.message || errorJson.error || errorMsg;
-          } catch {
-            errorMsg = errorText || errorMsg;
+          if (parseResult?.message || parseResult?.error) {
+            errorMsg = parseResult.message || parseResult.error;
           }
           
           // Create error message with delete button

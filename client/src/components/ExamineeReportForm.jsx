@@ -3,6 +3,22 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import html2canvas from "html2canvas";
 import * as XLSX from "xlsx";
+import {
+  AlignmentType,
+  BorderStyle,
+  Document,
+  Header,
+  HeadingLevel,
+  LevelFormat,
+  Packer,
+  Paragraph,
+  ShadingType,
+  Table,
+  TableCell,
+  TableRow,
+  TextRun,
+  WidthType
+} from "docx";
 import toast from "react-hot-toast";
 import api from "../services/api";
 import { examineeApi } from "../services/examineeApi";

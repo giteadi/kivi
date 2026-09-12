@@ -62,7 +62,7 @@ export const getLogoDataUrl = () =>
         canvas.getContext('2d').drawImage(img, 0, 0);
         cachedLogo = canvas.toDataURL('image/png');
         resolve(cachedLogo);
-      } catch (e) {
+      } catch {
         resolve(null);
       }
     };

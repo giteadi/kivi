@@ -24,9 +24,6 @@ import { fetchPatients } from '../store/slices/patientSlice';
 import Sidebar from './Sidebar';
 
 const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActiveItem, examineeId = null, isEditMode = false, onDelete }) => {
-  console.log('🚀 ExamineeCreateForm MOUNTED!');
-  console.log('📍 Props:', { examineeId, isEditMode, activeItem });
-  
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const [activeTab, setActiveTab] = useState('demographics');
@@ -1511,17 +1508,6 @@ const ExamineeCreateForm = ({ onSave, onCancel, activeItem = 'patients', setActi
 
   const labelClass = "block text-xs font-medium text-gray-600 mb-1";
   const requiredMark = <span className="text-red-500 ml-0.5">*</span>;
-
-  // Debug logs for rendering
-  console.log('🎨 RENDER DEBUG:');
-  console.log('📍 activeTab:', activeTab);
-  console.log('📍 historySubTab:', historySubTab);
-  console.log('📍 isEditMode:', isEditMode);
-  console.log('📍 isLoading:', isLoading);
-  console.log('📍 languageSampleReportData:', languageSampleReportData);
-  console.log('📍 educationSampleReportData:', educationSampleReportData);
-  console.log('📍 healthSampleReportData:', healthSampleReportData);
-  console.log('📍 employmentSampleReportData:', employmentSampleReportData);
 
   // Show loading state while fetching data in edit mode
   if (isLoading) {
