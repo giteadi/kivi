@@ -19,6 +19,18 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
+    // If a lazy chunk failed to load after a deployment, auto-reload once to fetch fresh assets
+    const isChunkError = 
+      error?.message?.includes('dynamically imported module') ||
+      error?.message?.includes('Loading chunk') ||
+      error?.message?.includes('Failed to fetch dynamically imported module');
+
+    if (isChunkError && !sessionStorage.getItem('chunk_reload_attempted')) {
+      sessionStorage.setItem('chunk_reload_attempted', 'true');
+      window.location.reload();
+      return;
+    }
+
     // Log error details
     const errorId = `ERR_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     

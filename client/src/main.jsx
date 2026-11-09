@@ -7,6 +7,14 @@ import { ThemeProvider } from './contexts/ThemeContext.jsx'
 import './index.css'
 import App from './App.jsx'
 
+// Automatically reload page if a new deployment changed chunk hashes
+window.addEventListener('vite:preloadError', (event) => {
+  event.preventDefault();
+  window.location.reload();
+});
+
+sessionStorage.removeItem('chunk_reload_attempted');
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Provider store={store}>
