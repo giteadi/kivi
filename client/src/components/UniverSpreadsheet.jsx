@@ -69,13 +69,13 @@ function buildStyledSheet(name, data, formulaCache, rowHeights, colWidths, merge
   for (const [key, formula] of Object.entries(formulas)) {
     const [rowIdx, colIdx] = key.split('_').map(Number);
     if (Number.isNaN(rowIdx) || Number.isNaN(colIdx)) continue;
+    if (!formula || typeof formula !== 'string' || !formula.trim()) continue;
     sheet.cellData[rowIdx] ||= {};
     sheet.cellData[rowIdx][colIdx] ||= {};
     sheet.cellData[rowIdx][colIdx].f = formula.startsWith('=') ? formula : `=${formula}`;
-    if (typeof sheet.cellData[rowIdx][colIdx].v === 'string' && sheet.cellData[rowIdx][colIdx].v.startsWith('=')) {
-      delete sheet.cellData[rowIdx][colIdx].v;
-      delete sheet.cellData[rowIdx][colIdx].t;
-    }
+    // Always clear pre-filled static value and type so Univer's formula engine calculates it freshly
+    delete sheet.cellData[rowIdx][colIdx].v;
+    delete sheet.cellData[rowIdx][colIdx].t;
   }
 
   sheet.rowData = {};
@@ -238,6 +238,9 @@ const UniverSpreadsheet = forwardRef(function UniverSpreadsheet({
               header: showToolbar,
               formulaBar: showFormulaBar,
               footer: showSheetTabs,
+              formula: {
+                initialFormulaComputing: 0, // CalculationMode.FORCED
+              },
               // Imported sheets legitimately store digits as text (e.g. "1", "0"
               // score columns). Suppress Univer's "number stored as text" popup
               // and the green corner marks it adds to every such cell.
@@ -325,6 +328,25 @@ const UniverSpreadsheet = forwardRef(function UniverSpreadsheet({
           try {
             const { workbookData } = await importFile(initialFile, { includeImages: true });
             if (workbookData) {
+              if (workbookData.sheets) {
+                Object.values(workbookData.sheets).forEach(s => {
+                  if (!s?.cellData) return;
+                  Object.values(s.cellData).forEach(row => {
+                    if (!row) return;
+                    Object.values(row).forEach(cell => {
+                      if (!cell) return;
+                      if (cell.v && typeof cell.v === 'object' && cell.v.formula) {
+                        if (!cell.f) cell.f = cell.v.formula.startsWith('=') ? cell.v.formula : `=${cell.v.formula}`;
+                        delete cell.v;
+                        delete cell.t;
+                      } else if (cell.f) {
+                        delete cell.v;
+                        delete cell.t;
+                      }
+                    });
+                  });
+                });
+              }
               univerAPI.createWorkbook(workbookData);
               activateTargetSheet(sheetName);
             } else {

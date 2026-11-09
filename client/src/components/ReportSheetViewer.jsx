@@ -117,69 +117,116 @@ function reEvaluateFormulas(sheetData, cache) {
       if (!nextData[r]) continue;
       try {
         const result = evalFormula(cache[key], nextData);
-        console.log('[DEBUG] Formula evaluated:', { key, formula: cache[key], result, pass });
         nextData[r][c] = result;
       } catch (err) {
-        console.error('[DEBUG] Formula error:', { key, formula: cache[key], error: err.message });
+        // Silently preserve formula cell on eval error
       }
     }
   }
   return nextData;
 }
 
+function colToLetters(idx) {
+  let letters = "";
+  idx += 1;
+  while (idx > 0) {
+    const rem = (idx - 1) % 26;
+    letters = String.fromCharCode(65 + rem) + letters;
+    idx = Math.floor((idx - 1) / 26);
+  }
+  return letters;
+}
+
+function lettersToCol(letters) {
+  let idx = 0;
+  for (const ch of letters.toUpperCase()) idx = idx * 26 + (ch.charCodeAt(0) - 64);
+  return idx - 1;
+}
+
+const SHEET_FN = {
+  SUM: (...a) => SHEET_FN._nums(a).reduce((s, n) => s + n, 0),
+  AVERAGE: (...a) => {
+    const n = SHEET_FN._nums(a);
+    return n.length ? n.reduce((s, v) => s + v, 0) / n.length : 0;
+  },
+  MIN: (...a) => { const n = SHEET_FN._nums(a); return n.length ? Math.min(...n) : 0; },
+  MAX: (...a) => { const n = SHEET_FN._nums(a); return n.length ? Math.max(...n) : 0; },
+  COUNT: (...a) => SHEET_FN._nums(a).length,
+  COUNTA: (...a) => a.flat(Infinity).filter((v) => v !== "" && v != null).length,
+  ROUND: (v, d = 0) => Number(Math.round(Number(v) + "e" + d) + "e-" + d) || 0,
+  ROUNDUP: (v, d = 0) => Math.ceil(Number(v) * 10 ** d) / 10 ** d,
+  ROUNDDOWN: (v, d = 0) => Math.floor(Number(v) * 10 ** d) / 10 ** d,
+  ABS: (v) => Math.abs(Number(v)),
+  INT: (v) => Math.floor(Number(v)),
+  SQRT: (v) => Math.sqrt(Number(v)),
+  POWER: (v, p) => Number(v) ** Number(p),
+  AND: (...a) => a.flat(Infinity).every(Boolean),
+  OR: (...a) => a.flat(Infinity).some(Boolean),
+  NOT: (v) => !v,
+  CONCATENATE: (...a) => a.flat(Infinity).join(""),
+  TRIM: (v) => String(v ?? "").trim(),
+  UPPER: (v) => String(v ?? "").toUpperCase(),
+  LOWER: (v) => String(v ?? "").toLowerCase(),
+  LEN: (v) => String(v ?? "").length,
+  IFERROR: (v, fallback) => (v === null || v === undefined || Number.isNaN(v) ? fallback : v),
+  _nums: (args) =>
+    args.flat(Infinity)
+      .map((v) => (typeof v === "number" ? v : parseFloat(v)))
+      .filter((v) => typeof v === "number" && !Number.isNaN(v)),
+};
+
+const FN_NAMES = Object.keys(SHEET_FN).filter((k) => !k.startsWith("_"));
+const SAFE_EXPR = /^[\s\d.+\-*/%^()<>=!,:&|?[\]\uE000A-Za-z_]*$/;
+
 // Formula evaluator
 function evalFormula(formula, grid) {
   if (!formula) return "";
-  let expr = formula.toString().trim();
-  if (expr.startsWith("=")) expr = expr.slice(1);
-  let e = expr.toUpperCase();
+  let e = formula.toString().trim();
+  if (e.startsWith("=")) e = e.slice(1);
 
-  const getCellValue = (ref) => {
-    const m = ref.match(/^([A-Z]+)(\d+)$/i);
+  const LIT_DELIM = "\uE000";
+  const literals = [];
+  const mask = (text) => `${LIT_DELIM}${literals.push(text) - 1}${LIT_DELIM}`;
+  e = e.replace(/"([^"]*)"/g, (_, text) => mask(text));
+  e = e.toUpperCase();
+
+  const cellValue = (ref) => {
+    const m = ref.match(/^\$?([A-Z]+)\$?(\d+)$/);
     if (!m) return 0;
-    const c = m[1].toUpperCase().charCodeAt(0) - 65;
-    const r = parseInt(m[2]) - 1;
-    const cell = grid[r]?.[c];
-    const raw = (cell && typeof cell === "object") ? (cell.raw ?? cell.value ?? "") : cell;
+    const cell = grid[parseInt(m[2], 10) - 1]?.[lettersToCol(m[1])];
+    const raw = cell && typeof cell === "object" ? (cell.raw ?? cell.value ?? "") : cell;
     if (raw === "" || raw === null || raw === undefined) return 0;
-    const val = parseFloat(String(raw));
-    return isNaN(val) ? 0 : val;
+    const str = String(raw).trim();
+    const num = Number(str);
+    return !Number.isNaN(num) && str !== "" ? num : str;
   };
 
-  // Step 1: Resolve SUM() — compute actual numeric total inline
-  e = e.replace(/SUM\(([^)]+)\)/g, (_, inner) => {
-    let total = 0;
-    inner.split(",").forEach(part => {
-      part = part.trim();
-      const range = part.match(/^([A-Z]+)(\d+):([A-Z]+)(\d+)$/);
-      if (range) {
-        const c1 = range[1].charCodeAt(0) - 65, r1 = parseInt(range[2]) - 1;
-        const c2 = range[3].charCodeAt(0) - 65, r2 = parseInt(range[4]) - 1;
-        for (let r = Math.min(r1,r2); r <= Math.max(r1,r2); r++)
-          for (let c = Math.min(c1,c2); c <= Math.max(c1,c2); c++)
-            total += getCellValue(String.fromCharCode(c+65) + (r+1));
-      } else {
-        total += getCellValue(part);
-      }
-    });
-    return String(total);
+  const emit = (value) => (typeof value === "number" ? String(value) : mask(value));
+
+  // Range resolution A1:B5 -> [val1, val2, ...]
+  e = e.replace(/\$?([A-Z]+)\$?(\d+):\$?([A-Z]+)\$?(\d+)/g, (_, c1, r1, c2, r2) => {
+    const [ca, cb] = [lettersToCol(c1), lettersToCol(c2)].sort((x, y) => x - y);
+    const [ra, rb] = [+r1 - 1, +r2 - 1].sort((x, y) => x - y);
+    const cells = [];
+    for (let r = ra; r <= rb; r++) {
+      for (let c = ca; c <= cb; c++) cells.push(emit(cellValue(colToLetters(c) + (r + 1))));
+    }
+    return `[${cells.join(",")}]`;
   });
 
-  // Step 2: Replace all cell refs with their numeric values
-  // Use a function-based replace so each ref gets its own lookup
-  e = e.replace(/([A-Z]+)(\d+)/g, (match) => String(getCellValue(match)));
+  // Function calls
+  e = e.replace(/\b([A-Z][A-Z0-9.]*)\s*\(/g, (match, name) =>
+    FN_NAMES.includes(name) ? `__fn.${name}(` : match
+  );
 
-  // Step 3: Strip quoted number strings "3" → 3
-  e = e.replace(/"(\d+(?:\.\d+)?)"/g, "$1");
+  // Single cell references
+  e = e.replace(/(?<!\.)\$?\b([A-Z]{1,3})\$?(\d+)\b/g, (match) => emit(cellValue(match)));
 
-  // Step 4: Remove trailing commas before ) 
-  e = e.replace(/,\s*\)/g, ")");
-
-  // Step 5: Convert nested IF(cond,t,f) → JS ternary char-by-char
+  // Convert IFs
   function convertIFs(s) {
     let out = "", i = 0;
     while (i < s.length) {
-      if (s.slice(i, i+3) === "IF(") {
+      if (s.slice(i, i + 3) === "IF(" && !/[A-Z0-9_.]/.test(s[i - 1] || "")) {
         i += 3;
         let depth = 0, args = [], cur = "";
         while (i < s.length) {
@@ -188,15 +235,14 @@ function evalFormula(formula, grid) {
           else if (ch === ")") {
             if (depth === 0) { args.push(cur.trim()); i++; break; }
             depth--; cur += ch;
-          } else if (ch === "," && depth === 0) {
-            args.push(cur.trim()); cur = "";
-          } else { cur += ch; }
+          } else if (ch === "," && depth === 0) { args.push(cur.trim()); cur = ""; }
+          else { cur += ch; }
           i++;
         }
         if (args.length >= 3)
           out += `((${convertIFs(args[0])})?(${convertIFs(args[1])}):(${convertIFs(args[2])}))`;
         else if (args.length === 2)
-          out += `((${convertIFs(args[0])})?(${convertIFs(args[1])}):(0))`;
+          out += `((${convertIFs(args[0])})?(${convertIFs(args[1])}):(${mask("")}))`;
         else out += "0";
       } else { out += s[i++]; }
     }
@@ -204,17 +250,25 @@ function evalFormula(formula, grid) {
   }
   e = convertIFs(e);
 
-  // Step 6: Excel <> → JS !==, bare = → ===
   e = e.replace(/<>/g, "!==");
   e = e.replace(/(?<![<>=!])=(?![>=])/g, "===");
+  e = e.replace(/&/g, "+");
+  e = e.replace(/(\d)\s*\^\s*/g, "$1**");
+  e = e.replace(/,\s*\)/g, ")");
 
-  // Step 7: Evaluate
+  if (!SAFE_EXPR.test(e)) return 0;
+
+  e = e.replace(new RegExp(`${LIT_DELIM}\\d+${LIT_DELIM}`, "g"), (m) => {
+    const i = m.replace(new RegExp(LIT_DELIM, "g"), "");
+    return JSON.stringify(literals[+i]);
+  });
+
   try {
-    const result = new Function(`return (${e})`)();
-    if (result === null || result === undefined) return 0;
+    const result = new Function("__fn", `return (${e})`)(SHEET_FN);
+    if (result === null || result === undefined) return "";
     if (typeof result === "boolean") return result ? 1 : 0;
-    if (typeof result === "string") { const n = parseFloat(result); return isNaN(n) ? result : n; }
-    if (!isFinite(result) || isNaN(result)) return 0;
+    if (typeof result === "string") return result;
+    if (!isFinite(result) || Number.isNaN(result)) return 0;
     return Number.isInteger(result) ? result : parseFloat(result.toFixed(4));
   } catch { return 0; }
 }

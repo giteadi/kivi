@@ -1,181 +1,173 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiChevronRight } from 'react-icons/fi';
+import { FiX, FiLogOut, FiCheckCircle } from 'react-icons/fi';
 import { 
   FiHome, 
   FiCalendar, 
-  FiUsers, 
   FiUser, 
   FiUserCheck, 
   FiMapPin,
-  FiList,
-  FiFileText,
-  FiDollarSign,
-  FiPercent,
-  FiCreditCard,
-  FiTrendingUp,
-  FiActivity
+  FiFileText, 
+  FiCreditCard, 
+  FiActivity,
+  FiUpload,
+  FiPackage,
+  FiMessageSquare,
+  FiShield
 } from 'react-icons/fi';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { logout } from '../store/slices/authSlice';
+import LogoImage from './LogoImage';
+
+const routeMapping = {
+  'dashboard': '/dashboard',
+  'patients': '/examinees',
+  'doctors': '/therapists',
+  'template-manager': '/templates',
+  'forms': '/forms',
+  'conners': '/conners',
+  'clinics': '/centres',
+  'assessment-calendar': '/assessment-calendar',
+  'billing-records': '/billing',
+  'financial-packages': '/packages/financial',
+  'invoices': '/invoices',
+  'queries': '/admin/queries',
+  'center-visibility': '/admin/center-visibility',
+};
 
 const MobileMenu = ({ isOpen, setIsOpen, activeItem, setActiveItem }) => {
-  const [expandedSections, setExpandedSections] = useState({});
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: FiHome, section: 'MAIN' },
-    { 
-      id: 'encounters', 
-      label: 'Sessions', 
-      icon: FiUsers, 
-      section: 'MAIN',
-      hasSubmenu: true,
-      submenu: [
-        { id: 'assessment-list', label: 'Assessment List', icon: FiFileText },
-        { id: 'therapy-list', label: 'Therapy List', icon: FiActivity }
-      ]
-    },
     { id: 'patients', label: 'Examinees', icon: FiUser, section: 'USERS' },
     { id: 'doctors', label: 'Therapists', icon: FiUserCheck, section: 'USERS' },
     { id: 'template-manager', label: 'Report Templates', icon: FiFileText, section: 'USERS' },
-    // { id: 'receptionists', label: 'Staff', icon: FiUser, section: 'USERS' }, // Temporarily disabled
-    { id: 'clinics', label: 'Centers', icon: FiMapPin, section: 'CENTER' },
-    { id: 'clinic-revenue', label: 'Center Revenue', icon: FiTrendingUp, section: 'FINANCIAL' },
-    // { id: 'doctor-revenue', label: 'Therapist Revenue', icon: FiDollarSign, section: 'FINANCIAL' }, // Temporarily disabled
-    { id: 'taxes', label: 'Taxes', icon: FiPercent, section: 'FINANCIAL' },
+    { id: 'forms', label: 'Clinical Forms', icon: FiUpload, section: 'USERS' },
+    { id: 'conners', label: 'Conners Rating', icon: FiActivity, section: 'USERS' },
+    { id: 'clinics', label: 'Centers Network', icon: FiMapPin, section: 'CENTER' },
+    { id: 'assessment-calendar', label: 'Calendar', icon: FiCalendar, section: 'CENTER' },
     { id: 'billing-records', label: 'Billing Records', icon: FiCreditCard, section: 'FINANCIAL' },
+    { id: 'financial-packages', label: 'Packages', icon: FiPackage, section: 'FINANCIAL' },
+    { id: 'invoices', label: 'Invoices', icon: FiFileText, section: 'FINANCIAL' },
   ];
 
   const sections = ['MAIN', 'USERS', 'CENTER', 'FINANCIAL'];
-
-  const toggleSection = (itemId) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [itemId]: !prev[itemId]
-    }));
+  const sectionLabels = {
+    MAIN: 'Overview',
+    USERS: 'Clinical',
+    CENTER: 'Centers',
+    FINANCIAL: 'Billing'
   };
 
-  const handleItemClick = (itemId, hasSubmenu = false) => {
-    if (hasSubmenu) {
-      toggleSection(itemId);
-    } else {
-      setActiveItem(itemId);
-      setIsOpen(false);
-    }
+  const handleItemClick = (itemId) => {
+    setActiveItem(itemId);
+    setIsOpen(false);
   };
 
-  const isActiveItem = (itemId) => {
-    if (itemId === 'encounters') {
-      return activeItem === 'assessment-list' || activeItem === 'therapy-list';
-    }
-    return activeItem === itemId;
+  const handleLogout = () => {
+    dispatch(logout());
+    setIsOpen(false);
   };
+
+  const isActiveItem = (itemId) => activeItem === itemId;
+
+  const userInitials = user?.first_name 
+    ? `${user.first_name[0]}${user?.last_name ? user.last_name[0] : ''}`.toUpperCase()
+    : 'AD';
 
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
+          {/* iOS Frosted Dimmer Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsOpen(false)}
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 lg:hidden"
           />
           
-          {/* Mobile Menu */}
+          {/* Native iOS Navigation Drawer */}
           <motion.div
-            initial={{ x: -300 }}
+            initial={{ x: '-100%' }}
             animate={{ x: 0 }}
-            exit={{ x: -300 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed left-0 top-0 w-80 h-full bg-white dark:bg-[#1c1c1e] shadow-xl dark:shadow-black/40 z-50 lg:hidden overflow-y-auto"
+            exit={{ x: '-100%' }}
+            transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+            className="fixed left-0 top-0 w-[82vw] max-w-[300px] h-full bg-[#fbfbfd]/95 backdrop-blur-2xl shadow-2xl z-50 lg:hidden flex flex-col border-r border-slate-200/80"
           >
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b dark:border-gray-800">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">M</span>
-                </div>
-                <span className="text-xl font-semibold text-gray-800 dark:text-white">MindSaid Learning</span>
-              </div>
+            {/* Header with Centrix Logo */}
+            <div className="flex items-center justify-between px-4 h-14 border-b border-slate-200/70 bg-white/60">
+              <LogoImage size={26} variant="full" />
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-[#2c2c2e] rounded-lg"
+                className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 hover:bg-black/[0.04] active:scale-95 transition-all"
+                aria-label="Close menu"
               >
-                <FiX className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <FiX className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Menu Items */}
-            <div className="py-4 overflow-y-auto h-full pb-20">
+            {/* Menu Items (Compact iOS Inset Grouping) */}
+            <div className="flex-1 overflow-y-auto p-2.5 space-y-3 scrollbar-none">
               {sections.map((section) => (
-                <div key={section} className="mb-4">
-                  <div className="px-6 mb-2">
-                    <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                      {section}
-                    </span>
+                <div key={section}>
+                  <div className="px-2.5 pb-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                    {sectionLabels[section] || section}
                   </div>
-                  <div className="space-y-1">
-                  {menuItems
-                    .filter(item => item.section === section)
-                    .map((item) => (
-                      <div key={item.id}>
-                        <motion.button
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => handleItemClick(item.id, item.hasSubmenu)}
-                          className={`w-full flex items-center justify-between px-6 py-2.5 text-left transition-colors ${
-                            isActiveItem(item.id)
-                              ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-r-2 border-blue-600'
-                              : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2c2c2e]'
-                          }`}
-                        >
-                          <div className="flex items-center">
-                            <item.icon className="w-5 h-5 mr-3" />
-                            <span className="font-medium">{item.label}</span>
-                          </div>
-                          {item.hasSubmenu && (
-                            <motion.div
-                              animate={{ rotate: expandedSections[item.id] ? 90 : 0 }}
-                              transition={{ duration: 0.2 }}
-                            >
-                              <FiChevronRight className="w-4 h-4" />
-                            </motion.div>
-                          )}
-                        </motion.button>
-
-                        {/* Submenu */}
-                        <AnimatePresence>
-                          {item.hasSubmenu && expandedSections[item.id] && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: 'auto', opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.2 }}
-                              className="overflow-hidden"
-                            >
-                              {item.submenu.map((subItem) => (
-                                <motion.button
-                                  key={subItem.id}
-                                  whileTap={{ scale: 0.95 }}
-                                  onClick={() => handleItemClick(subItem.id)}
-                                  className={`w-full flex items-center px-12 py-2 text-left transition-colors ${
-                                    activeItem === subItem.id
-                                      ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-r-2 border-blue-600'
-                                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2c2c2e]'
-                                  }`}
-                                >
-                                  <subItem.icon className="w-4 h-4 mr-3" />
-                                  <span className="font-medium text-sm">{subItem.label}</span>
-                                </motion.button>
-                              ))}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    ))}
+                  <div className="space-y-0.5">
+                    {menuItems
+                      .filter(item => item.section === section)
+                      .map((item) => {
+                        const active = isActiveItem(item.id);
+                        const Icon = item.icon;
+                        return (
+                          <Link
+                            key={item.id}
+                            to={routeMapping[item.id] || '/'}
+                            onClick={() => handleItemClick(item.id)}
+                            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all active:scale-[0.98] ${
+                              active
+                                ? 'bg-[#0071e3] text-white font-semibold shadow-sm'
+                                : 'text-slate-600 hover:text-slate-900 hover:bg-black/[0.04]'
+                            }`}
+                          >
+                            <Icon className={`w-4 h-4 flex-shrink-0 ${active ? 'text-white' : 'text-slate-400'}`} />
+                            <span className="truncate">{item.label}</span>
+                          </Link>
+                        );
+                      })}
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* User Mini-Card Footer with One-Tap Sign Out */}
+            <div className="p-3 border-t border-slate-200/70 bg-white/80 flex flex-col gap-2">
+              <div className="flex items-center gap-2.5 px-1.5 py-1">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#0071e3] to-[#6366f1] text-white flex items-center justify-center text-xs font-bold shadow-xs">
+                  {userInitials}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-slate-800 truncate leading-tight">
+                    {user?.first_name || 'Admin'} {user?.last_name || ''}
+                  </p>
+                  <p className="text-[10px] text-slate-400 capitalize truncate mt-0.5">
+                    {user?.role || 'Staff'} • {user?.email || 'admin@centrix'}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-medium text-red-600 rounded-xl bg-red-50/70 hover:bg-red-100/70 active:scale-[0.98] transition-all"
+              >
+                <FiLogOut className="w-3.5 h-3.5" />
+                <span>Sign Out</span>
+              </button>
             </div>
           </motion.div>
         </>

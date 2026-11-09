@@ -57,24 +57,25 @@ const Login = ({ onLoginSuccess, onShowRegister, selectedPlan }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center p-4">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md"
+        initial={{ opacity: 0, y: 15, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+        className="bg-white rounded-2xl shadow-[0_12px_32px_-4px_rgba(0,0,0,0.08),0_4px_12px_rgba(0,0,0,0.04)] border border-slate-200/80 p-7 sm:p-8 w-full max-w-sm"
       >
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 overflow-hidden">
-            <LogoImage />
+        {/* Logo & Header */}
+        <div className="text-center mb-6">
+          <div className="flex justify-center mb-3">
+            <LogoImage size={44} variant="mark" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">Welcome to Centrix</h1>
-          <p className="text-gray-600 mt-2">Sign in to your account</p>
+          <h1 className="text-xl font-bold tracking-tight text-slate-900">Sign In to Centrix</h1>
+          <p className="text-xs text-slate-500 mt-1">Clinical Therapy & Assessment System</p>
           {selectedPlan && (
-            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-800">Selected Plan:</p>
-              <p className="font-semibold text-blue-900">{selectedPlan.title}</p>
-              <p className="text-sm text-blue-700">₹{selectedPlan.price?.toLocaleString()}/-</p>
+            <div className="mt-3 p-2.5 bg-blue-50/70 border border-blue-100 rounded-xl">
+              <p className="text-[11px] text-blue-700">Selected Plan:</p>
+              <p className="text-xs font-semibold text-blue-900">{selectedPlan.title}</p>
+              <p className="text-xs font-bold text-blue-600">₹{selectedPlan.price?.toLocaleString()}/-</p>
             </div>
           )}
         </div>

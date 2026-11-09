@@ -3,28 +3,24 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   FiHome,
   FiCalendar,
-  FiUsers,
   FiUser,
   FiUserCheck,
   FiMapPin,
-  FiChevronDown,
   FiChevronRight,
-  FiList,
   FiFileText,
-  FiDollarSign,
-  FiPercent,
   FiCreditCard,
-  FiTrendingUp,
   FiActivity,
   FiMenu,
-  FiX,
+  FiSidebar,
   FiMessageSquare,
   FiShield,
   FiUpload,
-  FiPackage
+  FiPackage,
+  FiChevronLeft
 } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
+import LogoImage from './LogoImage';
 
 // Route mapping for navigation
 const routeMapping = {
@@ -71,51 +67,18 @@ const routeMapping = {
   'patient-edit': '/examinees/:id/edit'
 };
 
+const sectionLabels = {
+  MAIN: 'Overview',
+  USERS: 'Clinical',
+  NETWORK: 'Centers',
+  FINANCIAL: 'Financials',
+  ADMIN: 'System'
+};
+
 const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCollapsed, setSidebarCollapsed }) => {
   const [expandedSections, setExpandedSections] = useState({});
-  const [currentDateTime, setCurrentDateTime] = useState(new Date());
   const { user } = useSelector((state) => state.auth);
   const location = useLocation();
-
-  // Update date/time every second
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentDateTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  // Format date/time in 12-hour format with AM/PM
-  const formatDateTime = () => {
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    
-    const day = days[currentDateTime.getDay()];
-    const date = currentDateTime.getDate();
-    const month = months[currentDateTime.getMonth()];
-    const year = currentDateTime.getFullYear();
-    
-    let hours = currentDateTime.getHours();
-    const minutes = currentDateTime.getMinutes().toString().padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    
-    hours = hours % 12;
-    hours = hours ? hours : 12; // 0 should be 12
-    
-    return `${day}, ${date} ${month} ${year}, ${hours}:${minutes} ${ampm}`;
-  };
-  
-  // Get current route from URL
-  const getCurrentRoute = () => {
-    const path = location.pathname;
-    // Find the key that matches the current path
-    for (const [key, route] of Object.entries(routeMapping)) {
-      if (path === route || path.startsWith(route + '/')) {
-        return key;
-      }
-    }
-    return activeItem;
-  };
 
   // Auto-expand encounters section when needed
   useEffect(() => {
@@ -131,67 +94,40 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
   const getMenuItems = () => {
     const adminMenuItems = [
       { id: 'dashboard', label: 'Dashboard', icon: FiHome, section: 'MAIN' },
-      // { id: 'clinic-revenue', label: 'Center Revenue', icon: FiTrendingUp, section: 'MAIN' }, // Hidden
-      /* {
-        id: 'encounters',
-        label: 'Sessions',
-        icon: FiUsers,
-        section: 'MAIN',
-        hasSubmenu: true,
-        submenu: [
-          { id: 'assessment-list', label: 'Assessment List', icon: FiFileText },
-          { id: 'therapy-list', label: 'Therapy List', icon: FiActivity }
-        ]
-      }, */
       { id: 'patients', label: 'Examinees', icon: FiUser, section: 'USERS' },
       { id: 'doctors', label: 'Therapists', icon: FiUserCheck, section: 'USERS' },
-    { id: 'template-manager', label: 'Report Templates', icon: FiFileText, section: 'USERS' },
-    { id: 'forms', label: 'Forms', icon: FiUpload, section: 'USERS' },
-    { id: 'conners', label: 'Conners', icon: FiActivity, section: 'USERS' },
-    // { id: 'receptionists', label: 'Staff', icon: FiUser, section: 'USERS' }, // Temporarily disabled for future use
-    { id: 'clinics', label: 'Centers', icon: FiMapPin, section: 'NETWORK' },
-    { id: 'assessment-calendar', label: 'Assessment Calendar', icon: FiCalendar, section: 'NETWORK' },
-    // { id: 'doctor-revenue', label: 'Therapist Revenue', icon: FiDollarSign, section: 'FINANCIAL' }, // Temporarily disabled 
-    { id: 'billing-records', label: 'Billing Records', icon: FiCreditCard, section: 'FINANCIAL' },
-    { id: 'financial-packages', label: 'Packages', icon: FiPackage, section: 'FINANCIAL' },
-    { id: 'invoices', label: 'Invoice', icon: FiFileText, section: 'FINANCIAL' },
-    { id: 'queries', label: 'Queries', icon: FiMessageSquare, section: 'ADMIN' },
-    { id: 'center-visibility', label: 'Center Visibility', icon: FiShield, section: 'ADMIN' },
-  ];
+      { id: 'template-manager', label: 'Report Templates', icon: FiFileText, section: 'USERS' },
+      { id: 'forms', label: 'Forms', icon: FiUpload, section: 'USERS' },
+      { id: 'conners', label: 'Conners Rating', icon: FiActivity, section: 'USERS' },
+      { id: 'clinics', label: 'Centers', icon: FiMapPin, section: 'NETWORK' },
+      { id: 'assessment-calendar', label: 'Calendar', icon: FiCalendar, section: 'NETWORK' },
+      { id: 'billing-records', label: 'Billing Records', icon: FiCreditCard, section: 'FINANCIAL' },
+      { id: 'financial-packages', label: 'Packages', icon: FiPackage, section: 'FINANCIAL' },
+      { id: 'invoices', label: 'Invoices', icon: FiFileText, section: 'FINANCIAL' },
+      { id: 'queries', label: 'Inquiries', icon: FiMessageSquare, section: 'ADMIN' },
+      { id: 'center-visibility', label: 'Visibility', icon: FiShield, section: 'ADMIN' },
+    ];
 
-  const therapistMenuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: FiHome, section: 'MAIN' },
-    /* { 
-      id: 'encounters', 
-      label: 'Sessions', 
-      icon: FiUsers, 
-      section: 'MAIN',
-      hasSubmenu: true,
-      submenu: [
-        { id: 'assessment-list', label: 'Assessment List', icon: FiFileText },
-        { id: 'therapy-list', label: 'Therapy List', icon: FiActivity }
-      ]
-    }, */
-    { id: 'patients', label: 'Examinees', icon: FiUser, section: 'USERS' },
-    { id: 'profile', label: 'My Profile', icon: FiUser, section: 'USERS' },
-  ];
+    const therapistMenuItems = [
+      { id: 'dashboard', label: 'Dashboard', icon: FiHome, section: 'MAIN' },
+      { id: 'patients', label: 'Examinees', icon: FiUser, section: 'USERS' },
+      { id: 'profile', label: 'My Profile', icon: FiUser, section: 'USERS' },
+    ];
 
-  // Return menu items based on user role
-  switch (user?.role) {
-    case 'admin':
-      return adminMenuItems;
-    case 'therapist':
-      return therapistMenuItems;
-    default:
-      // For parents and other users, return minimal menu
-      return [
-        { id: 'dashboard', label: 'Dashboard', icon: FiHome, section: 'MAIN' },
-      ];
-  }
-};
+    switch (user?.role) {
+      case 'admin':
+        return adminMenuItems;
+      case 'therapist':
+        return therapistMenuItems;
+      default:
+        return [
+          { id: 'dashboard', label: 'Dashboard', icon: FiHome, section: 'MAIN' },
+        ];
+    }
+  };
 
   const menuItems = getMenuItems();
-  const sections = ['MAIN', 'NETWORK', 'USERS', 'FINANCIAL', 'ADMIN'];
+  const sections = ['MAIN', 'USERS', 'NETWORK', 'FINANCIAL', 'ADMIN'];
 
   const toggleSection = (itemId) => {
     setExpandedSections(prev => ({
@@ -212,135 +148,180 @@ const Sidebar = ({ activeItem, setActiveItem, shouldExpandEncounters, sidebarCol
     if (itemId === 'encounters') {
       return activeItem === 'encounters-list' || activeItem === 'encounter-templates';
     }
+    const currentPath = location.pathname;
+    const mappedRoute = routeMapping[itemId];
+    if (mappedRoute && (currentPath === mappedRoute || currentPath.startsWith(mappedRoute + '/'))) {
+      return true;
+    }
     return activeItem === itemId;
   };
 
   return (
-    <motion.div
+    <motion.aside
       initial={false}
-      animate={{ width: sidebarCollapsed ? 64 : 256 }}
-      transition={{ type: "tween", duration: 0.2, ease: "easeInOut" }}
-      className="hidden lg:block bg-white dark:bg-[#1c1c1e] shadow-lg dark:shadow-black/20 h-screen fixed left-0 top-0 z-10 overflow-y-auto will-change-[width] transition-colors duration-300"
+      animate={{ width: sidebarCollapsed ? 68 : 248 }}
+      transition={{ type: "spring", stiffness: 350, damping: 32 }}
+      className="hidden lg:flex flex-col bg-[#fbfbfd]/90 backdrop-blur-xl border-r border-slate-200/75 h-screen fixed left-0 top-0 z-30 overflow-hidden select-none transition-colors duration-200"
     >
-      {/* Logo */}
-      <div className="p-4 border-b dark:border-gray-800">
-        <div className="flex items-center justify-between">
-          <div className={`flex-1 flex items-center justify-center ${sidebarCollapsed ? 'hidden' : ''}`}>
-            <div className="w-40 h-30 rounded-lg flex items-center justify-center overflow-hidden">
-              <img
-                src="https://res.cloudinary.com/bazeercloud/image/upload/q_auto/f_auto/v1775895427/ChatGPT_Image_Apr_11_2026_01_45_49_PM_trwcph.png"
-                alt="Centrix Logo"
-                className="w-full h-full object-contain"
-              />
-            </div>
-          </div>
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2c2c2e] transition-colors dark:text-gray-300 flex-shrink-0"
-            title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-          >
-            {sidebarCollapsed ? <FiMenu className="w-5 h-5" /> : <FiX className="w-5 h-5" />}
-          </button>
-        </div>
-        
-        {/* Date and Time */}
-        {!sidebarCollapsed && (
-          <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
-            <div className="flex items-center justify-center text-xs text-gray-500 dark:text-gray-400">
-              <span className="font-medium">{formatDateTime()}</span>
-            </div>
-          </div>
-        )}
+      {/* Brand Header */}
+      <div className="h-14 px-3 flex items-center justify-between border-b border-slate-200/60 flex-shrink-0">
+        <Link 
+          to="/dashboard"
+          className="flex items-center gap-2.5 overflow-hidden transition-opacity hover:opacity-85"
+        >
+          <LogoImage 
+            size={28} 
+            variant={sidebarCollapsed ? "mark" : "full"} 
+          />
+        </Link>
+
+        {/* Apple-style Collapse Toggle */}
+        <button
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-black/[0.04] active:scale-95 transition-all flex-shrink-0"
+          title={sidebarCollapsed ? "Expand sidebar (⌘B)" : "Collapse sidebar (⌘B)"}
+        >
+          {sidebarCollapsed ? (
+            <FiSidebar className="w-4 h-4" />
+          ) : (
+            <FiChevronLeft className="w-4 h-4" />
+          )}
+        </button>
       </div>
 
-      {/* Menu Items */}
-      <div className="py-4">
-        {sections.map((section) => (
-          <div key={section} className="mb-4">
-            <div className={`${sidebarCollapsed ? 'px-2' : 'px-6'} mb-2`}>
-              <span className={`text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider ${
-                sidebarCollapsed ? 'hidden' : ''
-              }`}>
-                {section}
-              </span>
-            </div>
-            <div className="space-y-1">
-            {menuItems
-              .filter(item => item.section === section)
-              .map((item) => (
-                <div key={item.id}>
-                  <Link
-                    to={routeMapping[item.id] || `/`}
-                    onClick={(e) => {
-                      if (item.hasSubmenu) {
-                        e.preventDefault();
-                        handleItemClick(item.id, true);
-                      } else {
-                        setActiveItem(item.id);
-                      }
-                    }}
-                    className={`w-full flex items-center justify-between ${
-                      sidebarCollapsed ? 'px-2' : 'px-6'
-                    } py-2.5 text-left duration-150 ease-out transition-colors ${
-                      isActiveItem(item.id)
-                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-r-2 border-blue-600'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#2c2c2e]'
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <item.icon className="w-5 h-5 mr-3" />
-                      <span className={`font-medium ${sidebarCollapsed ? 'hidden' : ''}`}>{item.label}</span>
-                    </div>
-                    {item.hasSubmenu && !sidebarCollapsed && (
-                      <motion.div
-                        animate={{ rotate: expandedSections[item.id] ? 90 : 0 }}
-                        transition={{ duration: 0.2 }}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          toggleSection(item.id);
-                        }}
-                      >
-                        <FiChevronRight className="w-4 h-4" />
-                      </motion.div>
-                    )}
-                  </Link>
+      {/* Navigation Groups */}
+      <div className="flex-1 overflow-y-auto px-2 py-3 space-y-4 scrollbar-thin">
+        {sections.map((section) => {
+          const items = menuItems.filter(item => item.section === section);
+          if (items.length === 0) return null;
 
-                  {/* Submenu */}
-                  <AnimatePresence initial={false}>
-                    {item.hasSubmenu && expandedSections[item.id] && !sidebarCollapsed && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ type: "tween", duration: 0.15, ease: "easeOut" }}
-                        className="overflow-hidden will-change-[height,opacity]"
-                      >
-                        {item.submenu.map((subItem) => (
-                          <Link
-                            key={subItem.id}
-                            to={routeMapping[subItem.id] || `/`}
-                            onClick={() => setActiveItem(subItem.id)}
-                            className={`w-full flex items-center px-12 py-2 text-left duration-150 ease-out transition-colors ${
-                              activeItem === subItem.id
-                                ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-r-2 border-blue-600'
-                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#2c2c2e]'
-                            }`}
-                          >
-                            <subItem.icon className="w-4 h-4 mr-3" />
-                            <span className="font-medium text-sm">{subItem.label}</span>
-                          </Link>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+          return (
+            <div key={section}>
+              {/* Apple-style Micro Section Header */}
+              {!sidebarCollapsed ? (
+                <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  {sectionLabels[section] || section}
                 </div>
-              ))}
+              ) : (
+                <div className="h-px bg-slate-200/50 my-2 mx-2" />
+              )}
+
+              {/* Items List */}
+              <div className="space-y-0.5">
+                {items.map((item) => {
+                  const active = isActiveItem(item.id);
+                  const Icon = item.icon;
+
+                  return (
+                    <div key={item.id}>
+                      <Link
+                        to={routeMapping[item.id] || `/`}
+                        onClick={(e) => {
+                          if (item.hasSubmenu) {
+                            e.preventDefault();
+                            handleItemClick(item.id, true);
+                          } else {
+                            setActiveItem(item.id);
+                          }
+                        }}
+                        title={sidebarCollapsed ? item.label : undefined}
+                        className={`group relative flex items-center ${
+                          sidebarCollapsed ? 'justify-center px-0' : 'justify-between px-2.5'
+                        } py-2 rounded-xl text-[13px] font-medium transition-all duration-150 ${
+                          active
+                            ? 'bg-[#0071e3] text-white shadow-[0_1px_3px_rgba(0,113,227,0.3)] font-semibold'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-black/[0.04]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <Icon className={`w-4 h-4 flex-shrink-0 transition-transform duration-150 ${
+                            active ? 'text-white' : 'text-slate-400 group-hover:text-slate-700'
+                          }`} />
+                          
+                          {!sidebarCollapsed && (
+                            <span className="truncate tracking-[-0.01em]">
+                              {item.label}
+                            </span>
+                          )}
+                        </div>
+
+                        {item.hasSubmenu && !sidebarCollapsed && (
+                          <motion.div
+                            animate={{ rotate: expandedSections[item.id] ? 90 : 0 }}
+                            transition={{ duration: 0.15 }}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              toggleSection(item.id);
+                            }}
+                          >
+                            <FiChevronRight className={`w-3.5 h-3.5 ${active ? 'text-white/80' : 'text-slate-400'}`} />
+                          </motion.div>
+                        )}
+                      </Link>
+
+                      {/* Submenu if present */}
+                      <AnimatePresence initial={false}>
+                        {item.hasSubmenu && expandedSections[item.id] && !sidebarCollapsed && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.15, ease: "easeOut" }}
+                            className="overflow-hidden pl-7 pr-1 py-0.5 space-y-0.5"
+                          >
+                            {item.submenu.map((subItem) => {
+                              const subActive = activeItem === subItem.id;
+                              const SubIcon = subItem.icon;
+                              return (
+                                <Link
+                                  key={subItem.id}
+                                  to={routeMapping[subItem.id] || `/`}
+                                  onClick={() => setActiveItem(subItem.id)}
+                                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                                    subActive
+                                      ? 'bg-blue-50 text-blue-600 font-semibold'
+                                      : 'text-slate-500 hover:text-slate-800 hover:bg-black/[0.03]'
+                                  }`}
+                                >
+                                  <SubIcon className="w-3.5 h-3.5" />
+                                  <span className="truncate">{subItem.label}</span>
+                                </Link>
+                              );
+                            })}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
-    </motion.div>
+
+      {/* User Micro-Card Footer */}
+      <div className="p-2 border-t border-slate-200/60 bg-white/50 flex-shrink-0">
+        <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-2.5 px-2'} py-1.5 rounded-xl`}>
+          <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-slate-200 to-slate-100 border border-black/[0.08] flex items-center justify-center flex-shrink-0 shadow-sm">
+            <span className="text-[11px] font-semibold text-slate-700">
+              {user?.first_name ? user.first_name[0].toUpperCase() : 'A'}
+            </span>
+          </div>
+          {!sidebarCollapsed && (
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-slate-800 truncate leading-tight">
+                {user?.first_name || 'Admin'} {user?.last_name || ''}
+              </p>
+              <p className="text-[10px] text-slate-400 font-medium capitalize truncate">
+                {user?.role || 'Administrator'}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </motion.aside>
   );
 };
 

@@ -1266,13 +1266,20 @@ export default function ConnersManagement() {
           const finalHeader = headerHtml || DEFAULT_REPORT_HEADER;
           clonedData = [["__html__", finalHeader + "<p><br></p>"]];
         } else {
-          // ✅ Excel data → keep structure, clear data rows
+          // ✅ Excel data → keep structure, clear data rows but keep formulas
           const rowCount = clonedData.length;
-          const colCount = Math.max(...clonedData.map(r => r?.length || 0));
-          // Header row rakho (row 0), baaki clear karo
+          const colCount = Math.max(0, ...clonedData.map(r => r?.length || 0));
+          const sheetFormulas = form.template_data?.formulas?.[sheetName] || {};
+          // Header row rakho (row 0), baaki clear karo lekin formulas restore karo
           clonedData = clonedData.map((row, idx) => {
             if (idx === 0) return [...row]; // header row as-is
-            return Array(colCount).fill(""); // data rows blank
+            return Array.from({ length: colCount }, (_, cIdx) => {
+              const fKey = `${idx}_${cIdx}`;
+              if (sheetFormulas[fKey]) return sheetFormulas[fKey];
+              const cell = row?.[cIdx];
+              if (typeof cell === "string" && cell.startsWith("=")) return cell;
+              return "";
+            });
           });
         }
 

@@ -54,13 +54,8 @@ const Homepage = ({ onShowLogin, onShowPrivacyPolicy, onShowTermsOfService }) =>
       <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-sm z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden bg-gradient-to-br from-blue-600 to-indigo-600">
-                <LogoImage />
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Centrix
-              </span>
+            <div className="flex items-center">
+              <LogoImage size={34} variant="full" />
             </div>
             <nav className="hidden md:flex items-center space-x-8">
               <a href="#features" className="text-gray-600 hover:text-blue-600 transition-colors">Features</a>
@@ -305,11 +300,8 @@ const Homepage = ({ onShowLogin, onShowPrivacyPolicy, onShowTermsOfService }) =>
           <div className="grid md:grid-cols-4 gap-12">
             {/* Brand */}
             <div className="col-span-2">
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
-                  <LogoImage />
-                </div>
-                <span className="text-2xl font-bold text-white">Centrix</span>
+              <div className="flex items-center mb-5">
+                <LogoImage size={34} variant="full" />
               </div>
               <p className="text-slate-400 mb-6 max-w-sm">
                 Professional educational therapy management and assessment platform. 

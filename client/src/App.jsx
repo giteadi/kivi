@@ -1631,7 +1631,7 @@ setActiveItem('doctors');
   return (
     <ErrorBoundary>
       <SidebarContext.Provider value={{ sidebarCollapsed, setSidebarCollapsed }}>
-        <div className="min-h-screen bg-gray-50 dark:bg-[#0f0f10] transition-colors duration-300">
+        <div className="min-h-screen bg-[#fbfbfd] transition-colors duration-200">
           {/* Hide outer sidebar when TemplateManager is active */}
           {activeItem !== 'template-manager' && (
             <Sidebar 

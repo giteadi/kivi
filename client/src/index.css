@@ -13,13 +13,83 @@ html.dark {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "SF Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f9fafb;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  background-color: #fbfbfd;
+  color: #1d1d1f;
+  letter-spacing: -0.011em;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ─── Apple Design System Primitives ────────────────────────────── */
+.apple-glass {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.apple-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 16px -4px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.apple-card:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06), 0 12px 24px -6px rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.09);
+}
+
+.apple-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  transition: all 0.15s ease;
+}
+
+.apple-button-primary {
+  background: #0071e3;
+  color: #ffffff;
+  font-weight: 500;
+  border-radius: 10px;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(0, 113, 227, 0.2);
+}
+
+.apple-button-primary:hover {
+  background: #0077ed;
+  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3);
+  transform: translateY(-0.5px);
+}
+
+.apple-button-primary:active {
+  transform: scale(0.98);
+}
+
+.apple-button-secondary {
+  background: #f5f5f7;
+  color: #1d1d1f;
+  font-weight: 500;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+  transition: all 0.15s ease;
+}
+
+.apple-button-secondary:hover {
+  background: #ebebee;
+  color: #000000;
+}
+
+.apple-button-secondary:active {
+  transform: scale(0.98);
 }
 
 html.dark body {

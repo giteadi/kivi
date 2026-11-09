@@ -34,7 +34,7 @@ const ASSESSMENT_TEMPLATES = [
   },
   {
     id: 'ADHDT2',
-    name: 'EACA AUTISM ASSESSMENT',
+    name: 'Attention-Deficit/Hyperactivity Disorder Test-2 (ADHDT-2)',
     description: 'Attention-Deficit/Hyperactivity Disorder Test-Second Edition with comprehensive scoring',
     category: 'ADHD',
     icon: '📝'

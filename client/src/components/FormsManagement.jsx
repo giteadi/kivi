@@ -1335,10 +1335,16 @@ function convertIFs(s, mask) {
           clonedData = [["__html__", finalHeader + "<p><br></p>"]];
         } else {
           // ✅ Excel data → preserve structure, keep formulas, clear only values
+          const sheetFormulas = form.template_data?.formulas?.[sheetName] || {};
           clonedData = clonedData.map((row, rIdx) => {
             return row.map((cell, cIdx) => {
               // Header row (row 0) - keep as-is
               if (rIdx === 0) return cell;
+              // Check if cell is a formula in template_data.formulas or cell text
+              const fKey = `${rIdx}_${cIdx}`;
+              if (sheetFormulas[fKey]) {
+                return sheetFormulas[fKey];
+              }
               // Keep formulas (strings starting with =)
               if (typeof cell === "string" && cell.startsWith("=")) {
                 return cell;

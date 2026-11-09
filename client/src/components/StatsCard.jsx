@@ -1,35 +1,37 @@
+import React from 'react';
 import { motion } from 'framer-motion';
 
 const StatsCard = ({ icon: Icon, title, value, color = 'blue' }) => {
-  const colorClasses = {
-    blue: 'bg-blue-100 text-blue-600',
-    green: 'bg-green-100 text-green-600',
-    purple: 'bg-purple-100 text-purple-600',
-    orange: 'bg-orange-100 text-orange-600',
+  const colorStyles = {
+    blue: 'bg-blue-50 text-[#0071e3]',
+    green: 'bg-emerald-50 text-emerald-600',
+    purple: 'bg-indigo-50 text-indigo-600',
+    orange: 'bg-amber-50 text-amber-600',
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -5, boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
-      className="bg-white rounded-xl p-6 shadow-sm border hover:shadow-md transition-all duration-300"
+      whileHover={{ y: -2 }}
+      transition={{ duration: 0.15 }}
+      className="apple-card p-4 flex flex-col justify-between"
     >
-      <div className="flex flex-col items-center text-center">
-        <div className={`w-16 h-16 rounded-full ${colorClasses[color]} flex items-center justify-center mb-4`}>
-          <Icon className="w-8 h-8" />
-        </div>
-        
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-          className="text-3xl font-bold text-gray-800 mb-2"
-        >
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+          {title}
+        </span>
+        {Icon && (
+          <div className={`w-7 h-7 rounded-lg ${colorStyles[color] || colorStyles.blue} flex items-center justify-center flex-shrink-0`}>
+            <Icon className="w-3.5 h-3.5" />
+          </div>
+        )}
+      </div>
+
+      <div className="mt-3">
+        <span className="text-2xl font-bold tracking-tight text-slate-900">
           {value}
-        </motion.div>
-        
-        <p className="text-gray-600 text-sm font-medium">{title}</p>
+        </span>
       </div>
     </motion.div>
   );

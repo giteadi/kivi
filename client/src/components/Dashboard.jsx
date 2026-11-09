@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { FiEye } from 'react-icons/fi';
 import { 
+  FiEye,
   FiCalendar, 
   FiUsers, 
   FiMapPin, 
@@ -11,36 +11,29 @@ import {
   FiTrendingUp,
   FiActivity,
   FiBook,
-  FiLayers,
   FiSearch,
-  FiFilter,
-  FiMoreHorizontal,
   FiArrowUpRight,
   FiClock,
   FiChevronDown,
   FiCheckSquare,
   FiHeart,
-  FiHome,
   FiUser,
-  FiUserCheck,
   FiUpload,
   FiCreditCard,
   FiMessageSquare,
-  FiX,
-  FiLoader
+  FiX
 } from 'react-icons/fi';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchDashboardData, setFilters, clearFilters } from '../store/slices/dashboardSlice';
+import { fetchDashboardData } from '../store/slices/dashboardSlice';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import StatsCard from './StatsCard';
-import RevenueCard from './RevenueCard';
+import { useSidebar } from '../App';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 
-// Route mapping - same as Sidebar
+// Route mapping
 const routeMapping = {
   'assessment-list': '/encounters/assessments',
   'therapy-list': '/encounters/therapies',
@@ -51,27 +44,21 @@ const routeMapping = {
 
 const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointments, onViewAllTherapists, setActiveItem }) => {
   const dispatch = useDispatch();
-  const { 
-    stats, 
-    isLoading 
-  } = useSelector((state) => state.dashboard);
+  const { stats, isLoading } = useSelector((state) => state.dashboard);
+  const { sidebarCollapsed } = useSidebar();
 
-  const [assessments, setAssessments] = useState([]);
   const [upcomingAssessments, setUpcomingAssessments] = useState([]);
   const [calendarLoading, setCalendarLoading] = useState(false);
   const [templatesCount, setTemplatesCount] = useState(0);
   const [todaysSessions, setTodaysSessions] = useState(0);
   const [viewingAssessment, setViewingAssessment] = useState(null);
   const [showViewModal, setShowViewModal] = useState(false);
-
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [localFilters, setLocalFilters] = useState({ startDate: '', endDate: '', clinicId: '', doctorId: '' });
   const [showSessionsDropdown, setShowSessionsDropdown] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
   const searchRef = useRef(null);
 
-  // Close search suggestions when clicking outside
+  // Close search suggestions on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
@@ -82,29 +69,22 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Searchable navigation items
+  // Search items
   const searchableItems = [
-    { label: 'Dashboard', route: '/dashboard', activeItem: 'dashboard', icon: FiHome },
-    { label: 'Sessions', route: '/encounters', activeItem: 'encounters', icon: FiUsers },
-    { label: 'Assessment List', route: '/encounters/assessments', activeItem: 'assessment-list', icon: FiFileText },
-    { label: 'Therapy List', route: '/encounters/therapies', activeItem: 'therapy-list', icon: FiActivity },
-    { label: 'Examinees', route: '/examinees', activeItem: 'patients', icon: FiUser },
-    { label: 'Therapists', route: '/therapists', activeItem: 'doctors', icon: FiUserCheck },
-    { label: 'Templates', route: '/templates', activeItem: 'template-manager', icon: FiBook },
-    { label: 'Forms', route: '/forms', activeItem: 'forms', icon: FiUpload },
-    { label: 'Centers', route: '/centres', activeItem: 'clinics', icon: FiMapPin },
-    { label: 'Center Revenue', route: '/centres/revenue', activeItem: 'clinic-revenue', icon: FiTrendingUp },
+    { label: 'Dashboard', route: '/dashboard', activeItem: 'dashboard', icon: FiActivity },
+    { label: 'Examinees Management', route: '/examinees', activeItem: 'patients', icon: FiUser },
+    { label: 'Therapist Directory', route: '/therapists', activeItem: 'doctors', icon: FiUsers },
+    { label: 'Assessment Templates', route: '/templates', activeItem: 'template-manager', icon: FiBook },
+    { label: 'Clinical Forms', route: '/forms', activeItem: 'forms', icon: FiUpload },
+    { label: 'Center Locations', route: '/centres', activeItem: 'clinics', icon: FiMapPin },
     { label: 'Billing Records', route: '/billing', activeItem: 'billing-records', icon: FiCreditCard },
-    { label: 'Queries', route: '/admin/queries', activeItem: 'queries', icon: FiMessageSquare },
-    { label: 'Reports', route: '/reports', activeItem: 'report', icon: FiFileText },
-    { label: 'Conners', route: '/conners', activeItem: 'conners', icon: FiLayers },
+    { label: 'Assessment Calendar', route: '/assessment-calendar', activeItem: 'assessment-calendar', icon: FiCalendar },
+    { label: 'Conners Rating Scale', route: '/conners', activeItem: 'conners', icon: FiActivity },
+    { label: 'Invoices & Statements', route: '/invoices', activeItem: 'invoices', icon: FiFileText },
   ];
 
-  // Filter suggestions based on search query
   const filteredSuggestions = searchQuery.trim() 
-    ? searchableItems.filter(item => 
-        item.label.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+    ? searchableItems.filter(item => item.label.toLowerCase().includes(searchQuery.toLowerCase()))
     : [];
 
   const handleSearchClick = (item) => {
@@ -120,7 +100,6 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
     fetchTodaysSessions();
   }, [dispatch]);
 
-  // Fetch templates count
   const fetchTemplatesCount = async () => {
     try {
       const response = await api.request('/templates');
@@ -132,7 +111,6 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
     }
   };
 
-  // Fetch today's sessions
   const fetchTodaysSessions = async () => {
     try {
       const today = new Date().toISOString().split('T')[0];
@@ -145,11 +123,9 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
     }
   };
 
-  // Fetch upcoming assessments from calendar API
   const fetchUpcomingAssessments = async () => {
     try {
       setCalendarLoading(true);
-      // Get today's date and 7 days ahead
       const today = new Date();
       const nextWeek = new Date(today);
       nextWeek.setDate(today.getDate() + 7);
@@ -159,8 +135,7 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
       
       const response = await api.request(`/calendar?startDate=${startDate}&endDate=${endDate}`);
       if (response.success) {
-        // Transform backend data to frontend format and sort by date/time
-        const transformedData = response.data
+        const transformedData = (response.data || [])
           .filter(event => event.status !== 'cancelled')
           .map(event => ({
             id: event.id,
@@ -174,7 +149,6 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
             status: event.status
           }))
           .sort((a, b) => {
-            // Sort by date first, then by time
             const dateA = new Date(a.date + 'T' + (a.time || '00:00'));
             const dateB = new Date(b.date + 'T' + (b.time || '00:00'));
             return dateA - dateB;
@@ -188,18 +162,7 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
     }
   };
 
-  const getAssessmentColor = (type) => {
-    const colors = {
-      assessment: 'bg-blue-500',
-      therapy: 'bg-emerald-500',
-      evaluation: 'bg-violet-500',
-      followup: 'bg-amber-500',
-      meeting: 'bg-pink-500'
-    };
-    return colors[type] || 'bg-blue-500';
-  };
-
-  // Task 3.11 — Build weekly activity chart data from upcomingAssessments
+  // Weekly chart data
   const weeklyChartData = useMemo(() => {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const counts = { assessment: Array(7).fill(0), therapy: Array(7).fill(0) };
@@ -216,155 +179,6 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
     }));
   }, [upcomingAssessments]);
 
-  // Quick Action Cards Data
-  const quickActions = [
-    {
-      icon: FiPlus,
-      title: 'New Examinee',
-      description: 'Register new client',
-      color: 'from-blue-500 to-blue-600',
-      onClick: () => setActiveItem?.('patient-create')
-    },
-    {
-      icon: FiFileText,
-      title: 'Create Report',
-      description: 'Generate assessment report',
-      color: 'from-emerald-500 to-emerald-600',
-      onClick: () => setActiveItem?.('template-manager')
-    },
-    {
-      icon: FiClipboard,
-      title: 'Forms',
-      description: 'Custom assessment forms',
-      color: 'from-cyan-500 to-cyan-600',
-      route: '/forms',
-      activeItem: 'forms'
-    },
-    {
-      icon: FiCreditCard,
-      title: 'Invoice',
-      description: 'View billing records',
-      color: 'from-purple-500 to-purple-600',
-      onClick: () => setActiveItem?.('billing-records')
-    },
-    {
-      icon: FiMapPin,
-      title: 'Network',
-      description: 'Manage centres',
-      color: 'from-orange-500 to-orange-600',
-      route: '/centres',
-      activeItem: 'clinics'
-    },
-    {
-      icon: FiActivity,
-      title: 'Conners',
-      description: 'ADHD Assessment',
-      color: 'from-red-500 to-red-600',
-      route: '/conners',
-      activeItem: 'conners'
-    }
-  ];
-
-  // Stats Data
-  const statsData = [
-    {
-      icon: FiCalendar,
-      title: 'Today\'s Sessions',
-      value: todaysSessions.toString(),
-      trend: '+12%',
-      color: 'blue'
-    },
-    {
-      icon: FiUsers,
-      title: 'Examinees',
-      value: stats.totalPatients?.toString() || '24',
-      trend: '+5%',
-      color: 'emerald',
-      route: 'examinees'
-    },
-    {
-      icon: FiMapPin,
-      title: 'Centers',
-      value: stats.totalClinics?.toString() || '3',
-      trend: '0%',
-      color: 'violet',
-      route: 'centers'
-    },
-    {
-      icon: FiBook,
-      title: 'Templates',
-      value: templatesCount.toString(),
-      trend: '-8%',
-      color: 'amber',
-      route: 'templates'
-    }
-  ];
-
-  // Handle Assessment Actions
-  const handleAddAssessment = async (newAssessment) => {
-    try {
-      const response = await api.request('/calendar', {
-        method: 'POST',
-        body: JSON.stringify({
-          title: newAssessment.title,
-          clientName: newAssessment.clientName,
-          eventDate: newAssessment.date,
-          eventTime: newAssessment.time || null,
-          duration: newAssessment.duration,
-          eventType: newAssessment.type,
-          notes: newAssessment.notes
-        })
-      });
-      if (response.success) {
-        toast.success('Assessment scheduled successfully');
-        fetchUpcomingAssessments();
-      }
-    } catch (error) {
-      console.error('Error adding assessment:', error);
-      toast.error('Failed to schedule assessment');
-    }
-  };
-
-  const handleEditAssessment = async (updatedAssessment) => {
-    try {
-      const response = await api.request(`/calendar/${updatedAssessment.id}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          title: updatedAssessment.title,
-          clientName: updatedAssessment.clientName,
-          eventDate: updatedAssessment.date,
-          eventTime: updatedAssessment.time || null,
-          duration: updatedAssessment.duration,
-          eventType: updatedAssessment.type,
-          notes: updatedAssessment.notes
-        })
-      });
-      if (response.success) {
-        toast.success('Assessment updated successfully');
-        fetchUpcomingAssessments();
-      }
-    } catch (error) {
-      console.error('Error updating assessment:', error);
-      toast.error('Failed to update assessment');
-    }
-  };
-
-  const handleDeleteAssessment = async (id) => {
-    if (!confirm('Are you sure you want to delete this assessment?')) return;
-    try {
-      const response = await api.request(`/calendar/${id}`, {
-        method: 'DELETE'
-      });
-      if (response.success) {
-        toast.success('Assessment deleted successfully');
-        fetchUpcomingAssessments();
-      }
-    } catch (error) {
-      console.error('Error deleting assessment:', error);
-      toast.error('Failed to delete assessment');
-    }
-  };
-
   const formatDate = (dateStr) => {
     const date = new Date(dateStr);
     const today = new Date();
@@ -380,170 +194,469 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
     }
   };
 
+  // Quick Action Buttons (Compact Apple Toolbar)
+  const quickActions = [
+    {
+      title: 'New Examinee',
+      icon: FiPlus,
+      primary: true,
+      onClick: () => setActiveItem?.('patient-create')
+    },
+    {
+      title: 'Report Template',
+      icon: FiFileText,
+      onClick: () => setActiveItem?.('template-manager')
+    },
+    {
+      title: 'Forms',
+      icon: FiClipboard,
+      route: '/forms',
+      activeItem: 'forms'
+    },
+    {
+      title: 'Invoices',
+      icon: FiCreditCard,
+      onClick: () => setActiveItem?.('billing-records')
+    },
+    {
+      title: 'Conners',
+      icon: FiActivity,
+      route: '/conners',
+      activeItem: 'conners'
+    },
+    {
+      title: 'Centers',
+      icon: FiMapPin,
+      route: '/centres',
+      activeItem: 'clinics'
+    }
+  ];
+
   return (
-    <div className="lg:ml-64 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0f0f10] dark:to-[#1c1c1e] transition-colors duration-300">
-      <div className="p-4 lg:p-6">
-        {/* Header Section */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 space-y-4 lg:space-y-0">
+    <div className={`min-h-[calc(100vh-3.5rem)] bg-[#fbfbfd] transition-all duration-200 select-none ${
+      sidebarCollapsed ? 'lg:ml-[68px]' : 'lg:ml-[248px]'
+    }`}>
+      <div className="p-3 sm:p-6 max-w-7xl mx-auto space-y-3.5 sm:space-y-5">
+        
+        {/* Apple-style Top Bar: Clean Title & Spotlight Search */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pb-2 border-b border-slate-200/60">
           <div>
-            <motion.h1
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="text-3xl font-bold text-gray-800 dark:text-white"
-            >
-              Welcome Back, Admin
-            </motion.h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">Here is what is happening in your therapy center today</p>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-slate-900">
+                Clinical Overview
+              </h1>
+              <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                Live
+              </span>
+            </div>
+            <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
+              Therapy and assessment operations summary
+            </p>
           </div>
-          
-          <div className="flex items-center space-x-3">
-            <div className="relative" ref={searchRef}>
-              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setShowSearchSuggestions(true);
-                }}
-                onFocus={() => setShowSearchSuggestions(true)}
-                placeholder="Search anything..."
-                className="pl-10 pr-10 py-2 bg-white dark:bg-[#2c2c2e] border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none w-64 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-300"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => { setSearchQuery(''); setShowSearchSuggestions(false); }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+
+          {/* Spotlight Search Bar */}
+          <div className="relative w-full sm:w-72" ref={searchRef}>
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowSearchSuggestions(true);
+              }}
+              onFocus={() => setShowSearchSuggestions(true)}
+              placeholder="Search sections... (⌘K)"
+              className="w-full pl-9 pr-8 py-1.5 bg-white border border-slate-200/80 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0071e3]/20 focus:border-[#0071e3] shadow-sm transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => { setSearchQuery(''); setShowSearchSuggestions(false); }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <FiX className="w-3.5 h-3.5" />
+              </button>
+            )}
+
+            {/* Spotlight Dropdown */}
+            <AnimatePresence>
+              {showSearchSuggestions && searchQuery.trim() && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                  transition={{ duration: 0.12 }}
+                  className="absolute top-full left-0 right-0 mt-1.5 bg-white/95 backdrop-blur-xl rounded-xl shadow-[0_12px_32px_-4px_rgba(0,0,0,0.12)] border border-slate-200/80 z-40 overflow-hidden max-h-72 overflow-y-auto"
                 >
-                  <FiX className="w-4 h-4" />
-                </button>
-              )}
-              
-              {/* Search Suggestions Dropdown */}
-              <AnimatePresence>
-                {showSearchSuggestions && searchQuery.trim() && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#2c2c2e] rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 z-30 overflow-hidden max-h-80 overflow-y-auto"
-                  >
-                    {filteredSuggestions.length > 0 ? (
-                      <>
-                        <div className="px-4 py-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                          Results ({filteredSuggestions.length})
-                        </div>
-                        {filteredSuggestions.map((item, index) => (
-                          <Link
-                            key={index}
-                            to={item.route}
-                            onClick={() => handleSearchClick(item)}
-                            className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-left border-t border-gray-50 dark:border-gray-700"
-                          >
-                            <div className="p-2 bg-gray-100 dark:bg-[#3a3a3c] rounded-lg">
-                              <item.icon className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-                            </div>
-                            <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{item.label}</span>
-                          </Link>
-                        ))}
-                      </>
-                    ) : (
-                      <div className="px-4 py-4 text-center text-gray-500 dark:text-gray-400">
-                        <FiSearch className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">No results found</p>
+                  {filteredSuggestions.length > 0 ? (
+                    <div className="p-1 space-y-0.5">
+                      <div className="px-2.5 py-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                        Quick Results
                       </div>
-                    )}
-                  </motion.div>
+                      {filteredSuggestions.map((item, idx) => (
+                        <Link
+                          key={idx}
+                          to={item.route}
+                          onClick={() => handleSearchClick(item)}
+                          className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
+                        >
+                          <div className="w-6 h-6 rounded-md bg-slate-100 flex items-center justify-center text-slate-600">
+                            <item.icon className="w-3.5 h-3.5" />
+                          </div>
+                          <span>{item.label}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center text-xs text-slate-400">
+                      No matching records found
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Compact Quick Actions Toolbar (Apple Segmented Style) */}
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
+          {quickActions.map((action, i) => {
+            const Icon = action.icon;
+            if (action.route) {
+              return (
+                <Link
+                  key={i}
+                  to={action.route}
+                  onClick={() => setActiveItem?.(action.activeItem)}
+                  className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-200/80 bg-white hover:bg-slate-50 text-[11px] sm:text-xs font-medium text-slate-700 shadow-sm hover:border-slate-300 active:scale-98 transition-all flex-shrink-0"
+                >
+                  <Icon className="w-3.5 h-3.5 text-slate-500" />
+                  <span>{action.title}</span>
+                </Link>
+              );
+            }
+            return (
+              <button
+                key={i}
+                onClick={action.onClick}
+                className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium shadow-sm active:scale-98 transition-all flex-shrink-0 ${
+                  action.primary
+                    ? 'bg-[#0071e3] text-white hover:bg-[#0077ed] shadow-[0_1px_2px_rgba(0,113,227,0.25)]'
+                    : 'border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 hover:border-slate-300'
+                }`}
+              >
+                <Icon className={`w-3.5 h-3.5 ${action.primary ? 'text-white' : 'text-slate-500'}`} />
+                <span>{action.title}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Apple 4-Tile Metric Cards (Compact & Mobile-Optimized 2x2 Grid) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+          
+          {/* Card 1: Today's Sessions */}
+          <div className="relative group apple-card p-3 sm:p-4 hover:border-blue-200 transition-all">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                Today's Sessions
+              </span>
+              <button 
+                onClick={() => setShowSessionsDropdown(!showSessionsDropdown)}
+                className="w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-colors"
+                title="View categories"
+              >
+                <FiCalendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              </button>
+            </div>
+            
+            <div className="mt-1.5 sm:mt-2.5 flex items-baseline justify-between">
+              <span className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+                {todaysSessions}
+              </span>
+              <span className="inline-flex items-center px-1 sm:px-1.5 py-0.5 rounded-md text-[9px] sm:text-[10px] font-semibold bg-emerald-50 text-emerald-700">
+                Active
+              </span>
+            </div>
+
+            <div className="mt-1.5 sm:mt-2 text-[10px] sm:text-[11px] text-slate-400 flex items-center justify-between">
+              <span>Workflow</span>
+              <button
+                onClick={() => setShowSessionsDropdown(!showSessionsDropdown)}
+                className="text-blue-600 hover:text-blue-700 font-medium inline-flex items-center gap-0.5"
+              >
+                <span>Filter</span>
+                <FiChevronDown className={`w-2.5 h-2.5 sm:w-3 sm:h-3 transition-transform ${showSessionsDropdown ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+
+            {/* Sessions Dropdown */}
+            <AnimatePresence>
+              {showSessionsDropdown && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                  className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.1)] border border-slate-200 z-30 overflow-hidden p-1 space-y-0.5"
+                >
+                  <Link
+                    to={routeMapping['assessment-list']}
+                    onClick={() => { setActiveItem?.('assessment-list'); setShowSessionsDropdown(false); }}
+                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    <FiCheckSquare className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Assessment List</span>
+                  </Link>
+                  <Link
+                    to={routeMapping['therapy-list']}
+                    onClick={() => { setActiveItem?.('therapy-list'); setShowSessionsDropdown(false); }}
+                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    <FiHeart className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Therapy List</span>
+                  </Link>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Card 2: Examinees */}
+          <Link
+            to={routeMapping['examinees']}
+            onClick={() => setActiveItem?.('patients')}
+            className="group apple-card p-3 sm:p-4 hover:border-emerald-200 transition-all block"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                Total Examinees
+              </span>
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <FiUsers className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              </div>
+            </div>
+            
+            <div className="mt-1.5 sm:mt-2.5 flex items-baseline justify-between">
+              <span className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+                {stats.totalPatients || '24'}
+              </span>
+              <span className="inline-flex items-center px-1 sm:px-1.5 py-0.5 rounded-md text-[9px] sm:text-[10px] font-semibold bg-emerald-50 text-emerald-700">
+                +5%
+              </span>
+            </div>
+
+            <div className="mt-1.5 sm:mt-2 text-[10px] sm:text-[11px] text-slate-400 flex items-center justify-between">
+              <span>Clients</span>
+              <FiArrowUpRight className="w-3 h-3 text-slate-400 group-hover:text-emerald-600 transition-colors" />
+            </div>
+          </Link>
+
+          {/* Card 3: Centers */}
+          <Link
+            to={routeMapping['centers']}
+            onClick={() => setActiveItem?.('clinics')}
+            className="group apple-card p-3 sm:p-4 hover:border-indigo-200 transition-all block"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                Centers Network
+              </span>
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <FiMapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              </div>
+            </div>
+            
+            <div className="mt-1.5 sm:mt-2.5 flex items-baseline justify-between">
+              <span className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+                {stats.totalClinics || '3'}
+              </span>
+              <span className="inline-flex items-center px-1 sm:px-1.5 py-0.5 rounded-md text-[9px] sm:text-[10px] font-semibold bg-slate-100 text-slate-600">
+                Sites
+              </span>
+            </div>
+
+            <div className="mt-1.5 sm:mt-2 text-[10px] sm:text-[11px] text-slate-400 flex items-center justify-between">
+              <span>Locations</span>
+              <FiArrowUpRight className="w-3 h-3 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+            </div>
+          </Link>
+
+          {/* Card 4: Templates */}
+          <Link
+            to={routeMapping['templates']}
+            onClick={() => setActiveItem?.('template-manager')}
+            className="group apple-card p-3 sm:p-4 hover:border-amber-200 transition-all block"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                Report Batteries
+              </span>
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <FiBook className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              </div>
+            </div>
+            
+            <div className="mt-1.5 sm:mt-2.5 flex items-baseline justify-between">
+              <span className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+                {templatesCount}
+              </span>
+              <span className="inline-flex items-center px-1 sm:px-1.5 py-0.5 rounded-md text-[9px] sm:text-[10px] font-semibold bg-amber-50 text-amber-700">
+                Active
+              </span>
+            </div>
+
+            <div className="mt-1.5 sm:mt-2 text-[10px] sm:text-[11px] text-slate-400 flex items-center justify-between">
+              <span>Standardized</span>
+              <FiArrowUpRight className="w-3 h-3 text-slate-400 group-hover:text-amber-600 transition-colors" />
+            </div>
+          </Link>
+        </div>
+
+        {/* 2-Column Split: Activity Chart & Upcoming Timeline */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-5">
+          
+          {/* Left: Weekly Activity Bar Chart (7 Cols) */}
+          <div className="lg:col-span-7 apple-card p-3.5 sm:p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-3 sm:mb-4">
+              <div>
+                <h3 className="text-xs sm:text-sm font-semibold tracking-tight text-slate-900">
+                  Weekly Session Load
+                </h3>
+                <p className="text-[10px] sm:text-[11px] text-slate-400">
+                  Scheduled assessment and therapy distribution
+                </p>
+              </div>
+              <div className="flex items-center gap-3 text-xs font-medium self-end sm:self-auto">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#0071e3]" />
+                  <span className="text-slate-600 text-[10px] sm:text-[11px]">Assessments</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#34c759]" />
+                  <span className="text-slate-600 text-[10px] sm:text-[11px]">Therapy</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="w-full h-44 sm:h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={weeklyChartData} barSize={11} barGap={3}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis 
+                    dataKey="day" 
+                    tick={{ fontSize: 10, fill: '#94a3b8' }} 
+                    axisLine={false} 
+                    tickLine={false} 
+                  />
+                  <YAxis 
+                    allowDecimals={false} 
+                    tick={{ fontSize: 10, fill: '#94a3b8' }} 
+                    axisLine={false} 
+                    tickLine={false} 
+                    width={18} 
+                  />
+                  <Tooltip
+                    contentStyle={{ 
+                      borderRadius: 12, 
+                      border: '1px solid #e2e8f0', 
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.06)', 
+                      fontSize: 11,
+                      padding: '6px 10px'
+                    }}
+                    cursor={{ fill: 'rgba(0,113,227,0.04)' }}
+                  />
+                  <Bar dataKey="Assessments" fill="#0071e3" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="Therapy" fill="#34c759" radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Right: Upcoming Sessions & Schedule (5 Cols) */}
+          <div className="lg:col-span-5 apple-card p-3.5 sm:p-5 flex flex-col">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <h3 className="text-xs sm:text-sm font-semibold tracking-tight text-slate-900">
+                  Upcoming Timeline
+                </h3>
+                {calendarLoading && (
+                  <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
                 )}
-              </AnimatePresence>
+              </div>
+              <Link
+                to={routeMapping['assessment-list']}
+                onClick={() => setActiveItem?.('assessment-list')}
+                className="text-[11px] sm:text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-0.5"
+              >
+                <span>View All</span>
+                <FiArrowUpRight className="w-3 h-3" />
+              </Link>
+            </div>
+
+            <div className="space-y-1.5 sm:space-y-2 flex-1 overflow-y-auto max-h-48 sm:max-h-56 pr-0.5 scrollbar-thin">
+              {upcomingAssessments.length > 0 ? (
+                upcomingAssessments.slice(0, 5).map((assessment) => (
+                  <div
+                    key={assessment.id}
+                    onClick={() => {
+                      setViewingAssessment(assessment);
+                      setShowViewModal(true);
+                    }}
+                    className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/50 hover:bg-slate-50 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-between gap-2.5 group"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <span className="text-xs font-semibold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
+                          {assessment.title}
+                        </span>
+                        <span className={`text-[8px] sm:text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded-full ${
+                          assessment.type === 'therapy'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/50'
+                            : 'bg-blue-50 text-blue-700 border border-blue-200/50'
+                        }`}>
+                          {assessment.type || 'Session'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-slate-400 mt-0.5">
+                        <span className="truncate">{assessment.clientName || 'Client'}</span>
+                        {assessment.time && (
+                          <>
+                            <span>•</span>
+                            <span className="flex items-center gap-0.5 font-mono text-[9px] sm:text-[10px]">
+                              <FiClock className="w-2.5 h-2.5" />
+                              {assessment.time}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex-shrink-0 text-right">
+                      <span className="text-[9px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-md bg-white border border-slate-200/70 text-slate-600 shadow-sm">
+                        {formatDate(assessment.date)}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="h-40 flex flex-col items-center justify-center text-center p-3">
+                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-1.5">
+                    <FiCalendar className="w-3.5 h-3.5" />
+                  </div>
+                  <p className="text-xs font-medium text-slate-500">No scheduled sessions</p>
+                  <button
+                    onClick={() => setActiveItem?.('assessment-list')}
+                    className="mt-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700"
+                  >
+                    Schedule from Calendar
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Stats Row */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
-        >
-          {statsData.map((stat, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className={`bg-white dark:bg-[#1c1c1e] rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-black/20 transition-all relative ${stat.title === "Today's Sessions" || stat.route ? 'cursor-pointer' : ''}`}
-              onClick={stat.title === "Today's Sessions" ? () => setShowSessionsDropdown(!showSessionsDropdown) : undefined}
-            >
-              {stat.route && (
-                <Link
-                  to={routeMapping[stat.route]}
-                  onClick={() => setActiveItem?.(stat.route)}
-                  className="absolute inset-0 z-10"
-                />
-              )}
-              <div className="flex items-center justify-between">
-                <div className={`p-3 rounded-xl bg-${stat.color}-100`}>
-                  <stat.icon className={`w-6 h-6 text-${stat.color}-600`} />
-                </div>
-                <div className="flex items-center space-x-1">
-                  <span className={`text-sm font-medium ${stat.trend.startsWith('+') ? 'text-emerald-600' : stat.trend.startsWith('-') ? 'text-red-600' : 'text-gray-500'}`}>
-                    {stat.trend}
-                  </span>
-                  {stat.title === "Today's Sessions" && (
-                    <FiChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showSessionsDropdown ? 'rotate-180' : ''}`} />
-                  )}
-                </div>
-              </div>
-              <div className="mt-4">
-                <h3 className="text-2xl font-bold text-gray-800 dark:text-white">{stat.value}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{stat.title}</p>
-              </div>
-              
-              {/* Dropdown for Today's Sessions */}
-              <AnimatePresence>
-                {stat.title === "Today's Sessions" && showSessionsDropdown && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#2c2c2e] rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 z-20 overflow-hidden"
-                  >
-                    <Link
-                      to={routeMapping['assessment-list']}
-                      onClick={() => { setActiveItem?.('assessment-list'); setShowSessionsDropdown(false); }}
-                      className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 dark:hover:bg-[#3a3a3c] transition-colors text-left"
-                    >
-                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                        <FiCheckSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">Assessment List</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">View all assessments</p>
-                      </div>
-                    </Link>
-                    <div className="border-t border-gray-100 dark:border-gray-700"></div>
-                    <Link
-                      to={routeMapping['therapy-list']}
-                      onClick={() => { setActiveItem?.('therapy-list'); setShowSessionsDropdown(false); }}
-                      className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 dark:hover:bg-[#3a3a3c] transition-colors text-left"
-                    >
-                      <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                        <FiHeart className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">Therapy List</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">View all therapy sessions</p>
-                      </div>
-                    </Link>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          ))}
-        </motion.div>
+      </div>
 
-        {/* View Assessment Modal */}
+      {/* Apple-grade Session Details Modal */}
       <AnimatePresence>
         {showViewModal && viewingAssessment && (
           <motion.div
@@ -551,82 +664,79 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setShowViewModal(false)}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-md"
+              className="bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-200 w-full max-w-sm overflow-hidden"
             >
-              <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-2xl">
-                <h3 className="text-lg font-bold text-white flex items-center space-x-2">
-                  <FiEye className="w-5 h-5" />
-                  <span>Assessment Details</span>
-                </h3>
+              <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-md bg-blue-600 text-white flex items-center justify-center">
+                    <FiEye className="w-3.5 h-3.5" />
+                  </div>
+                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                    Session Record
+                  </h3>
+                </div>
                 <button
                   onClick={() => setShowViewModal(false)}
-                  className="text-white/80 hover:text-white transition-colors"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
                 >
-                  <FiX className="w-5 h-5" />
+                  <FiX className="w-4 h-4" />
                 </button>
               </div>
-              
-              <div className="p-6 space-y-4">
+
+              <div className="p-4 space-y-3.5 text-xs">
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">Title</label>
-                  <p className="text-lg font-semibold text-gray-900">{viewingAssessment.title}</p>
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Title</span>
+                  <p className="text-sm font-semibold text-slate-900 mt-0.5">{viewingAssessment.title}</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
                   <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">Date</label>
-                    <p className="text-gray-900 font-medium">
-                      {viewingAssessment.date ? new Date(viewingAssessment.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : 'Not set'}
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Date</span>
+                    <p className="font-medium text-slate-800 mt-0.5">
+                      {viewingAssessment.date ? new Date(viewingAssessment.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Not set'}
                     </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">Time</label>
-                    <p className="text-gray-900 font-medium">{viewingAssessment.time || 'Not set'}</p>
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Time</span>
+                    <p className="font-medium text-slate-800 mt-0.5 font-mono">{viewingAssessment.time || 'Not set'}</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
                   <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">Client Name</label>
-                    <p className="text-gray-900">{viewingAssessment.clientName || 'Not set'}</p>
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Client</span>
+                    <p className="font-medium text-slate-800 mt-0.5">{viewingAssessment.clientName || 'Unassigned'}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">Duration</label>
-                    <p className="text-gray-900">{viewingAssessment.duration} min</p>
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Duration</span>
+                    <p className="font-medium text-slate-800 mt-0.5">{viewingAssessment.duration || 45} mins</p>
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">Type</label>
-                  <span className={`${getAssessmentColor(viewingAssessment.type)} text-white text-xs px-2 py-1 rounded capitalize`}>
-                    {viewingAssessment.type}
-                  </span>
                 </div>
 
                 {viewingAssessment.notes && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">Notes</label>
-                    <p className="text-gray-900">{viewingAssessment.notes}</p>
+                  <div className="pt-2 border-t border-slate-100">
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Clinical Notes</span>
+                    <p className="text-slate-600 mt-0.5 leading-relaxed bg-slate-50 p-2 rounded-lg text-[11px]">{viewingAssessment.notes}</p>
                   </div>
                 )}
 
-                <div className="flex space-x-3 pt-4 border-t border-gray-100">
+                <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
                   <button
                     onClick={() => {
                       setShowViewModal(false);
                       setActiveItem?.('assessment-list');
                     }}
-                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all font-medium shadow-lg shadow-blue-500/30 flex items-center justify-center space-x-2"
+                    className="flex-1 py-2 rounded-xl bg-[#0071e3] hover:bg-[#0077ed] text-white font-medium text-xs shadow-sm transition-colors flex items-center justify-center gap-1.5"
                   >
-                    <FiCalendar className="w-4 h-4" />
-                    <span>View in Calendar</span>
+                    <FiCalendar className="w-3.5 h-3.5" />
+                    <span>Open in Calendar</span>
                   </button>
                 </div>
               </div>
@@ -634,204 +744,6 @@ const Dashboard = ({ onAppointmentClick, onCreateNewEncounter, onViewAllAppointm
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Quick Actions Grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mb-8"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-800">Quick Actions</h2>
-            <button className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-1">
-              <span>View All</span>
-              <FiArrowUpRight className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {quickActions.map((action, index) => (
-              action.route ? (
-                <Link key={index} to={action.route} onClick={() => setActiveItem?.(action.activeItem || action.route.replace('/', ''))}>
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: index * 0.05 }}
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`group relative overflow-hidden bg-gradient-to-br ${action.color} rounded-2xl p-5 text-white shadow-lg hover:shadow-xl transition-all cursor-pointer`}
-                  >
-                    <div className="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-white/20 rounded-full blur-xl group-hover:scale-150 transition-transform"></div>
-                    <div className="relative">
-                      <action.icon className="w-8 h-8 mb-3" />
-                      <h3 className="font-semibold text-sm">{action.title}</h3>
-                      <p className="text-xs text-white/80 mt-1">{action.description}</p>
-                    </div>
-                  </motion.div>
-                </Link>
-              ) : (
-                <motion.button
-                  key={index}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.05 }}
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={action.onClick}
-                  className={`group relative overflow-hidden bg-gradient-to-br ${action.color} rounded-2xl p-5 text-white shadow-lg hover:shadow-xl transition-all`}
-                >
-                  <div className="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-white/20 rounded-full blur-xl group-hover:scale-150 transition-transform"></div>
-                  <div className="relative">
-                    <action.icon className="w-8 h-8 mb-3" />
-                    <h3 className="font-semibold text-sm">{action.title}</h3>
-                    <p className="text-xs text-white/80 mt-1">{action.description}</p>
-                  </div>
-                </motion.button>
-              )
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Task 3.11 — Weekly Activity Chart */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35 }}
-          className="bg-white dark:bg-[#1c1c1e] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 mb-8"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-violet-100 dark:bg-violet-900/30 rounded-lg">
-                <FiTrendingUp className="w-5 h-5 text-violet-600 dark:text-violet-400" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-gray-800 dark:text-white">Weekly Activity</h3>
-                <p className="text-xs text-gray-400">Sessions scheduled this week by day</p>
-              </div>
-            </div>
-          </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={weeklyChartData} barSize={18} barGap={4}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-              <XAxis dataKey="day" tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={24} />
-              <Tooltip
-                contentStyle={{ borderRadius: 10, border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontSize: 13 }}
-                cursor={{ fill: 'rgba(99,102,241,0.06)' }}
-              />
-              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
-              <Bar dataKey="Assessments" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="Therapy" fill="#10b981" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </motion.div>
-
-        {/* Upcoming Assessments Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <FiCalendar className="w-5 h-5 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-bold text-gray-800">Upcoming Assessments</h3>
-              {calendarLoading && (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-              )}
-            </div>
-            <button 
-              onClick={() => setActiveItem?.('assessment-list')}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-1"
-            >
-              <span>View All</span>
-              <FiArrowUpRight className="w-4 h-4" />
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {upcomingAssessments.length > 0 ? (
-              upcomingAssessments.slice(0, 6).map((assessment) => (
-                <motion.div
-                  key={assessment.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="group cursor-pointer"
-                  onClick={() => {
-                    setViewingAssessment(assessment);
-                    setShowViewModal(true);
-                  }}
-                >
-                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-blue-300 hover:shadow-md transition-all group-hover:bg-blue-50/50">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center space-x-2">
-                        <div className={`w-2 h-2 rounded-full ${getAssessmentColor(assessment.type)}`}></div>
-                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">{assessment.type}</span>
-                      </div>
-                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                        formatDate(assessment.date) === 'Today' 
-                          ? 'bg-red-100 text-red-600' 
-                          : formatDate(assessment.date) === 'Tomorrow'
-                          ? 'bg-amber-100 text-amber-600'
-                          : 'bg-gray-100 text-gray-600'
-                      }`}>
-                        {formatDate(assessment.date)}
-                      </span>
-                    </div>
-                    
-                    <h4 className="font-semibold text-gray-800 mb-1 group-hover:text-blue-600 transition-colors">{assessment.title}</h4>
-                    
-                    {assessment.clientName && (
-                      <div className="flex items-center space-x-2 text-sm text-gray-500 mb-2">
-                        <FiUser className="w-4 h-4" />
-                        <span>{assessment.clientName}</span>
-                      </div>
-                    )}
-                    
-                    {assessment.time && (
-                      <div className="flex items-center space-x-2 text-sm text-gray-500">
-                        <FiClock className="w-4 h-4" />
-                        <span>{assessment.time} ({assessment.duration} min)</span>
-                      </div>
-                    )}
-                    
-                    {assessment.notes && (
-                      <div className="mt-3 pt-3 border-t border-gray-200">
-                        <p className="text-xs text-gray-500 line-clamp-2">{assessment.notes}</p>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              ))
-            ) : (
-              <div className="col-span-full text-center py-8 text-gray-400">
-                <FiCalendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>No upcoming assessments scheduled</p>
-                <button
-                  onClick={() => setActiveItem?.('assessment-list')}
-                  className="mt-3 text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  Schedule an assessment
-                </button>
-              </div>
-            )}
-          </div>
-          
-          {upcomingAssessments.length > 6 && (
-            <div className="mt-6 text-center">
-              <button
-                onClick={() => setActiveItem?.('assessment-list')}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-              >
-                View All {upcomingAssessments.length} Assessments
-              </button>
-            </div>
-          )}
-        </motion.div>
-      </div>
     </div>
   );
 };

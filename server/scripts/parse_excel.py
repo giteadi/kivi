@@ -678,8 +678,8 @@ def idx_to_col(idx):
         letters = chr(65 + rem) + letters
     return letters
 
-# Cell references, ignoring anything inside a quoted string literal.
-_REF_RE = re.compile(r'"[^"]*"|(\$?)([A-Z]{1,3})(\$?)(\d+)')
+# Cell references, ignoring anything inside a quoted string literal or function calls like LOG10().
+_REF_RE = re.compile(r'"[^"]*"|(?<![A-Za-z0-9_])(\$?)([A-Z]{1,3})(\$?)(\d+)\b(?!\s*\()')
 
 def shift_refs(formula, d_row, d_col):
     """
@@ -823,7 +823,10 @@ def parse_ws_xml(ws_bytes, shared, fmt_ids, num_fmts, styles=None):
             elif v_el is not None and v_el.text:
                 raw = v_el.text
             val = format_value(raw, fmt, num_fmts, ctype)
-            if val:
+            if f'{r}_{c}' in formulas:
+                # Formula cell: store formula text so frontend recognizes it as a formula cell
+                grid[(r, c)] = formulas[f'{r}_{c}']
+            elif val:
                 grid[(r, c)] = val
 
     # ── Merged cells: keep the original data, do NOT flatten child values.

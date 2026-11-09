@@ -1757,7 +1757,24 @@ export default function TemplateManager() {
         const wb = XLSX.utils.book_new();
         sheetList.forEach(sheetName => {
           const rows = allData[sheetName] || [];
-          XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), sheetName.substring(0, 31));
+          const ws = XLSX.utils.aoa_to_sheet(rows);
+          const sheetFormulas = reportPanel.formulas?.[sheetName] || {};
+          Object.keys(sheetFormulas).forEach((key) => {
+            const [r, c] = key.split('_').map(Number);
+            const addr = XLSX.utils.encode_cell({ r, c });
+            const rawFormula = sheetFormulas[key];
+            if (!rawFormula || typeof rawFormula !== 'string' || !rawFormula.trim()) return;
+            const f = rawFormula.replace(/^=/, '').trim();
+            if (!f) return;
+            const cell = ws[addr];
+            const isFormulaText = cell && cell.t === 's' && typeof cell.v === 'string' && cell.v.startsWith('=');
+            if (isFormulaText || !cell) {
+              ws[addr] = { t: 'n', v: 0, f };
+            } else {
+              cell.f = f;
+            }
+          });
+          XLSX.utils.book_append_sheet(wb, ws, sheetName.substring(0, 31));
         });
         const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
         const blob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
@@ -1768,6 +1785,7 @@ export default function TemplateManager() {
         formData.append("template_data", JSON.stringify({
           sheets: allData,
           sheetNames: sheetList,
+          formulas: reportPanel.formulas || {},
           isExcel: true,
         }));
         
