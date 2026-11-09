@@ -63,7 +63,7 @@ async function checkConerOwnership(req, res, next) {
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const query = `
-      SELECT id, name, description, type, file_path, file_size, 
+      SELECT id, name, description, type, file_path, file_size, template_data,
              created_at, updated_at, created_by
       FROM coners 
       WHERE deleted_at IS NULL
@@ -449,7 +449,7 @@ router.get('/folder/:id', authenticateToken, async (req, res) => {
     
     // Get coners in folder
     const [coners] = await getDb().promise().query(`
-      SELECT id, name, description, type, file_path, file_size, created_at, updated_at, created_by
+      SELECT id, name, description, type, file_path, file_size, template_data, created_at, updated_at, created_by
       FROM coners 
       WHERE folder_id = ? AND deleted_at IS NULL
       ORDER BY created_at DESC
