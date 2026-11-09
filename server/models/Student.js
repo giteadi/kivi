@@ -38,7 +38,9 @@ class Student extends BaseModel {
       // Try complex query with JOINs first
       try {
         const complexSql = `
-          SELECT s.*, 
+          SELECT s.id, s.student_id, s.first_name, s.last_name, s.gender, s.date_of_birth, s.birth_date,
+                 s.email, s.phone, s.status, s.centre_id, s.school_name, s.grade, s.created_at, s.updated_at,
+                 s.documents,
                  c.name as centre_name,
                  (SELECT MAX(sess.session_date) FROM kivi_sessions sess WHERE sess.student_id = s.id) as last_session
           FROM kivi_students s

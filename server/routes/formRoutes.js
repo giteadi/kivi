@@ -496,23 +496,24 @@ router.put('/:id/data', authenticateToken, checkFormOwnership, async (req, res) 
 // GET /api/forms/:id/data - Get form data
 router.get('/:id/data', authenticateToken, checkFormOwnership, async (req, res) => {
   try {
-    const query = 'SELECT sheet_data FROM forms WHERE id = ? AND deleted_at IS NULL';
+    const query = 'SELECT template_data FROM forms WHERE id = ? AND deleted_at IS NULL';
     const [forms] = await getDb().promise().query(query, [req.params.id]);
     
     if (forms.length === 0) {
       return res.status(404).json({ message: 'Form not found' });
     }
 
-    let sheetData = null;
-    if (forms[0].sheet_data) {
+    let templateData = null;
+    const raw = forms[0].template_data;
+    if (raw) {
       try {
-        sheetData = JSON.parse(forms[0].sheet_data);
+        templateData = typeof raw === 'string' ? JSON.parse(raw) : raw;
       } catch (e) {
-        console.warn('Malformed sheet_data for form', req.params.id, e.message);
-        sheetData = null;
+        console.warn('Malformed template_data for form', req.params.id, e.message);
+        templateData = null;
       }
     }
-    res.json({ sheetData });
+    res.json({ template_data: templateData, sheetData: templateData });
   } catch (error) {
     console.error('Get form data error:', error);
     res.status(500).json({ message: 'Failed to retrieve form data' });

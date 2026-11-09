@@ -494,11 +494,11 @@ const ExamineeDetail = ({ examineeId, onBack, onEditExaminee }) => {
   };
 
   useEffect(() => {
-    if (examineeId && !currentPatient) {
+    if (examineeId && (!currentPatient || String(currentPatient.id) !== String(examineeId))) {
       dispatch(fetchPatient(examineeId));
       dispatch(fetchAssessments(examineeId));
     }
-  }, [dispatch, examineeId, currentPatient]);
+  }, [dispatch, examineeId, currentPatient?.id]);
 
   // Populate form data when currentPatient loads
   useEffect(() => {

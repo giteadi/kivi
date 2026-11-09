@@ -3,10 +3,31 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3005/api'
 class ApiService {
   constructor() {
     this.baseURL = API_BASE_URL;
+    this.inFlightRequests = new Map();
   }
 
   async request(endpoint, options = {}) {
+    const method = (options.method || 'GET').toUpperCase();
     const url = `${this.baseURL}${endpoint}`;
+
+    // Deduplicate identical concurrent GET requests
+    if (method === 'GET' && !options.noDedupe) {
+      if (this.inFlightRequests.has(url)) {
+        return this.inFlightRequests.get(url);
+      }
+      const promise = this._executeRequest(url, options);
+      this.inFlightRequests.set(url, promise);
+      try {
+        return await promise;
+      } finally {
+        this.inFlightRequests.delete(url);
+      }
+    }
+
+    return this._executeRequest(url, options);
+  }
+
+  async _executeRequest(url, options = {}) {
     const token = localStorage.getItem('token');
 
     // Build headers - token ALWAYS added, never overridden

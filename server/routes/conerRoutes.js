@@ -347,23 +347,24 @@ router.put('/:id/data', authenticateToken, checkConerOwnership, async (req, res)
 // GET /api/coners/:id/data - Get coner data
 router.get('/:id/data', authenticateToken, checkConerOwnership, async (req, res) => {
   try {
-    const query = 'SELECT sheet_data FROM coners WHERE id = ? AND deleted_at IS NULL';
+    const query = 'SELECT template_data FROM coners WHERE id = ? AND deleted_at IS NULL';
     const [coners] = await getDb().promise().query(query, [req.params.id]);
     
     if (coners.length === 0) {
       return res.status(404).json({ message: 'Coner not found' });
     }
 
-    let sheetData = null;
-    if (coners[0].sheet_data) {
+    let templateData = null;
+    const raw = coners[0].template_data;
+    if (raw) {
       try {
-        sheetData = JSON.parse(coners[0].sheet_data);
+        templateData = typeof raw === 'string' ? JSON.parse(raw) : raw;
       } catch (e) {
-        console.warn('Malformed sheet_data for coner', req.params.id, e.message);
-        sheetData = null;
+        console.warn('Malformed template_data for coner', req.params.id, e.message);
+        templateData = null;
       }
     }
-    res.json({ sheetData });
+    res.json({ template_data: templateData, sheetData: templateData });
   } catch (error) {
     console.error('Get coner data error:', error);
     res.status(500).json({ message: 'Failed to retrieve coner data' });
