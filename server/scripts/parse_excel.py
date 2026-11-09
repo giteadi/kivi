@@ -854,7 +854,11 @@ def get_sheet_embeddings(zf):
             rid    = rel.attrib.get('Id', '')
             target = rel.attrib.get('Target', '')
             if rid and target:
-                p = os.path.normpath('xl/' + target.lstrip('/')).replace('\\', '/')
+                clean_target = target.lstrip('/')
+                if clean_target.startswith('xl/'):
+                    p = os.path.normpath(clean_target).replace('\\', '/')
+                else:
+                    p = os.path.normpath('xl/' + clean_target).replace('\\', '/')
                 rid_to_path[rid] = p
 
         for sh in wb_root.findall(f'.//{{{ns_main}}}sheet'):
@@ -909,7 +913,11 @@ def parse_xlsx(file_path):
                 rid    = rel.attrib.get('Id', '')
                 target = rel.attrib.get('Target', '')
                 if rid and target:
-                    p = os.path.normpath('xl/' + target.lstrip('/')).replace('\\', '/')
+                    clean_target = target.lstrip('/')
+                    if clean_target.startswith('xl/'):
+                        p = os.path.normpath(clean_target).replace('\\', '/')
+                    else:
+                        p = os.path.normpath('xl/' + clean_target).replace('\\', '/')
                     rid_to_path[rid] = p
 
             for sh in wb_root.findall(f'.//{{{ns_main}}}sheet'):
